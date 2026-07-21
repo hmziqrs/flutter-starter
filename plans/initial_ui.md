@@ -1,6 +1,6 @@
 # Initial Static UI Screen Plan
 
-**Status:** Proposed implementation plan
+**Status:** Audited implementation plan
 
 **Scope:** Static, navigable screens used to exercise the starter architecture
 
@@ -24,13 +24,26 @@ The screens provide enough realistic UI to evaluate:
 - ForUI component coverage and missing design tokens.
 - ExUI and Dartx usage discipline.
 - Simple Animations and reduced-motion behavior.
-- `flutter_form_builder` integration without falling back to Material-styled fields.
+- Native Flutter form integration through ForUI's existing `FormField` APIs.
 - Shared form abstractions based on repeated usage rather than prediction.
 - English, Arabic, and Simplified Chinese localization.
 - RTL, text scaling, focus traversal, validation, and error presentation.
 - Screen-level golden tests and a development UI gallery.
 
 The output is a reusable visual and structural baseline, not a production authentication or subscription system.
+
+### 1.1 Audited decisions
+
+| Area | Decision | Reason |
+| --- | --- | --- |
+| Form state | Use Flutter `Form`/`FormField` with ForUI form widgets | `FTextFormField`, `FOtpField`, selects, date/time fields, and other ForUI controls already expose native form behavior. |
+| Form controls | Start managed/internal; use managed/external or lifted controls only when a screen requires them | This follows ForUI's control model and avoids two competing owners for a field value. |
+| Extra form package | Add none during the static UI phase | Reactive Forms is capable, but it requires ForUI adapters and a second form-state model without solving a current requirement. |
+| Shared form API | Extract submit/focus helpers and non-form-field wrappers only after Login and Register | Do not hide ForUI's native form widgets behind pass-through application wrappers. |
+| Navigation ownership | The app router composes cross-feature flows and passes callbacks/intents into pages | Feature pages must not import another feature's routes or the development gallery. |
+| Gallery state | Use typed, screen-specific gallery cases | A generic scenario enum cannot represent focused, partial OTP, expired, dirty, billing-period, or route-error variants safely. |
+
+Re-evaluate a dedicated form engine only when real product forms require dynamic field arrays, nested/multi-step form graphs, coordinated asynchronous validation, or reusable server-error/dirty/reset orchestration that native forms no longer express cleanly.
 
 ---
 
@@ -52,6 +65,15 @@ Development screen gallery
 ```
 
 Settings continues to include appearance and language controls from the architecture baseline.
+
+Supporting application surfaces are also required for a trustworthy baseline:
+
+```text
+Recoverable startup failure
+Unknown/invalid route
+Development diagnostics
+Dialog, sheet, toast, popover, and tooltip gallery cases
+```
 
 ### 2.1 Explicit non-goals
 
@@ -81,7 +103,7 @@ At the end of the static build, review these questions:
 2. Which widgets are genuinely shared versus merely similar?
 3. Does the app shell remain stable while the window resizes?
 4. Are ForUI's touch and desktop variants sufficient for every screen?
-5. Which form behavior belongs in shared adapters, and which belongs to the feature?
+5. Which native form behavior deserves a shared helper, and which belongs to the feature?
 6. Can every validation and error state be localized cleanly?
 7. Do Arabic RTL and maximum text scale expose assumptions in spacing or navigation?
 8. Are keyboard, hover, focus, and submit behaviors good enough for desktop?
@@ -107,17 +129,19 @@ Record the answers before adding backend integrations.
 | `/auth/login` | Login | Entry to the static authentication flow. |
 | `/auth/register` | Register | Leads to registration OTP. |
 | `/auth/forgot-password` | Forgot password | Leads to reset OTP. |
-| `/auth/otp` | OTP | Purpose supplied by a typed route/query value. |
+| `/auth/otp/:purpose` | OTP | Typed purpose path value: `registration` or `password-reset`. |
 | `/auth/reset-password` | Reset password | Leads back to login after static success. |
 | `/profile/edit` | Update profile | Static account details form. |
 | `/pricing` | Pricing | Full plan comparison outside onboarding. |
 | `/dev/screens` | Screen gallery | Development builds only. |
+| `/dev/diagnostics` | Diagnostics | Development builds only. |
+| Router error builder | Unknown/invalid route | Localized recovery view; not a redirect loop. |
 
 ### 4.2 Navigation flow
 
 ```mermaid
 flowchart TD
-    Start["Start"] --> Onboarding["Onboarding"]
+    ReviewEntry["Onboarding review entry"] --> Onboarding["Onboarding"]
     Onboarding -->|"Continue"| Paywall["Onboarding paywall"]
     Onboarding -->|"Skip"| Home["Home"]
     Paywall -->|"Skip"| Home
@@ -145,11 +169,17 @@ flowchart TD
 ### 4.3 Route rules
 
 - Routes are named and centralized in `app_routes.dart`.
-- The OTP purpose is a typed value such as `registration` or `passwordReset`, not an arbitrary string spread through widgets.
+- The normal static app starts at Home. Onboarding remains directly addressable; the flowchart is a review flow, not a claim that onboarding completion is persisted.
+- Home, Pricing, and Settings are shell destinations. Compact navigation pushes settings detail pages; expanded navigation selects a detail pane without changing feature state.
+- Use a stateful shell only if separate destination stacks must survive switching; do not add it merely because `go_router` supports it.
+- The OTP purpose is parsed once into `OtpPurpose.registration` or `OtpPurpose.passwordReset`. Missing or invalid values render the router error view.
 - Static screens remain directly addressable for development and golden tests.
-- `/dev/screens` is absent from the production route table.
+- `/dev/screens` and `/dev/diagnostics` are added only when `AppEnvironment.development` and the explicit development-tools flag are enabled. They are absent from the production route table, including profile/release builds.
 - Static flows do not introduce fake authentication redirects.
 - Back navigation must behave naturally on Android, iOS, and desktop.
+- The app router owns cross-feature composition. It passes callbacks such as `onOpenPricing` or typed navigation intents into feature pages; feature files do not import another feature's route constants.
+- Unknown routes, malformed deep links, and router exceptions render a localized recovery surface with Home and Back actions.
+- Non-sensitive route and shell state may use Flutter restoration. Passwords and OTP values must never be restored to disk.
 
 ---
 
@@ -168,6 +198,9 @@ flowchart TD
 | Reset password | New password and confirmation | Idle, weak/mismatch, submitting, success |
 | Update profile | Avatar placeholder, display name, username, read-only email, bio | Default, dirty, invalid, saving, success |
 | Pricing | Plan cards, billing choice, comparison, FAQ/legal placeholders | Compact stack, medium grid, expanded grid |
+| Startup failure | Localized error, safe diagnostics ID, retry/exit guidance | Recoverable and non-recoverable fixtures |
+| Route error | Invalid path/purpose context and recovery actions | Unknown path, malformed OTP purpose |
+| Diagnostics | Redacted app/build/layout/input/locale capability data | Compact and expanded |
 
 Every state is deterministic and selectable in tests or the development screen gallery.
 
@@ -211,8 +244,8 @@ Required elements:
 - Monthly/annual billing selector.
 - One highlighted recommended plan.
 - Primary static CTA.
-- Restore-purchase placeholder.
-- Terms and privacy links as non-functional placeholders.
+- Restore-purchase placeholder that opens an honest “not connected” toast or dialog.
+- Terms and privacy links that open deterministic localized placeholder pages or dialogs.
 - Honest note that purchasing is not connected in the static phase.
 
 The static CTA may show a success toast and continue to Home. It must not imply that a purchase occurred.
@@ -254,7 +287,7 @@ Behavior:
 - Language changes between system, English, Arabic, and Simplified Chinese.
 - Account links to Update Profile and Login.
 - Subscription links to Pricing.
-- Privacy/About contains static explanatory copy and build information.
+- Privacy/About contains static explanatory copy, deterministic legal placeholders, and build information.
 
 Layout behavior:
 
@@ -271,7 +304,7 @@ Fields:
 ```text
 email
 password
-remember_me
+rememberMe
 ```
 
 Actions:
@@ -288,11 +321,11 @@ Static submission validates the form and navigates to Home. The screen gallery c
 Fields:
 
 ```text
-display_name
+displayName
 email
 password
-confirm_password
-accept_terms
+confirmPassword
+acceptTerms
 ```
 
 Actions:
@@ -302,6 +335,8 @@ Actions:
 - Show password requirements.
 
 Successful static submission navigates to OTP with purpose `registration`.
+
+Terms and privacy controls open deterministic localized placeholders. If the form becomes dirty, Back requests discard confirmation instead of silently dropping input.
 
 ### 6.7 Forgot password
 
@@ -317,7 +352,7 @@ Do not reveal whether an account exists in production-oriented copy. Even in a s
 
 ### 6.8 OTP verification
 
-Use ForUI's `FOtpField` as the visual control and adapt it to Form Builder only if Form Builder ownership provides a measurable benefit.
+Use ForUI's native `FOtpField` form-field behavior. Do not wrap it in another `FormField`.
 
 Requirements:
 
@@ -337,8 +372,8 @@ Successful registration OTP navigates to Home. Successful password-reset OTP nav
 Fields:
 
 ```text
-new_password
-confirm_password
+newPassword
+confirmPassword
 ```
 
 Show localized password requirements and mismatch feedback. Static success returns to Login with a success message.
@@ -349,15 +384,17 @@ Fields and content:
 
 ```text
 avatar placeholder
-display_name
+displayName
 username
 email       # read-only in this phase
 bio         # optional
 ```
 
-The avatar action is a visual placeholder and does not request file or camera permission.
+The avatar action does not request file or camera permission. It is disabled with an explanation or opens deterministic placeholder feedback; it is never a no-op control.
 
 Static saving validates, shows deterministic progress/success UI, and retains the edited values while the page remains mounted.
+
+Back navigation from a dirty profile asks whether to discard edits. Only non-sensitive profile draft fields may be considered for restoration later; this phase does not persist them.
 
 ### 6.11 Pricing
 
@@ -378,7 +415,7 @@ Required content:
 - Plan benefits.
 - Current/recommended visual treatment.
 - Comparison section.
-- Small FAQ and legal placeholders.
+- Small FAQ and legal controls that open deterministic placeholder content.
 - Static CTA that clearly does not complete a purchase.
 
 Layout behavior:
@@ -431,10 +468,14 @@ These values are hypotheses. Adjust them after reviewing screenshots at all targ
 ### 7.4 Resizing behavior
 
 - Resizing does not reset a form, pager, billing selection, or navigation state.
-- Layout changes do not recreate `GlobalKey<FormBuilderState>` instances.
+- Layout changes do not recreate `GlobalKey<FormState>`, `FocusNode`, text controller, or ForUI managed-control instances.
 - Avoid animated full-page reflow while the desktop window is actively resizing.
 - Scroll position is retained when a screen changes between one- and two-pane layouts where practical.
 - A narrow desktop window uses compact or medium layout while retaining mouse and keyboard behavior.
+- Screens account independently for `MediaQuery.padding`, `viewPadding`, `viewInsets`, `DisplayFeature`s, and short available height; width class alone does not make a layout usable.
+- Keyboard appearance never covers the focused field or primary form action. Scrollable forms use bottom inset padding and reveal the first invalid field.
+- Foldable hinges/cutouts divide content only when they intersect the allocated screen region. Do not treat every large device as a two-pane layout.
+- Landscape phones and short desktop windows remain scrollable and do not pin actions over content.
 
 ### 7.5 Interaction policy
 
@@ -455,7 +496,7 @@ Gallery controls:
 
 ```text
 Screen
-UI scenario
+Gallery case
 Viewport preset
 Theme mode
 Accent
@@ -469,9 +510,12 @@ Viewport presets:
 
 ```text
 390 × 844     compact phone
-640 × 900     compact/medium boundary
+844 × 390     landscape/short phone
+639 × 900     below compact/medium boundary
+640 × 900     at compact/medium boundary
 800 × 1000    tablet or medium window
-1024 × 768    expanded boundary
+1023 × 768    below expanded boundary
+1024 × 768    at expanded boundary
 1440 × 900    desktop
 700 × 700     narrow resized desktop
 ```
@@ -482,6 +526,7 @@ The gallery should:
 - Allow light/dark and English/Arabic/Chinese comparison.
 - Exercise idle, validation, submitting, failure, success, empty, and disabled states.
 - Support framed previews using constrained `MediaQuery` data.
+- Toggle safe-area padding, keyboard `viewInsets`, pointer/touch policy, display features, and short-height fixtures independently from width.
 - Avoid a new Storybook-style dependency during the initial phase.
 - Remain absent from production routing and navigation.
 
@@ -489,28 +534,30 @@ The gallery should:
 
 ## 9. Deterministic static states
 
-Use a small development-only scenario value:
+Use a development-only registry of typed, named `GalleryCase` values. Each case builds a production page/content widget with real immutable view state and callbacks; production features never import the gallery type.
 
-```dart
-enum UiScenario {
-  idle,
-  invalid,
-  submitting,
-  failure,
-  success,
-  empty,
-  disabled,
-}
+Required case families include:
+
+```text
+Onboarding: first, middle, final
+Paywall/Pricing: monthly, annual, recommended, unavailable
+Home: default, empty activity
+Auth forms: idle, focused, invalid, submitting, field error, global error, success
+OTP: empty, partial, pasted complete, invalid, expired, resending, submitting
+Profile: default, dirty, invalid, saving, saved, discard prompt
+System: startup failure, unknown route, malformed OTP purpose, diagnostics
+Overlays: dialog, sheet, toast, popover, tooltip, keyboard-inset form
 ```
 
 Rules:
 
-- `UiScenario` controls presentation only and must not become product/domain state.
-- Widget tests inject scenarios through constructors or Riverpod overrides.
+- Case IDs are stable and screen-specific, for example `auth.login.globalError` and `auth.otp.expired`; do not collapse unrelated states into a generic enum.
+- Widget tests construct production state directly or use focused Riverpod overrides.
 - Do not use `Future.delayed` to create flaky pseudo-network behavior.
-- Normal route usage defaults to `idle` and can transition synchronously after local validation.
+- Normal route usage begins with real idle state and can transition synchronously after local validation.
 - Loading controls disable duplicate submission while retaining visible focus behavior.
 - Failure scenarios include field-level and form-level examples.
+- Gallery-only environment overrides (locale, viewport, density, motion, insets) remain outside feature state.
 
 ---
 
@@ -523,11 +570,14 @@ lib/
 ├── app/
 │   ├── routing/
 │   │   ├── app_router.dart
-│   │   └── app_routes.dart
-│   └── shell/
-│       ├── app_shell.dart
-│       ├── compact_app_shell.dart
-│       └── expanded_app_shell.dart
+│   │   ├── app_routes.dart
+│   │   └── route_error_page.dart
+│   ├── shell/
+│   │   ├── app_shell.dart
+│   │   ├── compact_app_shell.dart
+│   │   └── expanded_app_shell.dart
+│   └── startup/
+│       └── startup_error_view.dart
 │
 ├── features/
 │   ├── onboarding/
@@ -567,15 +617,13 @@ lib/
 │   └── dev_gallery/
 │       ├── screen_gallery_page.dart
 │       ├── preview_frame.dart
-│       └── ui_scenario.dart
+│       ├── gallery_case.dart
+│       └── gallery_registry.dart
 │
 └── shared/
-    ├── forms/                          # create at the extraction checkpoint
-    │   ├── app_form.dart
-    │   ├── app_text_form_field.dart
-    │   ├── app_password_form_field.dart
-    │   ├── app_otp_form_field.dart
-    │   ├── app_form_submit_button.dart
+    ├── forms/                          # only files earned at the extraction checkpoint
+    │   ├── validate_and_reveal.dart
+    │   ├── forui_checkbox_form_field.dart
     │   └── app_validators.dart
     ├── adaptive/
     │   └── app_layout_class.dart
@@ -586,7 +634,7 @@ lib/
         └── app_sizes.dart
 ```
 
-This tree shows likely files, not mandatory empty directories.
+This tree is additive to [initial.md](initial.md): it expands the existing `features/` and `app/routing/` branches and does not replace bootstrap, configuration, infrastructure, i18n, or test files. It shows likely files, not mandatory empty directories.
 
 ### 10.1 Ownership rules
 
@@ -594,6 +642,7 @@ This tree shows likely files, not mandatory empty directories.
 - Authentication pages share one auth feature because their navigation and validation rules form one workflow.
 - Profile remains separate from auth because editing an existing profile is a different capability.
 - The development gallery may import public page/content APIs, but production features must never depend on the gallery.
+- Cross-feature navigation is wired by `app_router.dart` through callbacks or typed intents. Pricing, settings, onboarding, auth, and profile do not import one another's route files.
 - Feature-specific widgets remain in their feature even when they resemble a widget elsewhere.
 - Promote a widget to `shared/` only after at least two features use the same behavior and styling contract.
 
@@ -628,8 +677,9 @@ These do not move to `shared/` merely because they are visually reusable.
 
 Candidates that may earn extraction:
 
-- A ForUI/FormBuilder field adapter.
-- A shared form submit button with loading/error semantics.
+- A native-form submit helper that validates, focuses, and reveals the first error.
+- A small `FormField<bool>` wrapper for `FCheckbox` if Login and Register require the same accessibility/error contract.
+- Localized validator combinators that are genuinely identical across features.
 - An auth screen shell after Login and Register demonstrate the same layout.
 - A constrained content frame used unchanged by multiple feature families.
 
@@ -645,39 +695,53 @@ If a shared widget accumulates many booleans such as `isLogin`, `isDesktop`, `sh
 
 ---
 
-## 12. Form Builder and ForUI integration
+## 12. Native forms and ForUI integration
 
-This screen set is the concrete trigger for adding `flutter_form_builder`.
+### 12.1 Decision and package evaluation
 
-### 12.1 Integration boundary
+Use Flutter's native `Form`/`FormField` system with ForUI widgets for this screen set. This is not a temporary compromise: ForUI already supplies native form integration for the controls used here.
 
-`FormBuilderTextField` is Material-styled. Do not use it in the application UI.
+Research snapshot for 21 July 2026: ForUI `0.24.1`, Reactive Forms `18.2.2`, and Formz `0.8.0`. Resolve exact compatible constraints through `flutter pub add` and commit the lockfile when implementation begins; ForUI is pre-1.0, so re-check its form/control changelog before each minor upgrade.
 
-Instead:
+| Option | Compatibility with ForUI | Decision |
+| --- | --- | --- |
+| Flutter `Form` + ForUI | Direct. `FTextFormField` wraps `FTextField` in a `FormField`; `FOtpField`, select, date/time, slider, and related controls expose validation/save/reset/error APIs. Plain checkbox/switch controls can be wrapped once in `FormField<T>`. | Selected baseline. No extra dependency or duplicate field registry. |
+| `reactive_forms` | Feasible through custom reactive field widgets/value accessors. It provides nested groups, arrays, cross-field and asynchronous validation, pending state, focus orchestration, and optional generation. It still requires a ForUI adapter set and introduces a second model-driven form graph. | First option to spike if dynamic/nested/reactive requirements appear; not a baseline dependency. |
+| `formz` | UI-library agnostic validation/value representation, but it is not a widget/controller abstraction and does not register or focus fields. | Not selected for this goal. Consider only if immutable validation state becomes part of feature state for another reason. |
 
-- Use `FormBuilder` for form registration, values, dirty state, validation, reset, and programmatic errors.
-- Build `AppTextFormField` from `FormBuilderField<String>` plus a ForUI `FTextField`.
-- Forward the FormBuilder field value, focus, enabled state, `didChange`, and error text into the ForUI control.
-- Build password and OTP adapters by composition, not by copying the entire text adapter.
-- Use `FOtpField` for OTP visuals and behavior.
-- Keep ordinary `FTextFormField` available for simple non-FormBuilder forms; do not nest one `FormField` inside another FormBuilder field.
+Do not add a form package solely to reduce a few `GlobalKey<FormState>` or controller declarations. Reopen the decision when at least one real workflow needs dynamic add/remove fields, nested multi-step state shared across routes, coordinated debounced async validation, or uniform dirty/reset/server-error orchestration across several substantial forms.
 
-### 12.2 Extraction sequence
+Do not introduce an `AppFormController` facade now; native `FormState` coordinates the form, while ForUI controls own field editing state.
 
-Do not design all shared form APIs before seeing real usage:
+### 12.2 ForUI control ownership and lifecycle
 
-1. Implement Login with a local, minimal ForUI/FormBuilder adapter.
-2. Implement Register and note actual differences.
-3. Extract only the stable common field contract into `shared/forms/`.
-4. Migrate Login and Register to the shared adapter.
-5. Implement Forgot Password, Reset Password, OTP, and Update Profile with that contract.
-6. Review the API after all forms exist and remove unused configurability.
+Apply ForUI's control guidance consistently:
 
-Temporary duplication during steps 1–2 is acceptable. It must be resolved at the extraction checkpoint before the screen phase is complete.
+- Start with a managed/internal control when a field only needs an initial value plus `onSaved`/`onChange` observation.
+- Use a managed/external controller when the screen must prefill, read continuously, reset, select text, or coordinate cross-field behavior. The owning `State` creates and disposes it.
+- Use a lifted control only when Riverpod or another existing feature-state owner must be the single bidirectional source of truth.
+- Preserve the complete `TextEditingValue` when synchronizing text; never reduce live editing state to a string and lose selection or IME composing ranges.
+- Keep `GlobalKey<FormState>`, `FocusNode`, text controllers, and ForUI controls above adaptive layout branches so resizing cannot reset them.
+- Do not put `FTextFormField`, `FOtpField`, `FSelect`, or another existing ForUI form field inside a second `FormField`.
+- Wrap `FCheckbox`/`FSwitch` locally with `FormField<bool>` and forward `value`, `didChange`, and localized error content. Extract the wrapper only after two matching callers exist.
+- Group credential fields in `AutofillGroup`, use correct autofill hints and text-input actions, and finish the autofill context after a terminal submit action.
 
-### 12.3 Typed form boundary
+Passwords, OTP codes, and reset tokens are never persisted through restoration, preferences, logs, gallery URLs, or diagnostics.
 
-Form Builder exposes a `Map<String, dynamic>`. Raw maps must stop at each form boundary:
+### 12.3 Extraction sequence
+
+1. Implement Login directly with `Form`, `FTextFormField`, and a local checkbox `FormField<bool>`.
+2. Implement Register and record the actual repeated submit, focus, validation, and checkbox behavior.
+3. Extract only stable shared helpers such as `validateAndRevealFirstError`, a matching ForUI checkbox form field, and truly generic localized validators.
+4. Keep email/password/OTP widgets as direct ForUI usage unless a wrapper adds application behavior rather than renaming parameters.
+5. Implement Forgot Password, Reset Password, OTP, and Update Profile with the same native pattern.
+6. Review the form code after all screens exist. Delete speculative helpers and document any requirement native forms could not meet.
+
+Temporary local duplication in Login and Register is acceptable. A generic schema/form renderer is not part of this phase.
+
+### 12.4 Typed submission boundary
+
+Each feature creates a small typed value immediately after native validation and save. Do not pass controllers, `FormFieldState`, or a `Map<String, dynamic>` to a controller or future repository.
 
 ```dart
 final class LoginFormValue {
@@ -690,84 +754,74 @@ final class LoginFormValue {
   final String email;
   final String password;
   final bool rememberMe;
+}
 
-  factory LoginFormValue.fromForm(Map<String, dynamic> value) =>
-      LoginFormValue(
-        email: (value['email'] as String).trim(),
-        password: value['password'] as String,
-        rememberMe: (value['rememberMe'] as bool?) ?? false,
-      );
+String _email = '';
+String _password = '';
+bool _rememberMe = false;
+
+LoginFormValue? _readLoginForm() {
+  final form = _formKey.currentState!;
+  final invalidFields = form.validateGranularly();
+  if (invalidFields.isNotEmpty) {
+    revealAndFocusFirstInvalid(invalidFields, ordered: _fieldHandles);
+    return null;
+  }
+
+  form.save();
+  return LoginFormValue(
+    email: _email.trim(),
+    password: _password,
+    rememberMe: _rememberMe,
+  );
 }
 ```
 
-Rules:
+The fields' `onSaved` callbacks assign the feature-local variables in the example. Feature-local saved variables or explicitly owned controllers are both acceptable. Choose one owner per field, normalize only at the typed boundary, and never trim passwords or OTP codes accidentally. Small submission values remain handwritten until model volume justifies generation.
 
-- Field-name constants remain inside the owning form/page file.
-- Typed values contain normalized strings and booleans.
-- Controllers and future repositories never consume a raw form map.
-- Do not introduce a generic reflection-based form schema.
-- Do not use Freezed for these small values until model volume justifies it.
-
-### 12.4 Form field matrix
+### 12.5 Form field matrix
 
 | Field | Screens | Shared behavior |
 | --- | --- | --- |
-| Email | Login, Register, Forgot | Email keyboard, autofill, trim on submit, localized validation |
-| Password | Login, Register, Reset | Obscuring, visibility toggle, password autofill semantics |
-| Confirm password | Register, Reset | Cross-field equality validation |
-| Display name | Register, Update Profile | Name autofill and length validation |
-| Username | Update Profile | Normalization and allowed-character validation |
-| Bio | Update Profile | Optional multiline input and character count |
-| Checkbox | Login, Register | Remember/terms with different feature semantics |
-| OTP | OTP | Numeric input, paste, completion, purpose-specific errors |
+| Email | Login, Register, Forgot | Email keyboard, autofill, trim on submit, bidi-safe display, localized validation |
+| Password | Login, Register, Reset | Obscuring, localized visibility semantics, password autofill policy, no persistence |
+| Confirm password | Register, Reset | Cross-field equality validation without a duplicate state store |
+| Display name | Register, Update Profile | Name autofill, grapheme-aware length validation |
+| Username | Update Profile | Explicit normalization and product-owned allowed-character policy |
+| Bio | Update Profile | Optional multiline input, grapheme-aware character count |
+| Checkbox | Login, Register | Same native wrapper mechanics; different labels, validators, and feature meaning |
+| OTP | OTP | Native `FOtpField`, numeric formatter policy, autofill, paste, purpose-specific errors |
 
-Sharing a field adapter does not mean sharing every feature validator or label.
+Sharing mechanics does not imply sharing labels, field keys, validators, restoration, or product policy.
 
-### 12.5 Validation
+### 12.6 Validation and first-error behavior
 
-Create small localized validator functions:
-
-```text
-required
-email format
-minimum password length
-password confirmation
-terms accepted
-six-digit OTP
-username format
-maximum bio length
-```
+Create small localized validators for required values, email format, password policy, password confirmation, terms acceptance, OTP shape, username policy, and bio length.
 
 Rules:
 
-- Validators return Slang-generated localized messages.
-- Validation begins on submit and then updates on user interaction.
-- The first invalid field receives focus and scrolls into view.
-- Cross-field validation reads the current form state without storing a second copy.
-- Client validation does not perform API calls.
-- Do not add `form_builder_validators` initially; the small localized rule set is clearer and avoids a second localization path.
+- Validation runs on submit, then rechecks erroneous fields on edit using Flutter 3.44's `AutovalidateMode.onUserInteractionIfError` where appropriate.
+- Use `FormState.validateGranularly()` to identify invalid fields. Intersect that result with the form's explicit ordered field handles, then call `Scrollable.ensureVisible` and request the corresponding `FocusNode` for the first visual field.
+- Field order and focus-node registration stay explicit in each form; do not assume the returned `Set` defines visual order or discover fields through names/reflection.
+- Cross-field validators read the existing field/controller values and do not create another form-state copy.
+- Validators are synchronous, deterministic, side-effect free, and return Slang-generated localized messages. API calls and uniqueness checks belong to feature submission/application state.
+- When a backend exists, map server field errors to ForUI's `forceErrorText` or feature-owned error state and clear a field's server error when that value changes.
+- Do not add a validator package initially; the rule set is small and must follow product and localization policy rather than generic regex defaults.
 
-### 12.6 Submission and errors
+### 12.7 Submission, dirty state, and errors
 
-Represent form presentation state consistently:
-
-```text
-idle
-submitting
-success
-failure
-```
+Represent feature presentation state explicitly as idle, submitting, success, or failure. It is separate from native field state.
 
 During static implementation:
 
-- Submit first calls `saveAndValidate()`.
-- Valid typed values trigger deterministic navigation or success feedback.
-- Screen-gallery scenarios inject field and global errors.
-- Buttons disable duplicate submission.
-- Enter submits forms on desktop when focus is in an appropriate field.
-- A global error does not erase field values.
+- Submit validates granularly, reveals/focuses the first error, calls `save()`, constructs a typed value, and then performs deterministic feedback/navigation.
+- Buttons prevent duplicate submission; Enter submits only from appropriate fields and never from multiline Bio.
+- A global error retains every entered value and current layout/navigation state.
+- Register and Update Profile track a typed initial/current draft or a minimal dirty flag and confirm before destructive Back navigation. Do not infer dirty state from a raw form map.
+- Reset returns fields, error text, focus, and feature submission state to a documented baseline.
+- Gallery cases inject presentation and server-error fixtures without installing fake repositories or timers.
 
-When a real backend arrives, add server-to-field error mapping at the feature boundary. Do not invent a network error hierarchy in this static phase.
+When real services arrive, preserve this UI boundary and add feature-owned mapping from service failures to field/global presentation state. Do not invent a network hierarchy in this static phase.
 
 ---
 
@@ -804,8 +858,12 @@ Rules:
 - Validation messages include field context where needed.
 - Directional padding, alignment, icons, and row order are reviewed in Arabic.
 - OTP digits remain LTR while the surrounding page remains RTL.
+- Email addresses, usernames, prices, and codes are isolated safely inside RTL copy; do not force the entire paragraph LTR.
+- Decide whether OTP accepts only ASCII digits or normalizes locale digits, and test Arabic-Indic input/paste consistently with backend expectations.
+- Length rules and counters use user-perceived grapheme clusters rather than UTF-16 code units.
 - Chinese layouts are reviewed for line height and compact labels.
 - English copy should be realistic enough to expose wrapping rather than intentionally short placeholder text.
+- Add a pseudo-long locale or expanded-copy fixture in the gallery even if it is not shipped.
 
 For each screen, review:
 
@@ -856,10 +914,15 @@ Every screen must support:
 - Minimum touch targets from the active ForUI touch theme.
 - Pointer hover without making hover required.
 - Text scaling without clipping or inaccessible scroll regions.
+- Representative nonlinear/system text scaling at 200% or the largest supported accessibility setting; code must not assume `textScaleFactor` is linear.
 - Sufficient contrast in light, dark, selected, disabled, success, warning, and error states.
 - No essential meaning communicated only by color or animation.
+- No enabled control is a no-op: static legal, restore, avatar, and purchase controls provide honest deterministic feedback.
+- Screen-reader announcements for form-level errors, submission success, countdown changes that matter, and route/page changes without excessive live-region chatter.
 
 Do not disable text scaling globally to preserve a layout.
+
+Run Flutter accessibility guideline checks in widget tests where applicable, then manually verify the core flows with VoiceOver or TalkBack and keyboard-only desktop navigation. Automated semantics checks do not replace screen-reader review.
 
 ---
 
@@ -870,11 +933,13 @@ Do not disable text scaling globally to preserve a layout.
 Cover:
 
 - Route parsing for `OtpPurpose`.
-- Typed form-map conversion.
+- Typed form-value normalization without password/OTP trimming.
 - Localized validators.
 - Cross-field password confirmation.
 - Pricing currency/period formatting.
 - Layout-class selection using ForUI breakpoint values.
+- Gallery case IDs and registry uniqueness.
+- Unknown-route and development-route inclusion policy.
 
 ### 16.2 Widget tests
 
@@ -888,6 +953,9 @@ For every form:
 - Loading/disabled state.
 - Field and global error presentation.
 - Values retained after failure.
+- Reset behavior and controller/focus disposal.
+- Autofill hints and sensitive-field restoration policy.
+- Dirty-form discard confirmation where required.
 
 For navigation:
 
@@ -896,7 +964,10 @@ For navigation:
 - Register reaches registration OTP.
 - Forgot Password reaches reset OTP.
 - OTP destinations are purpose-correct.
+- Invalid/missing OTP purposes render the recovery view.
 - Reset Password returns to Login.
+- Unknown deep links render recovery actions without redirect loops.
+- Development routes are absent under production configuration.
 
 For responsive behavior:
 
@@ -905,6 +976,9 @@ For responsive behavior:
 - Pricing cards change layout without overflow.
 - Settings changes between list/detail and two-pane layout.
 - Auth fields preserve values across layout change.
+- Boundary tests cover widths immediately below and at `sm` and `lg`.
+- Short-height, keyboard-inset, safe-area, landscape, and representative foldable/display-feature fixtures remain usable.
+- Flutter accessibility guideline checks pass for representative screens.
 
 ### 16.3 Golden matrix
 
@@ -923,6 +997,8 @@ Use pairwise coverage rather than every possible combination:
 | Reset password | 700×700 | English, maximum text scale |
 | Update profile | 1440×900 | English, light, dirty form |
 | Pricing | 1440×900 | English, dark, annual selected |
+| Route error | 390×844 | Arabic, light, malformed OTP purpose |
+| Startup failure | 700×700 | English, dark, recoverable |
 
 Add targeted goldens when a regression has escaped this matrix; do not multiply snapshots without a reason.
 
@@ -939,27 +1015,50 @@ Review on at least:
 - Arabic RTL.
 - Maximum application and system text scale.
 - Animations disabled.
+- VoiceOver or TalkBack on the auth/OTP flow.
+- Safe areas, software keyboard, landscape phone, short desktop height, and a foldable/display-feature fixture.
+- Browser/OS Back and a direct deep link on every supported platform family.
 
 Capture review notes in the PR or an adjacent follow-up document.
+
+### 16.5 Integration smoke tests
+
+Keep one short deterministic flow rather than duplicating every widget test:
+
+1. Launch with explicit development configuration and verify Home is the cold-start route.
+2. Open Onboarding directly, Skip the paywall, and reach Home.
+3. Complete Register → registration OTP → Home using only local validation.
+4. Complete Forgot Password → password-reset OTP → Reset Password → Login.
+5. Resize across compact/medium/expanded while a form is dirty and verify its value/focus policy.
+6. Open registered deep links and verify malformed/unknown links render the recovery view.
+7. Launch with production configuration and prove `/dev/screens` and `/dev/diagnostics` are unregistered.
 
 ---
 
 ## 17. Implementation sequence
 
+### Phase 0 — Architecture prerequisites
+
+- Complete the compact baseline through bootstrap, explicit environment configuration, ForUI root composition, localization, router, adaptive shell, and strict analysis from [initial.md](initial.md).
+- Replace the current counter template before treating this document as executable UI work.
+- Record the tested Flutter and pre-1.0 ForUI versions in the first implementation PR and review their changelogs before upgrading.
+- Confirm development-route gating and the recoverable startup/error surfaces before adding feature flows.
+
 ### Phase 1 — Routes, fixtures, and gallery
 
-- Add route names and static navigation flow.
+- Add the complete route tree, typed OTP parsing, error builder, shell destinations, and app-owned cross-feature callbacks.
 - Add translation namespaces and initial English/Arabic/Chinese copy.
 - Create immutable screen view data without repositories.
-- Create `/dev/screens` with viewport, locale, theme, scale, density, motion, and scenario controls.
+- Create `/dev/screens` with typed gallery cases plus viewport, locale, theme, scale, density, motion, safe-area, inset, and display-feature controls.
+- Add `/dev/diagnostics` and prove both development routes are absent in production configuration.
 
-### Phase 2 — Form integration spike
+### Phase 2 — Native form foundation and abstraction checkpoint
 
-- Add `flutter_form_builder` in the same change as the first form.
-- Build Login with a local ForUI/FormBuilder adapter.
+- Build Login with native `Form`, `FTextFormField`, and a local `FormField<bool>` checkbox composition.
 - Build Register and compare requirements.
-- Test validation, keyboard submission, error focus, and RTL.
-- Extract the minimal stable shared form adapter.
+- Test granular validation, first-error focus/reveal, reset, autofill, keyboard submission, controller lifecycle, sensitive restoration policy, dirty navigation, and RTL.
+- Extract only the submit/focus helper, checkbox wrapper, and localized validators that have two matching callers.
+- Do not add Reactive Forms unless the spike records a requirement native forms cannot satisfy and updates this decision record.
 
 ### Phase 3 — Remaining auth and profile forms
 
@@ -968,7 +1067,7 @@ Capture review notes in the PR or an adjacent follow-up document.
 - Build Reset Password.
 - Build Update Profile.
 - Add typed form values and localized validators.
-- Review the shared form API and remove unused options.
+- Review the shared form helpers and remove pass-through or unused options.
 
 ### Phase 4 — Main static screens
 
@@ -989,8 +1088,9 @@ Capture review notes in the PR or an adjacent follow-up document.
 
 - Review every shared abstraction against its real callers.
 - Move feature-specific widgets back out of `shared/` where appropriate.
-- Remove duplicated adapters resolved by the form extraction.
+- Remove duplicated helpers resolved by the form extraction without wrapping ForUI fields unnecessarily.
 - Run format, analysis, unit, widget, and golden tests.
+- Run direct-deep-link and static-flow integration smoke tests under development and production route configurations.
 - Record discovered design-system gaps and architecture changes.
 - Update [initial.md](initial.md) if a new rule has become part of the baseline.
 
@@ -1004,7 +1104,7 @@ This phase produces:
 - Compact, medium, and expanded layouts.
 - A development-only screen gallery.
 - English, Arabic, and Simplified Chinese copy.
-- ForUI-compatible Form Builder adapters proven across the form set.
+- Native Flutter forms using ForUI form fields, with only proven shared helpers.
 - Typed form submission values.
 - Localized validators and deterministic error states.
 - Purposeful reduced-motion-aware animations.
@@ -1019,19 +1119,23 @@ This phase produces:
 - [ ] Onboarding and paywall both provide working Skip paths to Home.
 - [ ] Auth and password-reset demo flows navigate to the correct static destinations.
 - [ ] Pricing and onboarding paywall share pricing-feature plan components without cross-feature internal imports.
+- [ ] The app router owns cross-feature flow composition; feature pages receive callbacks/intents and do not import another feature's route internals.
 - [ ] Login and Register were implemented before finalizing the shared form API.
-- [ ] Form Builder manages the form state while ForUI owns field appearance and interaction.
-- [ ] No Material `FormBuilderTextField` appears in application UI.
-- [ ] Raw form maps are converted to typed feature values at submission.
+- [ ] Flutter `Form`/`FormField` manages form registration while ForUI owns field appearance and interaction.
+- [ ] Existing ForUI form fields are not nested inside another native or Reactive Forms field.
+- [ ] No extra form package was added without a recorded unmet native-form requirement and adapter spike.
+- [ ] Typed feature values are created at submission; controllers, field states, and raw maps do not cross the feature boundary.
 - [ ] Validation and form errors are localized.
+- [ ] First-error focus/reveal, reset, autofill, dirty navigation, and sensitive restoration policies are tested.
 - [ ] Compact, medium, and expanded layouts use one canonical breakpoint source.
 - [ ] Forms and navigation state survive desktop window resizing.
 - [ ] Touch, mouse, and keyboard behavior is verified.
 - [ ] English, Arabic RTL, and Simplified Chinese render without overflow.
 - [ ] Maximum text scale remains usable.
 - [ ] Custom motion respects disabled-animation preferences.
-- [ ] The development gallery can render all important UI scenarios and viewport presets.
-- [ ] Production routing contains no screen-gallery route.
+- [ ] The development gallery can render all typed cases, boundary viewports, safe-area/inset/display-feature fixtures, and overlay/system surfaces.
+- [ ] Production routing contains neither screen-gallery nor diagnostics routes.
+- [ ] Unknown/malformed routes and recoverable startup failures have localized, accessible recovery surfaces.
 - [ ] No fake API, auth, purchase, OTP, or upload service was introduced.
 - [ ] Shared widgets have at least two matching real callers.
 - [ ] `dart format`, `flutter analyze`, and relevant tests pass.
@@ -1048,12 +1152,19 @@ Use these static defaults for now, but revisit them before backend work:
 | Onboarding page count | Three |
 | OTP length | Six numeric digits |
 | OTP delivery channel | Generic “sent to your contact” copy |
+| OTP digits, expiry, resend, and attempt policy | ASCII demo digits; expiry/rate limits/attempt counts undecided |
+| Password policy | Demo minimum only; backend-aligned rules and breach checks undecided |
+| Username grammar and normalization | Conservative demo fixture; canonical case, Unicode, and availability rules undecided |
 | Plans | Basic, Pro, Team |
 | Billing periods | Monthly and annual |
 | Currency | Configurable view data; use one demo currency per fixture |
+| Trials, taxes, discounts, entitlements, and restore rules | Excluded until billing design exists |
 | Social authentication | Excluded |
 | Profile fields | Display name, username, read-only email, optional bio |
-| Legal destinations | Static placeholders |
+| Onboarding eligibility/completion | Direct static route; persistence and auth relationship undecided |
+| Legal acceptance/versioning and destinations | Deterministic static placeholders; final documents and consent records undecided |
+| Account enumeration and recovery copy | Neutral static wording; final threat model/backend responses undecided |
+| Avatar formats, crop, size, and upload policy | Excluded |
 | Purchase behavior | Static feedback only |
 
 These defaults must not harden into domain or backend contracts accidentally.
@@ -1063,10 +1174,16 @@ These defaults must not harden into domain or backend contracts accidentally.
 ## 21. Primary references
 
 - Architecture baseline: [initial.md](initial.md)
+- ForUI complete LLM reference: https://forui.dev/docs/llms-full.txt
+- ForUI control ownership: https://forui.dev/docs/concepts/controls
 - ForUI responsive concepts: https://forui.dev/docs/concepts/responsive
 - ForUI text form field: https://forui.dev/docs/widgets/form/text-form-field
-- ForUI OTP field: https://forui.dev/docs/form/otp-field
-- Flutter Form Builder: https://pub.dev/packages/flutter_form_builder
+- ForUI OTP field: https://forui.dev/docs/widgets/form/otp-field
+- ForUI checkbox/form example: https://forui.dev/docs/widgets/form/checkbox
+- Flutter `FormState`: https://api.flutter.dev/flutter/widgets/FormState-class.html
+- Flutter granular validation: https://api.flutter.dev/flutter/widgets/FormState/validateGranularly.html
+- Reactive Forms: https://pub.dev/packages/reactive_forms
+- Formz: https://pub.dev/packages/formz
 - Flutter adaptive layout approach: https://docs.flutter.dev/ui/adaptive-responsive/general
 - Flutter adaptive best practices: https://docs.flutter.dev/ui/adaptive-responsive/best-practices
 - Flutter accessibility: https://docs.flutter.dev/ui/accessibility

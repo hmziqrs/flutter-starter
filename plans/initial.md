@@ -85,6 +85,7 @@ Compact code is useful when intent remains obvious. Avoid clever extension chain
 | Custom motion | Flutter animation primitives first; Simple Animations for coordinated motion |
 | State and dependency injection | Riverpod |
 | Routing | `go_router` |
+| Forms | Flutter `Form`/`FormField` with ForUI form widgets |
 | Localization | Slang + `slang_flutter` with JSON source files |
 | Small persisted settings | `SharedPreferencesAsync` |
 | Local diagnostics | Application logger backed by Talker |
@@ -95,7 +96,7 @@ Compact code is useful when intent remains obvious. Avoid clever extension chain
 
 | Capability | Preferred package | Add when |
 | --- | --- | --- |
-| Multi-field forms | `flutter_form_builder` | A real feature has a form whose state or validation benefits from it. |
+| Advanced model-driven forms | Re-evaluate `reactive_forms` in a focused ForUI adapter spike | A real workflow needs dynamic arrays, nested/multi-step form graphs, coordinated async validation, or shared dirty/reset/server-error orchestration that native forms cannot express cleanly. |
 | Structured persistence | Drift + SQLite | A feature has durable records or queries. Do not create an empty database. |
 | Sensitive storage | `flutter_secure_storage` | Credentials, encryption keys, or other sensitive values exist. |
 | Networking | Dio | The first remote endpoint is implemented. |
@@ -277,7 +278,7 @@ This is a destination, not a request to create every listed folder on day one.
 
 - `app/` is the composition root. It may import features, shared code, and infrastructure.
 - `features/` contains user-visible behavior grouped by product capability.
-- `shared/` contains vendor-independent code reused by at least two features or by the app shell.
+- `shared/` contains cross-feature application code reused by at least two features or by the app shell. It may use Flutter and the approved UI-layer dependencies under section 8; third-party service/plugin adapters remain in `infrastructure/`.
 - `infrastructure/` contains cross-feature plugin setup, operating-system integration, shared clients, and vendor adapters.
 - Feature-specific data adapters remain with their feature; for example, the settings preferences repository stays under `features/settings/`.
 - `i18n/` owns translation sources and generated localization output.
@@ -417,11 +418,14 @@ Suggested root composition:
 ProviderScope
 └── TranslationProvider
     └── MaterialApp.router
-        └── FTheme
-            └── AppShell
+        └── builder
+            └── FTheme
+                └── FToaster
+                    └── FTooltipGroup
+                        └── router child (including AppShell)
 ```
 
-Keep generated ForUI theme files in source control. Never edit package source under `.pub-cache`.
+Keep generated ForUI theme files in source control. The `MaterialApp.router` builder must preserve and return its router child. Never edit package source under `.pub-cache`.
 
 ### 8.2 ExUI owns only layout ergonomics
 
@@ -732,9 +736,13 @@ Add HTTP caching only when an endpoint defines freshness and invalidation behavi
 
 ### 13.5 Forms
 
-Use native ForUI form controls for small settings interactions. Add `flutter_form_builder` when a real multi-field form needs coordinated validation, dirty state, reset behavior, or server-error mapping.
+Use Flutter `Form`/`FormField` with ForUI's native form widgets by default. `FTextFormField`, `FOtpField`, selects, date/time fields, sliders, and related ForUI controls already expose native validation/save/reset/error behavior; wrap plain checkbox/switch controls in a small `FormField<T>` composition only where needed.
 
-The feature owns the form schema and submission. API calls do not belong inside field validators.
+Follow ForUI control ownership: managed/internal first, managed/external for programmatic control with explicit lifecycle ownership, and lifted only when an existing state owner requires bidirectional synchronization. Never maintain a second value copy merely to satisfy a form library.
+
+The feature owns field order, focus, localized validation, typed submission values, dirty state, and service-error mapping. Use Flutter's granular validation to reveal the first invalid field. API calls do not belong inside field validators, and passwords/OTP values are never persisted or logged.
+
+Do not add `reactive_forms`, Formz, or a schema renderer for the initial static screens. The compatibility and activation criteria are documented in [initial_ui.md](initial_ui.md). If advanced requirements emerge, spike the smallest representative ForUI adapter before changing the baseline.
 
 ### 13.6 Audio, downloads, and notifications
 
@@ -805,6 +813,8 @@ Initial UI:
 - Development diagnostics showing environment, build version, layout class, interaction policy, locale, and platform capabilities.
 
 The settings screens are a real feature because users interact with them. They are not infrastructure controls.
+
+The expanded static screen route tree, shell ownership, typed OTP route, development gallery, and route-error policy live in [initial_ui.md](initial_ui.md). That companion plan is additive to this baseline and must retain the same environment gating and dependency direction.
 
 ---
 
@@ -980,6 +990,7 @@ The compact baseline is complete when:
 - [ ] The app has one `main.dart` and requires an explicit valid environment.
 - [ ] Development, staging, and production configuration cannot silently fall back to one another.
 - [ ] ForUI is the only styled application component system.
+- [ ] Native Flutter forms use ForUI form fields; no additional form engine exists without a recorded unmet requirement and adapter spike.
 - [ ] ExUI is limited to short, token-based layout composition.
 - [ ] Dartx is imported selectively and does not replace localization, security, or domain-aware date logic.
 - [ ] Simple Animations uses shared motion tokens and respects reduced-motion settings.
@@ -1010,6 +1021,7 @@ Flutter
 ├── Simple Animations for coordinated custom motion
 ├── Riverpod composition and state
 ├── go_router navigation
+├── Native Flutter forms with ForUI form fields
 ├── Adaptive compact / medium / expanded shells
 ├── Touch / pointer / keyboard interaction policy
 ├── Slang: type-safe en / ar / zh localization
@@ -1019,7 +1031,6 @@ Flutter
 └── Focused tests and multi-platform CI
 
 Added with first real use
-├── Forms
 ├── Drift persistence
 ├── Secure storage
 ├── Dio networking and caching
@@ -1037,6 +1048,10 @@ The result is deliberately smaller than a traditional “clean architecture” t
 
 - ForUI getting started: https://forui.dev/docs/getting-started
 - ForUI themes: https://forui.dev/docs/concepts/themes
+- ForUI complete LLM reference: https://forui.dev/docs/llms-full.txt
+- ForUI controls: https://forui.dev/docs/concepts/controls
+- ForUI text form field: https://forui.dev/docs/widgets/form/text-form-field
+- Flutter FormState: https://api.flutter.dev/flutter/widgets/FormState-class.html
 - ExUI package: https://pub.dev/packages/exui
 - Dartx package: https://pub.dev/packages/dartx
 - Simple Animations package: https://pub.dev/packages/simple_animations
