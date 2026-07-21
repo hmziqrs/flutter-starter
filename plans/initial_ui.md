@@ -176,10 +176,11 @@ flowchart TD
 - Static screens remain directly addressable for development and golden tests.
 - `/dev/screens` and `/dev/diagnostics` are added only when `AppEnvironment.development` and the explicit development-tools flag are enabled. They are absent from the production route table, including profile/release builds.
 - Static flows do not introduce fake authentication redirects.
-- Back navigation must behave naturally on Android, iOS, and desktop.
+- Back navigation must behave naturally on Android, iOS, desktop, and web if supported. The recovery page shows Back only when `GoRouter.canPop()` is true; a cold-start unknown location offers Home without attempting an invalid pop.
 - The app router owns cross-feature composition. It passes callbacks such as `onOpenPricing` or typed navigation intents into feature pages; feature files do not import another feature's route constants.
-- Unknown routes, malformed deep links, and router exceptions render a localized recovery surface with Home and Back actions.
-- Non-sensitive route and shell state may use Flutter restoration. Passwords and OTP values must never be restored to disk.
+- Unknown routes, malformed route locations, and router exceptions render a localized recovery surface with Home and a conditional Back action.
+- The baseline tests direct router initial locations and does not claim OS-level universal/app-link registration. External links and desktop URL schemes follow the activation rules in section 15.1 of [initial.md](initial.md).
+- Flutter route/draft restoration is deferred. If activated later, it requires stable restoration IDs, restart-and-restore tests, and a strict allowlist; passwords, OTP codes, and reset tokens must never enter restoration data.
 
 ---
 
@@ -394,7 +395,7 @@ The avatar action does not request file or camera permission. It is disabled wit
 
 Static saving validates, shows deterministic progress/success UI, and retains the edited values while the page remains mounted.
 
-Back navigation from a dirty profile asks whether to discard edits. Only non-sensitive profile draft fields may be considered for restoration later; this phase does not persist them.
+Back navigation from a dirty profile asks whether to discard edits. This phase does not persist drafts. Non-sensitive fields may be considered only if the deferred restoration capability and its allowlist/tests are activated later.
 
 ### 6.11 Pricing
 
@@ -476,6 +477,7 @@ These values are hypotheses. Adjust them after reviewing screenshots at all targ
 - Keyboard appearance never covers the focused field or primary form action. Scrollable forms use bottom inset padding and reveal the first invalid field.
 - Foldable hinges/cutouts divide content only when they intersect the allocated screen region. Do not treat every large device as a two-pane layout.
 - Landscape phones and short desktop windows remain scrollable and do not pin actions over content.
+- The app does not lock orientation; every screen family remains usable when the available constraints change because of rotation, split-screen, folding, or window resizing.
 
 ### 7.5 Interaction policy
 
@@ -485,6 +487,7 @@ Layout class and input mode remain separate:
 - Pointer-capable environments expose hover and tooltips where helpful.
 - Desktop supports visible focus, Tab/Shift+Tab traversal, Enter submission, Escape dismissal, and scroll-wheel behavior.
 - Hybrid devices preserve touch targets while enabling keyboard and pointer accelerators.
+- `AppInteractionPolicy` comes from the injectable resolver defined in [initial.md](initial.md), not from width or a widget-local platform check. Gallery and tests override the provider explicitly; runtime pointer observations may promote the session to hybrid without resetting layout or feature state.
 
 ---
 
@@ -502,8 +505,11 @@ Theme mode
 Accent
 Locale
 Text scale
+System text-scaling fixture
 Touch/desktop density
 Animations enabled/disabled
+High contrast enabled/disabled
+Bold-text accessibility fixture
 ```
 
 Viewport presets:
@@ -527,6 +533,8 @@ The gallery should:
 - Exercise idle, validation, submitting, failure, success, empty, and disabled states.
 - Support framed previews using constrained `MediaQuery` data.
 - Toggle safe-area padding, keyboard `viewInsets`, pointer/touch policy, display features, and short-height fixtures independently from width.
+- Compose the application font multiplier with normal and maximum nonlinear system `TextScaler` fixtures; never replace the system scaler with a linear value.
+- Toggle high contrast and bold-text accessibility fixtures independently from theme brightness.
 - Avoid a new Storybook-style dependency during the initial phase.
 - Remain absent from production routing and navigation.
 
@@ -611,6 +619,9 @@ lib/
 │   ├── settings/
 │   │   ├── settings_page.dart
 │   │   ├── settings_controller.dart
+│   │   ├── settings_state.dart
+│   │   ├── settings_store.dart           # feature-owned port
+│   │   ├── settings_repository.dart
 │   │   └── layouts/
 │   │       ├── settings_compact_layout.dart
 │   │       └── settings_expanded_layout.dart
@@ -634,7 +645,7 @@ lib/
         └── app_sizes.dart
 ```
 
-This tree is additive to [initial.md](initial.md): it expands the existing `features/` and `app/routing/` branches and does not replace bootstrap, configuration, infrastructure, i18n, or test files. It shows likely files, not mandatory empty directories.
+This tree is additive to [initial.md](initial.md): it expands the existing `features/` and `app/routing/` branches and does not replace bootstrap, configuration, the infrastructure `SharedPreferencesSettingsStore`, i18n, or test files. It shows likely files, not mandatory empty directories.
 
 ### 10.1 Ownership rules
 
@@ -829,6 +840,8 @@ When real services arrive, preserve this UI boundary and add feature-owned mappi
 
 Add translation keys before or with each screen. No user-facing string is hardcoded in widgets or fixtures.
 
+Use the locale-qualified Slang sources and committed `slang.yaml` from [initial.md](initial.md): `en.i18n.json`, `ar.i18n.json`, and `zh-Hans.i18n.json`, with English as the explicit base fallback. Settings and gallery fixtures use Slang's generated `AppLocale` rather than free-form locale strings; `null` means follow the operating system.
+
 Suggested namespaces:
 
 ```text
@@ -864,13 +877,14 @@ Rules:
 - Chinese layouts are reviewed for line height and compact labels.
 - English copy should be realistic enough to expose wrapping rather than intentionally short placeholder text.
 - Add a pseudo-long locale or expanded-copy fixture in the gallery even if it is not shipped.
+- Render at least one ForUI control with built-in localized copy in each supported locale to prove Flutter and ForUI delegates are wired alongside Slang.
 
 For each screen, review:
 
 ```text
 English at default and maximum text scale
 Arabic RTL at default and maximum text scale
-Simplified Chinese at default text scale
+Simplified Chinese (`zh-Hans`) at default text scale
 ```
 
 ---
@@ -911,18 +925,19 @@ Every screen must support:
 - Escape dismissal for dialogs/sheets.
 - Accessible password visibility labels.
 - OTP announcements that do not read an unusable sequence of unlabeled boxes.
-- Minimum touch targets from the active ForUI touch theme.
+- Minimum touch targets from the active ForUI touch theme: never below `44×44` logical pixels and target `48×48` where the component/layout allows it.
 - Pointer hover without making hover required.
 - Text scaling without clipping or inaccessible scroll regions.
 - Representative nonlinear/system text scaling at 200% or the largest supported accessibility setting; code must not assume `textScaleFactor` is linear.
-- Sufficient contrast in light, dark, selected, disabled, success, warning, and error states.
+- WCAG AA contrast in light, dark, selected, success, warning, and error states: at least `4.5:1` for normal text, `3:1` for large text, and `3:1` for meaningful active non-text controls and visible focus indicators. Disabled controls remain clearly distinguishable and never carry required information, while following the WCAG inactive-component exception.
+- High-contrast and bold-text accessibility settings do not remove information, focus visibility, or required actions.
 - No essential meaning communicated only by color or animation.
 - No enabled control is a no-op: static legal, restore, avatar, and purchase controls provide honest deterministic feedback.
 - Screen-reader announcements for form-level errors, submission success, countdown changes that matter, and route/page changes without excessive live-region chatter.
 
 Do not disable text scaling globally to preserve a layout.
 
-Run Flutter accessibility guideline checks in widget tests where applicable, then manually verify the core flows with VoiceOver or TalkBack and keyboard-only desktop navigation. Automated semantics checks do not replace screen-reader review.
+Run Flutter accessibility guideline checks and targeted contrast assertions in widget tests where applicable, then manually verify the core flows with VoiceOver or TalkBack and keyboard-only desktop navigation. Include one desktop screen-reader smoke review on the release-readiness checklist for each shipped desktop platform. Automated semantics checks do not replace screen-reader review.
 
 ---
 
@@ -938,6 +953,8 @@ Cover:
 - Cross-field password confirmation.
 - Pricing currency/period formatting.
 - Layout-class selection using ForUI breakpoint values.
+- Interaction-policy resolution for touch, precision-pointer, hybrid, and explicit test overrides.
+- Generated `AppLocale` persistence tags and invalid-locale fallback.
 - Gallery case IDs and registry uniqueness.
 - Unknown-route and development-route inclusion policy.
 
@@ -954,7 +971,7 @@ For every form:
 - Field and global error presentation.
 - Values retained after failure.
 - Reset behavior and controller/focus disposal.
-- Autofill hints and sensitive-field restoration policy.
+- Autofill hints and the explicit non-restoration policy for sensitive fields.
 - Dirty-form discard confirmation where required.
 
 For navigation:
@@ -966,7 +983,7 @@ For navigation:
 - OTP destinations are purpose-correct.
 - Invalid/missing OTP purposes render the recovery view.
 - Reset Password returns to Login.
-- Unknown deep links render recovery actions without redirect loops.
+- Unknown and malformed router locations render conditional recovery actions without redirect loops or invalid pops.
 - Development routes are absent under production configuration.
 
 For responsive behavior:
@@ -978,6 +995,8 @@ For responsive behavior:
 - Auth fields preserve values across layout change.
 - Boundary tests cover widths immediately below and at `sm` and `lg`.
 - Short-height, keyboard-inset, safe-area, landscape, and representative foldable/display-feature fixtures remain usable.
+- Application font multipliers `0.85×`, `1.00×`, and `1.60×` compose with normal and maximum nonlinear system text scaling; the system `TextScaler` remains active.
+- High-contrast and bold-text accessibility fixtures preserve meaning and actions.
 - Flutter accessibility guideline checks pass for representative screens.
 
 ### 16.3 Golden matrix
@@ -1002,6 +1021,8 @@ Use pairwise coverage rather than every possible combination:
 
 Add targeted goldens when a regression has escaped this matrix; do not multiply snapshots without a reason.
 
+Use the canonical golden harness from [initial.md](initial.md): one pinned CI OS, Flutter patch, renderer, device-pixel ratio, color space, and bundled Noto font set; reviewed baselines under `test/goldens/`; explicit locale, text scaler, inset, focus, pointer, and animation setup with teardown. Do not use the host's incidental Arabic or Chinese fallback fonts and do not conceal layout regressions behind a broad pixel tolerance.
+
 ### 16.4 Manual review checklist
 
 Review on at least:
@@ -1013,25 +1034,30 @@ Review on at least:
 - Keyboard-only navigation.
 - Mouse/trackpad navigation.
 - Arabic RTL.
-- Maximum application and system text scale.
+- Maximum application multiplier composed with maximum nonlinear system text scaling.
 - Animations disabled.
+- High contrast and bold text enabled.
 - VoiceOver or TalkBack on the auth/OTP flow.
 - Safe areas, software keyboard, landscape phone, short desktop height, and a foldable/display-feature fixture.
-- Browser/OS Back and a direct deep link on every supported platform family.
+- Browser/OS Back where supported and direct router initial locations on every platform family. Test real universal/app links or desktop URL schemes only on platforms whose association/protocol configuration has been activated.
 
 Capture review notes in the PR or an adjacent follow-up document.
 
 ### 16.5 Integration smoke tests
 
-Keep one short deterministic flow rather than duplicating every widget test:
+Use the two executable integration-test targets defined in [initial.md](initial.md). Both initialize `IntegrationTestWidgetsFlutterBinding`, use stable `ValueKey`s, launch with an explicit `--dart-define-from-file`, reset only test-owned preference keys, and avoid the legacy Flutter Driver extension.
 
-1. Launch with explicit development configuration and verify Home is the cold-start route.
-2. Open Onboarding directly, Skip the paywall, and reach Home.
+`development_smoke_test.dart` keeps one short representative flow:
+
+1. Launch with development configuration and verify Home is the cold-start route.
+2. Open Onboarding by router location, Skip the paywall, and reach Home.
 3. Complete Register → registration OTP → Home using only local validation.
-4. Complete Forgot Password → password-reset OTP → Reset Password → Login.
-5. Resize across compact/medium/expanded while a form is dirty and verify its value/focus policy.
-6. Open registered deep links and verify malformed/unknown links render the recovery view.
-7. Launch with production configuration and prove `/dev/screens` and `/dev/diagnostics` are unregistered.
+4. Enter a value in Update Profile, resize across compact/medium/expanded, and verify value/focus policy.
+5. Change locale/theme, reconstruct the root app and production dependencies, and verify settings persistence without enabling Flutter restoration.
+
+The Forgot Password → reset OTP → Reset Password flow remains a router/widget test because repeating it on-device adds cost without a distinct integration boundary. Malformed/unknown locations are also exhaustive router widget tests.
+
+`production_routes_test.dart` launches independently with production configuration and proves `/dev/screens` and `/dev/diagnostics` are unregistered. Run both targets on the pinned desktop CI target; Linux requires Xvfb. Add Android/iOS or Patrol execution only when a real native workflow justifies it.
 
 ---
 
@@ -1040,23 +1066,24 @@ Keep one short deterministic flow rather than duplicating every widget test:
 ### Phase 0 — Architecture prerequisites
 
 - Complete the compact baseline through bootstrap, explicit environment configuration, ForUI root composition, localization, router, adaptive shell, and strict analysis from [initial.md](initial.md).
+- Complete the native `riverpod_lint`/strict analyzer configuration, settings persistence port/adapter, locale-qualified Slang configuration, and explicit Flutter/ForUI localization delegates from [initial.md](initial.md).
 - Replace the current counter template before treating this document as executable UI work.
 - Record the tested Flutter and pre-1.0 ForUI versions in the first implementation PR and review their changelogs before upgrading.
-- Confirm development-route gating and the recoverable startup/error surfaces before adding feature flows.
+- Confirm development-route gating, conditional Back recovery, and the recoverable startup/error surfaces before adding feature flows.
 
 ### Phase 1 — Routes, fixtures, and gallery
 
 - Add the complete route tree, typed OTP parsing, error builder, shell destinations, and app-owned cross-feature callbacks.
-- Add translation namespaces and initial English/Arabic/Chinese copy.
+- Add translation namespaces and initial English/Arabic/`zh-Hans` copy using generated `AppLocale` values.
 - Create immutable screen view data without repositories.
-- Create `/dev/screens` with typed gallery cases plus viewport, locale, theme, scale, density, motion, safe-area, inset, and display-feature controls.
+- Create `/dev/screens` with typed gallery cases plus viewport, locale, application/system text scaling, density, motion, high-contrast, bold-text, safe-area, inset, and display-feature controls.
 - Add `/dev/diagnostics` and prove both development routes are absent in production configuration.
 
 ### Phase 2 — Native form foundation and abstraction checkpoint
 
 - Build Login with native `Form`, `FTextFormField`, and a local `FormField<bool>` checkbox composition.
 - Build Register and compare requirements.
-- Test granular validation, first-error focus/reveal, reset, autofill, keyboard submission, controller lifecycle, sensitive restoration policy, dirty navigation, and RTL.
+- Test granular validation, first-error focus/reveal, reset, autofill, keyboard submission, controller lifecycle, the sensitive-field non-restoration policy, dirty navigation, and RTL.
 - Extract only the submit/focus helper, checkbox wrapper, and localized validators that have two matching callers.
 - Do not add Reactive Forms unless the spike records a requirement native forms cannot satisfy and updates this decision record.
 
@@ -1082,7 +1109,7 @@ Keep one short deterministic flow rather than duplicating every widget test:
 - Verify touch, pointer, hybrid, and keyboard behavior.
 - Add only the approved purposeful animations.
 - Implement reduced-motion behavior.
-- Test text scaling, focus order, semantics, contrast, and RTL.
+- Test composed nonlinear text scaling, focus order, semantics, numerical contrast requirements, high contrast, bold text, and RTL.
 
 ### Phase 6 — Refactor and lock the baseline
 
@@ -1090,7 +1117,7 @@ Keep one short deterministic flow rather than duplicating every widget test:
 - Move feature-specific widgets back out of `shared/` where appropriate.
 - Remove duplicated helpers resolved by the form extraction without wrapping ForUI fields unnecessarily.
 - Run format, analysis, unit, widget, and golden tests.
-- Run direct-deep-link and static-flow integration smoke tests under development and production route configurations.
+- Run direct-router-location widget tests plus the separate development-flow and production-route integration targets with explicit configuration files.
 - Record discovered design-system gaps and architecture changes.
 - Update [initial.md](initial.md) if a new rule has become part of the baseline.
 
@@ -1109,6 +1136,7 @@ This phase produces:
 - Localized validators and deterministic error states.
 - Purposeful reduced-motion-aware animations.
 - Responsive, accessibility, widget, and golden tests.
+- A deterministic golden harness and executable development/production integration-test targets.
 - A short follow-up report listing abstractions kept, changed, or rejected.
 
 ---
@@ -1126,19 +1154,24 @@ This phase produces:
 - [ ] No extra form package was added without a recorded unmet native-form requirement and adapter spike.
 - [ ] Typed feature values are created at submission; controllers, field states, and raw maps do not cross the feature boundary.
 - [ ] Validation and form errors are localized.
-- [ ] First-error focus/reveal, reset, autofill, dirty navigation, and sensitive restoration policies are tested.
+- [ ] First-error focus/reveal, reset, autofill, dirty navigation, and the sensitive-field non-restoration policy are tested.
 - [ ] Compact, medium, and expanded layouts use one canonical breakpoint source.
+- [ ] The application does not lock orientation and remains usable in portrait, landscape, split-screen, foldable, keyboard-inset, and short-window fixtures.
 - [ ] Forms and navigation state survive desktop window resizing.
-- [ ] Touch, mouse, and keyboard behavior is verified.
-- [ ] English, Arabic RTL, and Simplified Chinese render without overflow.
-- [ ] Maximum text scale remains usable.
+- [ ] Touch, precision-pointer, hybrid, and keyboard behavior use the injectable interaction policy and are verified.
+- [ ] English, Arabic RTL, and Simplified Chinese (`zh-Hans`) render without overflow, including localized ForUI built-in copy and base-locale fallback.
+- [ ] Maximum application font multiplier composed with maximum nonlinear system text scaling remains usable without replacing or globally clamping the system `TextScaler`.
+- [ ] High-contrast and bold-text settings preserve meaning, focus visibility, and required actions; contrast and touch-target thresholds are met.
 - [ ] Custom motion respects disabled-animation preferences.
-- [ ] The development gallery can render all typed cases, boundary viewports, safe-area/inset/display-feature fixtures, and overlay/system surfaces.
+- [ ] The development gallery can render all typed cases, boundary viewports, application/system text-scaling combinations, interaction policies, high-contrast/bold-text states, safe-area/inset/display-feature fixtures, and overlay/system surfaces.
 - [ ] Production routing contains neither screen-gallery nor diagnostics routes.
 - [ ] Unknown/malformed routes and recoverable startup failures have localized, accessible recovery surfaces.
+- [ ] Unknown cold-start locations never offer an invalid Back action; direct router-location tests do not claim external OS link registration.
 - [ ] No fake API, auth, purchase, OTP, or upload service was introduced.
 - [ ] Shared widgets have at least two matching real callers.
-- [ ] `dart format`, `flutter analyze`, and relevant tests pass.
+- [ ] Goldens use the pinned runner/renderer/DPR/font harness and reviewed source-controlled baselines.
+- [ ] Development and production integration targets pass with explicit environment files on the pinned CI target.
+- [ ] `dart format`, `flutter analyze --fatal-infos`, unit/widget/golden tests, generated-code drift detection, and relevant integration tests pass.
 
 ---
 
@@ -1162,6 +1195,8 @@ Use these static defaults for now, but revisit them before backend work:
 | Social authentication | Excluded |
 | Profile fields | Display name, username, read-only email, optional bio |
 | Onboarding eligibility/completion | Direct static route; persistence and auth relationship undecided |
+| Universal/app links, web path URLs, and desktop URL schemes | Router-location parsing only; domains, identifiers, signing associations, host rewrites, and desktop protocol registration are deferred |
+| Flutter route/draft restoration | Disabled/deferred; activation requires stable restoration IDs, an allowlist, and restart-and-restore tests that exclude all sensitive fields |
 | Legal acceptance/versioning and destinations | Deterministic static placeholders; final documents and consent records undecided |
 | Account enumeration and recovery copy | Neutral static wording; final threat model/backend responses undecided |
 | Avatar formats, crop, size, and upload policy | Excluded |
@@ -1187,3 +1222,7 @@ These defaults must not harden into domain or backend contracts accidentally.
 - Flutter adaptive layout approach: https://docs.flutter.dev/ui/adaptive-responsive/general
 - Flutter adaptive best practices: https://docs.flutter.dev/ui/adaptive-responsive/best-practices
 - Flutter accessibility: https://docs.flutter.dev/ui/accessibility
+- Flutter integration testing: https://docs.flutter.dev/testing/integration-tests
+- Flutter deep linking: https://docs.flutter.dev/ui/navigation/deep-linking
+- Flutter nonlinear text scaling: https://docs.flutter.dev/release/breaking-changes/deprecate-textscalefactor
+- Slang: https://pub.dev/packages/slang

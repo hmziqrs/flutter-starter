@@ -1,6 +1,6 @@
 # Compact Cross-Platform Flutter Starter
 
-**Status:** Architecture baseline
+**Status:** Audited architecture baseline
 
 **Scope:** A compact, reusable Flutter application starter with no product-specific features
 
@@ -21,8 +21,8 @@ The baseline must provide:
 - A feature-first project structure that can grow without creating a `core/` junk drawer.
 - One application entrypoint with explicit development, staging, and production configuration.
 - ForUI as the sole application design system.
-- ExUI as optional syntax sugar for basic Flutter layout only.
-- Dartx for selective, non-UI Dart ergonomics.
+- ExUI as optional syntax sugar for basic Flutter layout only, installed with its first adopted caller.
+- Dartx approved for selective, non-UI Dart ergonomics when a concrete caller is clearer than the Dart SDK equivalent.
 - Simple Animations for purposeful custom and multi-property motion.
 - Riverpod for state composition and dependency injection.
 - Declarative routing with `go_router`.
@@ -78,10 +78,10 @@ Compact code is useful when intent remains obvious. Avoid clever extension chain
 
 | Concern | Decision |
 | --- | --- |
-| Framework | Flutter stable `3.44.0+` with Dart `3.12.0+` |
+| Framework | Flutter stable `3.44.7`; package floor Flutter `>=3.44.0 <3.45.0` with Dart `^3.12.0`; pin the exact Flutter patch in CI |
 | Design system | ForUI |
 | Layout ergonomics | ExUI core extensions, used selectively |
-| Dart ergonomics | Dartx extensions, used selectively |
+| Dart ergonomics | Dart SDK first; Dartx approved on first use for a demonstrably clearer non-UI operation |
 | Custom motion | Flutter animation primitives first; Simple Animations for coordinated motion |
 | State and dependency injection | Riverpod |
 | Routing | `go_router` |
@@ -89,8 +89,9 @@ Compact code is useful when intent remains obvious. Avoid clever extension chain
 | Localization | Slang + `slang_flutter` with JSON source files |
 | Small persisted settings | `SharedPreferencesAsync` |
 | Local diagnostics | Application logger backed by Talker |
-| Unit and widget tests | Flutter Test + Mocktail where a mock is genuinely useful |
-| Static analysis | `very_good_analysis`, `custom_lint`, and `riverpod_lint` |
+| Unit and widget tests | Flutter Test; add Mocktail only when a mock is genuinely clearer than a fake or provider override |
+| Integration smoke tests | Flutter SDK `integration_test`; add it with the first smoke-test file |
+| Static analysis | `very_good_analysis`, strict analyzer language settings, and the native `riverpod_lint` analysis-server plugin |
 
 ### 3.2 Approved on first use
 
@@ -109,6 +110,9 @@ Compact code is useful when intent remains obvious. Avoid clever extension chain
 | Background downloads | `background_downloader` | A concrete downloadable resource exists. |
 | Local notifications | `flutter_local_notifications` + `timezone` | A user-facing notification workflow exists. |
 | Native end-to-end tests | Patrol | The first permission, notification, background, or native integration workflow exists. |
+| Riverpod code generation | `riverpod_annotation` + `riverpod_generator` | Repeated manual provider declarations make generation measurably clearer; the compact baseline starts with handwritten providers. |
+| Dart collection ergonomics | Dartx | A concrete non-UI collection/string operation is clearer than the Dart SDK equivalent. Do not add it only to demonstrate an extension. |
+| Test mocks | Mocktail | A collaboration is awkward to cover with a small fake, in-memory implementation, or provider override. |
 
 ### 3.3 Explicit exclusions
 
@@ -127,7 +131,7 @@ Do not add these without a written architectural reason:
 
 ## 4. Initial dependencies
 
-Install and exercise only the compact baseline:
+These are the dependencies reached by the compact baseline. Add each package in the phase that introduces its first real caller and test:
 
 ```yaml
 dependencies:
@@ -137,53 +141,52 @@ dependencies:
     sdk: flutter
 
   # UI
-  forui:
-  exui:
-  simple_animations:
-
-  # Dart ergonomics
-  dartx:
+  forui: ^0.24.1
+  exui: ^1.0.11
+  simple_animations: ^5.3.0
 
   # State and routing
-  flutter_riverpod:
-  riverpod_annotation:
-  go_router:
+  flutter_riverpod: ^3.3.2
+  go_router: ^17.3.0
 
   # Localization
-  intl:
-  slang:
-  slang_flutter:
+  intl: ^0.20.2
+  slang: ^4.18.0
+  slang_flutter: ^4.18.0
 
   # Settings and diagnostics
-  shared_preferences:
-  talker_flutter:
-  package_info_plus:
+  shared_preferences: ^2.5.5
+  talker_flutter: ^5.1.19
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
-  build_runner:
-  riverpod_generator:
-  slang_build_runner:
-  mocktail:
-  very_good_analysis:
-  custom_lint:
-  riverpod_lint:
+  build_runner: ^2.15.1
+  slang_build_runner: ^4.18.0
+  very_good_analysis: ^10.3.0
 ```
 
 Add packages through `flutter pub add`, review the generated constraints, and commit `pubspec.lock` because this is an application.
 
+The baseline deliberately selects Flutter Riverpod 3.3.x. Dependency resolution must not silently fall back to Riverpod 2.x while `riverpod_lint` 3.1.x is configured; inspect `flutter pub deps` after the initial add and after every major dependency upgrade.
+
 ```bash
 flutter pub add \
-  forui exui simple_animations dartx \
-  flutter_riverpod riverpod_annotation go_router \
-  intl slang slang_flutter \
-  shared_preferences talker_flutter package_info_plus
+  "flutter_localizations@{sdk: flutter}" \
+  forui@^0.24.1 exui@^1.0.11 simple_animations@^5.3.0 \
+  flutter_riverpod@^3.3.2 go_router@^17.3.0 \
+  intl@^0.20.2 slang@^4.18.0 slang_flutter@^4.18.0 \
+  shared_preferences@^2.5.5 talker_flutter@^5.1.19 \
+  package_info_plus@^10.2.1
 
-flutter pub add --dev \
-  build_runner riverpod_generator slang_build_runner \
-  mocktail very_good_analysis custom_lint riverpod_lint
+flutter pub add \
+  "dev:integration_test@{sdk: flutter}" \
+  dev:build_runner@^2.15.1 dev:slang_build_runner@^4.18.0 \
+  dev:very_good_analysis@^10.3.0
 ```
 
 Generate ForUI theme files without allowing the CLI to define the application architecture:
@@ -198,6 +201,29 @@ Run code generation with:
 dart run build_runner build --delete-conflicting-outputs
 ```
 
+Configure analysis explicitly. `riverpod_lint` 3.1.x uses Dart's native analysis-server plugin and is versioned in `analysis_options.yaml`; it is not a `custom_lint` dependency and does not require a separate CI command.
+
+```yaml
+include: package:very_good_analysis/analysis_options.yaml
+
+plugins:
+  riverpod_lint: 3.1.4
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+formatter:
+  page_width: 100
+  trailing_commas: preserve
+```
+
+Document every project-wide lint override beside the override with its architectural reason. Prefer a narrow line or file suppression for generated/vendor constraints over disabling a rule globally.
+
 ---
 
 ## 5. Project structure
@@ -209,6 +235,11 @@ config/
 ├── development.json
 ├── staging.json
 └── production.json
+
+slang.yaml
+
+assets/
+└── fonts/                  # reviewed Noto subsets/weights + license files
 
 lib/
 ├── main.dart
@@ -234,6 +265,7 @@ lib/
 │   └── settings/
 │       ├── settings_controller.dart
 │       ├── settings_state.dart
+│       ├── settings_store.dart
 │       ├── settings_repository.dart
 │       ├── settings_page.dart
 │       ├── layouts/
@@ -256,20 +288,27 @@ lib/
 │   ├── logging/
 │   │   ├── app_logger.dart
 │   │   └── log_redactor.dart
+│   ├── preferences/
+│   │   └── shared_preferences_settings_store.dart
 │   └── platform/
 │       └── platform_capabilities.dart
 │
 └── i18n/
-    ├── strings.i18n.json
-    ├── strings_ar.i18n.json
-    ├── strings_zh.i18n.json
+    ├── en.i18n.json
+    ├── ar.i18n.json
+    ├── zh-Hans.i18n.json
     └── translations.g.dart
 
 test/
 ├── app/
 ├── features/
 ├── shared/
-└── infrastructure/
+├── infrastructure/
+└── goldens/
+
+integration_test/
+├── development_smoke_test.dart
+└── production_routes_test.dart
 ```
 
 This is a destination, not a request to create every listed folder on day one.
@@ -279,28 +318,29 @@ This is a destination, not a request to create every listed folder on day one.
 - `app/` is the composition root. It may import features, shared code, and infrastructure.
 - `features/` contains user-visible behavior grouped by product capability.
 - `shared/` contains cross-feature application code reused by at least two features or by the app shell. It may use Flutter and the approved UI-layer dependencies under section 8; third-party service/plugin adapters remain in `infrastructure/`.
-- `infrastructure/` contains cross-feature plugin setup, operating-system integration, shared clients, and vendor adapters.
-- Feature-specific data adapters remain with their feature; for example, the settings preferences repository stays under `features/settings/`.
+- `infrastructure/` contains plugin setup, operating-system integration, shared clients, and concrete vendor adapters. An infrastructure adapter may implement an app- or feature-owned port, but it must not contain product decisions or UI.
+- Feature-specific repositories, ports, serialization, and mapping remain with their feature. For example, settings owns `SettingsStore`, `SettingsRepository`, persisted keys, and invalid-value fallback; infrastructure supplies the `SharedPreferencesAsync` implementation.
 - `i18n/` owns translation sources and generated localization output.
 - Native implementation code remains in `android/`, `ios/`, `macos/`, `windows/`, and `linux/`.
 
 ### 5.2 Dependency direction
 
 ```text
-app ───────────────► features
- │                     │
- ├───────────────► shared ◄──────────────┐
- │                                       │
- └───────────────► infrastructure ───────┘
+app ───────────────► features ───────────► shared
+ │                       ▲
+ └───────────────► infrastructure ───────► shared
+                         │
+                         └── implements feature-owned ports
 ```
 
 Rules:
 
 - `shared/` must not import from `features/` or `infrastructure/`.
-- Feature UI and controllers must not call Firebase, Dio, Drift, Shared Preferences, or platform plugins directly.
-- `app/dependencies.dart` constructs app-wide infrastructure and feature dependencies, then binds them to Riverpod providers.
+- Feature UI, controllers, repositories, and public feature APIs must not expose Firebase, Dio, Drift, Shared Preferences, or other vendor types. Only concrete adapter files import the corresponding plugin.
+- `app/dependencies.dart` constructs concrete adapters and feature repositories, then binds them to Riverpod providers. For settings it creates `SharedPreferencesSettingsStore`, injects it into `SettingsRepository`, and never exposes `SharedPreferencesAsync` above that adapter.
 - One feature must not import another feature's internal files. Promote a genuinely shared concept or expose a narrow public contract.
-- Infrastructure must not contain product UI.
+- Infrastructure may depend on the narrow port it implements; feature code must not import the concrete infrastructure implementation.
+- Infrastructure must not contain product UI or product validation/mapping rules.
 - Avoid barrel files until a directory has a stable public API worth protecting.
 
 ### 5.3 Keeping features compact
@@ -341,6 +381,8 @@ Future<void> main() async {
 }
 ```
 
+`main()` is the production entrypoint and the normal owner of compile-time environment reads. `bootstrap`, `App`, router construction, and dependency construction receive an explicit validated `AppConfig`. Unit and widget tests construct `AppConfig` fixtures directly and therefore do not depend on ambient `--dart-define` values. Integration tests call the production bootstrap/composition path with `AppConfig.fromEnvironment()` and always pass a configuration file to the test command.
+
 Read non-secret compile-time values through `--dart-define-from-file`:
 
 ```bash
@@ -365,6 +407,7 @@ Rules:
 
 - Missing or unknown `APP_ENV` must fail with an actionable startup error.
 - Production CI must explicitly pass `config/production.json`.
+- Development integration tests must explicitly pass `config/development.json`; no test may rely on a default environment.
 - Compile-time client configuration is discoverable and must not contain secrets.
 - Use native Android/iOS/macOS flavors when the environment changes the app name, identifier, icon, Firebase files, signing, or entitlements.
 - Keep native flavor names aligned with `development`, `staging`, and `production`.
@@ -386,7 +429,7 @@ Bootstrap only what is required to render the application safely:
 5. Create the preferences dependency used by settings.
 6. Load only the settings needed to avoid an incorrect first frame.
 7. Create Riverpod overrides and run the application.
-8. Place Slang's translation provider at the required root boundary.
+8. Place Slang's translation provider at the required root boundary and wire the selected locale, supported locales, Flutter delegates, and ForUI delegates into `MaterialApp.router`.
 
 Do not initialize Firebase, a database, audio, downloads, notifications, or permissions in the baseline bootstrap.
 
@@ -426,6 +469,15 @@ ProviderScope
 ```
 
 Keep generated ForUI theme files in source control. The `MaterialApp.router` builder must preserve and return its router child. Never edit package source under `.pub-cache`.
+
+`MaterialApp.router` must also receive:
+
+- The Slang-selected Flutter locale, with `null`/system behavior resolved before construction.
+- Only the application-supported locales: English, Arabic, and Simplified Chinese.
+- Flutter's Material, Widgets, and Cupertino localization delegates.
+- ForUI's `FLocalizations` delegates so built-in ForUI controls and accessibility copy are localized.
+
+Do not advertise every locale supported internally by ForUI when the application ships only three. Add a root widget test that renders one ForUI control with built-in localized copy in each application locale.
 
 ### 8.2 ExUI owns only layout ergonomics
 
@@ -548,6 +600,8 @@ Use:
 
 Never use orientation or hardware labels as the primary layout switch.
 
+Do not lock application orientation. Compact, medium, and expanded layouts must remain usable in portrait, landscape, split-screen, foldable, and resizable-window modes.
+
 ### 9.3 Shell behavior
 
 | Layout | Navigation | Typical content |
@@ -591,7 +645,16 @@ Touch layouts must preserve accessible target sizes and must not depend on hover
 
 ForUI touch and desktop density must be selected through `AppInteractionPolicy`, not screen width alone. A tablet may have a mouse, and a desktop device may have a touchscreen.
 
-Default safely when input capability is ambiguous, and allow future user override if the product needs it.
+Use a deterministic, injectable resolver:
+
+| Signal | Initial policy |
+| --- | --- |
+| Touch-first platform with no observed precision pointer | Touch |
+| Desktop-first platform with no observed touch input | Precision pointer |
+| Both touch and mouse/stylus/trackpad input observed | Hybrid |
+| Test or development gallery override | Explicit injected policy |
+
+Platform supplies only the safe initial default. Observed pointer kinds may promote the session to hybrid, but transient pointer attachment must not destroy feature state or change the width-based layout class. Keep the resolver behind a provider so widget tests and the gallery can select every policy deterministically. Allow a future persisted user override only if a real product need emerges.
 
 ---
 
@@ -608,7 +671,7 @@ class SettingsState {
   final AppThemeMode themeMode;
   final AppAccent accent;
   final double fontScale;
-  final String? locale;
+  final AppLocale? localeOverride;
 }
 ```
 
@@ -633,6 +696,10 @@ Maximum: 1.60×
 Step:    0.05×
 ```
 
+Apply the application multiplier to the base typography tokens used to build the ForUI and approximate Material themes. Leave the ambient `MediaQuery` `TextScaler` intact so the operating system's nonlinear accessibility scaling is applied afterward. Do not replace it with `TextScaler.linear`, derive behavior from the deprecated `textScaleFactor`, or clamp system scaling globally.
+
+Before accepting the first locale goldens, choose and bundle source-controlled, license-reviewed font assets that cover the required Latin, Arabic, and Simplified Chinese glyphs and weights. The baseline choice is the relevant Noto Sans families. System fonts may still be reviewed manually, but committed goldens must not depend on whichever fallback fonts happen to be installed on a CI runner.
+
 Centralize persisted keys inside `settings_repository.dart`:
 
 ```text
@@ -654,18 +721,31 @@ Initial locales:
 | --- | --- | --- |
 | English | `en` | LTR |
 | Arabic | `ar` | RTL |
-| Simplified Chinese | `zh` | LTR |
+| Simplified Chinese | `zh-Hans` | LTR |
 
 Use Slang with JSON translation sources and committed generated output.
+
+Add a committed `slang.yaml`:
+
+```yaml
+base_locale: en
+fallback_strategy: base_locale
+input_directory: lib/i18n
+input_file_pattern: .i18n.json
+output_directory: lib/i18n
+output_file_name: translations.g.dart
+```
 
 Rules:
 
 - English is the base locale.
+- Source files are `en.i18n.json`, `ar.i18n.json`, and `zh-Hans.i18n.json`; every file name identifies its locale explicitly.
 - Feature UI never embeds user-facing strings directly.
 - Keys describe meaning, not English wording.
 - Interpolation and pluralization remain type-safe.
 - Layout uses directional APIs such as `EdgeInsetsDirectional` and `AlignmentDirectional`.
 - Generated files are never edited manually.
+- Locale selection uses Slang's generated `AppLocale` type. A null `localeOverride` means follow the operating system; persistence serializes the locale tag only at the repository boundary and rejects unknown saved values safely.
 - Locale selection and persistence belong to the settings feature.
 
 Smoke-test every locale for startup, navigation, settings, fallback, and text direction.
@@ -680,7 +760,8 @@ Use Riverpod as the composition seam:
 Widget
   └── Controller/provider
         └── Feature repository or gateway, when needed
-              └── Infrastructure adapter
+              └── Feature-owned port
+                    └── Infrastructure adapter
 ```
 
 Not every feature needs every level.
@@ -693,10 +774,12 @@ Rules:
 - Widgets render state and send user intent; they do not perform storage or network work.
 - Provider overrides are the first testing seam.
 - Extract an interface only when provider replacement alone is insufficient or a real boundary requires it.
-- Plugin-specific types must stop at the infrastructure boundary.
+- Plugin-specific types must stop inside their concrete adapter. Feature ports, repositories, controller state, and provider signatures use application-owned types only.
 - Avoid global mutable singletons. Dependencies are created in `app/dependencies.dart`.
 
-For the initial settings feature, one `SettingsRepository` backed by `SharedPreferencesAsync` is sufficient. It does not need a separate interface and no-op implementation on day one.
+For the initial settings feature, `SettingsRepository` owns keys, serialization, fallback, and settings behavior. It depends on one narrow `SettingsStore` port. `SharedPreferencesSettingsStore` is the sole production implementation and is the only file that imports `SharedPreferencesAsync`; an in-memory implementation is used by repository, controller, widget, and restart-policy tests. Do not create a no-op implementation or a generic CRUD repository hierarchy.
+
+This port is earned immediately by two concrete boundaries from section 2.1: it prevents a vendor type from leaking inward and provides a deterministic substitute for persistence tests. Keep it settings-specific instead of turning it into a project-wide storage abstraction.
 
 ---
 
@@ -705,6 +788,8 @@ For the initial settings feature, one `SettingsRepository` backed by `SharedPref
 ### 13.1 Preferences
 
 Use `SharedPreferencesAsync` only for small, non-sensitive settings such as theme, locale, and telemetry consent.
+
+The adapter exposes only the small read/write/remove operations required by `SettingsRepository`. It does not expose a `SharedPreferencesAsync` instance, preferences-specific options, or raw plugin exceptions to the feature. Map read/write failures to a small application-owned settings failure with actionable logging and a safe UI fallback.
 
 Do not store collections, durable records, user content, transfer metadata, or credentials there.
 
@@ -803,7 +888,7 @@ Rules:
 - Route construction lives in `app_router.dart`.
 - Redirects read application state through providers, not storage or plugins.
 - Development routes are absent from the production route table, not merely hidden in navigation.
-- Deep links are accepted only for registered routes.
+- Router locations are accepted only for registered routes. Unknown or malformed locations render the localized recovery page; Back is shown only when `GoRouter.canPop()` is true, otherwise Home is the sole navigation recovery action.
 
 Initial UI:
 
@@ -815,6 +900,20 @@ Initial UI:
 The settings screens are a real feature because users interact with them. They are not infrastructure controls.
 
 The expanded static screen route tree, shell ownership, typed OTP route, development gallery, and route-error policy live in [initial_ui.md](initial_ui.md). That companion plan is additive to this baseline and must retain the same environment gating and dependency direction.
+
+### 15.1 Link and restoration scope
+
+The baseline guarantees route parsing, direct initial-location navigation, browser/OS Back behavior inside the app, and unknown-location recovery. Tests may inject locations such as `/auth/otp/registration` directly into `GoRouter` without claiming that the operating system is registered to open an external URL.
+
+Universal links, Android App Links, iOS associated domains, custom desktop URL schemes, and a production web path-URL strategy are deferred until a product owns a domain, application identifiers, signing identities, and hosting configuration. When activated:
+
+- Android requires an intent filter, verified `assetlinks.json`, package ID, and signing-certificate fingerprints.
+- iOS requires associated-domain entitlements, an AASA document, team ID, and bundle ID.
+- Web must explicitly choose hash URLs or path URLs; path URLs require host rewrite/fallback rules.
+- macOS, Windows, and Linux require an explicit OS protocol/launch-argument registration design and are not implied by the mobile route table.
+- Platform link validation must run on every activated platform before its external-link support is claimed.
+
+Flutter restoration of non-sensitive route or draft state is also deferred in this baseline. If activated later, add `restorationScopeId`, stable page restoration IDs, restart-and-restore tests, and an allowlist proving that passwords, OTP values, and tokens never enter restoration data.
 
 ---
 
@@ -832,6 +931,7 @@ Cover:
 - Interaction-policy selection.
 - Theme, accent, text-scale, and locale transitions.
 - Preference serialization and invalid-value fallback.
+- The `SettingsStore` contract, in-memory implementation, plugin-error mapping, and repository behavior without a platform channel.
 - Log redaction.
 
 ### 16.2 Widget tests
@@ -843,10 +943,10 @@ Cover:
 - Expanded shell at desktop dimensions.
 - Live resizing across breakpoints without losing settings state.
 - Light and dark themes.
-- Minimum and maximum text scaling without overflow.
-- English, Arabic RTL, and Simplified Chinese.
+- Application multipliers `0.85×`, `1.00×`, and `1.60×` composed with normal and maximum nonlinear system text scaling without overflow or lost actions.
+- English, Arabic RTL, and Simplified Chinese (`zh-Hans`).
 - Keyboard focus traversal and visible focus state.
-- Settings persistence through provider overrides or a focused fake.
+- Settings persistence through provider overrides and the in-memory `SettingsStore` implementation.
 - Reduced-motion behavior for custom animations.
 - Custom animation start, settled, and interruption states where applicable.
 
@@ -871,14 +971,41 @@ Expanded / English / dark / default scale
 Expanded / Chinese / light / default scale
 ```
 
+Golden-test harness rules:
+
+- Commit reviewed baselines under `test/goldens/` and update them only through an explicit review command/change.
+- Run comparison on one pinned OS, Flutter patch, renderer, device-pixel ratio, color space, and bundled application font set. Other platforms receive widget and manual visual checks rather than sharing the same pixels blindly.
+- Every helper sets and restores logical size, device-pixel ratio, locale, brightness, text scaler, safe-area/inset fixtures, and animation state with `addTearDown`.
+- Settle finite animations at a documented timestamp. Do not hide real diffs behind a broad pixel tolerance; any narrow tolerance must be justified beside the comparator.
+- Keep focused/hovered goldens deterministic by controlling focus and pointer state explicitly.
+
 ### 16.4 Integration smoke test
 
-1. Launch with explicit development configuration.
-2. Navigate using compact and expanded shells.
-3. Change theme, accent, text scale, and locale.
-4. Verify Arabic directionality.
-5. Restart and verify persistence.
-6. Verify development routes are absent under production configuration.
+Add `integration_test/development_smoke_test.dart` using `IntegrationTestWidgetsFlutterBinding.ensureInitialized()` and stable `ValueKey`s on workflow-critical controls. After resetting test-owned preferences, the test reads `AppConfig.fromEnvironment()` and calls the same public bootstrap/composition path used by `main()`; it does not enable the legacy Flutter Driver extension.
+
+1. Reset the test-owned preference keys to a known baseline.
+2. Launch with explicit development configuration.
+3. Navigate using compact and expanded shells.
+4. Change theme, accent, text scale, and locale.
+5. Verify Arabic directionality.
+6. Reconstruct the root application and production dependencies and verify persistence. This is a settings persistence check, not Flutter restoration.
+7. Resize across compact, medium, and expanded widths while preserving navigation and settings state.
+
+Add a separate `integration_test/production_routes_test.dart` that launches with production configuration and proves `/dev/screens` and `/dev/diagnostics` are unregistered. Keep production route-gating assertions separate from the longer development flow so failures identify the violated policy directly.
+
+Desktop/local commands:
+
+```bash
+flutter test integration_test/development_smoke_test.dart \
+  -d linux \
+  --dart-define-from-file=config/development.json
+
+flutter test integration_test/production_routes_test.dart \
+  -d linux \
+  --dart-define-from-file=config/production.json
+```
+
+Linux CI runs these commands under Xvfb. Select one deterministic desktop target for every pull request; add Android/iOS device runs when a real platform workflow exists. Web uses `flutter drive` plus ChromeDriver only if web becomes supported.
 
 Add Patrol only when a native workflow justifies it.
 
@@ -886,12 +1013,15 @@ Add Patrol only when a native workflow justifies it.
 
 ## 17. CI requirements
 
+Pin Flutter `3.44.7` in CI rather than following a floating `stable` channel. Record the runner images and minimum supported OS/toolchain versions in `README.md`; changing any of them is a reviewed maintenance decision.
+
 Every pull request runs:
 
 ```bash
+flutter pub get
 dart format --output=none --set-exit-if-changed .
-flutter analyze
-flutter test
+flutter analyze --fatal-infos
+flutter test test
 ```
 
 Detect stale generated code:
@@ -905,11 +1035,26 @@ Recommended platform matrix:
 
 | Runner | Checks |
 | --- | --- |
-| Ubuntu | Analysis, tests, Android build, Linux build |
-| macOS | iOS build, macOS build |
-| Windows | Windows build |
+| Ubuntu | Format, analysis, generated-code drift, unit/widget/golden tests, Xvfb Linux integration smoke tests, Android release build, Linux release build |
+| macOS | iOS release build with `--no-codesign`, macOS release build, optional simulator smoke test |
+| Windows | Windows release build |
 
-At least one release build must use `config/production.json`. CI must fail if production configuration is missing, malformed, or identifies itself as another environment. When remote services are added, also validate that production configuration cannot reference development endpoints or projects.
+Release-build commands always pass production configuration explicitly:
+
+```bash
+flutter build apk --release \
+  --dart-define-from-file=config/production.json
+flutter build linux --release \
+  --dart-define-from-file=config/production.json
+flutter build ios --release --no-codesign \
+  --dart-define-from-file=config/production.json
+flutter build macos --release \
+  --dart-define-from-file=config/production.json
+flutter build windows --release \
+  --dart-define-from-file=config/production.json
+```
+
+Jobs run only commands supported by their host OS. CI must fail if production configuration is missing, malformed, identifies itself as another environment, or if the production router registers development routes. When remote services are added, also validate that production configuration cannot reference development endpoints or projects.
 
 Web compilation is added only if web remains a supported target.
 
@@ -921,10 +1066,12 @@ Review dependency upgrades deliberately, especially while ForUI remains pre-1.0:
 flutter pub outdated
 flutter pub upgrade
 flutter pub upgrade forui --major-versions
-dart fix --apply
+dart fix --dry-run
 flutter analyze
 flutter test
 ```
+
+Review the dry-run output before running `dart fix --apply`; never apply automated fixes blindly across an upgrade.
 
 Read Flutter, ForUI, ExUI, Dartx, Simple Animations, Riverpod, and Slang changelogs before accepting major or pre-1.0 minor upgrades. Run the platform build matrix before merging automated dependency changes.
 
@@ -934,11 +1081,12 @@ Read Flutter, ForUI, ExUI, Dartx, Simple Animations, Riverpod, and Slang changel
 
 ### Phase 1 — Compact baseline
 
-- Confirm Flutter `3.44.0+` on stable.
+- Pin Flutter `3.44.7` in local tooling and CI and declare the supported Flutter/Dart range in `pubspec.yaml`.
 - Replace the counter template with the one-entrypoint bootstrap.
 - Add explicit development, staging, and production configuration files.
-- Enable strict analysis and code generation.
-- Install only the baseline dependencies in section 4.
+- Enable `very_good_analysis`, strict analyzer language settings, and the native `riverpod_lint` plugin.
+- Add `slang.yaml`, locale-qualified source files, and generated-code drift detection.
+- Install each baseline dependency from section 4 with its first caller.
 
 ### Phase 2 — App shell and adaptive UI
 
@@ -946,21 +1094,22 @@ Read Flutter, ForUI, ExUI, Dartx, Simple Animations, Riverpod, and Slang changel
 - Add the ForUI root theme and minimal router.
 - Add `AppLayoutClass`, breakpoints, and interaction policy.
 - Implement compact and expanded app shells.
-- Use ExUI and Dartx only under the policies in section 8.
+- Exercise ExUI in one short token-based shell/content composition; keep Dartx uninstalled until a clearer-than-SDK caller exists.
 - Add shared motion tokens and one reduced-motion-aware Simple Animations transition.
 - Verify resizing, keyboard focus, pointer behavior, and constrained desktop content.
 
 ### Phase 3 — Settings and localization
 
-- Add the settings feature and `SharedPreferencesAsync` repository.
+- Add the settings feature, feature-owned `SettingsStore` port and repository, infrastructure `SharedPreferencesSettingsStore`, and in-memory test implementation.
 - Implement theme mode, accent, and accessible text scaling.
-- Configure Slang for English, Arabic, and Simplified Chinese.
+- Configure Slang and the Flutter/ForUI delegates for English, Arabic, and Simplified Chinese (`zh-Hans`).
 - Implement locale switching, persistence, fallback, and RTL behavior.
 
 ### Phase 4 — Diagnostics, tests, and CI
 
 - Add the redacted logger and development diagnostics page.
 - Add unit, widget, golden, and smoke tests.
+- Add `integration_test` with separate development-flow and production-route tests, and run it on one deterministic desktop CI target.
 - Add generated-code drift detection.
 - Build Android, iOS, macOS, Windows, and Linux in CI.
 
@@ -987,24 +1136,30 @@ Before public release, decide and implement as required:
 The compact baseline is complete when:
 
 - [ ] Android, iOS, macOS, Windows, and Linux builds are green.
+- [ ] CI and local tooling use the reviewed Flutter `3.44.7` patch; supported Flutter/Dart and platform/toolchain ranges are documented.
 - [ ] The app has one `main.dart` and requires an explicit valid environment.
 - [ ] Development, staging, and production configuration cannot silently fall back to one another.
 - [ ] ForUI is the only styled application component system.
 - [ ] Native Flutter forms use ForUI form fields; no additional form engine exists without a recorded unmet requirement and adapter spike.
 - [ ] ExUI is limited to short, token-based layout composition.
-- [ ] Dartx is imported selectively and does not replace localization, security, or domain-aware date logic.
+- [ ] If Dartx has earned installation, every import has a concrete clearer-than-SDK caller and does not replace localization, security, or domain-aware date logic.
 - [ ] Simple Animations uses shared motion tokens and respects reduced-motion settings.
 - [ ] The project is feature-first and has no generic `core/`, `utils/`, or empty capability folders.
 - [ ] Compact, medium, and expanded layouts are selected from available width.
+- [ ] The application does not lock orientation and remains usable in portrait, landscape, split-screen, foldable, and short-window fixtures.
 - [ ] Layout state survives live window resizing.
-- [ ] Touch, mouse, and keyboard interactions have been tested.
+- [ ] Touch, precision-pointer, hybrid, and keyboard interactions use an injectable deterministic policy and have been tested.
 - [ ] Theme mode, accent, and text scale change at runtime and survive restart.
-- [ ] System accessibility text scaling remains effective.
-- [ ] English, Arabic, and Simplified Chinese localization works, including RTL.
+- [ ] The application font multiplier composes with nonlinear system accessibility scaling; neither replaces nor globally clamps the system `TextScaler`.
+- [ ] English, Arabic, and Simplified Chinese (`zh-Hans`) localization works, including RTL, fallback, and localized ForUI built-in copy.
 - [ ] Feature UI does not access Shared Preferences or other plugins directly.
+- [ ] `SharedPreferencesAsync` appears only in the concrete infrastructure adapter; settings repository and controller tests use the feature port and in-memory implementation.
 - [ ] Logging centrally redacts sensitive data.
 - [ ] Unit, widget, golden, and smoke tests pass.
+- [ ] Goldens use a pinned runner/renderer/DPR/font harness and reviewed source-controlled baselines.
+- [ ] Development and production integration-test commands run with explicit environment files; Linux CI uses Xvfb when Linux is the selected target.
 - [ ] Generated code is committed and CI detects stale output.
+- [ ] Route-location parsing and recovery are tested without claiming external OS link registration; any activated external-link platform has its association/protocol configuration and validation committed.
 - [ ] No unused database, network, Firebase, audio, download, notification, form, or no-op service code exists.
 - [ ] No product-specific placeholder infrastructure exists.
 
@@ -1017,20 +1172,22 @@ Flutter
 ├── One main.dart + explicit environment configuration
 ├── ForUI design system
 ├── ExUI layout ergonomics only
-├── Dartx non-UI ergonomics only
 ├── Simple Animations for coordinated custom motion
 ├── Riverpod composition and state
 ├── go_router navigation
 ├── Native Flutter forms with ForUI form fields
 ├── Adaptive compact / medium / expanded shells
 ├── Touch / pointer / keyboard interaction policy
-├── Slang: type-safe en / ar / zh localization
+├── Slang: type-safe en / ar / zh-Hans localization
 ├── Runtime theme, accent, and accessible text scaling
-├── SharedPreferencesAsync for exercised settings
+├── Feature-owned settings persistence port + SharedPreferencesAsync adapter
 ├── Redacted local logging
-└── Focused tests and multi-platform CI
+└── Focused unit/widget/golden/integration tests and multi-platform CI
 
 Added with first real use
+├── Dartx non-UI ergonomics
+├── Riverpod code generation
+├── Mocktail
 ├── Drift persistence
 ├── Secure storage
 ├── Dio networking and caching
@@ -1061,3 +1218,8 @@ The result is deliberately smaller than a traditional “clean architecture” t
 - Flutter flavors for Android: https://docs.flutter.dev/deployment/flavors
 - Flutter flavors for iOS and macOS: https://docs.flutter.dev/deployment/flavors-ios
 - Flutter internationalization: https://docs.flutter.dev/ui/internationalization
+- Flutter integration testing: https://docs.flutter.dev/testing/integration-tests
+- Flutter deep linking: https://docs.flutter.dev/ui/navigation/deep-linking
+- Flutter nonlinear text scaling: https://docs.flutter.dev/release/breaking-changes/deprecate-textscalefactor
+- Riverpod lint: https://pub.dev/packages/riverpod_lint
+- Slang: https://pub.dev/packages/slang
