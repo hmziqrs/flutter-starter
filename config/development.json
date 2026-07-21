@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "development",
+  "ENABLE_VERBOSE_LOGGING": "true",
+  "ENABLE_DEV_TOOLS": "true"
+}
