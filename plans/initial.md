@@ -34,6 +34,8 @@ The baseline must provide:
 
 The starter must make the first product feature easy to add. It must not pre-build infrastructure for hypothetical features.
 
+The companion [initial UI plan](initial_ui.md) defines the first static screens used to exercise these architecture decisions.
+
 ---
 
 ## 2. Guiding principles
@@ -239,7 +241,6 @@ lib/
 │
 ├── shared/
 │   ├── adaptive/
-│   │   ├── app_breakpoints.dart
 │   │   ├── app_layout_class.dart
 │   │   └── app_interaction_policy.dart
 │   ├── theme/
@@ -514,7 +515,7 @@ Do not infer all three from `Platform.isAndroid` or `Platform.isWindows`.
 
 ### 9.2 Initial window classes
 
-Start with application-owned breakpoints:
+Use ForUI's theme breakpoints as the canonical numeric source and map them into the application-owned layout class:
 
 ```dart
 enum AppLayoutClass {
@@ -522,15 +523,19 @@ enum AppLayoutClass {
   medium,
   expanded;
 
-  static AppLayoutClass fromWidth(double width) {
-    if (width < 600) return compact;
-    if (width < 1024) return medium;
+  static AppLayoutClass fromWidth(
+    double width, {
+    required double compactMax,
+    required double expandedMin,
+  }) {
+    if (width < compactMax) return compact;
+    if (width < expandedMin) return medium;
     return expanded;
   }
 }
 ```
 
-These are initial product values, not universal device definitions. Adjust them when real screens demonstrate a better transition point.
+Initially pass `context.theme.breakpoints.sm` (`640`) as `compactMax` and `context.theme.breakpoints.lg` (`1024`) as `expandedMin`. Do not scatter those numbers or mix a second breakpoint scale into feature code. Adjust the ForUI theme tokens if real screens demonstrate better transition points.
 
 Use:
 
