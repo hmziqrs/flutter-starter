@@ -1,0 +1,209 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.7
+
+jobs:
+  ubuntu-quality:
+    name: Ubuntu / quality and non-golden tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run fatal static analysis
+        run: flutter analyze --fatal-infos
+
+      - name: Check generated-code drift
+        shell: bash
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git status --short
+            exit 1
+          fi
+
+      - name: Run all non-golden unit and widget tests
+        shell: bash
+        run: |
+          mapfile -d '' test_files < <(
+            find test -type f -name '*_test.dart' \
+              ! -path 'test/goldens/*' -print0
+          )
+          if (( ${#test_files[@]} == 0 )); then
+            echo 'No non-golden tests were discovered.' >&2
+            exit 1
+          fi
+          flutter test "${test_files[@]}"
+
+  linux-integration:
+    name: Ubuntu / Linux integration targets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Linux desktop and display prerequisites
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            libgtk-3-dev \
+            libstdc++-12-dev \
+            ninja-build \
+            pkg-config \
+            xvfb
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Run development smoke test under Xvfb
+        run: >-
+          xvfb-run -a
+          flutter test integration_test/development_smoke_test.dart
+          -d linux
+          --dart-define-from-file=config/development.json
+
+      - name: Run production route policy test under Xvfb
+        run: >-
+          xvfb-run -a
+          flutter test integration_test/production_routes_test.dart
+          -d linux
+          --dart-define-from-file=config/production.json
+
+  ubuntu-release-builds:
+    name: Ubuntu / Android and Linux release builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Linux desktop prerequisites
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            libgtk-3-dev \
+            libstdc++-12-dev \
+            ninja-build \
+            pkg-config
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build Android APK with production configuration
+        run: >-
+          flutter build apk --release
+          --dart-define-from-file=config/production.json
+
+      - name: Build Linux bundle with production configuration
+        run: >-
+          flutter build linux --release
+          --dart-define-from-file=config/production.json
+
+  macos-goldens-and-release-builds:
+    name: macOS / canonical goldens and Apple release builds
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Compare canonical macOS golden baselines
+        run: flutter test test/goldens/canonical_matrix_golden_test.dart
+
+      - name: Build unsigned iOS release with production configuration
+        run: >-
+          flutter build ios --release --no-codesign
+          --dart-define-from-file=config/production.json
+
+      - name: Build macOS release with production configuration
+        run: >-
+          flutter build macos --release
+          --dart-define-from-file=config/production.json
+
+  windows-release-build:
+    name: Windows / release build
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build Windows release with production configuration
+        run: >-
+          flutter build windows --release
+          --dart-define-from-file=config/production.json

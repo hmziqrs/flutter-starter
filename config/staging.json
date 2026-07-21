@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "staging",
+  "ENABLE_VERBOSE_LOGGING": "false",
+  "ENABLE_DEV_TOOLS": "false"
+}

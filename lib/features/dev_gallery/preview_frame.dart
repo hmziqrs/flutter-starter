@@ -1,0 +1,135 @@
+import 'dart:ui' show DisplayFeature, DisplayFeatureState, DisplayFeatureType;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/features/dev_gallery/gallery_environment.dart';
+import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/motion/app_motion.dart';
+import 'package:starter/shared/theme/forui_theme_factory.dart';
+
+class PreviewFrame extends StatelessWidget {
+  const PreviewFrame({
+    required this.environment,
+    required this.child,
+    super.key,
+  });
+
+  static const safeAreaPadding = EdgeInsets.fromLTRB(16, 24, 16, 24);
+  static const keyboardInsets = EdgeInsets.only(bottom: 320);
+  static const verticalFoldWidth = 16.0;
+
+  final GalleryEnvironment environment;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ForuiThemeFactory.build(
+      brightness: environment.brightness,
+      accent: environment.accent,
+      fontScale: environment.appFontScale,
+      interactionPolicy: environment.interactionPolicy,
+    );
+    final size = environment.viewport.size;
+    final safeArea = environment.safeAreaEnabled ? safeAreaPadding : EdgeInsets.zero;
+    final keyboardInsets = environment.keyboardInsetsEnabled
+        ? PreviewFrame.keyboardInsets
+        : EdgeInsets.zero;
+    final displayFeatures = switch (environment.displayFeature) {
+      GalleryDisplayFeature.none => const <DisplayFeature>[],
+      GalleryDisplayFeature.verticalFold => [
+        DisplayFeature(
+          bounds: Rect.fromLTWH(
+            (size.width - verticalFoldWidth) / 2,
+            0,
+            verticalFoldWidth,
+            size.height,
+          ),
+          type: DisplayFeatureType.fold,
+          state: DisplayFeatureState.unknown,
+        ),
+      ],
+    };
+    final mediaQuery = MediaQuery.of(context).copyWith(
+      size: size,
+      devicePixelRatio: 1,
+      textScaler: environment.textScaler,
+      padding: safeArea,
+      viewPadding: safeArea,
+      viewInsets: keyboardInsets,
+      disableAnimations: !environment.animationsEnabled,
+      highContrast: environment.highContrast,
+      boldText: environment.boldText,
+      displayFeatures: displayFeatures,
+    );
+    final direction = environment.locale == AppLocale.ar ? TextDirection.rtl : TextDirection.ltr;
+
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: SingleChildScrollView(
+        key: const ValueKey('gallery-preview-horizontal-scroll'),
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          key: const ValueKey('gallery-preview-vertical-scroll'),
+          child: SizedBox(
+            key: const ValueKey('gallery-preview-viewport'),
+            width: size.width,
+            height: size.height,
+            child: ProviderScope(
+              overrides: [
+                interactionPolicyOverrideProvider.overrideWithValue(
+                  environment.interactionPolicy,
+                ),
+              ],
+              child: MediaQuery(
+                data: mediaQuery,
+                child: Localizations.override(
+                  context: context,
+                  locale: environment.locale.flutterLocale,
+                  child: Directionality(
+                    textDirection: direction,
+                    child: Theme(
+                      key: const ValueKey('gallery-preview-material-theme'),
+                      data: theme.toApproximateMaterialTheme(),
+                      child: FTheme(
+                        key: const ValueKey('gallery-preview-forui-theme'),
+                        data: theme,
+                        motion: FThemeMotion(
+                          duration: environment.animationsEnabled
+                              ? AppMotion.standard
+                              : Duration.zero,
+                          curve: AppMotion.standardCurve,
+                        ),
+                        child: AppLayoutScope(
+                          builder: (_, _) => FToaster(
+                            child: FTooltipGroup(
+                              child: Navigator(
+                                pages: [
+                                  MaterialPage<void>(
+                                    key: const ValueKey('gallery-preview-root-page'),
+                                    child: child,
+                                  ),
+                                ],
+                                onDidRemovePage: (_) {
+                                  throw StateError(
+                                    'The gallery preview root page cannot be removed.',
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,197 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/app.dart';
+import 'package:starter/app/config/app_config.dart';
+import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/i18n/translations.g.dart';
+
+void main() {
+  setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
+
+  testWidgets('Onboarding Skip reaches Home', (tester) async {
+    await _pumpApp(tester, AppRoutes.onboardingPath);
+
+    await tester.tap(find.byKey(const ValueKey('onboarding-skip')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+  });
+
+  testWidgets('Onboarding final Continue opens Paywall and its Skip reaches Home', (tester) async {
+    await _pumpApp(tester, AppRoutes.onboardingPath);
+
+    for (var index = 0; index < 3; index += 1) {
+      await tester.tap(find.byKey(const ValueKey('onboarding-continue')));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.byKey(const ValueKey('paywall-page')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('paywall-skip')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+  });
+
+  testWidgets('Paywall static Continue reaches Home without claiming a purchase', (tester) async {
+    await _pumpApp(tester, AppRoutes.onboardingPaywallPath);
+
+    expect(find.text('No payment or purchase will be made.'), findsOneWidget);
+    final continueButton = find.byKey(const ValueKey('paywall-continue'));
+    await tester.ensureVisible(continueButton);
+    await tester.pumpAndSettle();
+    await tester.tap(continueButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+  });
+
+  testWidgets('Home quick actions reach their centrally wired destinations', (tester) async {
+    const cases = [
+      (source: 'home-open-profile', target: 'profile-save'),
+      (source: 'home-open-pricing', target: 'pricing-page'),
+      (source: 'home-open-settings', target: 'settings-open-appearance'),
+      (source: 'home-open-login', target: 'auth-login-page'),
+    ];
+
+    for (final entry in cases) {
+      await _pumpApp(tester, AppRoutes.homePath);
+      final source = find.byKey(ValueKey(entry.source));
+      await tester.ensureVisible(source);
+      await tester.pumpAndSettle();
+      await tester.tap(source);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ValueKey(entry.target)), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets('Profile save provides honest deterministic feedback', (tester) async {
+    await _pumpApp(tester, AppRoutes.updateProfilePath);
+    await tester.enterText(
+      find.byKey(const ValueKey('profile-bio')),
+      'Updated locally for the static preview.',
+    );
+    await _tapVisible(tester, 'profile-save');
+
+    expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
+  });
+
+  testWidgets('Login validates locally and reaches Home', (tester) async {
+    await _pumpApp(tester, AppRoutes.loginPath);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-email')),
+      'person@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-password')),
+      'Password1',
+    );
+    await _tapVisible(tester, 'auth-login-submit');
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+  });
+
+  testWidgets('Register and registration OTP reach Home', (tester) async {
+    await _pumpApp(tester, AppRoutes.registerPath);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-register-display-name')),
+      'Sam Rivera',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-register-email')),
+      'sam@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-register-password')),
+      'Password1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-register-confirm-password')),
+      'Password1',
+    );
+    await _tapVisible(tester, 'auth-register-accept-terms');
+    await _tapVisible(tester, 'auth-register-submit');
+
+    expect(find.text('Verify your registration'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-otp-code')),
+      '123456',
+    );
+    await _tapVisible(tester, 'auth-otp-submit');
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+  });
+
+  testWidgets('Forgot Password follows reset OTP to Login success feedback', (tester) async {
+    await _pumpApp(tester, AppRoutes.forgotPasswordPath);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-forgot-password-email')),
+      'person@example.com',
+    );
+    await _tapVisible(tester, 'auth-forgot-password-submit');
+
+    expect(find.text('Verify your reset request'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-otp-code')),
+      '654321',
+    );
+    await _tapVisible(tester, 'auth-otp-submit');
+
+    expect(find.byKey(const ValueKey('auth-reset-password-page')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-new')),
+      'Password1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-confirm')),
+      'Password1',
+    );
+    await _tapVisible(tester, 'auth-reset-password-submit');
+
+    expect(find.byKey(const ValueKey('auth-login-page')), findsOneWidget);
+    expect(find.byKey(const ValueKey('auth-login-success')), findsOneWidget);
+    expect(
+      find.text('Password update preview complete. Return to login.'),
+      findsOneWidget,
+    );
+  });
+}
+
+Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
+  final target = find.byKey(ValueKey(valueKey));
+  tester.binding.focusManager.primaryFocus?.unfocus();
+  await tester.pump();
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpApp(WidgetTester tester, String initialLocation) async {
+  tester.view
+    ..devicePixelRatio = 1
+    ..physicalSize = const Size(390, 844);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
+
+  await tester.pumpWidget(
+    App(
+      config: _productionConfig,
+      dependencies: AppDependencies.inMemory(),
+      initialLocation: initialLocation,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+final _productionConfig = AppConfig(
+  environment: AppEnvironment.production,
+  enableVerboseLogging: false,
+  enableDevTools: false,
+);
