@@ -10,6 +10,7 @@ import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
+import 'package:starter/shared/motion/app_page_transitions.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 class App extends StatelessWidget {
@@ -89,8 +90,12 @@ class _AppViewState extends ConsumerState<_AppView> {
       locale: localeData.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: FLocalizations.localizationsDelegates,
-      theme: lightTheme.toApproximateMaterialTheme(),
-      darkTheme: darkTheme.toApproximateMaterialTheme(),
+      theme: lightTheme.toApproximateMaterialTheme().copyWith(
+        pageTransitionsTheme: nativePageTransitionsTheme,
+      ),
+      darkTheme: darkTheme.toApproximateMaterialTheme().copyWith(
+        pageTransitionsTheme: nativePageTransitionsTheme,
+      ),
       themeMode: _materialThemeMode(settings.themeMode),
       builder: (context, child) {
         final activeTheme = Theme.of(context).brightness == Brightness.dark
