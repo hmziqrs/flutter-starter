@@ -41,10 +41,31 @@ void _log(Object? message) {
 /// canonical CI run does not set it, so coverage is unchanged.
 const _watchMode = bool.fromEnvironment('SMOKE_WATCH');
 
+/// Animation slow-down factor in watch mode (1.0 = normal speed). Tune with
+/// `--dart-define=SMOKE_DILATION=3.0`. Higher = slower/prettier, lower = snappier.
+const _watchDilationString = String.fromEnvironment('SMOKE_DILATION', defaultValue: '2.0');
+final double _watchDilation = double.tryParse(_watchDilationString) ?? 2.0;
+
 /// Pause between steps in watch mode so the UI is observable; a no-op otherwise.
 Future<void> _watchPause(WidgetTester tester) async {
   if (_watchMode) {
     await tester.pump(const Duration(milliseconds: 600));
+  }
+}
+
+/// Runs [action] with animations at normal speed, restoring watch-mode dilation
+/// afterwards. `timeDilation` slows entrance animations past the bounded pump
+/// windows, which breaks timing-sensitive input such as dismissing a dialog
+/// with Escape (the dialog ignores input until its entrance finishes).
+Future<void> _withoutDilation(Future<void> Function() action) async {
+  final saved = timeDilation;
+  if (_watchMode) {
+    timeDilation = 1.0;
+  }
+  try {
+    await action();
+  } finally {
+    timeDilation = saved;
   }
 }
 
@@ -63,9 +84,10 @@ void main() {
     await resetTestSettings();
     addTearDown(resetTestSettings);
     if (_watchMode) {
-      timeDilation = 6.0;
+      timeDilation = _watchDilation;
       _log('WATCH MODE: keeping native window at default size so the UI is visible');
       _log('(setting physicalSize blanks the desktop window — flutter#149209)');
+      _log('WATCH MODE: animation dilation = $_watchDilation (tune via SMOKE_DILATION)');
     } else {
       _setViewport(tester, const Size(390, 844));
       _log('viewport pinned to 390x844 (compact phone)');
@@ -153,8 +175,13 @@ void main() {
     await tapVisible(tester, const ValueKey('profile-save'));
     expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
     _log('dialog shown; dismissing with Escape');
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await pumpAppFrames(tester);
+    await _withoutDilation(() async {
+      // Let the (slowed) entrance finish at normal speed before dismissing —
+      // otherwise the dialog ignores the Escape key mid-transition.
+      await pumpAppFrames(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await pumpAppFrames(tester);
+    });
     expect(find.byKey(const ValueKey('information-dialog')), findsNothing);
     _log('dialog dismissed');
 
@@ -213,6 +240,12 @@ void main() {
     );
     _log('post-restart theme=dark + direction=rtl confirmed');
     _log('SMOKE FLOW COMPLETE — all assertions passed');
+    if (_watchMode) {
+      // The binding asserts timeDilation is reset by end-of-test
+      // (debugAssertNoTimeDilation). Its invariant check runs before
+      // addTearDown, so reset synchronously here in the body.
+      timeDilation = 1.0;
+    }
   });
 }
 
