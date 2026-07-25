@@ -131,11 +131,13 @@ Files:
 - `lib/app/shell/expanded_app_shell.dart` — sidebar shell (reused for medium); uses `exui` `.paddingOnly` (sole exui call site)
 - `lib/shared/adaptive/app_layout_class.dart` — compact/medium/expanded enum + fromWidth
 - `lib/shared/adaptive/app_layout_provider.dart` — AppLayoutScope + provider
+- `lib/shared/adaptive/app_unit.dart` — bounded logical-width spacing/type scale + physical-pixel helpers
 - `lib/shared/adaptive/app_interaction_policy.dart` — AppInteractionPolicy enum + monotonic resolver
 - `lib/app/interaction_policy_controller.dart` — Riverpod policy providers
 
 Notes:
 - Derive layout only from width inside AppLayoutScope; never branch on platform. Read breakpoints from `context.theme.breakpoints` (`.sm` compactMax, `.lg` expandedMin).
+- `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
 - `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells + the `_selectedIndex` prefix map (0=home,1=pricing,2=settings).
 - Interaction policy is input-only and monotonic; `interactionPolicyOverrideProvider` is the deterministic test/dev hook; reading `appLayoutClassProvider` outside AppLayoutScope throws.
 
@@ -147,14 +149,19 @@ Files:
 - `lib/shared/theme/forui_theme_factory.dart` — builds FThemeData, applies accent/scale/touch
 - `lib/shared/theme/generated_forui_theme.dart` — ForUI CLI output (committed)
 - `lib/shared/theme/colors.dart` / `typography.dart` / `style.dart` / `icons.dart` — generated (do not edit)
-- `lib/shared/theme/app_spacing.dart` — AppSpacing xs..xl3 constants
+- `lib/shared/theme/app_spacing.dart` — AppSpacing xs..xl3 base tokens + `context.spacing` responsive values
 - `lib/shared/theme/app_sizes.dart` — AppSizes sidebar/content width constants
 - `lib/features/settings/settings_state.dart` — AppAccent enum owner
 
 Notes:
 - Never hand-edit generated files (`colors`/`typography`/`style`/`icons`/`generated_forui_theme`); regenerate via `forui_cli`. No lint fixes to them either.
 - Change accents in `ForuiThemeFactory._accentColors`; feed FThemeData to MaterialApp via `toApproximateMaterialTheme()` (a ForUI SDK method), not Material duplicates.
-- `touch` derives from `AppInteractionPolicy` (precisionPointer => desktop); dark error foreground overridden in factory; `AppAccent` is owned by `settings_state.dart`.
+- `touch` derives from `AppInteractionPolicy` (precisionPointer => desktop). The app factory
+  replaces the generated type sizes and excessive leading with explicit body/display tokens,
+  composes responsive and user font scales, and distributes leading evenly. Button vertical
+  padding is derived from the resolved label size while preserving ForUI's 44-pixel touch and
+  36-pixel pointer targets. Dark error foreground is overridden in the factory; `AppAccent` is
+  owned by `settings_state.dart`.
 
 #### motion-and-page-transitions
 

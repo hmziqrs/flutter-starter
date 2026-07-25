@@ -63,10 +63,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
         key: ValueKey('onboarding-layout-${layoutClass.name}'),
         children: [
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xl,
-              AppSpacing.sm,
-              AppSpacing.xl,
+            padding: EdgeInsetsDirectional.fromSTEB(
+              context.spacing.xl,
+              context.spacing.sm,
+              context.spacing.xl,
               0,
             ),
             child: Align(
@@ -94,11 +94,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xl,
-              AppSpacing.md,
-              AppSpacing.xl,
-              AppSpacing.xl,
+            padding: EdgeInsetsDirectional.fromSTEB(
+              context.spacing.xl,
+              context.spacing.md,
+              context.spacing.xl,
+              context.spacing.xl,
             ),
             child: Column(
               children: [
@@ -109,7 +109,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     key: const ValueKey('onboarding-progress'),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: context.spacing.md),
                 Row(
                   children: [
                     if (_page > 0)

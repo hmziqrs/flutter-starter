@@ -78,7 +78,9 @@ void main() {
     final config = AppConfig.fromEnvironment();
     expect(config.environment, AppEnvironment.development);
     expect(config.developmentToolsEnabled, isTrue);
-    _log('config ok: environment=${config.environment.value} devTools=${config.developmentToolsEnabled}');
+    _log(
+      'config ok: environment=${config.environment.value} devTools=${config.developmentToolsEnabled}',
+    );
 
     _log('resetting persisted settings (shared preferences)');
     await resetTestSettings();
@@ -93,7 +95,9 @@ void main() {
       _log('viewport pinned to 390x844 (compact phone)');
     }
 
-    _log('building app graph + root widget (first run also compiles the macOS runner; this is the slow part)');
+    _log(
+      'building app graph + root widget (first run also compiles the macOS runner; this is the slow part)',
+    );
     await tester.pumpWidget(await createApplication(config));
     await pumpAppFrames(tester);
     await _watchPause(tester);

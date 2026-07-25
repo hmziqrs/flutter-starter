@@ -52,10 +52,10 @@ class AuthPageScaffold extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(icon, size: AppSpacing.xl3),
-                        const SizedBox(height: AppSpacing.xl),
+                        Icon(icon, size: context.spacing.xl3),
+                        SizedBox(height: context.spacing.xl),
                         Text(title, style: context.theme.typography.display.xl4),
-                        const SizedBox(height: AppSpacing.lg),
+                        SizedBox(height: context.spacing.lg),
                         Text(body, style: context.theme.typography.body.lg),
                       ],
                     ),
@@ -91,7 +91,7 @@ class AuthPageScaffold extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
               child: FCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  padding: EdgeInsets.all(context.spacing.xl),
                   child: form,
                 ),
               ),
@@ -105,10 +105,10 @@ class AuthPageScaffold extends StatelessWidget {
 
   EdgeInsetsGeometry _scrollPadding(BuildContext context) {
     return EdgeInsetsDirectional.fromSTEB(
-      AppSpacing.xl,
-      AppSpacing.xl2,
-      AppSpacing.xl,
-      AppSpacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
+      context.spacing.xl,
+      context.spacing.xl2,
+      context.spacing.xl,
+      context.spacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
     );
   }
 }

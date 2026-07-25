@@ -31,15 +31,16 @@ class ExpandedAppShell extends StatelessWidget {
         width: width,
         child: FSidebar(
           key: const ValueKey('expanded-navigation'),
-          header: Text(
-            translations.app.name,
-            style: context.theme.typography.display.lg,
-          ).paddingOnly(
-            left: AppSpacing.lg,
-            top: AppSpacing.xl,
-            right: AppSpacing.lg,
-            bottom: AppSpacing.md,
-          ),
+          header:
+              Text(
+                translations.app.name,
+                style: context.theme.typography.display.lg,
+              ).paddingOnly(
+                left: context.spacing.lg,
+                top: context.spacing.xl,
+                right: context.spacing.lg,
+                bottom: context.spacing.md,
+              ),
           children: [
             FSidebarItem(
               selected: selectedIndex == 0,

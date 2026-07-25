@@ -7,6 +7,7 @@ import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
@@ -26,13 +27,15 @@ class PreviewFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = environment.viewport.size;
+    final unit = AppUnit.fromSize(size, devicePixelRatio: 1);
     final theme = ForuiThemeFactory.build(
       brightness: environment.brightness,
       accent: environment.accent,
       fontScale: environment.appFontScale,
       interactionPolicy: environment.interactionPolicy,
+      responsiveFontScale: unit.typographyScale,
     );
-    final size = environment.viewport.size;
     final safeArea = environment.safeAreaEnabled ? safeAreaPadding : EdgeInsets.zero;
     final keyboardInsets = environment.keyboardInsetsEnabled
         ? PreviewFrame.keyboardInsets

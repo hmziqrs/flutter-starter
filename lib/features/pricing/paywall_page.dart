@@ -82,10 +82,10 @@ class _PaywallPageState extends State<PaywallPage> {
         key: const ValueKey('paywall-page'),
         children: [
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xl,
-              AppSpacing.sm,
-              AppSpacing.xl,
+            padding: EdgeInsetsDirectional.fromSTEB(
+              context.spacing.xl,
+              context.spacing.sm,
+              context.spacing.xl,
               0,
             ),
             child: Align(
@@ -101,11 +101,11 @@ class _PaywallPageState extends State<PaywallPage> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.xl,
-                AppSpacing.sm,
-                AppSpacing.xl,
-                AppSpacing.xl3,
+              padding: EdgeInsetsDirectional.fromSTEB(
+                context.spacing.xl,
+                context.spacing.sm,
+                context.spacing.xl,
+                context.spacing.xl3,
               ),
               children: [
                 Center(
@@ -118,12 +118,12 @@ class _PaywallPageState extends State<PaywallPage> {
                           translations.pricing.paywallTitle,
                           style: context.theme.typography.display.xl3,
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        SizedBox(height: context.spacing.md),
                         Text(
                           translations.pricing.paywallBody,
                           style: context.theme.typography.body.lg,
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        SizedBox(height: context.spacing.lg),
                         _BenefitList(
                           benefits: [
                             translations.pricing.benefitAdaptive,
@@ -131,7 +131,7 @@ class _PaywallPageState extends State<PaywallPage> {
                             translations.pricing.benefitAccessible,
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.xl),
+                        SizedBox(height: context.spacing.xl),
                         BillingSelector(
                           value: _billingPeriod,
                           monthlyLabel: translations.pricing.monthly,

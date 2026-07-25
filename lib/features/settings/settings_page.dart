@@ -662,11 +662,11 @@ class _SettingsScrollFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.xl,
-        AppSpacing.xl2,
-        AppSpacing.xl,
-        AppSpacing.xl3,
+      padding: EdgeInsetsDirectional.fromSTEB(
+        context.spacing.xl,
+        context.spacing.xl2,
+        context.spacing.xl,
+        context.spacing.xl3,
       ),
       children: [
         Center(
@@ -676,7 +676,7 @@ class _SettingsScrollFrame extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(title, style: context.theme.typography.display.xl2),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 child,
               ],
             ),

@@ -53,11 +53,11 @@ class _PricingPageState extends ConsumerState<PricingPage> {
 
     return ListView(
       key: const ValueKey('pricing-page'),
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.xl,
-        AppSpacing.xl2,
-        AppSpacing.xl,
-        AppSpacing.xl3,
+      padding: EdgeInsetsDirectional.fromSTEB(
+        context.spacing.xl,
+        context.spacing.xl2,
+        context.spacing.xl,
+        context.spacing.xl3,
       ),
       children: [
         Center(
@@ -67,7 +67,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(translations.pricing.title, style: context.theme.typography.display.xl3),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: context.spacing.md),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
                   child: Text(
@@ -75,7 +75,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                     style: context.theme.typography.body.lg,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 BillingSelector(
                   value: _billingPeriod,
                   monthlyLabel: translations.pricing.monthly,
@@ -84,14 +84,14 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                   onChanged: (period) => setState(() => _billingPeriod = period),
                 ),
                 if (!_hasAvailablePlan) ...[
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: context.spacing.lg),
                   FAlert(
                     key: const ValueKey('pricing-unavailable'),
                     variant: .destructive,
                     title: Text(translations.pricing.unavailableReason),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 _PlanGrid(
                   key: ValueKey('pricing-layout-${layoutClass.name}'),
                   layoutClass: layoutClass,

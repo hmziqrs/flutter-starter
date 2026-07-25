@@ -6,13 +6,54 @@ import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 abstract final class ForuiThemeFactory {
   static const scriptFontFamilies = <String>['Noto Sans Arabic', 'Noto Sans SC'];
+  static const _displayTokens = <({double size, double height})>[
+    (size: 10, height: 1.2),
+    (size: 12, height: 1.2),
+    (size: 14, height: 1.2),
+    (size: 16, height: 1.25),
+    (size: 18, height: 1.25),
+    (size: 20, height: 1.2),
+    (size: 24, height: 1.2),
+    (size: 30, height: 1.15),
+    (size: 36, height: 1.12),
+    (size: 48, height: 1.1),
+    (size: 60, height: 1.1),
+    (size: 72, height: 1.1),
+    (size: 96, height: 1.1),
+    (size: 108, height: 1.1),
+  ];
+  static const _bodyTokens = <({double size, double height})>[
+    (size: 10, height: 1.25),
+    (size: 11, height: 1.25),
+    (size: 12, height: 1.3),
+    (size: 14, height: 1.35),
+    (size: 16, height: 1.4),
+    (size: 18, height: 1.45),
+    (size: 20, height: 1.45),
+    (size: 24, height: 1.35),
+    (size: 30, height: 1.25),
+    (size: 36, height: 1.2),
+    (size: 48, height: 1.15),
+    (size: 60, height: 1.15),
+    (size: 72, height: 1.1),
+    (size: 96, height: 1.1),
+  ];
 
   static FThemeData build({
     required Brightness brightness,
     required AppAccent accent,
     required double fontScale,
     required AppInteractionPolicy interactionPolicy,
+    double responsiveFontScale = 1,
   }) {
+    if (!responsiveFontScale.isFinite || responsiveFontScale <= 0) {
+      throw ArgumentError.value(
+        responsiveFontScale,
+        'responsiveFontScale',
+        'Responsive font scale must be finite and greater than zero.',
+      );
+    }
+
     final generatedTheme = switch (brightness) {
       Brightness.light => generated.lightTheme,
       Brightness.dark => generated.darkTheme,
@@ -28,8 +69,22 @@ abstract final class ForuiThemeFactory {
       errorForeground: destructiveForeground,
     );
     final touch = interactionPolicy != AppInteractionPolicy.precisionPointer;
-    final typography = _withScriptFallbacks(generatedTheme.typography).scale(
-      sizeScalar: fontScale,
+    final typography = _buildTypography(
+      generatedTheme.typography,
+      sizeScalar: fontScale * responsiveFontScale,
+    );
+    final style = FStyle.inherit(
+      colors: colors,
+      typography: typography,
+      touch: touch,
+    );
+    final buttonStyles = _balancedButtonStyles(
+      FButtonStyles.inherit(
+        colors: colors,
+        typography: typography,
+        style: style,
+        touch: touch,
+      ),
     );
 
     return FThemeData(
@@ -38,39 +93,108 @@ abstract final class ForuiThemeFactory {
       colors: colors,
       typography: typography,
       icons: generatedTheme.icons,
+      style: style,
       touch: touch,
+      buttonStyles: buttonStyles,
     );
   }
 
-  static FTypography _withScriptFallbacks(FTypography typography) {
+  static FVariants<FButtonVariantConstraint, FButtonVariant, FButtonSizeStyles, FButtonSizesDelta>
+  _balancedButtonStyles(FButtonStyles styles) {
+    return FVariants.raw(
+      _balancedButtonSizeStyles(styles.base),
+      {
+        for (final MapEntry(key: constraint, :value) in styles.variants.entries)
+          constraint: _balancedButtonSizeStyles(value),
+      },
+    );
+  }
+
+  static FButtonSizeStyles _balancedButtonSizeStyles(FButtonSizeStyles styles) {
+    return FButtonSizeStyles(
+      FVariants.raw(
+        _balancedButtonStyle(styles.base),
+        {
+          for (final MapEntry(key: constraint, :value) in styles.variants.entries)
+            constraint: _balancedButtonStyle(value),
+        },
+      ),
+    );
+  }
+
+  static FButtonStyle _balancedButtonStyle(FButtonStyle style) {
+    final content = style.contentStyle;
+    final resolvedPadding = content.padding.resolve(TextDirection.ltr);
+    final fontSize = content.textStyle.base.fontSize ?? 14;
+    final verticalPadding = (fontSize * 0.55).clamp(6.0, 10.0);
+
+    return style.copyWith(
+      contentStyle: FButtonContentStyle(
+        textStyle: content.textStyle,
+        iconStyle: content.iconStyle,
+        circularProgressStyle: content.circularProgressStyle,
+        constraints: content.constraints,
+        padding: EdgeInsets.fromLTRB(
+          resolvedPadding.left,
+          verticalPadding,
+          resolvedPadding.right,
+          verticalPadding,
+        ),
+        spacing: content.spacing,
+      ),
+    );
+  }
+
+  static FTypography _buildTypography(
+    FTypography typography, {
+    required double sizeScalar,
+  }) {
     return typography.copyWith(
-      display: _withScriptFallbacksForTypeface(typography.display),
-      body: _withScriptFallbacksForTypeface(typography.body),
+      display: _buildTypeface(
+        typography.display,
+        tokens: _displayTokens,
+        sizeScalar: sizeScalar,
+      ),
+      body: _buildTypeface(
+        typography.body,
+        tokens: _bodyTokens,
+        sizeScalar: sizeScalar,
+      ),
     );
   }
 
-  static FTypeface _withScriptFallbacksForTypeface(FTypeface typeface) {
-    TextStyle withFallbacks(TextStyle style) {
-      return style.copyWith(fontFamilyFallback: scriptFontFamilies);
+  static FTypeface _buildTypeface(
+    FTypeface typeface, {
+    required List<({double size, double height})> tokens,
+    required double sizeScalar,
+  }) {
+    TextStyle token(TextStyle style, int index) {
+      final token = tokens[index];
+      return style.copyWith(
+        fontFamilyFallback: scriptFontFamilies,
+        fontSize: token.size * sizeScalar,
+        height: token.height,
+        leadingDistribution: TextLeadingDistribution.even,
+      );
     }
 
     return FTypeface(
       fontFamily: typeface.fontFamily,
       fontFamilyFallback: scriptFontFamilies,
-      xs3: withFallbacks(typeface.xs3),
-      xs2: withFallbacks(typeface.xs2),
-      xs: withFallbacks(typeface.xs),
-      sm: withFallbacks(typeface.sm),
-      md: withFallbacks(typeface.md),
-      lg: withFallbacks(typeface.lg),
-      xl: withFallbacks(typeface.xl),
-      xl2: withFallbacks(typeface.xl2),
-      xl3: withFallbacks(typeface.xl3),
-      xl4: withFallbacks(typeface.xl4),
-      xl5: withFallbacks(typeface.xl5),
-      xl6: withFallbacks(typeface.xl6),
-      xl7: withFallbacks(typeface.xl7),
-      xl8: withFallbacks(typeface.xl8),
+      xs3: token(typeface.xs3, 0),
+      xs2: token(typeface.xs2, 1),
+      xs: token(typeface.xs, 2),
+      sm: token(typeface.sm, 3),
+      md: token(typeface.md, 4),
+      lg: token(typeface.lg, 5),
+      xl: token(typeface.xl, 6),
+      xl2: token(typeface.xl2, 7),
+      xl3: token(typeface.xl3, 8),
+      xl4: token(typeface.xl4, 9),
+      xl5: token(typeface.xl5, 10),
+      xl6: token(typeface.xl6, 11),
+      xl7: token(typeface.xl7, 12),
+      xl8: token(typeface.xl8, 13),
     );
   }
 

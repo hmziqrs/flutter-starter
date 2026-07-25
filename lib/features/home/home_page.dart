@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -5,6 +7,7 @@ import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
@@ -36,10 +39,10 @@ class HomePage extends ConsumerWidget {
     return ListView(
       key: ValueKey('home-layout-${layoutClass.name}'),
       padding: EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.xl,
-        AppSpacing.xl2,
-        AppSpacing.xl,
-        AppSpacing.xl3 + MediaQuery.viewPaddingOf(context).bottom,
+        context.spacing.xl,
+        context.spacing.xl2,
+        context.spacing.xl,
+        context.spacing.xl3 + MediaQuery.viewPaddingOf(context).bottom,
       ),
       children: [
         Center(
@@ -49,7 +52,7 @@ class HomePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _HomeHeader(viewData: viewData),
-                const SizedBox(height: AppSpacing.xl2),
+                SizedBox(height: context.spacing.xl2),
                 _QuickActions(
                   columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
                   onOpenProfile: onOpenProfile,
@@ -57,9 +60,9 @@ class HomePage extends ConsumerWidget {
                   onOpenSettings: onOpenSettings,
                   onOpenLogin: onOpenLogin,
                 ),
-                const SizedBox(height: AppSpacing.xl2),
+                SizedBox(height: context.spacing.xl2),
                 _StatusSection(viewData: viewData, columns: columns),
-                const SizedBox(height: AppSpacing.xl2),
+                SizedBox(height: context.spacing.xl2),
                 _RecentActivity(viewData: viewData),
               ],
             ),
@@ -111,6 +114,8 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.home;
+    final minimumButtonHeight =
+        context.theme.buttonStyles.primary.md.contentStyle.constraints.minHeight;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -121,7 +126,10 @@ class _QuickActions extends StatelessWidget {
           crossAxisCount: columns,
           mainAxisSpacing: AppSpacing.md,
           crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: columns == 1 ? 5 : 3.4,
+          mainAxisExtent: math.max(
+            minimumButtonHeight,
+            context.appUnit.un(minimumButtonHeight),
+          ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -201,7 +209,7 @@ class _StatusSection extends StatelessWidget {
           crossAxisCount: columns,
           mainAxisSpacing: AppSpacing.md,
           crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: columns == 1 ? 2.4 : 1.4,
+          childAspectRatio: (columns == 1 ? 2.4 : 1.4) / context.appUnit.typographyScale,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [for (final status in viewData.statuses) _StatusCard(status: status)],

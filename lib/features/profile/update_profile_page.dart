@@ -169,10 +169,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
             controller: _scrollController,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xl,
-              AppSpacing.xl2,
-              AppSpacing.xl,
-              AppSpacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
+              context.spacing.xl,
+              context.spacing.xl2,
+              context.spacing.xl,
+              context.spacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
             ),
             children: [
               if (_isDirty) const SizedBox.shrink(key: ValueKey('profile-dirty-indicator')),
@@ -189,7 +189,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: form),
-                        const SizedBox(width: AppSpacing.xl2),
+                        SizedBox(width: context.spacing.xl2),
                         SizedBox(
                           width: 320,
                           child: _ProfilePreview(draft: _currentDraft),

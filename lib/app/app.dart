@@ -9,6 +9,7 @@ import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/motion/app_page_transitions.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
@@ -98,19 +99,29 @@ class _AppViewState extends ConsumerState<_AppView> {
       ),
       themeMode: _materialThemeMode(settings.themeMode),
       builder: (context, child) {
-        final activeTheme = Theme.of(context).brightness == Brightness.dark
-            ? darkTheme
-            : lightTheme;
-        return AppInputObserver(
-          child: FTheme(
-            data: activeTheme,
-            motion: const FThemeMotion(
-              duration: AppMotion.standard,
-              curve: AppMotion.standardCurve,
-            ),
-            child: FToaster(
-              child: FTooltipGroup(
-                child: child ?? const SizedBox.shrink(),
+        final activeTheme = ForuiThemeFactory.build(
+          brightness: Theme.of(context).brightness,
+          accent: settings.accent,
+          fontScale: settings.fontScale,
+          interactionPolicy: interactionPolicy,
+          responsiveFontScale: context.appUnit.typographyScale,
+        );
+
+        return Theme(
+          data: activeTheme.toApproximateMaterialTheme().copyWith(
+            pageTransitionsTheme: nativePageTransitionsTheme,
+          ),
+          child: AppInputObserver(
+            child: FTheme(
+              data: activeTheme,
+              motion: const FThemeMotion(
+                duration: AppMotion.standard,
+                curve: AppMotion.standardCurve,
+              ),
+              child: FToaster(
+                child: FTooltipGroup(
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
             ),
           ),
