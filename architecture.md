@@ -265,7 +265,7 @@ Files:
 - `test/goldens/README.md` — pinned baseline env (macOS 26.5, Flutter 3.44.7)
 
 Notes:
-- `just test` excludes goldens; goldens compare ONLY on macOS via `just test-goldens`; regenerate baselines with `--update-goldens` on the pinned runner. `test/goldens/baselines/` is currently empty — needs `--update-goldens` before first compare.
+- `just test` excludes goldens; goldens compare ONLY on macOS via `just test-goldens`; regenerate the 13 committed baselines with `--update-goldens` on the pinned runner and inspect every changed image.
 - Integration tests reuse `createApplication`; use `pumpAppFrames` (8 bounded frames), never `pumpAndSettle`; pass `--dart-define-from-file`. `resetTestSettings()` wipes settings keys before each run.
 - Keep analysis clean at `flutter analyze --fatal-infos`; keep generated code in sync (`just gen` + `just gen-check`); Flutter pinned to 3.44.7 in CI.
 
