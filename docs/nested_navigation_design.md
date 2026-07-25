@@ -53,19 +53,38 @@ These facts were confirmed against the pinned source
   the container contains stable branch navigator proxies whose element lifecycle
   retains each loaded branch's `Navigator` state (`route.dart:1561-1570`). An
   `AnimatedSwitcher` around only the active child would eventually unmount the
-  outgoing proxy and destroy that branch's route stack and scroll position. The
-  container must keep every proxy in one stable child list and animate visibility
-  without removing children.
+  outgoing proxy and dispose its `NavigatorState`, losing scroll offsets and
+  in-page widget state. (The route *stack* itself would be recovered from the
+  saved `_RestorableRouteMatchList`; the live state would not.) The container
+  must keep every proxy in one stable child list and animate visibility without
+  removing children. Reordering is safe — proxies are keyed `ObjectKey(branch)`
+  and branch navigators carry `GlobalKey`s — but this design keeps index order
+  fixed; see *Cross-fade shape and paint order*.
 - **`goBranch(index, {initialLocation = false})`** restores a previously visited
   branch's last stack, or goes to its root when `initialLocation: true`
   (`route.dart:1276`, impl `1522`) — exactly the reset-on-retap affordance.
 - **`shell.currentIndex` is correct on cold-start deep links** (e.g.
   `/settings/appearance` resolves to index 2), and `StatefulShellRoute.builder`
   receives the `StatefulNavigationShell` as its third argument (`route.dart:1011`).
-- **Branch persistence is not Flutter restoration.** `StatefulShellRoute` retains
-  loaded branch navigators for the lifetime of the live router without a
-  `restorationScopeId`. Process-death restoration remains deferred under the
-  project's existing restoration policy.
+- **Branch persistence is not Flutter restoration, and it is scoped to the
+  mounted shell — not the router.** `StatefulShellRoute` retains loaded branch
+  navigators without a `restorationScopeId`, but
+  `StatefulNavigationShellState.dispose` disposes every branch state
+  (`route.dart:1538-1545`). The shell unmounts whenever the route configuration
+  stops matching it, so any `go` to a top-level route resets **all** branch
+  stacks: onboarding, paywall, the five auth screens, and
+  `RouteErrorPage.onHome` (`app_router.dart:323`). Per-tab stacks therefore
+  survive tab switches and *pushed* overlays (`/profile/edit`, `/auth/login`
+  from settings) but not a full-screen flow entered with `go`. Process-death
+  restoration remains deferred under the project's existing restoration policy.
+- **`replace` does not preserve a page key when the target branch holds one
+  page.** `NavigatingType.replace` (`parser.dart:313-326`) removes the top match
+  and returns `newMatchList` verbatim if the remainder is empty, and
+  `_removeRouteMatchFromList` (`match.dart:756-770`) drops the enclosing
+  `ShellRouteMatch` once its submatch list empties. Declarative page keys are
+  `ValueKey(matchedPath)` (`match.dart:251`, `291`), so a key survives a
+  `replace` only when the matched path is unchanged. This governs the settings
+  branch policy below.
 
 ## Target design
 
@@ -102,6 +121,14 @@ StatefulShellRoute(
 )
 ```
 
+Two structural details in that sketch are load-bearing. Branch routes keep their
+existing **absolute** paths: `StatefulShellBranch` is not a `ShellRouteBase`, so
+go_router's path assertion treats branch routes as top-level and requires the
+leading `/`. And `goBranch(index, initialLocation: true)` resets to
+`StatefulShellBranch.defaultRoute`, the first `GoRoute` in the branch — so
+`settings` must stay listed before its two detail routes for reset-on-retap to
+land on `/settings`.
+
 ## Cross-fading branch container
 
 The custom container is the riskiest single piece. It lives in a new
@@ -113,9 +140,10 @@ The load-bearing invariants are:
 
 - **Keep every branch proxy mounted in stable order.** A
   `Stack(fit: StackFit.expand)` always contains every `children[i]`; switching
-  tabs never removes or reorders a proxy. An unvisited branch may still be a
-  lightweight proxy until go_router lazily creates its navigator, but every
-  loaded navigator remains mounted.
+  tabs never removes a proxy, and index order is held fixed so the child list is
+  trivially stable. An unvisited branch is a `SizedBox.shrink()` proxy until
+  go_router lazily creates its navigator (`route.dart:1656-1660`), so cold start
+  lays out one branch; every loaded navigator then remains mounted.
 - **Cross-fade both branches.** Each child is wrapped in `AnimatedOpacity` with
   opacity `1` for `currentIndex` and `0` otherwise, duration
   `AppMotion.standard`, and curve `AppMotion.standardCurve`. The outgoing opacity
@@ -130,8 +158,13 @@ The load-bearing invariants are:
   from the first supplied opacity, so the initial current branch—including a
   deep-linked settings page—appears immediately.
 - **Rapid switches retarget from current opacity.** Implicit opacity animations
-  naturally retarget A→B→C without manually tracking a previous index, exposing a
-  stale branch, or resetting an `AnimationController`.
+  naturally retarget A→B→C without manually tracking a previous index or
+  resetting an `AnimationController`: `AnimatedOpacity` rebases its tween
+  `begin` to the current value and restarts. The guaranteed property is that no
+  stale branch is ever *fully* revealed — not that none is visible. Mid-retarget
+  the opacities no longer sum to `1` (A still falling, B reversing from a partial
+  value, C rising from `0`), so three branches are briefly painted at partial
+  opacity. Accepted; see *Cross-fade shape and paint order*.
 - **Honor reduce motion.** When `MediaQuery.disableAnimationsOf(context)` is
   true, every wrapper receives `Duration.zero`; the new branch is visible and
   interactive in the same frame. This follows the custom-animation guardrail
@@ -194,6 +227,35 @@ class _CrossFadingBranchContainer extends StatelessWidget {
 }
 ```
 
+### Cross-fade shape and paint order
+
+Two consequences of the fixed-order `Stack` are accepted deliberately rather than
+solved, and they bound what the transition can claim.
+
+**Paint order is branch index order, not switch order.** Settings→Home paints the
+*outgoing* branch on top of the incoming one; Home→Settings paints the *incoming*
+on top. The transition therefore reads slightly differently by direction, which
+is a weaker version of the directional cue this change removes. Making the
+incoming branch always paint last would require reordering the (keyed, therefore
+reorder-safe) children, at the cost of the trivially stable child list above.
+
+**Both branches' content composites mid-fade.** Product pages here paint no
+background of their own; `FScaffold` supplies the only opaque fill
+(`ColoredBox`, forui `scaffold.dart`) *below* the whole stack. With complementary
+opacities the composite is
+`a_out·out + (1 − a_out)·a_in·in + a_in·(1 − a_in)·bg`, so both pages' cards and
+text are visible at once with up to 25% scaffold bleed at the 50/50 point. This
+is the opposite of the principle `CrossFadePageTransitionsBuilder` documents for
+per-route transitions (`app_page_transitions.dart`): fade in over a still-opaque
+outgoing page, with no see-through gap. `AppMotion.standardCurve`
+(`easeOutCubic`) confines the overlap to roughly 60–70 ms of the 220 ms, which is
+judged acceptable for a non-directional tab swap.
+
+If the double exposure proves visible in review, the fix is a fade-through shape
+rather than reordering: fade the outgoing branch out over the first ~35% and the
+incoming branch in over the remainder, expressible as two `Interval` curves on
+the same duration. That is a follow-up, not part of this change.
+
 ## Cross-tab callback audit
 
 From a context below the stateful shell, `goNamed` or `pushNamed` to another
@@ -203,6 +265,8 @@ go through `goBranch`. A router-local helper captures the reset-on-retap behavio
 
 ```dart
 void _goTab(BuildContext context, int index) {
+  // Returns StatefulNavigationShellState (route.dart:1329), which owns both
+  // goBranch and currentIndex.
   final shell = StatefulNavigationShell.of(context);
   shell.goBranch(index, initialLocation: index == shell.currentIndex);
 }
@@ -220,10 +284,10 @@ The audit of current callbacks is:
 |---|---|---|
 | `home.onOpenPricing` (`:53`) | `goNamed(pricing)` | `_goTab(context, 1)` |
 | `home.onOpenSettings` (`:54`) | `goNamed(settings)` | `_goTab(context, 2)` |
-| `settings.onOpenPricing` (`:255`) | `pushNamed(pricing)` | `_goTab(context, 1)` |
-| `settings.onOpenAppearance` (`:248`) | `pushNamed(appearance)` | `_openSettingsDestination(appearance)` |
-| `settings.onOpenLanguage` (`:249`) | `pushNamed(language)` | `_openSettingsDestination(language)` |
-| `_openSettingsSection` account/subscription/privacyAbout (`:268`) | `pushNamed(settings, ?section=)` | delegates to `_openSettingsDestination(settings, ?section=)` |
+| `settings.onOpenPricing` (`:255`) | `pushNamed(pricing)` | `_goTab(context, 1)` — see the Back note below |
+| `settings.onOpenAppearance` (`:248`) | `pushNamed(appearance)` | `_openSettingsSection(appearance)` |
+| `settings.onOpenLanguage` (`:249`) | `pushNamed(language)` | `_openSettingsSection(language)` |
+| `_openSettingsSection` account/subscription/privacyAbout (`:268`) | `pushNamed(settings, ?section=)` | layout-aware `_openSettingsSection` below |
 | `home`/`settings` `onOpenProfile`, `onOpenLogin` (`:55`, `:253-254`) | `pushNamed(updateProfile\|login)` | unchanged — top-level root-navigator push |
 | Onboarding/paywall/auth success callbacks to Home | `goNamed(home)` | unchanged — caller is outside the shell |
 | `RouteErrorPage.onHome` (`:323`) | `goNamed(home)` | unchanged — must work without a shell ancestor |
@@ -231,53 +295,104 @@ The audit of current callbacks is:
 ### Settings branch navigation policy
 
 The settings branch intentionally distinguishes compact drill-in navigation from
-wide pane selection:
+wide pane selection. The two layouts use **different targets for the same
+section**, and that asymmetry is what makes the no-transition property real:
 
-- **Compact:** opening a section from `/settings` uses `pushNamed`, so system Back
-  returns to the overview. A direct cold-start `/settings/appearance` retains the
-  current behavior: no synthetic overview page is inserted below it.
-- **Medium and expanded:** selecting a section uses `replaceNamed`, which keeps
-  one section page at the top of the settings branch, reuses its page key, and
-  runs no directional page transition. Repeatedly selecting the exact current
-  path and query is a no-op.
+- **Compact:** opening a section from `/settings` pushes the section's dedicated
+  path (`/settings/appearance`, `/settings/language`) or `/settings?section=…`
+  for the three query-only sections, so system Back returns to the overview. A
+  direct cold-start `/settings/appearance` retains the current behavior: no
+  synthetic overview page is inserted below it.
+- **Medium and expanded:** selecting *any* of the five sections replaces to
+  `/settings?section=<parameter>` — never to a dedicated `/settings/*` path. The
+  matched path stays `/settings`, so the declarative page key stays
+  `ValueKey('/settings')`, the page updates in place, and no route transition
+  runs. Repeatedly selecting the exact current path and query is a no-op.
 - **Resize:** navigation history is not synthesized or discarded merely because
   the layout changes. A section selected while wide therefore remains one page
   when resized to compact; a compact overview/detail stack remains a stack when
   resized wide.
 
-The router can implement this without changing `SettingsPage` callbacks. The
-callback context is below `AppLayoutScope`, so a helper reads the nearest
-`appLayoutClassProvider`, compares the current URI with the named target, then
-pushes or replaces:
+**Why wide selection must not target `/settings/appearance`.** Page keys are
+derived from the matched path, not the URI, so `/settings` and
+`/settings/appearance` can never share one; and when the branch holds a single
+page, `replace` discards the base match list entirely and returns a fresh
+declarative match (see *Verified go_router constraints*). Replacing to a
+dedicated path therefore runs the platform page transition — the Cupertino slide
+on iOS, the Material zoom on Android — on every tablet-width section selection,
+which is exactly the affordance this change exists to remove. It would also
+rebuild `_SettingsWideLayout` from scratch, violating the rule in
+`plans/initial_ui.md` that expanded navigation selects a detail pane *without
+changing feature state*. Replacing to `/settings?section=…` avoids both: from a
+single-page branch the degenerate path still yields page key
+`ValueKey('/settings')`, and from a compact overview/detail stack the imperative
+path reuses the pushed key and preserves the page beneath.
+
+This needs no new routes — `SettingsSection.tryParse` already accepts
+`appearance` and `language` (`settings_page.dart:27-36`), and `/settings` already
+reads `?section=` (`app_router.dart:83`) — and no change to `SettingsPage`
+callbacks. The callback context is below `AppLayoutScope`, so one helper reads
+the nearest `appLayoutClassProvider`, compares the current URI with the target,
+then pushes the compact target or replaces with the wide one:
 
 ```dart
-void _openSettingsDestination(
-  BuildContext context,
-  String name, {
-  Map<String, dynamic> queryParameters = const {},
-}) {
-  final target = Uri.parse(
-    context.namedLocation(name, queryParameters: queryParameters),
-  );
-  if (GoRouterState.of(context).uri == target) return;
+void _openSettingsSection(BuildContext context, SettingsSection section) {
+  // Compact drills into a dedicated path where one exists; wide always selects
+  // the pane in place via ?section=, keeping the /settings page key.
+  final (String name, Map<String, dynamic> queryParameters) = switch (section) {
+    SettingsSection.appearance => (AppRoutes.appearanceSettings, const {}),
+    SettingsSection.language => (AppRoutes.languageSettings, const {}),
+    _ => (AppRoutes.settings, {'section': section.parameter}),
+  };
 
   final layoutClass = ProviderScope.containerOf(
     context,
+    listen: false,
   ).read(appLayoutClassProvider);
 
   if (layoutClass == AppLayoutClass.compact) {
-    unawaited(
-      context.pushNamed<void>(
-        name,
-        queryParameters: queryParameters,
-      ),
+    final target = Uri.parse(
+      context.namedLocation(name, queryParameters: queryParameters),
     );
+    if (GoRouterState.of(context).uri == target) return;
+    unawaited(context.pushNamed<void>(name, queryParameters: queryParameters));
     return;
   }
 
-  context.replaceNamed(name, queryParameters: queryParameters);
+  final wideTarget = Uri.parse(
+    context.namedLocation(
+      AppRoutes.settings,
+      queryParameters: {'section': section.parameter},
+    ),
+  );
+  if (GoRouterState.of(context).uri == wideTarget) return;
+  context.replaceNamed(
+    AppRoutes.settings,
+    queryParameters: {'section': section.parameter},
+  );
 }
 ```
+
+`ProviderScope.containerOf` passes `listen: false`: the call happens in a tap
+callback, and the default would register an inherited-widget dependency outside
+build.
+
+### System Back edges that change
+
+Two Back behaviors change and are accepted:
+
+- **`settings.onOpenPricing` stops being reversible.** It becomes a branch
+  selection, so system Back from Pricing no longer returns to
+  `/settings?section=subscription`; on Android it leaves the shell. Recovery is
+  by retapping the Settings tab, which restores the branch's saved stack — so
+  reset-on-retap is load-bearing for recovery here, not just a convenience. The
+  alternative (keeping `pushNamed`) would put a second tab's root page on the
+  settings branch, which is the abstraction error this section rejects.
+- **A single-page settings detail has no in-app back affordance.**
+  `SettingsPage` renders none in compact detail views, so a cold-start
+  `/settings/appearance` — or one left as a single page after a wide→compact
+  resize — is escapable only through the tab bar. This matches today's cold-start
+  behavior and is unchanged by the migration, but the resize path is new.
 
 ## Shell and router changes
 
@@ -291,18 +406,23 @@ void _openSettingsDestination(
   `compact-navigation`, `medium-shell`, `expanded-shell`, and `expanded-navigation`
   `ValueKey`s that tests depend on. The inner shells become go_router-agnostic;
   they are constructed only by `AppShell.build`, so this signature change is
-  internal.
-- **`lib/app/shell/app_shell.dart`.** The constructor becomes
-  `AppShell({required StatefulNavigationShell navigationShell, super.key})`;
-  `_selectedIndex` becomes `navigationShell.currentIndex`; `build` renders the
-  shell as the body and passes `selectedIndex` plus an `onSelectTab` closure that
-  calls `goBranch` with reset-on-retap. A new `AppShell.preview({required Widget
-  child})` factory performs the same adaptive layout dispatch with a no-op tab
-  callback for the dev-gallery chrome preview.
+  internal. This also removes a latent coupling: both shells currently call
+  `context.goNamed` directly, so the existing gallery chrome preview would throw
+  if anything tapped its navigation.
+- **`lib/app/shell/app_shell.dart`.** `AppShell` keeps two private fields — a
+  nullable `StatefulNavigationShell? navigationShell` and a `Widget child` — with
+  two constructors over them, because the preview has no shell to read. The
+  default `AppShell({required StatefulNavigationShell navigationShell,
+  super.key})` sets `child` to that shell, derives `selectedIndex` from
+  `navigationShell.currentIndex`, and passes an `onSelectTab` closure calling
+  `goBranch` with reset-on-retap. `AppShell.preview({required Widget child})`
+  leaves `navigationShell` null, pins `selectedIndex` to `0` — matching the
+  index that today's `location: '/home'` preview falls through to — and supplies
+  a no-op tab callback. Both run the same adaptive layout dispatch.
 - **`lib/app/routing/app_router.dart`.** The `ShellRoute` block becomes the
   `StatefulShellRoute` block above; the three cross-tab callbacks move to
-  `_goTab`. `_settingsPage` and `_openSettingsSection` use the layout-aware
-  `_openSettingsDestination` policy above. Top-level routes,
+  `_goTab`. `_settingsPage` routes all five section callbacks through the
+  layout-aware `_openSettingsSection` above. Top-level routes,
   `developmentToolsEnabled` gating, `errorBuilder`, and
   `_showInformationDialog` are unchanged, and `buildAppRouter`'s signature is
   unchanged so `initialLocation` deep links still resolve into a branch.
@@ -316,8 +436,10 @@ persistence does not activate the separately deferred Flutter restoration work.
 ## Contracts preserved and test impact
 
 The frozen contracts in `plans/feature_contracts.md` are respected: no
-`AppRoutes` constant, `otpLocation`, `OtpPurpose`, navigation callback signature,
-shell `ValueKey`, or the `0/1/2` index contract changes, and the const
+`AppRoutes` constant, `otpLocation`, `OtpPurpose`, or navigation callback
+signature changes. The shell `ValueKey`s and the `0/1/2` index contract are held
+too, though those are documented under `shell-adaptive-layout` in
+`architecture.md` rather than in `feature_contracts.md`. The const
 `nativePageTransitionsTheme` platform map stays exactly as pinned by
 `test/shared/motion/app_page_transitions_test.dart`.
 
@@ -326,8 +448,23 @@ and branch transitions do not touch the const map or isolated builder),
 `app_router_test.dart` (all fourteen production paths and their direct-entry
 history remain unchanged), `static_navigation_test.dart` (it asserts destination
 state, not transitions), `motion_and_contrast_test.dart` (a gallery case, no
-router), and both integration tests, which use bounded `pumpAppFrames` and never
-`pumpAndSettle`, so a 220 ms fade cannot hang them.
+router), `settings_page_test.dart` (its section hops stay compact pushes, and its
+one wide case is a cold-start deep link), and both integration tests, whose
+`pumpAppFrames` advances 8 × 100 ms — far past a 220 ms fade, so it cannot hang
+them. The golden matrix is unaffected because its harness pumps gallery fixtures
+through `PreviewFrame`, never `AppShell`.
+
+Tests that keep passing while behavior changes, and therefore need a new
+assertion rather than trust:
+
+- `settings_page_test.dart` taps `settings-view-pricing` and asserts only that
+  Pricing renders. It will keep passing after that hop becomes a branch switch,
+  silently losing the Back edge described above.
+- `development_smoke_test.dart` navigates exclusively through
+  `GoRouter.of(rootContext).go(...)`, so after this change the only place the real
+  production composition runs on a device exercises no `goBranch` and no
+  container code — and `just watch` shows none of it. Add one
+  `tapVisible(ValueKey('compact-navigation'))` hop.
 
 One forced edit: `test/hardening/responsive/responsive_environment_test.dart:388`
 constructs `AppShell(location: '/home', child: page)` for the gallery chrome
@@ -343,7 +480,12 @@ Existing contracts that must be explicitly re-verified during implementation:
 - Home quick actions switch branches through `goBranch`; auth and error recovery
   still reach Home through `goNamed` from outside the shell.
 - Compact settings pushes details and returns to its overview, while wide
-  settings replaces sections without duplicate history or route animation.
+  settings replaces sections without duplicate history or route animation. The
+  wide case must assert *no* route animation explicitly — a regression to a
+  dedicated `/settings/*` target would reintroduce one silently.
+- Leaving the shell with `go` (onboarding, auth, paywall, error recovery to Home)
+  resets every branch stack, while a `pushNamed` overlay preserves them. Both
+  halves need a test so the distinction is not mistaken for a bug later.
 
 New coverage is required because the canonical golden harness renders gallery
 pages directly rather than through `AppShell`; its existing thirteen baseline
@@ -354,15 +496,20 @@ images cannot exercise branch navigation:
    both be non-offstage and have complementary opacity; inactive branches remain
    mounted but have pointer, focus, semantics, and tickers disabled.
 2. The same test must cover `disableAnimations`, verify an immediate swap, and
-   retarget A→B→C before the first fade settles.
+   retarget A→B→C before the first fade settles — asserting that the destination
+   branch reaches opacity `1` and that no earlier branch is ever fully opaque,
+   not that only two branches are painted.
 3. A real-`App` test must push `settings → appearance`, mutate observable widget
    or scroll state, switch to Pricing, settle, switch back to Settings, and assert
    the appearance route and state survived.
 4. The real-`App` test must retap the active Settings destination, assert a reset
    to `/settings`, and verify the system Back contract.
-5. Router tests must cover compact push versus wide replace, duplicate-selection
-   no-op, direct deep-link Back behavior, top-level overlay placement, and pushed
-   error-page recovery.
+5. Router tests must cover compact push versus wide `?section=` replace (asserting
+   the wide path keeps one page and runs no route animation),
+   duplicate-selection no-op, direct deep-link Back behavior, top-level overlay
+   placement, and pushed error-page recovery.
+6. A test must pin the shell-lifetime boundary: `go` to a top-level flow and back
+   resets branch stacks, while a pushed overlay preserves them.
 
 ## Recorded-decision update
 
@@ -397,10 +544,14 @@ just smoke macos
 just test-prod-routes macos
 ```
 
-A visual check with `just watch 2.5` should confirm that tab switches cross-fade on
-mobile with no slide or blank frame; tapping Settings after
+A visual check with `just watch 2.5` should confirm that tab switches cross-fade
+on mobile with no slide; tapping Settings after
 `settings → appearance → pricing` restores Appearance; tapping Settings again
-resets it to the settings root; rapid tab taps never reveal a stale branch.
+resets it to the settings root; rapid tab taps never leave a stale branch fully
+opaque. Because slow motion exaggerates it, review the mid-fade double exposure
+described under *Cross-fade shape and paint order* at `just watch 1` before
+judging it — at 2.5× the overlap is ~170 ms rather than ~65 ms. Also check a
+tablet-width window: selecting settings sections there must not slide or zoom.
 
 ## Risks
 
@@ -413,9 +564,23 @@ resets it to the settings root; rapid tab taps never reveal a stale branch.
   is “select another tab” move to `goBranch`. Top-level onboarding, auth, paywall,
   and error-recovery actions must keep named location navigation because they
   have no shell ancestor.
-- **Settings history depends on layout.** Compact pushes and wide layouts replace.
-  The route-aware no-op and breakpoint-resize tests prevent duplicate stacks and
-  accidental history synthesis.
+- **Settings history depends on layout, and so does the target.** Compact pushes
+  a dedicated path; wide replaces to `/settings?section=`. Retargeting the wide
+  case to a `/settings/*` path is a silent regression — it reinstates the
+  platform page transition and rebuilds the pane — so the no-animation assertion
+  is the guard, not review. The route-aware no-op and breakpoint-resize tests
+  prevent duplicate stacks and accidental history synthesis.
+- **Branch stacks are shell-scoped, not session-scoped.** Any `go` to a
+  full-screen flow unmounts the shell and clears every branch. This is inherent
+  to `StatefulShellRoute` and out of scope to change; it only needs to be
+  understood so a later report of "settings lost its stack after logging in"
+  is recognized as expected.
+- **Tab switching changes web history semantics.** `goBranch` into an
+  already-visited branch reports with `neglect`, so it replaces the browser entry
+  instead of pushing one; a first visit still pushes. Browser Back therefore
+  becomes asymmetric across tabs, where today every switch is a `goNamed` that
+  pushes. Accepted — web is an optional target — but it is a real change if
+  `just build web` output is ever shipped.
 - **All branch children remain laid out.** Opacity zero prevents painting and
   `TickerMode` stops animations, but the fixed stack still incurs layout cost for
   loaded branches. Keep the three-branch scope and profile before adding preload
