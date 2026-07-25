@@ -100,7 +100,7 @@ test-server contract together, with the real impl as the final optional step.
 | Port | Owner | Readers |
 |---|---|---|
 | `ConnectivityService` | `lib/infrastructure/connectivity/` | connectivity banner, offline-cache |
-| Remote-config family | `lib/infrastructure/feature_flags/` | feature-flags, update-blocker (`VersionGateStore`), ab-experiments |
+| Remote-config family | feature-owned typed ports (`lib/features/{feature_flags,force_update,experiments}/`) + shared adapter `lib/infrastructure/remote_config/` | feature-flags (`FeatureFlagsSource`), update-blocker (`VersionGateStore`), ab-experiments (`ExperimentSource`) |
 | `SecureStore` | `lib/infrastructure/secure_storage/` | session (refresh token), pin-autolock, biometric, analytics opt-in |
 | `CrashReporter` | `lib/infrastructure/error_reporting/` | bootstrap `_installErrorHandlers` |
 | `AnalyticsClient` | `lib/infrastructure/analytics/` | `GoRouter` `observers:` |
