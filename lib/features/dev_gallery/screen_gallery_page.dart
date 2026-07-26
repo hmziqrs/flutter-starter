@@ -68,84 +68,92 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final controls = _GalleryControls(
-          cases: widget.cases,
-          environment: _environment,
-          query: _query,
-          selectedScreenId: _selectedScreenId,
-          selectedCaseId: _selectedCaseId,
-          onQueryChanged: (query) => setState(() => _query = query),
-          onScreenSelected: _selectScreen,
-          onCaseSelected: (id) => setState(() => _selectedCaseId = id),
-          onEnvironmentChanged: _setEnvironment,
-          onReset: _resetEnvironment,
-        );
-        final preview = _GalleryPreview(
-          environment: _environment,
-          galleryCase: _selectedCase,
-        );
+    return FScaffold(
+      childPad: false,
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final controls = _GalleryControls(
+              cases: widget.cases,
+              environment: _environment,
+              query: _query,
+              selectedScreenId: _selectedScreenId,
+              selectedCaseId: _selectedCaseId,
+              onQueryChanged: (query) => setState(() => _query = query),
+              onScreenSelected: _selectScreen,
+              onCaseSelected: (id) => setState(() => _selectedCaseId = id),
+              onEnvironmentChanged: _setEnvironment,
+              onReset: _resetEnvironment,
+            );
+            final preview = _GalleryPreview(
+              environment: _environment,
+              galleryCase: _selectedCase,
+            );
 
-        if (constraints.maxWidth < context.theme.breakpoints.lg) {
-          final previewHeight = (constraints.maxHeight * 0.52).clamp(320, 640).toDouble();
-          return Column(
-            key: const ValueKey('gallery-compact-layout'),
-            children: [
-              Expanded(
-                child: ListView(
-                  key: const ValueKey('gallery-controls-scroll'),
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  children: [
-                    Text(
-                      translations.devGallery.title,
-                      style: context.theme.typography.display.xl2,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    controls,
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: previewHeight,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: preview,
-                ),
-              ),
-            ],
-          );
-        }
-
-        return Row(
-          key: const ValueKey('gallery-expanded-layout'),
-          children: [
-            SizedBox(
-              width: 360,
-              child: ListView(
-                key: const ValueKey('gallery-controls-scroll'),
-                padding: const EdgeInsets.all(AppSpacing.lg),
+            if (constraints.maxWidth < context.theme.breakpoints.lg) {
+              final previewHeight = (constraints.maxHeight * 0.52).clamp(320, 640).toDouble();
+              return Column(
+                key: const ValueKey('gallery-compact-layout'),
                 children: [
-                  Text(translations.devGallery.title, style: context.theme.typography.display.xl2),
-                  const SizedBox(height: AppSpacing.lg),
-                  controls,
+                  Expanded(
+                    child: ListView(
+                      key: const ValueKey('gallery-controls-scroll'),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      children: [
+                        Text(
+                          translations.devGallery.title,
+                          style: context.theme.typography.display.xl2,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        controls,
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: previewHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: preview,
+                    ),
+                  ),
                 ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  top: AppSpacing.lg,
-                  end: AppSpacing.lg,
-                  bottom: AppSpacing.lg,
+              );
+            }
+
+            return Row(
+              key: const ValueKey('gallery-expanded-layout'),
+              children: [
+                SizedBox(
+                  width: 360,
+                  child: ListView(
+                    key: const ValueKey('gallery-controls-scroll'),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    children: [
+                      Text(
+                        translations.devGallery.title,
+                        style: context.theme.typography.display.xl2,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      controls,
+                    ],
+                  ),
                 ),
-                child: preview,
-              ),
-            ),
-          ],
-        );
-      },
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      top: AppSpacing.lg,
+                      end: AppSpacing.lg,
+                      bottom: AppSpacing.lg,
+                    ),
+                    child: preview,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 

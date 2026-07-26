@@ -19,6 +19,13 @@ void main() {
     expect(find.byKey(const ValueKey('settings-open-account')), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-open-subscription')), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-open-privacy-about')), findsOneWidget);
+    final appearanceBounds = tester.getRect(
+      find.byKey(const ValueKey('settings-open-appearance')),
+    );
+    final languageBounds = tester.getRect(
+      find.byKey(const ValueKey('settings-open-language')),
+    );
+    expect(languageBounds.top, greaterThan(appearanceBounds.bottom));
 
     await tester.tap(find.byKey(const ValueKey('settings-open-account')));
     await tester.pumpAndSettle();

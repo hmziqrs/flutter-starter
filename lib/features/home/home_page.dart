@@ -36,39 +36,41 @@ class HomePage extends ConsumerWidget {
       AppLayoutClass.expanded => 3,
     };
 
-    return ListView(
-      key: ValueKey('home-layout-${layoutClass.name}'),
-      padding: EdgeInsetsDirectional.fromSTEB(
-        context.spacing.xl,
-        context.spacing.xl2,
-        context.spacing.xl,
-        context.spacing.xl3 + MediaQuery.viewPaddingOf(context).bottom,
-      ),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _HomeHeader(viewData: viewData),
-                SizedBox(height: context.spacing.xl2),
-                _QuickActions(
-                  columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
-                  onOpenProfile: onOpenProfile,
-                  onOpenPricing: onOpenPricing,
-                  onOpenSettings: onOpenSettings,
-                  onOpenLogin: onOpenLogin,
-                ),
-                SizedBox(height: context.spacing.xl2),
-                _StatusSection(viewData: viewData, columns: columns),
-                SizedBox(height: context.spacing.xl2),
-                _RecentActivity(viewData: viewData),
-              ],
+    return SafeArea(
+      child: ListView(
+        key: ValueKey('home-layout-${layoutClass.name}'),
+        padding: EdgeInsetsDirectional.fromSTEB(
+          context.spacing.xl,
+          context.spacing.xl,
+          context.spacing.xl,
+          context.spacing.xl2,
+        ),
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _HomeHeader(viewData: viewData),
+                  SizedBox(height: context.spacing.xl),
+                  _QuickActions(
+                    columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
+                    onOpenProfile: onOpenProfile,
+                    onOpenPricing: onOpenPricing,
+                    onOpenSettings: onOpenSettings,
+                    onOpenLogin: onOpenLogin,
+                  ),
+                  SizedBox(height: context.spacing.xl),
+                  _StatusSection(viewData: viewData, columns: columns),
+                  SizedBox(height: context.spacing.xl),
+                  _RecentActivity(viewData: viewData),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -120,7 +122,7 @@ class _QuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(translations.quickActions, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         GridView.count(
           key: ValueKey('home-quick-actions-$columns'),
           crossAxisCount: columns,
@@ -203,16 +205,24 @@ class _StatusSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(context.t.home.statusTitle, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.md),
-        GridView.count(
-          key: ValueKey('home-status-grid-$columns'),
-          crossAxisCount: columns,
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: (columns == 1 ? 2.4 : 1.4) / context.appUnit.typographyScale,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [for (final status in viewData.statuses) _StatusCard(status: status)],
+        const SizedBox(height: AppSpacing.sm),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final gaps = AppSpacing.md * (columns - 1);
+            final cardWidth = (constraints.maxWidth - gaps) / columns;
+            return Wrap(
+              key: ValueKey('home-status-grid-$columns'),
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              children: [
+                for (final status in viewData.statuses)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _StatusCard(status: status),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -238,7 +248,7 @@ class _StatusCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(content.title, style: context.theme.typography.display.md),
             const SizedBox(height: AppSpacing.sm),
-            Flexible(child: Text(content.body, style: context.theme.typography.body.sm)),
+            Text(content.body, style: context.theme.typography.body.sm),
           ],
         ),
       ),
@@ -258,7 +268,7 @@ class _RecentActivity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(translations.recentTitle, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         if (!viewData.hasRecentActivity)
           FCard(
             key: const ValueKey('home-activity-empty'),
@@ -278,13 +288,14 @@ class _RecentActivity extends StatelessWidget {
             ),
           )
         else
-          FCard(
+          Column(
             key: const ValueKey('home-activity-list'),
-            child: Column(
-              children: [
-                for (final activity in viewData.recentActivity) _ActivityTile(activity: activity),
+            children: [
+              for (var index = 0; index < viewData.recentActivity.length; index++) ...[
+                if (index > 0) const SizedBox(height: AppSpacing.sm),
+                _ActivityTile(activity: viewData.recentActivity[index]),
               ],
-            ),
+            ],
           ),
       ],
     );

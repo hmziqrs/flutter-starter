@@ -157,49 +157,54 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           onSave: _submit,
         );
 
-        return PopScope<void>(
-          canPop: !_isDirty || _discarding,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop && _isDirty) {
-              unawaited(_showDiscardDialog());
-            }
-          },
-          child: ListView(
-            key: ValueKey('profile-layout-${layoutClass.name}'),
-            controller: _scrollController,
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsetsDirectional.fromSTEB(
-              context.spacing.xl,
-              context.spacing.xl2,
-              context.spacing.xl,
-              context.spacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
-            ),
-            children: [
-              if (_isDirty) const SizedBox.shrink(key: ValueKey('profile-dirty-indicator')),
-              Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: layoutClass == AppLayoutClass.expanded
-                        ? AppSizes.wideContentMaxWidth
-                        : AppSizes.formContentMaxWidth,
-                  ),
-                  child: switch (layoutClass) {
-                    AppLayoutClass.compact || AppLayoutClass.medium => form,
-                    AppLayoutClass.expanded => Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: form),
-                        SizedBox(width: context.spacing.xl2),
-                        SizedBox(
-                          width: 320,
-                          child: _ProfilePreview(draft: _currentDraft),
-                        ),
-                      ],
-                    ),
-                  },
+        return FScaffold(
+          childPad: false,
+          child: PopScope<void>(
+            canPop: !_isDirty || _discarding,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop && _isDirty) {
+                unawaited(_showDiscardDialog());
+              }
+            },
+            child: SafeArea(
+              child: ListView(
+                key: ValueKey('profile-layout-${layoutClass.name}'),
+                controller: _scrollController,
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  context.spacing.xl,
+                  context.spacing.xl,
+                  context.spacing.xl,
+                  context.spacing.xl2 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
+                children: [
+                  if (_isDirty) const SizedBox.shrink(key: ValueKey('profile-dirty-indicator')),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: layoutClass == AppLayoutClass.expanded
+                            ? AppSizes.wideContentMaxWidth
+                            : AppSizes.formContentMaxWidth,
+                      ),
+                      child: switch (layoutClass) {
+                        AppLayoutClass.compact || AppLayoutClass.medium => form,
+                        AppLayoutClass.expanded => Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: form),
+                            SizedBox(width: context.spacing.xl2),
+                            SizedBox(
+                              width: 320,
+                              child: _ProfilePreview(draft: _currentDraft),
+                            ),
+                          ],
+                        ),
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

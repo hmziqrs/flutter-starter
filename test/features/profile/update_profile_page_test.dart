@@ -28,6 +28,25 @@ void main() {
     expect(feedbackCount, 1);
   });
 
+  testWidgets('paints an opaque page surface and respects device insets', (tester) async {
+    const safePadding = EdgeInsets.only(top: 59, bottom: 34);
+    await _pumpProfile(
+      tester,
+      safePadding: safePadding,
+      page: const UpdateProfilePage(
+        initialDraft: ProfileDraft.defaults(),
+        onSave: _noopSave,
+        onAvatarFeedback: _noop,
+      ),
+    );
+
+    expect(find.byType(FScaffold), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Update profile')).dy,
+      greaterThan(safePadding.top),
+    );
+  });
+
   testWidgets('invalid submit focuses and reveals the first visual error', (tester) async {
     await _pumpProfile(
       tester,
@@ -202,6 +221,7 @@ Future<void> _pumpProfile(
   required UpdateProfilePage page,
   Size size = const Size(390, 900),
   bool settle = true,
+  EdgeInsets safePadding = EdgeInsets.zero,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -230,9 +250,15 @@ Future<void> _pumpProfile(
         localizationsDelegates: FLocalizations.localizationsDelegates,
         theme: theme.toApproximateMaterialTheme(),
         builder: (context, child) {
-          return FTheme(
-            data: theme,
-            child: child ?? const SizedBox.shrink(),
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: safePadding,
+              viewPadding: safePadding,
+            ),
+            child: FTheme(
+              data: theme,
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         },
       ),
