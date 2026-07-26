@@ -20,7 +20,7 @@ The architecture decisions live in [`plans/initial.md`](plans/initial.md), the s
 |---|---|---|
 | bootstrap-startup | Zone guard, error handlers, dependency graph, root App | `lib/bootstrap.dart` |
 | configuration-environments | Compile-time defines select env, gate logging/dev routes | `lib/app/config/app_config.dart` |
-| routing | go_router tree mapping AppRoutes to screens, one ShellRoute | `lib/app/routing/app_router.dart` |
+| routing | go_router tree mapping AppRoutes to screens, one StatefulShellRoute | `lib/app/routing/app_router.dart` |
 | state-settings | Handwritten Riverpod accent/fontScale/themeMode/locale | `lib/features/settings/settings_controller.dart` |
 | internationalization | slang v4 codegen: en + ar + zh-Hans via context.t | `lib/i18n/en.i18n.json` |
 | shell-adaptive-layout | AppShell picks compact/expanded nav by width | `lib/app/shell/app_shell.dart` |
@@ -70,7 +70,7 @@ Notes:
 
 #### routing
 
-**go_router tree mapping `AppRoutes` constants to screens behind one adaptive ShellRoute.**
+**go_router tree mapping `AppRoutes` constants to screens behind one adaptive StatefulShellRoute.**
 
 Files:
 - `lib/app/routing/app_router.dart` — buildAppRouter wires GoRoutes
@@ -78,11 +78,12 @@ Files:
 - `lib/app/routing/otp_purpose.dart` — OtpPurpose enum disambiguates OTP
 - `lib/app/routing/route_error_page.dart` — unknown-route fallback
 - `lib/app/shell/app_shell.dart` — adaptive shell dispatch
+- `lib/app/shell/cross_fading_branch_container.dart` — `StatefulShellRoute` navigator container builder (tab cross-fade)
 
 Notes:
 - Declare every route as paired name+path constants; navigate by name via `context.goNamed`/`pushNamed`; build parameterized paths via helpers like `AppRoutes.otpLocation(purpose)`.
-- Chrome-bearing destinations inside the ShellRoute; full-screen flows (auth, onboarding) top-level; gate dev routes behind `if (config.developmentToolsEnabled)` with `/dev/*` paths.
-- One ShellRoute builds `AppShell`, which switches compact/expanded internally (not separate branches); router is rebuilt, not reactive. `ProductionPageFactory<TState>` is a typedef in `lib/app/presentation/production_page_factory.dart`, not a class.
+- Chrome-bearing destinations live inside one `StatefulShellRoute` with three branches (home, pricing, settings) and a cross-fading navigator container builder (`crossFadingBranchContainer`); full-screen flows (auth, onboarding) are top-level; gate dev routes behind `if (config.developmentToolsEnabled)` with `/dev/*` paths.
+- Branch GoRoutes keep absolute paths (a `StatefulShellBranch` is not a `ShellRouteBase`); `settings` must precede its detail routes so reset-on-retap lands on `/settings`. In-shell tab switches go through `goBranch` with reset-on-retap (`initialLocation: index == shell.currentIndex`). Top-level flows (onboarding, paywall, auth, profile, route-error) stay siblings of the shell: a `go` to one unmounts the shell and resets every branch stack, while a `pushNamed` overlay preserves branch stacks. Router is rebuilt, not reactive. `ProductionPageFactory<TState>` is a typedef in `lib/app/presentation/production_page_factory.dart`, not a class.
 
 #### state-settings
 
@@ -126,8 +127,9 @@ Notes:
 **Adaptive nav chrome: AppShell picks a compact bottom-bar or expanded sidebar shell from width.**
 
 Files:
-- `lib/app/shell/app_shell.dart` — layout-dispatching ShellRoute builder
-- `lib/app/shell/compact_app_shell.dart` — compact bottom-nav shell
+- `lib/app/shell/app_shell.dart` — adaptive shell; takes a `StatefulNavigationShell` (or `AppShell.preview` for the dev gallery)
+- `lib/app/shell/cross_fading_branch_container.dart` — owns the `StatefulShellRoute` tab cross-fade
+- `lib/app/shell/compact_app_shell.dart` — compact bottom-nav shell (go_router-agnostic)
 - `lib/app/shell/expanded_app_shell.dart` — sidebar shell (reused for medium); uses `exui` `.paddingOnly` (sole exui call site)
 - `lib/shared/adaptive/app_layout_class.dart` — compact/medium/expanded enum + fromWidth
 - `lib/shared/adaptive/app_layout_provider.dart` — AppLayoutScope + provider
@@ -137,6 +139,8 @@ Files:
 
 Notes:
 - Derive layout only from width inside AppLayoutScope; never branch on platform. Read breakpoints from `context.theme.breakpoints` (`.sm` compactMax, `.lg` expandedMin).
+- `AppShell` is built two ways: the default `AppShell(navigationShell: shell)` from `StatefulShellRoute.builder`, and `AppShell.preview(child:)` for the dev gallery (which has no shell). It wraps `AppLayoutScope` and passes `selectedIndex`, `child`, and an `onSelectTab(int)` callback down; `onSelectTab` is wired to `goBranch` with reset-on-retap. The 0/1/2 index contract (0=home,1=pricing,2=settings) is unchanged.
+- `CompactAppShell`/`ExpandedAppShell` are go_router-agnostic: they switch tabs only through `onSelectTab(int)` and no longer import `go_router`/`app_routes`. `cross_fading_branch_container.dart` owns the tab cross-fade — it keeps every branch proxy mounted in stable order, fades both branches, and leaves only the current branch interactive/focusable/semantic/ticking; it honors `MediaQuery.disableAnimationsOf` (`Duration.zero`).
 - `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
 - `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells + the `_selectedIndex` prefix map (0=home,1=pricing,2=settings).
 - Interaction policy is input-only and monotonic; `interactionPolicyOverrideProvider` is the deterministic test/dev hook; reading `appLayoutClassProvider` outside AppLayoutScope throws.

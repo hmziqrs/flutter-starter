@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
@@ -37,6 +38,20 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-view-pricing')));
     await tester.pumpAndSettle();
     expect(find.text('Plans for the way you work'), findsOneWidget);
+
+    // Pricing opens as a sibling branch, so system Back no longer returns to
+    // the subscription section. Retapping the Settings bottom-nav must restore
+    // the saved settings stack via reset-on-retap (goBranch without
+    // initialLocation), surfacing the subscription section's pricing affordance
+    // again.
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('compact-navigation')),
+        matching: find.byIcon(FLucideIcons.settings),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('settings-view-pricing')), findsOneWidget);
 
     await tester.pumpWidget(_app(initialLocation: '/settings?section=privacy-about'));
     await tester.pumpAndSettle();

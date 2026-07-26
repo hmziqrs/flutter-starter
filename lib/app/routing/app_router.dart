@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/config/app_config.dart';
@@ -9,6 +10,7 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/app/routing/route_error_page.dart';
 import 'package:starter/app/shell/app_shell.dart';
+import 'package:starter/app/shell/cross_fading_branch_container.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
@@ -28,6 +30,8 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/shared/adaptive/app_layout_class.dart';
+import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
@@ -38,60 +42,70 @@ GoRouter buildAppRouter({
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      ShellRoute(
-        builder: (context, state, child) => AppShell(
-          location: state.uri.path,
-          child: child,
-        ),
-        routes: [
-          GoRoute(
-            name: AppRoutes.home,
-            path: AppRoutes.homePath,
-            builder: (context, state) => HomePage(
-              viewData: HomeViewData.defaults(),
-              onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
-              onOpenPricing: () => context.goNamed(AppRoutes.pricing),
-              onOpenSettings: () => context.goNamed(AppRoutes.settings),
-              onOpenLogin: () => context.pushNamed(AppRoutes.login),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.pricing,
-            path: AppRoutes.pricingPath,
-            builder: (context, state) => PricingPage(
-              plans: PricingFixtures.standard(context.t),
-              onSelectPlan: (plan, _) => _showInformationDialog(
-                context,
-                title: context.t.pricing.choosePlan(plan: plan.name),
-                body: context.t.pricing.staticPurchaseNotice,
+      StatefulShellRoute(
+        builder: (context, state, shell) => AppShell(navigationShell: shell),
+        navigatorContainerBuilder: crossFadingBranchContainer,
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.home,
+                path: AppRoutes.homePath,
+                builder: (context, state) => HomePage(
+                  viewData: HomeViewData.defaults(),
+                  onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
+                  onOpenPricing: () => _goTab(context, 1),
+                  onOpenSettings: () => _goTab(context, 2),
+                  onOpenLogin: () => context.pushNamed(AppRoutes.login),
+                ),
               ),
-              onOpenTerms: () => _showInformationDialog(
-                context,
-                title: context.t.pricing.terms,
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.pricing,
+                path: AppRoutes.pricingPath,
+                builder: (context, state) => PricingPage(
+                  plans: PricingFixtures.standard(context.t),
+                  onSelectPlan: (plan, _) => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.choosePlan(plan: plan.name),
+                    body: context.t.pricing.staticPurchaseNotice,
+                  ),
+                  onOpenTerms: () => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.terms,
+                  ),
+                  onOpenPrivacy: () => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.privacy,
+                  ),
+                ),
               ),
-              onOpenPrivacy: () => _showInformationDialog(
-                context,
-                title: context.t.pricing.privacy,
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.settings,
+                path: AppRoutes.settingsPath,
+                builder: (context, state) => _settingsPage(
+                  context,
+                  SettingsSection.tryParse(state.uri.queryParameters['section']),
+                ),
               ),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.settings,
-            path: AppRoutes.settingsPath,
-            builder: (context, state) => _settingsPage(
-              context,
-              SettingsSection.tryParse(state.uri.queryParameters['section']),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.appearanceSettings,
-            path: AppRoutes.appearanceSettingsPath,
-            builder: (context, state) => _settingsPage(context, SettingsSection.appearance),
-          ),
-          GoRoute(
-            name: AppRoutes.languageSettings,
-            path: AppRoutes.languageSettingsPath,
-            builder: (context, state) => _settingsPage(context, SettingsSection.language),
+              GoRoute(
+                name: AppRoutes.appearanceSettings,
+                path: AppRoutes.appearanceSettingsPath,
+                builder: (context, state) => _settingsPage(context, SettingsSection.appearance),
+              ),
+              GoRoute(
+                name: AppRoutes.languageSettings,
+                path: AppRoutes.languageSettingsPath,
+                builder: (context, state) => _settingsPage(context, SettingsSection.language),
+              ),
+            ],
           ),
         ],
       ),
@@ -245,14 +259,14 @@ const _passwordResetComplete = 'password-reset-complete';
 SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
   return SettingsPage(
     section: section,
-    onOpenAppearance: () => context.pushNamed(AppRoutes.appearanceSettings),
-    onOpenLanguage: () => context.pushNamed(AppRoutes.languageSettings),
+    onOpenAppearance: () => _openSettingsSection(context, SettingsSection.appearance),
+    onOpenLanguage: () => _openSettingsSection(context, SettingsSection.language),
     onOpenAccount: () => _openSettingsSection(context, SettingsSection.account),
     onOpenSubscription: () => _openSettingsSection(context, SettingsSection.subscription),
     onOpenPrivacyAbout: () => _openSettingsSection(context, SettingsSection.privacyAbout),
     onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
     onOpenLogin: () => context.pushNamed(AppRoutes.login),
-    onOpenPricing: () => context.pushNamed(AppRoutes.pricing),
+    onOpenPricing: () => _goTab(context, 1),
     onOpenTerms: () => _showInformationDialog(
       context,
       title: context.t.settings.terms,
@@ -265,12 +279,46 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
   );
 }
 
+void _goTab(BuildContext context, int index) {
+  // Returns StatefulNavigationShellState (route.dart:1329), which owns both
+  // goBranch and currentIndex.
+  final shell = StatefulNavigationShell.of(context);
+  shell.goBranch(index, initialLocation: index == shell.currentIndex);
+}
+
 void _openSettingsSection(BuildContext context, SettingsSection section) {
-  unawaited(
-    context.pushNamed<void>(
+  // Compact drills into a dedicated path where one exists; wide always selects
+  // the pane in place via ?section=, keeping the /settings page key.
+  final (String name, Map<String, dynamic> queryParameters) = switch (section) {
+    SettingsSection.appearance => (AppRoutes.appearanceSettings, const {}),
+    SettingsSection.language => (AppRoutes.languageSettings, const {}),
+    _ => (AppRoutes.settings, {'section': section.parameter}),
+  };
+
+  final layoutClass = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(appLayoutClassProvider);
+
+  if (layoutClass == AppLayoutClass.compact) {
+    final target = Uri.parse(
+      context.namedLocation(name, queryParameters: queryParameters),
+    );
+    if (GoRouterState.of(context).uri == target) return;
+    unawaited(context.pushNamed<void>(name, queryParameters: queryParameters));
+    return;
+  }
+
+  final wideTarget = Uri.parse(
+    context.namedLocation(
       AppRoutes.settings,
       queryParameters: {'section': section.parameter},
     ),
+  );
+  if (GoRouterState.of(context).uri == wideTarget) return;
+  context.replaceNamed(
+    AppRoutes.settings,
+    queryParameters: {'section': section.parameter},
   );
 }
 

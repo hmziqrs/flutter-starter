@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:starter/app/config/app_config.dart';
@@ -104,6 +105,33 @@ void main() {
     _log('app launched; expecting home greeting');
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     _log('home rendered');
+
+    // Compact tab-switch detour: every other navigation in this smoke drives
+    // `GoRouter.of(rootContext).go(...)`, which never exercises `goBranch` or
+    // the cross-fading branch container that real bottom-nav taps use. Hop to
+    // Pricing and back through the compact navigation so the production
+    // composition is covered on-device. The detour ends on Home so the
+    // subsequent onboarding flow is unaffected.
+    _log('navigating: home -> pricing (compact bottom-nav tap)');
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('compact-navigation')),
+        matching: find.byIcon(FLucideIcons.badgeDollarSign),
+      ),
+    );
+    await pumpAppFrames(tester);
+    expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
+    _log('pricing rendered');
+    _log('navigating: pricing -> home (compact bottom-nav tap)');
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('compact-navigation')),
+        matching: find.byIcon(FLucideIcons.house),
+      ),
+    );
+    await pumpAppFrames(tester);
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    _log('back on home');
 
     _log('navigating: home -> onboarding');
     await _go(tester, AppRoutes.onboardingPath);

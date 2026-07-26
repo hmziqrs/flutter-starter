@@ -171,7 +171,7 @@ flowchart TD
 - Routes are named and centralized in `app_routes.dart`.
 - The normal static app starts at Home. Onboarding remains directly addressable; the flowchart is a review flow, not a claim that onboarding completion is persisted.
 - Home, Pricing, and Settings are shell destinations. Compact navigation pushes settings detail pages; expanded navigation selects a detail pane without changing feature state.
-- Use a stateful shell only if separate destination stacks must survive switching; do not add it merely because `go_router` supports it.
+- Use a stateful shell only if separate destination stacks must survive switching; do not add it merely because `go_router` supports it. That condition is now met: the shell is a `StatefulShellRoute` with three branches (home, pricing, settings), each tab keeps its own back-stack, and tab switches cross-fade through a custom navigator container (`lib/app/shell/cross_fading_branch_container.dart`). The stateful shell is justified by the surviving settings stack and a tab transition distinct from in-branch pushes — not adopted gratuitously.
 - The OTP purpose is parsed once into `OtpPurpose.registration` or `OtpPurpose.passwordReset`. Missing or invalid values render the router error view.
 - Static screens remain directly addressable for development and golden tests.
 - `/dev/screens` and `/dev/diagnostics` are added only when `AppEnvironment.development` and the explicit development-tools flag are enabled. They are absent from the production route table, including profile/release builds.
@@ -292,9 +292,10 @@ Behavior:
 
 Layout behavior:
 
-- Compact: section list navigates to full-screen detail routes.
+- Compact: section list navigates to dedicated detail routes (`/settings/appearance`, `/settings/language`) or `/settings?section=…` for the query-only sections; system Back returns to the overview.
 - Medium: section list plus a flexible detail area when space permits.
-- Expanded: persistent settings navigation and constrained detail panel.
+- Expanded: persistent settings navigation and constrained detail panel; selecting any section targets `/settings?section=<parameter>` so the `/settings` page key is reused and no route transition runs.
+- The settings branch owns its own back-stack inside the stateful shell, so a drill-in survives visits to Home or Pricing; a `go` to a top-level flow (onboarding, auth, paywall) unmounts the shell and resets every branch stack, while a pushed overlay preserves it.
 
 Use the same settings state and controller for every layout.
 
