@@ -251,7 +251,39 @@ GoRouter buildAppRouter({
       ],
     ],
     errorBuilder: _routeErrorPage,
+    redirect: _redirectSettingsDeepLinks,
   );
+}
+
+// Normalizes dedicated settings detail deep links (/settings/appearance,
+// /settings/language) to the /settings?section=… query form. A cold-start
+// deep-link to a dedicated path would otherwise leave the settings branch
+// holding a page keyed ValueKey("/settings/appearance"); a subsequent wide
+// section switch (replaceNamed to /settings?section=…) changes the matched
+// path/key and fires the platform page transition the migration exists to
+// remove. Normalizing on entry keeps the page key ValueKey("/settings") for
+// all settings pages on medium/expanded, so wide section switches run no
+// transition. Content is unchanged: SettingsPage reads ?section=, so the
+// appearance/language content still renders.
+String? _redirectSettingsDeepLinks(BuildContext context, GoRouterState state) {
+  final path = state.uri.path;
+  if (path == AppRoutes.appearanceSettingsPath) {
+    return state.uri
+        .replace(
+          path: AppRoutes.settingsPath,
+          queryParameters: {'section': SettingsSection.appearance.parameter},
+        )
+        .toString();
+  }
+  if (path == AppRoutes.languageSettingsPath) {
+    return state.uri
+        .replace(
+          path: AppRoutes.settingsPath,
+          queryParameters: {'section': SettingsSection.language.parameter},
+        )
+        .toString();
+  }
+  return null;
 }
 
 const _passwordResetComplete = 'password-reset-complete';

@@ -18,6 +18,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -412,6 +413,161 @@ void main() {
       // round-trip (design item 3: "scroll and in-page state").
       final scrollStateAfter = appearanceScroll();
       expect(scrollStateAfter.position.pixels, offset);
+    },
+  );
+
+  testWidgets(
+    'cold-start /settings/appearance wide section switch runs no transition (redirect normalized the deep link)',
+    (tester) async {
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.appearanceSettingsPath,
+        size: const Size(1024, 844),
+      );
+      expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
+
+      // The router-level redirect normalized /settings/appearance to the query
+      // form on entry, so the matched URI is /settings?section=appearance even
+      // on cold start. Keeping the page key ValueKey('/settings') stable across
+      // every settings page is what makes wide section switches run no platform
+      // transition.
+      final initialUri = GoRouterState.of(
+        tester.element(find.byType(SettingsPage)),
+      ).uri;
+      expect(initialUri.path, '/settings');
+      expect(initialUri.queryParameters['section'], 'appearance');
+
+      // Wide section swap targets /settings?section=language in place via
+      // replaceNamed. The path staying /settings AND canPop staying false is
+      // the load-bearing no-transition guard: a regression to a dedicated
+      // /settings/language target would change the matched path/key and fire
+      // the platform page transition; a replaceNamed->pushNamed regression
+      // would flip canPop.
+      await tester.ensureVisible(find.widgetWithText(FSidebarItem, 'Language'));
+      await tester.tap(find.widgetWithText(FSidebarItem, 'Language'));
+      await tester.pumpAndSettle();
+
+      final uriAfter = GoRouterState.of(
+        tester.element(find.byType(SettingsPage)),
+      ).uri;
+      expect(uriAfter.path, '/settings');
+      expect(uriAfter.queryParameters['section'], 'language');
+      expect(
+        GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
+        isFalse,
+        reason: 'replaceNamed in place leaves no push entry to pop',
+      );
+    },
+  );
+
+  testWidgets(
+    'cold-start /settings/appearance survives a compact->expanded->compact resize round-trip',
+    (tester) async {
+      await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
+      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(
+        GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
+        isFalse,
+        reason: 'redirect left no in-branch stack to pop',
+      );
+
+      // Resize to expanded. _pumpApp's _setViewport pins devicePixelRatio=1, so
+      // physical==logical here. The redirect-normalized URI must survive the
+      // layout rebuild: the wide SettingsPage reads ?section=appearance.
+      tester.view.physicalSize = const Size(1024, 844);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
+      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      final expandedUri = GoRouterState.of(
+        tester.element(find.byType(SettingsPage)),
+      ).uri;
+      expect(expandedUri.path, '/settings');
+      expect(expandedUri.queryParameters['section'], 'appearance');
+
+      // Resize back to compact. The appearance content is still reachable and
+      // the settings branch is still one page deep (the redirect held across
+      // both layout rebuilds).
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(
+        GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets(
+    'rapid home->pricing->settings->home retarget settles on home with the other branches faded out',
+    (tester) async {
+      await _pumpApp(tester, initialLocation: AppRoutes.homePath);
+      expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+
+      Finder compactNavIcon(IconData icon) => find.descendant(
+        of: find.byKey(const ValueKey('compact-navigation')),
+        matching: find.byIcon(icon),
+      );
+
+      // Rapid-fire retargets with a sub-frame pump between taps: at 40ms the
+      // 220ms cross-fade cannot finish mid-sequence, so each retarget starts
+      // the implicit opacity animation from an intermediate value. This is the
+      // real-world pattern that would expose a stale-opaque branch if the
+      // container ever stopped retargeting from the current value. The taps
+      // land on ForUI's footer gesture handler, not the icon render object
+      // itself, so silence the benign hit-test warning.
+      await tester.tap(
+        compactNavIcon(FLucideIcons.badgeDollarSign),
+        warnIfMissed: false,
+      );
+      await tester.pump(const Duration(milliseconds: 40));
+      await tester.tap(compactNavIcon(FLucideIcons.settings), warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 40));
+      await tester.tap(compactNavIcon(FLucideIcons.house), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // Settled destination is Home.
+      expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+
+      // Pin the no-stale-opaque guarantee through the real cross-fade plumbing:
+      // read each branch wrapper's live opacity. Every branch stays mounted in
+      // the Stack; at rest the active branch is fully opaque and the inactive
+      // branches are fully transparent. AnimatedOpacity appears exactly once
+      // per branch (the wrapper in crossFadingBranchContainer), so the
+      // outermost ancestor is unambiguously the branch wrapper.
+      //
+      // The settings-branch anchor is the overview tile `settings-open-
+      // appearance`, not `accent-blue`: this flow cold-starts at / and reaches
+      // the settings branch via the bottom-nav (its defaultRoute is `/settings`
+      // with no `?section=`), so compact layout renders the overview, not the
+      // appearance detail. The overview tile is part of the settings branch
+      // subtree and so is wrapped by the same branch AnimatedOpacity.
+      double branchOpacity(Key anchor) => tester
+          .renderObject<RenderAnimatedOpacity>(
+            find
+                .ancestor(
+                  of: find.byKey(anchor),
+                  matching: find.byType(AnimatedOpacity),
+                )
+                .first,
+          )
+          .opacity
+          .value;
+
+      expect(
+        branchOpacity(const ValueKey('home-greeting')),
+        1.0,
+        reason: 'home branch is the active branch at rest',
+      );
+      expect(
+        branchOpacity(const ValueKey('pricing-page')),
+        0.0,
+        reason: 'pricing branch faded out at rest',
+      );
+      expect(
+        branchOpacity(const ValueKey('settings-open-appearance')),
+        0.0,
+        reason: 'settings branch faded out at rest',
+      );
     },
   );
 }

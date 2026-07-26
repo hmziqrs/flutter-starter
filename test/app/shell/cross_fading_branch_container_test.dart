@@ -14,6 +14,10 @@
 //  2. `MediaQuery.disableAnimationsOf` collapses the duration to `Duration.zero`
 //     for an immediate swap, and a rapid A->B->C retarget never fully reveals a
 //     stale branch while still landing on the destination.
+//  3. `ExcludeFocus` actually *unfocuses* the outgoing branch at runtime when
+//     the current branch changes — the focus guarantee
+//     (docs/nested_navigation_design.md:152-156) that the wrapper-property
+//     assertions above do not exercise.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -179,6 +183,102 @@ void main() {
         expect(settled[2], 1.0);
         expect(settled[0], 0.0);
         expect(settled[1], 0.0);
+      },
+    );
+  });
+
+  group('item 3 - runtime focus guarantee', () {
+    testWidgets(
+      'ExcludeFocus unfocuses the outgoing branch when the current branch changes',
+      (tester) async {
+        // Self-contained harness. The shared `_BranchPage`/`_pumpShell` helpers
+        // have no focusable widget and the existing wrapper-property assertions
+        // depend on the current child structure, so this case mounts its own
+        // minimal router over two trivial branches where branch 0 hosts a
+        // `Focus` widget with a `FocusNode` we control. That makes it possible
+        // to observe the runtime guarantee the widget-property assertions do
+        // NOT exercise: when the current branch changes, `ExcludeFocus` on the
+        // outgoing branch rebuilds with `excluding: true`, which marks its
+        // subtree non-focusable and removes primary focus from any focused
+        // descendant — even though the branch widget stays mounted (cross-fade
+        // out) and is still being painted.
+        final branchAFocusNode = FocusNode(debugLabel: 'branch-a-focus');
+        addTearDown(branchAFocusNode.dispose);
+
+        const hostKey = ValueKey<String>('focus-test-host');
+        final router = GoRouter(
+          initialLocation: '/a',
+          routes: [
+            StatefulShellRoute(
+              builder: (context, state, shell) => SizedBox(key: hostKey, child: shell),
+              navigatorContainerBuilder: crossFadingBranchContainer,
+              branches: [
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/a',
+                      builder: (context, state) => Focus(
+                        focusNode: branchAFocusNode,
+                        child: const SizedBox(),
+                      ),
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/b',
+                      builder: (context, state) => const SizedBox(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        // (a) While branch 0 is current, its node can take primary focus. This
+        //     confirms the harness is wired up and the node starts focusable.
+        branchAFocusNode.requestFocus();
+        await tester.pump();
+        expect(
+          FocusManager.instance.primaryFocus,
+          branchAFocusNode,
+          reason: 'branch 0 node should hold primary focus while branch 0 is current',
+        );
+
+        // (b) Switch to branch 1.
+        GoRouter.of(tester.element(find.byKey(hostKey))).go('/b');
+        await tester.pumpAndSettle();
+
+        // (c) Load-bearing behavioral assertion: the outgoing branch's
+        //     `ExcludeFocus` rebuilt with `excluding: true`, marking its subtree
+        //     non-focusable. Any focused descendant loses primary focus, so the
+        //     branch-0 node is no longer primary focus even though the branch
+        //     widget is still mounted and cross-fading out.
+        expect(
+          FocusManager.instance.primaryFocus,
+          isNot(branchAFocusNode),
+          reason:
+              'outgoing branch node must lose primary focus once ExcludeFocus '
+              're-enables on branch 0',
+        );
+
+        // (d) Switching back re-enables `ExcludeFocus` on branch 0
+        //     (`excluding: false`), so the node is focusable again and can
+        //     re-take primary focus.
+        GoRouter.of(tester.element(find.byKey(hostKey))).go('/a');
+        await tester.pumpAndSettle();
+        branchAFocusNode.requestFocus();
+        await tester.pump();
+        expect(
+          FocusManager.instance.primaryFocus,
+          branchAFocusNode,
+          reason: 'branch 0 node must be focusable again after returning to /a',
+        );
       },
     );
   });
