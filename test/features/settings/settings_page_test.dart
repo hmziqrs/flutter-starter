@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
@@ -45,6 +46,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-view-pricing')));
     await tester.pumpAndSettle();
     expect(find.text('Plans for the way you work'), findsOneWidget);
+    // settings.onOpenPricing is now a branch switch (_goTab), not a push, so
+    // there is no in-app Back edge from Pricing to the subscription section.
+    expect(
+      GoRouter.of(tester.element(find.text('Plans for the way you work'))).canPop(),
+      isFalse,
+    );
 
     // Pricing opens as a sibling branch, so system Back no longer returns to
     // the subscription section. Retapping the Settings bottom-nav must restore

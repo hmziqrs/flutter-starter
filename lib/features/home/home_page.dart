@@ -37,6 +37,7 @@ class HomePage extends ConsumerWidget {
     };
 
     return SafeArea(
+      bottom: false,
       child: ListView(
         key: ValueKey('home-layout-${layoutClass.name}'),
         padding: EdgeInsetsDirectional.fromSTEB(
@@ -208,12 +209,12 @@ class _StatusSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final gaps = AppSpacing.md * (columns - 1);
+            final gaps = AppSpacing.sm * (columns - 1);
             final cardWidth = (constraints.maxWidth - gaps) / columns;
             return Wrap(
               key: ValueKey('home-status-grid-$columns'),
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.md,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 for (final status in viewData.statuses)
                   SizedBox(

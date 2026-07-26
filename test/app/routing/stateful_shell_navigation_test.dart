@@ -176,6 +176,14 @@ void main() {
       expect(uriAfter.path, '/settings');
       expect(uriAfter.queryParameters['section'], 'language');
 
+      // No page was pushed: the section swap is an in-place replace, so the
+      // settings branch stays one page deep. A replaceNamed->pushNamed
+      // regression would flip this to true and reintroduce a route transition.
+      expect(
+        GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
+        isFalse,
+      );
+
       // The detail pane updated to the selected section in place.
       expect(find.byKey(const ValueKey('locale-system')), findsOneWidget);
       expect(find.byKey(const ValueKey('accent-blue')), findsNothing);
@@ -308,6 +316,102 @@ void main() {
 
       // Back returns to the same branch (Home) that initiated the push.
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'expanded sidebar nav items select the correct branch via onSelectTab',
+    (tester) async {
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.homePath,
+        size: const Size(1024, 844),
+      );
+      expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+
+      Finder sidebarItem(IconData icon) => find.descendant(
+        of: find.byKey(const ValueKey('expanded-navigation')),
+        matching: find.byIcon(icon),
+      );
+
+      await tester.tap(sidebarItem(FLucideIcons.badgeDollarSign));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
+
+      await tester.tap(sidebarItem(FLucideIcons.settings));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+
+      await tester.tap(sidebarItem(FLucideIcons.house));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'an open information dialog overlays the shell chrome and blocks a tab switch',
+    (tester) async {
+      await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
+      await tester.tap(find.byKey(const ValueKey('settings-open-privacy-about')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('settings-open-terms')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
+
+      // The dialog mounts on the ROOT navigator (useRootNavigator: true), so it
+      // covers the bottom-nav chrome. Tapping the Pricing nav item is absorbed
+      // by the dialog barrier and must NOT switch branches. With the old
+      // branch-navigator placement the nav stayed tappable and this landed on
+      // pricing-page.
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('compact-navigation')),
+          matching: find.byIcon(FLucideIcons.badgeDollarSign),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pricing-page')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'appearance scroll position survives a compact tab round-trip',
+    (tester) async {
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.appearanceSettingsPath,
+        size: const Size(390, 600),
+      );
+      ScrollableState appearanceScroll() =>
+          Scrollable.of(tester.element(find.byKey(const ValueKey('font-scale-slider'))));
+      final scrollState = appearanceScroll();
+      scrollState.position.jumpTo(240);
+      await tester.pumpAndSettle();
+      final offset = scrollState.position.pixels;
+      expect(offset, greaterThan(0));
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('compact-navigation')),
+          matching: find.byIcon(FLucideIcons.badgeDollarSign),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('compact-navigation')),
+          matching: find.byIcon(FLucideIcons.settings),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The retained appearance branch keeps its ScrollPosition across the
+      // round-trip (design item 3: "scroll and in-page state").
+      final scrollStateAfter = appearanceScroll();
+      expect(scrollStateAfter.position.pixels, offset);
     },
   );
 }

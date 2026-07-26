@@ -142,7 +142,7 @@ Notes:
 - `AppShell` is built two ways: the default `AppShell(navigationShell: shell)` from `StatefulShellRoute.builder`, and `AppShell.preview(child:)` for the dev gallery (which has no shell). It wraps `AppLayoutScope` and passes `selectedIndex`, `child`, and an `onSelectTab(int)` callback down; `onSelectTab` is wired to `goBranch` with reset-on-retap. The 0/1/2 index contract (0=home,1=pricing,2=settings) is unchanged.
 - `CompactAppShell`/`ExpandedAppShell` are go_router-agnostic: they switch tabs only through `onSelectTab(int)` and no longer import `go_router`/`app_routes`. `cross_fading_branch_container.dart` owns the tab cross-fade — it keeps every branch proxy mounted in stable order, fades both branches, and leaves only the current branch interactive/focusable/semantic/ticking; it honors `MediaQuery.disableAnimationsOf` (`Duration.zero`).
 - `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
-- `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells + the `_selectedIndex` prefix map (0=home,1=pricing,2=settings).
+- `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells, a new ordered `StatefulShellBranch` in `app_router.dart` (branches are indexed home=0/pricing=1/settings=2), and an `onSelectTab` entry in each shell. `selectedIndex` is derived from `navigationShell.currentIndex`, not a location prefix.
 - Interaction policy is input-only and monotonic; `interactionPolicyOverrideProvider` is the deterministic test/dev hook; reading `appLayoutClassProvider` outside AppLayoutScope throws.
 
 #### theme-system
@@ -275,7 +275,7 @@ Notes:
 
 ## Where do I...
 
-- **Add a screen/route:** Add name+path constants in `lib/app/routing/app_routes.dart`; add a GoRoute in `lib/app/routing/app_router.dart` (inside the ShellRoute for nav chrome, top-level for full-screen flows). For a dev route, add inside `if (config.developmentToolsEnabled)` with a `/dev/*` path.
+- **Add a screen/route:** Add name+path constants in `lib/app/routing/app_routes.dart`; add a GoRoute in `lib/app/routing/app_router.dart` (inside the matching `StatefulShellBranch` — home/pricing/settings — for nav chrome, top-level for full-screen flows). Branch GoRoutes keep absolute paths; in the settings branch the index `/settings` route must precede its `/settings/*` detail routes so reset-on-retap lands on the overview. Switch tabs in-shell via `_goTab`/`goBranch`, not `goNamed`. For a dev route, add inside `if (config.developmentToolsEnabled)` with a `/dev/*` path.
 - **Add a translation:** Add the key to `lib/i18n/en.i18n.json`, `ar.i18n.json`, and `zh-Hans.i18n.json` in sync; run `just gen` (`dart run build_runner build`); commit all `*.g.dart`. Use `context.t` in widgets.
 - **Change a color/theme token:** Accent colors live in `lib/shared/theme/forui_theme_factory.dart` (`_accentColors`). Do NOT edit generated `colors.dart`/`typography.dart`/`style.dart`/`icons.dart`/`generated_forui_theme.dart` — regenerate via `forui_cli`. Use `AppSpacing`/`AppSizes` for layout numbers.
 - **Add a setting:** Extend `SettingsState` in `lib/features/settings/settings_state.dart`; add a key to `persistedKeys` + load/save in `lib/features/settings/settings_repository.dart`; add a controller setter in `settings_controller.dart`; render it in `lib/features/settings/settings_page.dart`.

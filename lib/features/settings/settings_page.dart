@@ -110,7 +110,7 @@ class SettingsPage extends ConsumerWidget {
             loadBuildLabel: loadBuildLabel,
           );
 
-    return SafeArea(child: content);
+    return SafeArea(bottom: false, child: content);
   }
 }
 

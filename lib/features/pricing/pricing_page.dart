@@ -52,6 +52,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
     final locale = Localizations.localeOf(context).toLanguageTag();
 
     return SafeArea(
+      bottom: false,
       child: ListView(
         key: const ValueKey('pricing-page'),
         padding: EdgeInsetsDirectional.fromSTEB(

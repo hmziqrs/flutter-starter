@@ -330,6 +330,7 @@ void _showInformationDialog(
   unawaited(
     showFDialog<void>(
       context: context,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context, style, animation) => EscapeDismissibleOverlay(
         child: FDialog(
