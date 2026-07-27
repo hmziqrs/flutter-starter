@@ -331,6 +331,40 @@ void main() {
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
+      final navigationRect = tester.getRect(
+        find.byKey(const ValueKey('expanded-navigation')),
+      );
+      final brandRect = tester.getRect(
+        find.byKey(const ValueKey('expanded-navigation-brand')),
+      );
+      final homeRect = tester.getRect(
+        find.byKey(const ValueKey('expanded-navigation-home')),
+      );
+      final pricingRect = tester.getRect(
+        find.byKey(const ValueKey('expanded-navigation-pricing')),
+      );
+      final settingsRect = tester.getRect(
+        find.byKey(const ValueKey('expanded-navigation-settings')),
+      );
+      final homeIconRect = tester.getRect(
+        find.descendant(
+          of: find.byKey(const ValueKey('expanded-navigation-home')),
+          matching: find.byIcon(FLucideIcons.house),
+        ),
+      );
+
+      expect(homeRect.left, greaterThan(navigationRect.left));
+      expect(
+        navigationRect.right - homeRect.right,
+        closeTo(homeRect.left - navigationRect.left, 0.01),
+      );
+      expect(brandRect.left, closeTo(homeIconRect.left, 0.01));
+      expect(pricingRect.top - homeRect.bottom, greaterThan(0));
+      expect(
+        settingsRect.top - pricingRect.bottom,
+        closeTo(pricingRect.top - homeRect.bottom, 0.01),
+      );
+
       Finder sidebarItem(IconData icon) => find.descendant(
         of: find.byKey(const ValueKey('expanded-navigation')),
         matching: find.byIcon(icon),
