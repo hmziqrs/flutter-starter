@@ -95,6 +95,7 @@ class _PaywallPageState extends State<PaywallPage> {
                 child: FButton(
                   key: const ValueKey('paywall-skip'),
                   variant: .ghost,
+                  autofocus: true,
                   mainAxisSize: .min,
                   onPress: widget.onSkip,
                   child: Text(translations.common.skip),

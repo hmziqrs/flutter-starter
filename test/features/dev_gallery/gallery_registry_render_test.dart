@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
@@ -59,6 +60,9 @@ class _RegistryCaseHost extends StatelessWidget {
       overrides: [
         settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
+        platformCapabilitiesProvider.overrideWithValue(
+          dependencies.platformCapabilities,
+        ),
       ],
       child: TranslationProvider(
         child: MaterialApp(

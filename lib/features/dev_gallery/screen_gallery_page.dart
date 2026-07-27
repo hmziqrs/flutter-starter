@@ -8,7 +8,9 @@ import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/preview_frame.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class ScreenGalleryPage extends StatefulWidget {
@@ -399,6 +401,43 @@ class _GalleryControls extends StatelessWidget {
               ),
           ],
         ),
+        _ControlGroup(
+          title: gallery.viewingEnvironment,
+          children: [
+            for (final environmentOption in AppViewingEnvironment.values)
+              _ChoiceButton(
+                buttonKey: ValueKey(
+                  'gallery-viewing-${environmentOption.name}',
+                ),
+                label: _viewingEnvironmentLabel(
+                  translations,
+                  environmentOption,
+                ),
+                selected: environment.viewingEnvironment == environmentOption,
+                onPress: () => onEnvironmentChanged(
+                  environment.copyWith(
+                    viewingEnvironment: environmentOption,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        _ControlGroup(
+          title: gallery.tvPlatform,
+          children: [
+            for (final tvPlatform in AppTvPlatform.values)
+              _ChoiceButton(
+                buttonKey: ValueKey(
+                  'gallery-tv-platform-${tvPlatform.name}',
+                ),
+                label: _tvPlatformLabel(translations, tvPlatform),
+                selected: environment.tvPlatform == tvPlatform,
+                onPress: () => onEnvironmentChanged(
+                  environment.copyWith(tvPlatform: tvPlatform),
+                ),
+              ),
+          ],
+        ),
         _BooleanControl(
           id: 'animations',
           title: gallery.motion,
@@ -578,5 +617,28 @@ String _interactionLabel(Translations translations, AppInteractionPolicy policy)
     AppInteractionPolicy.touch => translations.devGallery.touch,
     AppInteractionPolicy.precisionPointer => translations.devGallery.precision,
     AppInteractionPolicy.hybrid => translations.devGallery.hybrid,
+    AppInteractionPolicy.remote => translations.devGallery.remote,
+    AppInteractionPolicy.hybridRemote => translations.devGallery.hybridRemote,
+  };
+}
+
+String _viewingEnvironmentLabel(
+  Translations translations,
+  AppViewingEnvironment environment,
+) {
+  return switch (environment) {
+    AppViewingEnvironment.nearField => translations.devGallery.nearField,
+    AppViewingEnvironment.tenFoot => translations.devGallery.tenFoot,
+  };
+}
+
+String _tvPlatformLabel(
+  Translations translations,
+  AppTvPlatform platform,
+) {
+  return switch (platform) {
+    AppTvPlatform.none => translations.devGallery.none,
+    AppTvPlatform.androidTv => translations.devGallery.androidTv,
+    AppTvPlatform.tvOS => translations.devGallery.tvOS,
   };
 }

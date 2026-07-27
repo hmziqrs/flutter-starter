@@ -10,7 +10,9 @@ import 'package:starter/features/auth/login_form_value.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 
 typedef LoginSubmitCallback = FutureOr<void> Function(LoginFormValue value);
 
@@ -66,6 +68,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'login.email');
   final _passwordFocus = FocusNode(debugLabel: 'login.password');
+  final _submitFocus = FocusNode(debugLabel: 'login.submit');
   bool _callbackSubmitting = false;
   bool _rememberMe = false;
 
@@ -100,6 +103,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    _submitFocus.dispose();
     super.dispose();
   }
 
@@ -147,57 +151,82 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               alert,
             ],
             const SizedBox(height: AppSpacing.xl),
-            FTextFormField.email(
-              key: const ValueKey('auth-login-email'),
-              formFieldKey: _emailFieldKey,
-              control: .managed(controller: _emailController),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-login-email-activation'),
+              label: translations.auth.common.email,
+              controller: _emailController,
               focusNode: _emailFocus,
-              label: Text(translations.auth.common.email),
-              textDirection: TextDirection.ltr,
-              autofillHints: const [AutofillHints.username, AutofillHints.email],
               enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture || fieldFailureFixture
-                  ? translations.validation.email
-                  : null,
-              validator: (value) => validateAuthEmail(
-                value,
-                requiredMessage: translations.validation.required(
-                  field: translations.auth.common.email,
-                ),
-                invalidMessage: translations.validation.email,
-              ),
-              onEditingComplete: _passwordFocus.requestFocus,
-              onReset: () {
-                _emailController.clear();
-                _emailFocus.unfocus();
+              autofocus: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.email(
+                  key: const ValueKey('auth-login-email'),
+                  formFieldKey: _emailFieldKey,
+                  control: .managed(controller: _emailController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.email),
+                  textDirection: TextDirection.ltr,
+                  autofillHints: const [AutofillHints.username, AutofillHints.email],
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture || fieldFailureFixture
+                      ? translations.validation.email
+                      : null,
+                  validator: (value) => validateAuthEmail(
+                    value,
+                    requiredMessage: translations.validation.required(
+                      field: translations.auth.common.email,
+                    ),
+                    invalidMessage: translations.validation.email,
+                  ),
+                  onEditingComplete: () {
+                    completeEditing(nextFocusNode: _passwordFocus);
+                  },
+                  onReset: () {
+                    _emailController.clear();
+                    _emailFocus.unfocus();
+                  },
+                );
               },
             ),
             const SizedBox(height: AppSpacing.lg),
-            FTextFormField.password(
-              key: const ValueKey('auth-login-password'),
-              formFieldKey: _passwordFieldKey,
-              control: .managed(controller: _passwordController),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-login-password-activation'),
+              label: translations.auth.common.password,
+              controller: _passwordController,
               focusNode: _passwordFocus,
-              label: Text(translations.auth.common.password),
-              textInputAction: TextInputAction.done,
               enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-              validator: (value) => validateAuthPassword(
-                value,
-                requiredMessage: translations.validation.required(
-                  field: translations.auth.common.password,
-                ),
-                weakMessage: translations.validation.passwordWeak,
-              ),
-              suffixBuilder: buildAuthPasswordToggle(
-                key: const ValueKey('auth-login-password-toggle'),
-              ),
-              onSubmit: (_) => unawaited(_submit()),
-              onReset: () {
-                _passwordController.clear();
-                _passwordFocus.unfocus();
+              secure: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.password(
+                  key: const ValueKey('auth-login-password'),
+                  formFieldKey: _passwordFieldKey,
+                  control: .managed(controller: _passwordController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.password),
+                  textInputAction: TextInputAction.done,
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
+                  validator: (value) => validateAuthPassword(
+                    value,
+                    requiredMessage: translations.validation.required(
+                      field: translations.auth.common.password,
+                    ),
+                    weakMessage: translations.validation.passwordWeak,
+                  ),
+                  suffixBuilder: buildAuthPasswordToggle(
+                    key: const ValueKey('auth-login-password-toggle'),
+                  ),
+                  onSubmit: (_) {
+                    completeEditing();
+                    unawaited(_submit());
+                  },
+                  onReset: () {
+                    _passwordController.clear();
+                    _passwordFocus.unfocus();
+                  },
+                );
               },
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -222,7 +251,8 @@ class _LoginViewState extends ConsumerState<_LoginView> {
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-login-submit'),
-              onPress: _submitting ? null : () => unawaited(_submit()),
+              focusNode: _submitFocus,
+              onPress: _submitting ? () {} : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 _submitting ? translations.auth.login.submitting : translations.auth.login.submit,
@@ -320,6 +350,9 @@ class _LoginViewState extends ConsumerState<_LoginView> {
       rememberMe: _rememberMe,
     );
 
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _submitFocus.requestFocus();
+    }
     setState(() => _callbackSubmitting = true);
     TextInput.finishAutofillContext(shouldSave: false);
     try {

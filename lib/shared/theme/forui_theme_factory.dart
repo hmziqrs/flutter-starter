@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 abstract final class ForuiThemeFactory {
@@ -45,6 +49,7 @@ abstract final class ForuiThemeFactory {
     required double fontScale,
     required AppInteractionPolicy interactionPolicy,
     double responsiveFontScale = 1,
+    AppPresentationPolicy? presentationPolicy,
   }) {
     if (!responsiveFontScale.isFinite || responsiveFontScale <= 0) {
       throw ArgumentError.value(
@@ -68,10 +73,27 @@ abstract final class ForuiThemeFactory {
       destructiveForeground: destructiveForeground,
       errorForeground: destructiveForeground,
     );
-    final touch = interactionPolicy != AppInteractionPolicy.precisionPointer;
+    final resolvedPresentationPolicy =
+        presentationPolicy ??
+        AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.nearField,
+          interactionPolicy: interactionPolicy,
+        );
+    final presentationTokens = AppPresentationTokens.resolve(
+      policy: resolvedPresentationPolicy,
+      focusColor: colors.primary,
+    );
+    final touch = switch (interactionPolicy) {
+      AppInteractionPolicy.precisionPointer => false,
+      AppInteractionPolicy.touch ||
+      AppInteractionPolicy.hybrid ||
+      AppInteractionPolicy.remote ||
+      AppInteractionPolicy.hybridRemote => true,
+    };
     final typography = _buildTypography(
       generatedTheme.typography,
-      sizeScalar: fontScale * responsiveFontScale,
+      bodySizeScalar: fontScale * responsiveFontScale * presentationTokens.bodyTypeScale,
+      displaySizeScalar: fontScale * responsiveFontScale * presentationTokens.displayTypeScale,
     );
     final style = FStyle.inherit(
       colors: colors,
@@ -85,6 +107,7 @@ abstract final class ForuiThemeFactory {
         style: style,
         touch: touch,
       ),
+      minimumHeight: presentationTokens.controlMinHeight,
     );
 
     return FThemeData(
@@ -96,33 +119,49 @@ abstract final class ForuiThemeFactory {
       style: style,
       touch: touch,
       buttonStyles: buttonStyles,
+      extensions: [presentationTokens],
     );
   }
 
   static FVariants<FButtonVariantConstraint, FButtonVariant, FButtonSizeStyles, FButtonSizesDelta>
-  _balancedButtonStyles(FButtonStyles styles) {
+  _balancedButtonStyles(
+    FButtonStyles styles, {
+    required double minimumHeight,
+  }) {
     return FVariants.raw(
-      _balancedButtonSizeStyles(styles.base),
+      _balancedButtonSizeStyles(styles.base, minimumHeight: minimumHeight),
       {
         for (final MapEntry(key: constraint, :value) in styles.variants.entries)
-          constraint: _balancedButtonSizeStyles(value),
+          constraint: _balancedButtonSizeStyles(
+            value,
+            minimumHeight: minimumHeight,
+          ),
       },
     );
   }
 
-  static FButtonSizeStyles _balancedButtonSizeStyles(FButtonSizeStyles styles) {
+  static FButtonSizeStyles _balancedButtonSizeStyles(
+    FButtonSizeStyles styles, {
+    required double minimumHeight,
+  }) {
     return FButtonSizeStyles(
       FVariants.raw(
-        _balancedButtonStyle(styles.base),
+        _balancedButtonStyle(styles.base, minimumHeight: minimumHeight),
         {
           for (final MapEntry(key: constraint, :value) in styles.variants.entries)
-            constraint: _balancedButtonStyle(value),
+            constraint: _balancedButtonStyle(
+              value,
+              minimumHeight: minimumHeight,
+            ),
         },
       ),
     );
   }
 
-  static FButtonStyle _balancedButtonStyle(FButtonStyle style) {
+  static FButtonStyle _balancedButtonStyle(
+    FButtonStyle style, {
+    required double minimumHeight,
+  }) {
     final content = style.contentStyle;
     final resolvedPadding = content.padding.resolve(TextDirection.ltr);
     final fontSize = content.textStyle.base.fontSize ?? 14;
@@ -133,7 +172,10 @@ abstract final class ForuiThemeFactory {
         textStyle: content.textStyle,
         iconStyle: content.iconStyle,
         circularProgressStyle: content.circularProgressStyle,
-        constraints: content.constraints,
+        constraints: content.constraints.copyWith(
+          minHeight: math.max(content.constraints.minHeight, minimumHeight),
+          maxHeight: math.max(content.constraints.maxHeight, minimumHeight),
+        ),
         padding: EdgeInsets.fromLTRB(
           resolvedPadding.left,
           verticalPadding,
@@ -147,18 +189,19 @@ abstract final class ForuiThemeFactory {
 
   static FTypography _buildTypography(
     FTypography typography, {
-    required double sizeScalar,
+    required double bodySizeScalar,
+    required double displaySizeScalar,
   }) {
     return typography.copyWith(
       display: _buildTypeface(
         typography.display,
         tokens: _displayTokens,
-        sizeScalar: sizeScalar,
+        sizeScalar: displaySizeScalar,
       ),
       body: _buildTypeface(
         typography.body,
         tokens: _bodyTokens,
-        sizeScalar: sizeScalar,
+        sizeScalar: bodySizeScalar,
       ),
     );
   }

@@ -23,28 +23,31 @@ class BillingSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      child: Wrap(
-        key: const ValueKey('billing-selector'),
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
-        children: [
-          FButton(
-            key: const ValueKey('billing-monthly'),
-            variant: value == BillingPeriod.monthly ? .primary : .outline,
-            selected: value == BillingPeriod.monthly,
-            mainAxisSize: .min,
-            onPress: enabled ? () => onChanged(BillingPeriod.monthly) : null,
-            child: Text(monthlyLabel),
-          ),
-          FButton(
-            key: const ValueKey('billing-annual'),
-            variant: value == BillingPeriod.annual ? .primary : .outline,
-            selected: value == BillingPeriod.annual,
-            mainAxisSize: .min,
-            onPress: enabled ? () => onChanged(BillingPeriod.annual) : null,
-            child: Text(annualLabel),
-          ),
-        ],
+      child: FocusTraversalGroup(
+        policy: WidgetOrderTraversalPolicy(),
+        child: Wrap(
+          key: const ValueKey('billing-selector'),
+          spacing: context.spacing.sm,
+          runSpacing: context.spacing.sm,
+          children: [
+            FButton(
+              key: const ValueKey('billing-monthly'),
+              variant: value == BillingPeriod.monthly ? .primary : .outline,
+              selected: value == BillingPeriod.monthly,
+              mainAxisSize: .min,
+              onPress: enabled ? () => onChanged(BillingPeriod.monthly) : null,
+              child: Text(monthlyLabel),
+            ),
+            FButton(
+              key: const ValueKey('billing-annual'),
+              variant: value == BillingPeriod.annual ? .primary : .outline,
+              selected: value == BillingPeriod.annual,
+              mainAxisSize: .min,
+              onPress: enabled ? () => onChanged(BillingPeriod.annual) : null,
+              child: Text(annualLabel),
+            ),
+          ],
+        ),
       ),
     );
   }

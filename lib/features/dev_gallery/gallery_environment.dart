@@ -2,7 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
 enum GallerySystemTextScale { normal, maximumNonlinear }
 
@@ -14,11 +16,13 @@ final class GalleryViewportPreset {
     required this.id,
     required this.size,
     required this.labelBuilder,
+    this.devicePixelRatio = 1,
   });
 
   final String id;
   final Size size;
   final GalleryLabelBuilder labelBuilder;
+  final double devicePixelRatio;
 
   String label(Translations translations) => labelBuilder(translations);
 }
@@ -70,6 +74,22 @@ abstract final class GalleryViewportPresets {
       size: const Size(700, 700),
       labelBuilder: (translations) => translations.devGallery.viewportNarrowDesktop,
     ),
+    GalleryViewportPreset(
+      id: 'tv-720p',
+      size: const Size(1280, 720),
+      labelBuilder: (translations) => translations.devGallery.viewportTv720p,
+    ),
+    GalleryViewportPreset(
+      id: 'tv-1080p',
+      size: const Size(1920, 1080),
+      labelBuilder: (translations) => translations.devGallery.viewportTv1080p,
+    ),
+    GalleryViewportPreset(
+      id: 'tv-4k-equivalent',
+      size: const Size(1920, 1080),
+      devicePixelRatio: 2,
+      labelBuilder: (translations) => translations.devGallery.viewportTv4k,
+    ),
   ];
 
   static GalleryViewportPreset byId(String id) {
@@ -87,6 +107,8 @@ final class GalleryEnvironment {
     required this.appFontScale,
     required this.systemTextScale,
     required this.interactionPolicy,
+    required this.viewingEnvironment,
+    required this.tvPlatform,
     required this.animationsEnabled,
     required this.highContrast,
     required this.boldText,
@@ -103,6 +125,8 @@ final class GalleryEnvironment {
       appFontScale = 1,
       systemTextScale = GallerySystemTextScale.normal,
       interactionPolicy = AppInteractionPolicy.touch,
+      viewingEnvironment = AppViewingEnvironment.nearField,
+      tvPlatform = AppTvPlatform.none,
       animationsEnabled = true,
       highContrast = false,
       boldText = false,
@@ -117,6 +141,8 @@ final class GalleryEnvironment {
   final double appFontScale;
   final GallerySystemTextScale systemTextScale;
   final AppInteractionPolicy interactionPolicy;
+  final AppViewingEnvironment viewingEnvironment;
+  final AppTvPlatform tvPlatform;
   final bool animationsEnabled;
   final bool highContrast;
   final bool boldText;
@@ -137,6 +163,8 @@ final class GalleryEnvironment {
     double? appFontScale,
     GallerySystemTextScale? systemTextScale,
     AppInteractionPolicy? interactionPolicy,
+    AppViewingEnvironment? viewingEnvironment,
+    AppTvPlatform? tvPlatform,
     bool? animationsEnabled,
     bool? highContrast,
     bool? boldText,
@@ -152,6 +180,8 @@ final class GalleryEnvironment {
       appFontScale: appFontScale ?? this.appFontScale,
       systemTextScale: systemTextScale ?? this.systemTextScale,
       interactionPolicy: interactionPolicy ?? this.interactionPolicy,
+      viewingEnvironment: viewingEnvironment ?? this.viewingEnvironment,
+      tvPlatform: tvPlatform ?? this.tvPlatform,
       animationsEnabled: animationsEnabled ?? this.animationsEnabled,
       highContrast: highContrast ?? this.highContrast,
       boldText: boldText ?? this.boldText,

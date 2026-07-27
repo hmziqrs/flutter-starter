@@ -95,6 +95,10 @@ test-goldens:
 smoke dev='macos':
     {{flutter}} test integration_test/development_smoke_test.dart -d {{dev}} --dart-define-from-file={{dev_config}}
 
+# Injected ten-foot remote-only integration flow.
+smoke-tv dev='macos':
+    {{flutter}} test integration_test/tv_remote_smoke_test.dart -d {{dev}} --dart-define-from-file={{dev_config}}
+
 # Dev smoke integration test — VISIBLE watch mode (real window, slowed animations).
 #   just watch        # 2x slow-mo
 #   just watch 4      # 4x slow-mo (prettier)
@@ -109,6 +113,51 @@ watch dilation='2' dev='macos':
 # Production route-policy integration test (dev routes must be absent in prod).
 test-prod-routes dev='macos':
     {{flutter}} test integration_test/production_routes_test.dart -d {{dev}} --dart-define-from-file={{prod_config}}
+
+# Validate Android TV launcher metadata, native detection, themes, and assets.
+android-tv-validate merged_manifest='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ -n '{{merged_manifest}}' ]]; then
+        python3 tool/android_tv/validate_android_tv.py \
+            --merged-manifest '{{merged_manifest}}'
+    else
+        python3 tool/android_tv/validate_android_tv.py
+    fi
+
+# Build the shared production APK and validate its Android TV packaging.
+android-tv-build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # A flutter-tvos invocation writes checkout-local plugin metadata. Always
+    # restore it with the stock SDK before entering the Android release lane.
+    {{flutter}} pub get
+    {{flutter}} build apk --release --dart-define-from-file={{prod_config}}
+    merged_manifest="$(
+        find build/app/intermediates/merged_manifest/release \
+            -name AndroidManifest.xml -print -quit
+    )"
+    if [[ -z "$merged_manifest" ]]; then
+        echo 'Release merged manifest was not found.' >&2
+        exit 1
+    fi
+    python3 tool/android_tv/validate_android_tv.py \
+        --merged-manifest "$merged_manifest"
+    apk=build/app/outputs/flutter-apk/app-release.apk
+    apk_entries="$(mktemp)"
+    trap 'rm -f "$apk_entries"' EXIT
+    unzip -Z1 "$apk" >"$apk_entries"
+    grep -qx 'lib/armeabi-v7a/libflutter\.so' "$apk_entries"
+    grep -qx 'lib/arm64-v8a/libflutter\.so' "$apk_entries"
+    build_tools="$(
+        find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 \
+            -type d -print | sort -V | tail -n 1
+    )"
+    "$build_tools/zipalign" -c -P 16 -v 4 "$apk"
+    {{flutter}} build appbundle --release \
+        --dart-define-from-file={{prod_config}}
 
 # --- release builds (production config) ---------------------------------------
 # Production release build: just build <target>

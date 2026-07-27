@@ -2,11 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 
 final interactionPolicyOverrideProvider = Provider<AppInteractionPolicy?>((ref) => null);
 
 final interactionPlatformDefaultProvider = Provider<AppInteractionPlatformDefault>((ref) {
+  if (ref.watch(platformCapabilitiesProvider).isTelevision) {
+    return AppInteractionPlatformDefault.remoteFirst;
+  }
+
   return switch (defaultTargetPlatform) {
     TargetPlatform.android ||
     TargetPlatform.iOS ||

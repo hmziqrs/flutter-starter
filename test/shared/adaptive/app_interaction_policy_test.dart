@@ -29,6 +29,18 @@ void main() {
       );
     });
 
+    test('starts remote-first platforms in remote mode', () {
+      const resolver = AppInteractionPolicyResolver(
+        platformDefault: AppInteractionPlatformDefault.remoteFirst,
+      );
+
+      expect(resolver.resolve(), AppInteractionPolicy.remote);
+      expect(
+        resolver.resolve(observedInputs: const <AppObservedInput>{AppObservedInput.touch}),
+        AppInteractionPolicy.remote,
+      );
+    });
+
     test('promotes a touch-first session after precision input is observed', () {
       const resolver = AppInteractionPolicyResolver(
         platformDefault: AppInteractionPlatformDefault.touchFirst,
@@ -50,6 +62,28 @@ void main() {
       expect(
         resolver.resolve(observedInputs: const <AppObservedInput>{AppObservedInput.touch}),
         AppInteractionPolicy.hybrid,
+      );
+    });
+
+    test('promotes a remote-first session only after precision input is observed', () {
+      const resolver = AppInteractionPolicyResolver(
+        platformDefault: AppInteractionPlatformDefault.remoteFirst,
+      );
+
+      expect(
+        resolver.resolve(
+          observedInputs: const <AppObservedInput>{AppObservedInput.precisionPointer},
+        ),
+        AppInteractionPolicy.hybridRemote,
+      );
+      expect(
+        resolver.resolve(
+          observedInputs: const <AppObservedInput>{
+            AppObservedInput.touch,
+            AppObservedInput.precisionPointer,
+          },
+        ),
+        AppInteractionPolicy.hybridRemote,
       );
     });
 

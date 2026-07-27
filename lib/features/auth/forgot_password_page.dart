@@ -10,7 +10,9 @@ import 'package:starter/features/auth/forgot_password_form_value.dart';
 import 'package:starter/features/auth/forgot_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 
 typedef ForgotPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -61,6 +63,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'forgotPassword.email');
+  final _submitFocus = FocusNode(debugLabel: 'forgotPassword.submit');
   bool _callbackSubmitting = false;
 
   bool get _submitting =>
@@ -93,6 +96,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
   void dispose() {
     _emailController.dispose();
     _emailFocus.dispose();
+    _submitFocus.dispose();
     super.dispose();
   }
 
@@ -114,6 +118,8 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
     final status = widget.presentation.status;
+    final retainBusySubmitFocus =
+        _submitting && (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false);
     final forceEmailError =
         status == ForgotPasswordPresentationStatus.invalid ||
         status == ForgotPasswordPresentationStatus.fieldFailure;
@@ -140,35 +146,53 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
               alert,
             ],
             const SizedBox(height: AppSpacing.xl),
-            FTextFormField.email(
-              key: const ValueKey('auth-forgot-password-email'),
-              formFieldKey: _emailFieldKey,
-              control: .managed(controller: _emailController),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-forgot-password-email-activation'),
+              label: translations.auth.common.email,
+              controller: _emailController,
               focusNode: _emailFocus,
-              label: Text(translations.auth.common.email),
-              textDirection: TextDirection.ltr,
-              autofillHints: const [AutofillHints.username, AutofillHints.email],
-              textInputAction: TextInputAction.done,
               enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: forceEmailError ? translations.validation.email : null,
-              validator: (value) => validateAuthEmail(
-                value,
-                requiredMessage: translations.validation.required(
-                  field: translations.auth.common.email,
-                ),
-                invalidMessage: translations.validation.email,
-              ),
-              onSubmit: (_) => unawaited(_submit()),
-              onReset: () {
-                _emailController.clear();
-                _emailFocus.unfocus();
+              autofocus: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.email(
+                  key: const ValueKey('auth-forgot-password-email'),
+                  formFieldKey: _emailFieldKey,
+                  control: .managed(controller: _emailController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.email),
+                  textDirection: TextDirection.ltr,
+                  autofillHints: const [AutofillHints.username, AutofillHints.email],
+                  textInputAction: TextInputAction.done,
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: forceEmailError ? translations.validation.email : null,
+                  validator: (value) => validateAuthEmail(
+                    value,
+                    requiredMessage: translations.validation.required(
+                      field: translations.auth.common.email,
+                    ),
+                    invalidMessage: translations.validation.email,
+                  ),
+                  onSubmit: (_) {
+                    completeEditing();
+                    unawaited(_submit());
+                  },
+                  onReset: () {
+                    _emailController.clear();
+                    _emailFocus.unfocus();
+                  },
+                );
               },
             ),
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-forgot-password-submit'),
-              onPress: _submitting ? null : () => unawaited(_submit()),
+              focusNode: _submitFocus,
+              onPress: _submitting
+                  ? retainBusySubmitFocus
+                        ? () {}
+                        : null
+                  : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 _submitting
@@ -249,6 +273,9 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
 
     form.save();
     final value = ForgotPasswordFormValue(email: _emailController.text.trim());
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _submitFocus.requestFocus();
+    }
     setState(() => _callbackSubmitting = true);
     TextInput.finishAutofillContext(shouldSave: false);
     try {

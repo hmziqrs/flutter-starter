@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 
 typedef AppKeyboardShortcutCallback = bool Function();
 
@@ -26,11 +28,13 @@ final class AppKeyboardBinding {
 /// handlers of their own; new app-wide bindings belong in root composition.
 class AppKeyboardHost extends StatefulWidget {
   const AppKeyboardHost({
+    required this.interactionPolicy,
     required this.bindings,
     required this.child,
     super.key,
   });
 
+  final AppInteractionPolicy interactionPolicy;
   final List<AppKeyboardBinding> bindings;
   final Widget child;
 
@@ -56,6 +60,22 @@ class _AppKeyboardHostState extends State<AppKeyboardHost> {
   }
 
   bool _handleKeyEvent(KeyEvent event) {
+    if (_usesDirectionalFocus(widget.interactionPolicy) &&
+        _isBackKey(event.logicalKey) &&
+        (event is KeyDownEvent || event is KeyRepeatEvent) &&
+        AppTvEditableField.editorHasPrimaryFocus) {
+      if (event is KeyDownEvent) {
+        AppTvEditableField.dismissPrimaryEditor();
+      }
+      return true;
+    }
+
+    if (event is KeyRepeatEvent &&
+        _usesDirectionalFocus(widget.interactionPolicy) &&
+        _isActivationKey(event.logicalKey)) {
+      return true;
+    }
+
     if (event is KeyDownEvent || event is KeyRepeatEvent) {
       final chord = _AppKeyboardChord.fromKeyboard(HardwareKeyboard.instance);
       if (chord == null) {
@@ -117,7 +137,15 @@ class _AppKeyboardHostState extends State<AppKeyboardHost> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Positioned.fill(child: widget.child),
+        Positioned.fill(
+          child: _usesDirectionalFocus(widget.interactionPolicy)
+              ? Shortcuts(
+                  debugLabel: 'AppKeyboardHost activation-repeat guard',
+                  shortcuts: _activationRepeatShortcuts,
+                  child: widget.child,
+                )
+              : widget.child,
+        ),
         PositionedDirectional(
           start: 0,
           end: 0,
@@ -147,6 +175,48 @@ class _AppKeyboardHostState extends State<AppKeyboardHost> {
       ],
     );
   }
+}
+
+bool _usesDirectionalFocus(AppInteractionPolicy policy) {
+  return policy == AppInteractionPolicy.remote || policy == AppInteractionPolicy.hybridRemote;
+}
+
+bool _isActivationKey(LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.enter ||
+      key == LogicalKeyboardKey.numpadEnter ||
+      key == LogicalKeyboardKey.space ||
+      key == LogicalKeyboardKey.select ||
+      key == LogicalKeyboardKey.gameButtonA;
+}
+
+bool _isBackKey(LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.gameButtonB;
+}
+
+const _activationRepeatShortcuts = <ShortcutActivator, Intent>{
+  _ActivationRepeatActivator(LogicalKeyboardKey.enter): DoNothingAndStopPropagationIntent(),
+  _ActivationRepeatActivator(LogicalKeyboardKey.numpadEnter): DoNothingAndStopPropagationIntent(),
+  _ActivationRepeatActivator(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
+  _ActivationRepeatActivator(LogicalKeyboardKey.select): DoNothingAndStopPropagationIntent(),
+  _ActivationRepeatActivator(LogicalKeyboardKey.gameButtonA): DoNothingAndStopPropagationIntent(),
+};
+
+@immutable
+final class _ActivationRepeatActivator implements ShortcutActivator {
+  const _ActivationRepeatActivator(this.trigger);
+
+  final LogicalKeyboardKey trigger;
+
+  @override
+  Iterable<LogicalKeyboardKey> get triggers => <LogicalKeyboardKey>[trigger];
+
+  @override
+  bool accepts(KeyEvent event, HardwareKeyboard state) {
+    return event is KeyRepeatEvent && SingleActivator(trigger).accepts(event, state);
+  }
+
+  @override
+  String debugDescribeKeys() => '${trigger.debugName ?? trigger.keyLabel} repeat';
 }
 
 class _AppKeyboardChordOverlay extends StatelessWidget {

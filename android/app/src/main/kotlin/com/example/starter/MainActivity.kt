@@ -1,5 +1,5 @@
 package com.example.starter
 
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity : FlutterActivity()
+class MainActivity : PlatformAwareFlutterActivity() {
+    override val isAuthoritativeTvLaunch = false
+}

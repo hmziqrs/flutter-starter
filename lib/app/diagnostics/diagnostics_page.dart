@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
+import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
-import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
@@ -25,7 +26,8 @@ class DiagnosticsPage extends ConsumerWidget {
       expandedMin: breakpoints.lg,
     );
     final interactionPolicy = ref.watch(interactionPolicyProvider);
-    final capabilities = PlatformCapabilities.current();
+    final presentationPolicy = ref.watch(presentationPolicyProvider);
+    final capabilities = ref.watch(platformCapabilitiesProvider);
     final locale = TranslationProvider.of(context).locale;
 
     return FScaffold(
@@ -63,6 +65,10 @@ class DiagnosticsPage extends ConsumerWidget {
                           _DiagnosticTile(
                             label: translations.diagnostics.interaction,
                             value: interactionPolicy.name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.viewingEnvironment,
+                            value: presentationPolicy.viewingEnvironment.name,
                           ),
                           _DiagnosticTile(
                             label: translations.diagnostics.locale,

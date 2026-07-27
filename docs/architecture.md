@@ -24,6 +24,7 @@ The architecture decisions live in [`plans/completed/initial.md`](../plans/compl
 | state-settings | Handwritten Riverpod accent/fontScale/themeMode/locale | `lib/features/settings/settings_controller.dart` |
 | internationalization | slang v4 codegen: en + ar + zh-Hans via context.t | `lib/i18n/en.i18n.json` |
 | shell-adaptive-layout | AppShell picks compact/expanded nav by width | `lib/app/shell/app_shell.dart` |
+| tv-platform-support | Injected TV capability, ten-foot presentation, remote focus, and native targets | `lib/shared/adaptive/app_presentation_policy.dart` |
 | keyboard-shortcuts | One root hardware listener, shortcut registry, and chord preview | `lib/app/keyboard/app_keyboard_host.dart` |
 | theme-system | ForuiThemeFactory composes FThemeData from tokens | `lib/shared/theme/forui_theme_factory.dart` |
 | motion-and-page-transitions | Duration/curve tokens + per-platform transitions | `lib/shared/motion/app_motion.dart` |
@@ -49,7 +50,7 @@ Files:
 - `lib/app/startup/startup_error_view.dart` — startup fallback UI
 
 Notes:
-- `createApplication` is the shared seam: `integration_test/*` reuse it to build the real tree without `runApp`; inject `ApplicationRunner` (default `runApp`), never call `runApp` directly.
+- `createApplication` is the shared seam: `integration_test/*` reuse it to build the real tree without `runApp`; inject `ApplicationRunner` (default `runApp`), never call `runApp` directly. `AppDependencies.production` resolves immutable platform capabilities before composition; tests inject a complete `PlatformCapabilities` value through `AppDependencies.inMemory`.
 - Error handlers log then swallow (PlatformDispatcher returns true, neither rethrows); `_AppView` is keyed by `(environment, developmentToolsEnabled, initialLocation)` so the router rebuilds on config change.
 - `main.dart` stays minimal (config load + zone guard); add providers via `AppDependencies` + ProviderScope overrides in `App.build`.
 
@@ -144,11 +145,11 @@ Files:
 
 Notes:
 - Derive layout only from width inside AppLayoutScope; never branch on platform. Read breakpoints from `context.theme.breakpoints` (`.sm` compactMax, `.lg` expandedMin).
-- `AppShell` is built two ways: the default `AppShell(navigationShell: shell)` from `StatefulShellRoute.builder`, and `AppShell.preview(child:)` for the dev gallery (which has no shell). It wraps `AppLayoutScope` and passes `selectedIndex`, `child`, and an `onSelectTab(int)` callback down; `onSelectTab` is wired to `goBranch` with reset-on-retap. The 0/1/2 index contract (0=home,1=pricing,2=settings) is unchanged.
+- `AppShell` is built two ways: the default `AppShell(navigationShell: shell)` from `StatefulShellRoute.builder`, and `AppShell.preview(child:)` for the dev gallery (which has no shell). It wraps `AppLayoutScope` and passes `selectedIndex`, `child`, and an `onSelectTab(int)` callback down; `onSelectTab` is wired to `goBranch` with reset-on-retap. Ten-foot policy dispatches to `TelevisionAppShell` before the width switch; near-field keeps the compact/medium/expanded behavior. The 0/1/2 index contract (0=home,1=pricing,2=settings) is unchanged.
 - `CompactAppShell`/`ExpandedAppShell` are go_router-agnostic: they switch tabs only through `onSelectTab(int)` and no longer import `go_router`/`app_routes`. `cross_fading_branch_container.dart` owns the tab cross-fade — it keeps every branch proxy mounted in stable order, fades both branches, and leaves only the current branch interactive/focusable/semantic/ticking; it honors `MediaQuery.disableAnimationsOf` (`Duration.zero`).
 - `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
 - `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells, a new ordered `StatefulShellBranch` in `app_router.dart` (branches are indexed home=0/pricing=1/settings=2), and an `onSelectTab` entry in each shell. `selectedIndex` is derived from `navigationShell.currentIndex`, not a location prefix.
-- Interaction policy is input-only and monotonic; `interactionPolicyOverrideProvider` is the deterministic test/dev hook; reading `appLayoutClassProvider` outside AppLayoutScope throws.
+- Interaction policy is input-only and monotonic, including `remote -> hybridRemote` after precision-pointer observation. Viewing distance remains orthogonal through `AppPresentationPolicy`; `interactionPolicyOverrideProvider` and `presentationPolicyOverrideProvider` are deterministic test/dev hooks. Reading `appLayoutClassProvider` outside AppLayoutScope throws.
 
 #### keyboard-shortcuts
 
@@ -160,6 +161,7 @@ Files:
 
 Notes:
 - Mount `AppKeyboardHost` once below `FTheme`; feature screens must not add global hardware handlers.
+- In remote/hybrid-remote mode the host consumes activation `KeyRepeatEvent`s (Enter, numpad Enter, Space, Select, game Button A) but leaves first-down activation and directional repeats to Flutter's normal Shortcuts/Actions/focus system.
 - Ordinary keys never surface by themselves. Meta, Control, Alt/Option, Shift, and Fn start the
   preview; ordinary keys held with them join the displayed chord.
 - A binding consumes the event only when its callback reports that it performed an action. The
@@ -187,6 +189,10 @@ Notes:
   padding is derived from the resolved label size while preserving ForUI's 44-pixel touch and
   36-pixel pointer targets. Dark error foreground is overridden in the factory; `AppAccent` is
   owned by `settings_state.dart`.
+- `AppPresentationTokens` is a handwritten ForUI theme extension. Ten-foot policy raises readable
+  widths, spacing/type scale, minimum focus/control bounds, navigation width, and focus outline
+  metrics without editing generated theme sources. `AppPresentationViewport` is the sole TV safe
+  frame owner and preserves IME/display-feature data.
 
 #### motion-and-page-transitions
 
@@ -269,10 +275,11 @@ Files:
 - `lib/infrastructure/logging/log_redactor.dart` — regex scrubber for tokens/passwords
 - `lib/infrastructure/platform/app_build_info.dart` — version/buildNumber
 - `lib/infrastructure/platform/platform_capabilities.dart` — read-only platform flags
+- `lib/infrastructure/platform/platform_capabilities_resolver.dart` — startup tvOS/Android TV detection
 - `lib/infrastructure/preferences/shared_preferences_settings_store.dart` — sole production SettingsStore impl
 
 Notes:
-- Route all logging through `AppLogger`; pass structured `Map<String,Object?>` context (redacted automatically, never pre-redact); debug/stacks gated behind verbose, info/warn/error always on.
+- Route all logging through `AppLogger`; pass structured `Map<String,Object?>` context (redacted automatically, never pre-redact); debug/stacks gated behind verbose, info/warn/error always on. Diagnostics reads the injected capability provider and never performs a second native query.
 - SettingsStore is per-key only (`readString`/`writeString`/`remove`), never `clearAll`; uses `SharedPreferencesAsync`; wrap adapters in try/on Object -> `SettingsStoreException`.
 - No network/db/secure-storage adapters exist by design — do not add without escalating. Only `log_redactor` has tests.
 
@@ -292,6 +299,9 @@ Files:
 Notes:
 - `just test` excludes goldens; goldens compare ONLY on macOS via `just test-goldens`; regenerate the 13 committed baselines with `--update-goldens` on the pinned runner and inspect every changed image.
 - Integration tests reuse `createApplication`; use `pumpAppFrames` (8 bounded frames), never `pumpAndSettle`; pass `--dart-define-from-file`. `resetTestSettings()` wipes settings keys before each run.
+- Android release CI validates TV source/merged manifests, launcher/resource ownership, ARM ABIs,
+  and 16 KB zip alignment. tvOS uses the separately pinned `flutter-tvos` toolchain documented in
+  `docs/tvos_toolchain.md`; it never replaces the stock Flutter SDK.
 - Keep analysis clean at `flutter analyze --fatal-infos`; keep generated code in sync (`just gen` + `just gen-check`); Flutter pinned to 3.44.7 in CI.
 
 ## Where do I...
