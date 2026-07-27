@@ -8,7 +8,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(90));
+    expect(cases, hasLength(103));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -24,6 +24,11 @@ void main() {
         'forceUpdate.hard',
         'softUpdate.card',
         'busy.overlay',
+        // Wave-3 feature surfaces registered by their gallery contributors.
+        'splash.loading',
+        'stateViews.empty',
+        'formScaffold.enabled',
+        'announcements.critical',
       ]),
     );
     expect(

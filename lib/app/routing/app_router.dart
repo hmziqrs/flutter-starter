@@ -35,6 +35,7 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/features/splash/splash_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
@@ -45,7 +46,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 GoRouter buildAppRouter({
   required AppConfig config,
-  String initialLocation = AppRoutes.homePath,
+  String initialLocation = AppRoutes.splashPath,
   bool hasCompletedOnboarding = false,
 }) {
   // The cold-start seed mirrors AppDependencies.initialSettings
@@ -123,6 +124,19 @@ GoRouter buildAppRouter({
             ],
           ),
         ],
+      ),
+      GoRoute(
+        name: AppRoutes.splash,
+        path: AppRoutes.splashPath,
+        builder: (context, state) => SplashPage(
+          // SplashPage receives the navigation callback (never calls go_router
+          // directly, per the root contract). On resolve it goes to home; the
+          // existing C5 onboarding redirect then sends fresh installs to
+          // /onboarding (home '/' is a shell-tab destination and gates when
+          // !hasCompletedOnboarding), and the HARD update-blocker redirect
+          // (already first in _redirectSettingsDeepLinks) wins over both.
+          onComplete: (_) => context.goNamed(AppRoutes.home),
+        ),
       ),
       GoRoute(
         name: AppRoutes.onboarding,

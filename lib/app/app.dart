@@ -9,12 +9,16 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/routing/app_router.dart';
+import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/announcements/announcement_banner.dart';
+import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/features/splash/app_startup_result_provider.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
@@ -50,6 +54,20 @@ class App extends StatelessWidget {
         // AsyncData and the check never re-fires on rebuild (C5).
         versionCheckProvider.overrideWith((ref) async => dependencies.versionCheck),
         connectivityServiceProvider.overrideWithValue(dependencies.connectivityService),
+        // Forward the AppStartupResult that createApplication already produced
+        // (build-info + settings load + locale apply). SplashPage is the sole
+        // consumer; it watches the future and hands off without re-loading any
+        // of these (FutureProvider accepts FutureOr<T>, so a resolved value is
+        // fine). Mirrors the settingsStoreProvider/versionCheckProvider shape.
+        appStartupResultProvider.overrideWith((ref) => dependencies.appStartupResult),
+        // Announcements: cold-start dismissed-id seed + installed build info,
+        // both pre-loaded in AppDependencies.production so the controller
+        // resolves synchronously on the first frame. Without the dismissed
+        // override dismissals persist but never re-read on next launch.
+        initialDismissedAnnouncementIdsProvider.overrideWithValue(
+          dependencies.initialDismissedAnnouncementIds,
+        ),
+        appBuildInfoProvider.overrideWithValue(dependencies.buildInfo),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -75,7 +93,11 @@ class _AppView extends ConsumerStatefulWidget {
 class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver {
   late final GoRouter _router = buildAppRouter(
     config: widget.config,
-    initialLocation: widget.initialLocation ?? '/',
+    // Cold start shows the in-app splash first; SplashPage hands off to home
+    // (or onboarding, via the existing C5 redirect) the moment the startup
+    // future resolves. Callers that pass an explicit initialLocation (tests,
+    // deep links) bypass the splash as intended.
+    initialLocation: widget.initialLocation ?? AppRoutes.splashPath,
     // Cold-start seed for the onboarding redirect. The redirect itself reads
     // LIVE settingsControllerProvider state so the in-session Skip path is
     // observable on the same tick; this seed is the fallback used by harnesses
@@ -167,7 +189,13 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                 child: FToaster(
                   child: FTooltipGroup(
                     child: ConnectivityBanner(
-                      child: child ?? const SizedBox.shrink(),
+                      // AnnouncementBanner mounts ONCE above the router child so
+                      // auth/onboarding top-level routes (outside AppShell) see
+                      // it. ConnectivityBanner stays topmost (offline wins over
+                      // any announcement for the user's attention).
+                      child: AnnouncementBanner(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),

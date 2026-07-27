@@ -253,6 +253,45 @@
     "update": "Update",
     "later": "Later"
   },
+  "splash": {
+    "loading": "Starting up",
+    "tagline": "A thoughtful starting point",
+    "error": "We couldn't finish starting up."
+  },
+  "states": {
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "When content is available, it will appear here.",
+    "errorTitle": "Could not load this",
+    "errorBody": "Something went wrong while loading. Try again.",
+    "loadingTitle": "Loading…"
+  },
+  "announcements": {
+    "dismiss": "Dismiss",
+    "actionLearnMore": "Learn more",
+    "dismissFailed": "Couldn't dismiss the announcement.",
+    "severityInfo": "Information",
+    "severitySuccess": "Success",
+    "severityWarning": "Warning",
+    "severityCritical": "Critical",
+    "fixtures": {
+      "welcome": {
+        "title": "Welcome to the starter",
+        "message": "A durable foundation for your next product. Dismiss this to explore the shell."
+      },
+      "changelog": {
+        "title": "New in this version",
+        "message": "Announcements keep everyone in the loop without an app update."
+      },
+      "deprecation": {
+        "title": "A newer version is available",
+        "message": "This build will be deprecated soon. Update when you can."
+      },
+      "outage": {
+        "title": "Service outage",
+        "message": "Some actions may fail while we resolve a service disruption."
+      }
+    }
+  },
   "validation": {
     "required": "$field is required.",
     "email": "Enter a valid email address.",
@@ -346,6 +385,23 @@
     "screenBusy": "Busy indicators",
     "screenSystem": "System surfaces",
     "screenOverlays": "Overlays",
+    "screenSplash": "In-app splash",
+    "screenStateViews": "State views",
+    "screenFormScaffolding": "Form scaffolding",
+    "screenAnnouncements": "Announcements banner",
+    "caseSplashLoading": "Loading",
+    "caseSplashReady": "Ready",
+    "caseSplashError": "Startup error",
+    "caseStateEmpty": "Empty",
+    "caseStateError": "Error",
+    "caseStateLoading": "Loading",
+    "caseFormScaffoldDisabled": "Submit disabled",
+    "caseFormScaffoldEnabled": "Submit enabled",
+    "caseFormScaffoldSubmitting": "Submitting",
+    "caseAnnouncementsInfo": "Info",
+    "caseAnnouncementsSuccess": "Success",
+    "caseAnnouncementsWarning": "Warning",
+    "caseAnnouncementsCritical": "Critical",
     "caseDefault": "Default",
     "caseHardBlock": "Hard block",
     "caseSoftUpdate": "Soft update",

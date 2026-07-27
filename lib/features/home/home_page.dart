@@ -10,6 +10,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/states/empty_state_view.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({
@@ -271,22 +272,10 @@ class _RecentActivity extends StatelessWidget {
         Text(translations.recentTitle, style: context.theme.typography.display.lg),
         const SizedBox(height: AppSpacing.sm),
         if (!viewData.hasRecentActivity)
-          FCard(
+          EmptyStateView(
             key: const ValueKey('home-activity-empty'),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    translations.recentEmptyTitle,
-                    style: context.theme.typography.display.md,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(translations.recentEmptyBody),
-                ],
-              ),
-            ),
+            title: translations.recentEmptyTitle,
+            body: translations.recentEmptyBody,
           )
         else
           Column(

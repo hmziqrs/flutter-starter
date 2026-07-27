@@ -253,6 +253,45 @@
     "update": "تحديث",
     "later": "لاحقًا"
   },
+  "splash": {
+    "loading": "جارٍ التشغيل",
+    "tagline": "نقطة انطلاق مدروسة",
+    "error": "تعذّر إكمال التشغيل."
+  },
+  "states": {
+    "emptyTitle": "لا يوجد شيء هنا بعد",
+    "emptyBody": "عند توفّر المحتوى، سيظهر هنا.",
+    "errorTitle": "تعذّر تحميل هذا",
+    "errorBody": "حدث خطأ أثناء التحميل. حاول مرة أخرى.",
+    "loadingTitle": "جارٍ التحميل…"
+  },
+  "announcements": {
+    "dismiss": "إغلاق",
+    "actionLearnMore": "اعرف المزيد",
+    "dismissFailed": "تعذّر إغلاق الإعلان.",
+    "severityInfo": "معلومة",
+    "severitySuccess": "نجاح",
+    "severityWarning": "تحذير",
+    "severityCritical": "حرج",
+    "fixtures": {
+      "welcome": {
+        "title": "أهلًا بك في نقطة الانطلاق",
+        "message": "أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة."
+      },
+      "changelog": {
+        "title": "الجديد في هذا الإصدار",
+        "message": "تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق."
+      },
+      "deprecation": {
+        "title": "يتوفر إصدار أحدث",
+        "message": "سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك."
+      },
+      "outage": {
+        "title": "انقطاع الخدمة",
+        "message": "قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة."
+      }
+    }
+  },
   "validation": {
     "required": "حقل $field مطلوب.",
     "email": "أدخل بريدًا إلكترونيًا صالحًا.",
@@ -346,6 +385,23 @@
     "screenBusy": "مؤشرات الانشغال",
     "screenSystem": "واجهات النظام",
     "screenOverlays": "الطبقات العلوية",
+    "screenSplash": "شاشة البداية داخل التطبيق",
+    "screenStateViews": "حالات العرض",
+    "screenFormScaffolding": "هيكل النموذج",
+    "screenAnnouncements": "شريط الإعلانات",
+    "caseSplashLoading": "جارٍ التشغيل",
+    "caseSplashReady": "جاهز",
+    "caseSplashError": "خطأ في التشغيل",
+    "caseStateEmpty": "فارغة",
+    "caseStateError": "خطأ",
+    "caseStateLoading": "جارٍ التحميل",
+    "caseFormScaffoldDisabled": "إرسال معطّل",
+    "caseFormScaffoldEnabled": "إرسال مفعّل",
+    "caseFormScaffoldSubmitting": "جارٍ الإرسال",
+    "caseAnnouncementsInfo": "معلومة",
+    "caseAnnouncementsSuccess": "نجاح",
+    "caseAnnouncementsWarning": "تحذير",
+    "caseAnnouncementsCritical": "حرج",
     "caseDefault": "افتراضية",
     "caseHardBlock": "حظر إلزامي",
     "caseSoftUpdate": "تحديث اختياري",

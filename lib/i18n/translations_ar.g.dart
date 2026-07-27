@@ -51,6 +51,9 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$profile$ar profile = _Translations$profile$ar._(_root);
 	@override late final _Translations$forceUpdate$ar forceUpdate = _Translations$forceUpdate$ar._(_root);
 	@override late final _Translations$softUpdate$ar softUpdate = _Translations$softUpdate$ar._(_root);
+	@override late final _Translations$splash$ar splash = _Translations$splash$ar._(_root);
+	@override late final _Translations$states$ar states = _Translations$states$ar._(_root);
+	@override late final _Translations$announcements$ar announcements = _Translations$announcements$ar._(_root);
 	@override late final _Translations$validation$ar validation = _Translations$validation$ar._(_root);
 	@override late final _Translations$routeError$ar routeError = _Translations$routeError$ar._(_root);
 	@override late final _Translations$startupFailure$ar startupFailure = _Translations$startupFailure$ar._(_root);
@@ -298,6 +301,49 @@ class _Translations$softUpdate$ar extends Translations$softUpdate$en {
 	@override String get later => 'لاحقًا';
 }
 
+// Path: splash
+class _Translations$splash$ar extends Translations$splash$en {
+	_Translations$splash$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'جارٍ التشغيل';
+	@override String get tagline => 'نقطة انطلاق مدروسة';
+	@override String get error => 'تعذّر إكمال التشغيل.';
+}
+
+// Path: states
+class _Translations$states$ar extends Translations$states$en {
+	_Translations$states$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => 'لا يوجد شيء هنا بعد';
+	@override String get emptyBody => 'عند توفّر المحتوى، سيظهر هنا.';
+	@override String get errorTitle => 'تعذّر تحميل هذا';
+	@override String get errorBody => 'حدث خطأ أثناء التحميل. حاول مرة أخرى.';
+	@override String get loadingTitle => 'جارٍ التحميل…';
+}
+
+// Path: announcements
+class _Translations$announcements$ar extends Translations$announcements$en {
+	_Translations$announcements$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get dismiss => 'إغلاق';
+	@override String get actionLearnMore => 'اعرف المزيد';
+	@override String get dismissFailed => 'تعذّر إغلاق الإعلان.';
+	@override String get severityInfo => 'معلومة';
+	@override String get severitySuccess => 'نجاح';
+	@override String get severityWarning => 'تحذير';
+	@override String get severityCritical => 'حرج';
+	@override late final _Translations$announcements$fixtures$ar fixtures = _Translations$announcements$fixtures$ar._(_root);
+}
+
 // Path: validation
 class _Translations$validation$ar extends Translations$validation$en {
 	_Translations$validation$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -425,6 +471,23 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenBusy => 'مؤشرات الانشغال';
 	@override String get screenSystem => 'واجهات النظام';
 	@override String get screenOverlays => 'الطبقات العلوية';
+	@override String get screenSplash => 'شاشة البداية داخل التطبيق';
+	@override String get screenStateViews => 'حالات العرض';
+	@override String get screenFormScaffolding => 'هيكل النموذج';
+	@override String get screenAnnouncements => 'شريط الإعلانات';
+	@override String get caseSplashLoading => 'جارٍ التشغيل';
+	@override String get caseSplashReady => 'جاهز';
+	@override String get caseSplashError => 'خطأ في التشغيل';
+	@override String get caseStateEmpty => 'فارغة';
+	@override String get caseStateError => 'خطأ';
+	@override String get caseStateLoading => 'جارٍ التحميل';
+	@override String get caseFormScaffoldDisabled => 'إرسال معطّل';
+	@override String get caseFormScaffoldEnabled => 'إرسال مفعّل';
+	@override String get caseFormScaffoldSubmitting => 'جارٍ الإرسال';
+	@override String get caseAnnouncementsInfo => 'معلومة';
+	@override String get caseAnnouncementsSuccess => 'نجاح';
+	@override String get caseAnnouncementsWarning => 'تحذير';
+	@override String get caseAnnouncementsCritical => 'حرج';
 	@override String get caseDefault => 'افتراضية';
 	@override String get caseHardBlock => 'حظر إلزامي';
 	@override String get caseSoftUpdate => 'تحديث اختياري';
@@ -627,6 +690,63 @@ class _Translations$profile$update$ar extends Translations$profile$update$en {
 	@override String get discardBody => 'سيتم مسح تغييرات الملف الشخصي غير المحفوظة.';
 	@override String get stay => 'متابعة التحرير';
 	@override String get discard => 'تجاهل التغييرات';
+}
+
+// Path: announcements.fixtures
+class _Translations$announcements$fixtures$ar extends Translations$announcements$fixtures$en {
+	_Translations$announcements$fixtures$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$announcements$fixtures$welcome$ar welcome = _Translations$announcements$fixtures$welcome$ar._(_root);
+	@override late final _Translations$announcements$fixtures$changelog$ar changelog = _Translations$announcements$fixtures$changelog$ar._(_root);
+	@override late final _Translations$announcements$fixtures$deprecation$ar deprecation = _Translations$announcements$fixtures$deprecation$ar._(_root);
+	@override late final _Translations$announcements$fixtures$outage$ar outage = _Translations$announcements$fixtures$outage$ar._(_root);
+}
+
+// Path: announcements.fixtures.welcome
+class _Translations$announcements$fixtures$welcome$ar extends Translations$announcements$fixtures$welcome$en {
+	_Translations$announcements$fixtures$welcome$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'أهلًا بك في نقطة الانطلاق';
+	@override String get message => 'أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة.';
+}
+
+// Path: announcements.fixtures.changelog
+class _Translations$announcements$fixtures$changelog$ar extends Translations$announcements$fixtures$changelog$en {
+	_Translations$announcements$fixtures$changelog$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الجديد في هذا الإصدار';
+	@override String get message => 'تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق.';
+}
+
+// Path: announcements.fixtures.deprecation
+class _Translations$announcements$fixtures$deprecation$ar extends Translations$announcements$fixtures$deprecation$en {
+	_Translations$announcements$fixtures$deprecation$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يتوفر إصدار أحدث';
+	@override String get message => 'سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك.';
+}
+
+// Path: announcements.fixtures.outage
+class _Translations$announcements$fixtures$outage$ar extends Translations$announcements$fixtures$outage$en {
+	_Translations$announcements$fixtures$outage$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'انقطاع الخدمة';
+	@override String get message => 'قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة.';
 }
 
 /// The flat map containing all translations for locale <ar>.
@@ -851,6 +971,29 @@ extension on TranslationsAr {
 			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.',
 			'softUpdate.update' => 'تحديث',
 			'softUpdate.later' => 'لاحقًا',
+			'splash.loading' => 'جارٍ التشغيل',
+			'splash.tagline' => 'نقطة انطلاق مدروسة',
+			'splash.error' => 'تعذّر إكمال التشغيل.',
+			'states.emptyTitle' => 'لا يوجد شيء هنا بعد',
+			'states.emptyBody' => 'عند توفّر المحتوى، سيظهر هنا.',
+			'states.errorTitle' => 'تعذّر تحميل هذا',
+			'states.errorBody' => 'حدث خطأ أثناء التحميل. حاول مرة أخرى.',
+			'states.loadingTitle' => 'جارٍ التحميل…',
+			'announcements.dismiss' => 'إغلاق',
+			'announcements.actionLearnMore' => 'اعرف المزيد',
+			'announcements.dismissFailed' => 'تعذّر إغلاق الإعلان.',
+			'announcements.severityInfo' => 'معلومة',
+			'announcements.severitySuccess' => 'نجاح',
+			'announcements.severityWarning' => 'تحذير',
+			'announcements.severityCritical' => 'حرج',
+			'announcements.fixtures.welcome.title' => 'أهلًا بك في نقطة الانطلاق',
+			'announcements.fixtures.welcome.message' => 'أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة.',
+			'announcements.fixtures.changelog.title' => 'الجديد في هذا الإصدار',
+			'announcements.fixtures.changelog.message' => 'تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق.',
+			'announcements.fixtures.deprecation.title' => 'يتوفر إصدار أحدث',
+			'announcements.fixtures.deprecation.message' => 'سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك.',
+			'announcements.fixtures.outage.title' => 'انقطاع الخدمة',
+			'announcements.fixtures.outage.message' => 'قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة.',
 			'validation.required' => ({required Object field}) => 'حقل ${field} مطلوب.',
 			'validation.email' => 'أدخل بريدًا إلكترونيًا صالحًا.',
 			'validation.passwordWeak' => 'استخدم 8 أحرف على الأقل مع حرف لاتيني كبير ورقم.',
@@ -935,6 +1078,23 @@ extension on TranslationsAr {
 			'devGallery.screenBusy' => 'مؤشرات الانشغال',
 			'devGallery.screenSystem' => 'واجهات النظام',
 			'devGallery.screenOverlays' => 'الطبقات العلوية',
+			'devGallery.screenSplash' => 'شاشة البداية داخل التطبيق',
+			'devGallery.screenStateViews' => 'حالات العرض',
+			'devGallery.screenFormScaffolding' => 'هيكل النموذج',
+			'devGallery.screenAnnouncements' => 'شريط الإعلانات',
+			'devGallery.caseSplashLoading' => 'جارٍ التشغيل',
+			'devGallery.caseSplashReady' => 'جاهز',
+			'devGallery.caseSplashError' => 'خطأ في التشغيل',
+			'devGallery.caseStateEmpty' => 'فارغة',
+			'devGallery.caseStateError' => 'خطأ',
+			'devGallery.caseStateLoading' => 'جارٍ التحميل',
+			'devGallery.caseFormScaffoldDisabled' => 'إرسال معطّل',
+			'devGallery.caseFormScaffoldEnabled' => 'إرسال مفعّل',
+			'devGallery.caseFormScaffoldSubmitting' => 'جارٍ الإرسال',
+			'devGallery.caseAnnouncementsInfo' => 'معلومة',
+			'devGallery.caseAnnouncementsSuccess' => 'نجاح',
+			'devGallery.caseAnnouncementsWarning' => 'تحذير',
+			'devGallery.caseAnnouncementsCritical' => 'حرج',
 			'devGallery.caseDefault' => 'افتراضية',
 			'devGallery.caseHardBlock' => 'حظر إلزامي',
 			'devGallery.caseSoftUpdate' => 'تحديث اختياري',

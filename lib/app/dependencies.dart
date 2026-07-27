@@ -1,3 +1,4 @@
+import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_store.dart';
@@ -6,6 +7,7 @@ import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
@@ -27,6 +29,9 @@ final class AppDependencies {
     required this.versionGateStore,
     required this.versionCheck,
     required this.connectivityService,
+    required this.appStartupResult,
+    required this.buildInfo,
+    required this.initialDismissedAnnouncementIds,
   });
 
   factory AppDependencies.inMemory({
@@ -56,6 +61,19 @@ final class AppDependencies {
       // production default (no Noop, no credentials). Safe in integration tests
       // on a real platform; widget tests override connectivityServiceProvider.
       connectivityService: ConnectivityPlusService(),
+      // Splash seed: a resolved success so test harnesses that read the
+      // startup result never throw (mirrors the inMemory
+      // hasCompletedOnboarding:true default). The test build info mirrors the
+      // global test fixture in app_build_info_test.dart.
+      appStartupResult: const AppStartupResult(
+        buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
+        settingsLoaded: true,
+        localeApplied: true,
+      ),
+      buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
+      // No dismissed announcements in the test harness — the default feed
+      // surfaces its first fixture.
+      initialDismissedAnnouncementIds: const <String>{},
     );
   }
 
@@ -69,6 +87,44 @@ final class AppDependencies {
   final UpdateRequirement versionCheck;
   final ConnectivityService connectivityService;
 
+  /// Typed summary of the work `createApplication` already performs (build-info
+  /// load, settings load, locale apply). Carried out of the composition root so
+  /// SplashPage can observe the existing init future without re-running any of
+  /// it. Built in `AppDependencies.production` from the load outcome and the
+  /// already-loaded build info; `localeApplied` is finalized in
+  /// `createApplication` once the locale apply runs (see copyWith below).
+  final AppStartupResult appStartupResult;
+
+  /// The installed build, surfaced for the announcements version window. Reuses
+  /// the value already loaded for the update check rather than reading
+  /// `PackageInfo` a second time.
+  final AppBuildInfo? buildInfo;
+
+  /// Cold-start seed of dismissed announcement ids (decoded from the
+  /// `announcements.dismissedIds` settings key). Mirrors `initialSettings`:
+  /// pre-loaded at the composition root so the controller resolves synchronously.
+  final Set<String> initialDismissedAnnouncementIds;
+
+  /// Returns a copy with the provided fields replaced. Used by
+  /// `createApplication` to finalize the startup result's `localeApplied` flag
+  /// once the locale apply has run (which happens after `AppDependencies.production`).
+  AppDependencies copyWith({AppStartupResult? appStartupResult}) {
+    return AppDependencies(
+      settingsRepository: settingsRepository,
+      settingsStore: settingsStore,
+      initialSettings: initialSettings,
+      secureStore: secureStore,
+      crashReporter: crashReporter,
+      crashReporterBackend: crashReporterBackend,
+      versionGateStore: versionGateStore,
+      versionCheck: versionCheck,
+      connectivityService: connectivityService,
+      appStartupResult: appStartupResult ?? this.appStartupResult,
+      buildInfo: buildInfo,
+      initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
+    );
+  }
+
   static Future<AppDependencies> production(
     AppLogger logger, {
     AppBuildInfo? buildInfo,
@@ -76,6 +132,7 @@ final class AppDependencies {
     final settingsStore = SharedPreferencesSettingsStore();
     final repository = SettingsRepository(settingsStore);
     SettingsState settings;
+    var settingsLoaded = true;
     try {
       settings = await repository.load();
     } on SettingsFailure catch (error, stackTrace) {
@@ -85,7 +142,14 @@ final class AppDependencies {
         stackTrace: stackTrace,
       );
       settings = const SettingsState.defaults();
+      settingsLoaded = false;
     }
+    // Pre-load the dismissed-announcement id set so AnnouncementsController
+    // resolves active synchronously on the first frame. Tolerant of malformed
+    // storage (treated as "nothing dismissed" rather than throwing).
+    final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(
+      await settingsStore.readString(DismissedAnnouncements.key),
+    );
     // No-backend default: InMemoryVersionGateStore returns none, so production
     // runs green with zero backend wiring (C2). The optional
     // RemoteConfigVersionGateStore activates only when a remote-config backend
@@ -110,6 +174,18 @@ final class AppDependencies {
       // production default (no Noop, no credentials). A sensor failure degrades
       // honestly to offline and never fakes online.
       connectivityService: ConnectivityPlusService(),
+      // Forward the startup signals WITHOUT re-loading: buildInfo and
+      // settingsLoaded are already known here. `localeApplied` is set true
+      // optimistically because the locale apply runs in `createApplication`
+      // after this factory returns; `createApplication` finalizes it via
+      // copyWith when the apply fails.
+      appStartupResult: AppStartupResult(
+        buildInfo: buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
+        settingsLoaded: settingsLoaded,
+        localeApplied: true,
+      ),
+      buildInfo: buildInfo,
+      initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
     );
   }
 }

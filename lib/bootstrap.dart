@@ -51,15 +51,35 @@ Future<App> createApplication(
   // AppDependencies.versionCheck and read by the redirect / force-update route.
   final buildInfo = await AppBuildInfo.load();
   final dependencies = await AppDependencies.production(appLogger, buildInfo: buildInfo);
+  // Apply the persisted locale once. Guarded so a failure flips
+  // AppStartupResult.localeApplied to false (surfaced on the splash) rather
+  // than tearing down startup; the device locale is the honest fallback.
+  var localeApplied = true;
   if (dependencies.initialSettings.localeOverride case final locale?) {
-    await LocaleSettings.setLocale(locale);
+    try {
+      await LocaleSettings.setLocale(locale);
+    } on Object {
+      localeApplied = false;
+    }
   } else {
-    await LocaleSettings.useDeviceLocale();
+    try {
+      await LocaleSettings.useDeviceLocale();
+    } on Object {
+      localeApplied = false;
+    }
   }
+  // Finalize the startup result now that the locale apply outcome is known.
+  // AppDependencies.production sets localeApplied=true optimistically because
+  // the apply runs after the factory returns; correct it here when it failed.
+  final dependenciesWithStartup = localeApplied
+      ? dependencies
+      : dependencies.copyWith(
+          appStartupResult: dependencies.appStartupResult.copyWith(localeApplied: localeApplied),
+        );
 
   return App(
     config: config,
-    dependencies: dependencies,
+    dependencies: dependenciesWithStartup,
     initialLocation: initialLocation,
   );
 }

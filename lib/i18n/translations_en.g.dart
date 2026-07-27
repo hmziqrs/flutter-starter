@@ -52,6 +52,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$profile$en profile = Translations$profile$en.internal(_root);
 	late final Translations$forceUpdate$en forceUpdate = Translations$forceUpdate$en.internal(_root);
 	late final Translations$softUpdate$en softUpdate = Translations$softUpdate$en.internal(_root);
+	late final Translations$splash$en splash = Translations$splash$en.internal(_root);
+	late final Translations$states$en states = Translations$states$en.internal(_root);
+	late final Translations$announcements$en announcements = Translations$announcements$en.internal(_root);
 	late final Translations$validation$en validation = Translations$validation$en.internal(_root);
 	late final Translations$routeError$en routeError = Translations$routeError$en.internal(_root);
 	late final Translations$startupFailure$en startupFailure = Translations$startupFailure$en.internal(_root);
@@ -548,6 +551,80 @@ class Translations$softUpdate$en {
 	String get later => 'Later';
 }
 
+// Path: splash
+class Translations$splash$en {
+	Translations$splash$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Starting up'
+	String get loading => 'Starting up';
+
+	/// en: 'A thoughtful starting point'
+	String get tagline => 'A thoughtful starting point';
+
+	/// en: 'We couldn't finish starting up.'
+	String get error => 'We couldn\'t finish starting up.';
+}
+
+// Path: states
+class Translations$states$en {
+	Translations$states$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nothing here yet'
+	String get emptyTitle => 'Nothing here yet';
+
+	/// en: 'When content is available, it will appear here.'
+	String get emptyBody => 'When content is available, it will appear here.';
+
+	/// en: 'Could not load this'
+	String get errorTitle => 'Could not load this';
+
+	/// en: 'Something went wrong while loading. Try again.'
+	String get errorBody => 'Something went wrong while loading. Try again.';
+
+	/// en: 'Loading…'
+	String get loadingTitle => 'Loading…';
+}
+
+// Path: announcements
+class Translations$announcements$en {
+	Translations$announcements$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Dismiss'
+	String get dismiss => 'Dismiss';
+
+	/// en: 'Learn more'
+	String get actionLearnMore => 'Learn more';
+
+	/// en: 'Couldn't dismiss the announcement.'
+	String get dismissFailed => 'Couldn\'t dismiss the announcement.';
+
+	/// en: 'Information'
+	String get severityInfo => 'Information';
+
+	/// en: 'Success'
+	String get severitySuccess => 'Success';
+
+	/// en: 'Warning'
+	String get severityWarning => 'Warning';
+
+	/// en: 'Critical'
+	String get severityCritical => 'Critical';
+
+	late final Translations$announcements$fixtures$en fixtures = Translations$announcements$fixtures$en.internal(_root);
+}
+
 // Path: validation
 class Translations$validation$en {
 	Translations$validation$en.internal(this._root);
@@ -843,6 +920,57 @@ class Translations$devGallery$en {
 
 	/// en: 'Overlays'
 	String get screenOverlays => 'Overlays';
+
+	/// en: 'In-app splash'
+	String get screenSplash => 'In-app splash';
+
+	/// en: 'State views'
+	String get screenStateViews => 'State views';
+
+	/// en: 'Form scaffolding'
+	String get screenFormScaffolding => 'Form scaffolding';
+
+	/// en: 'Announcements banner'
+	String get screenAnnouncements => 'Announcements banner';
+
+	/// en: 'Loading'
+	String get caseSplashLoading => 'Loading';
+
+	/// en: 'Ready'
+	String get caseSplashReady => 'Ready';
+
+	/// en: 'Startup error'
+	String get caseSplashError => 'Startup error';
+
+	/// en: 'Empty'
+	String get caseStateEmpty => 'Empty';
+
+	/// en: 'Error'
+	String get caseStateError => 'Error';
+
+	/// en: 'Loading'
+	String get caseStateLoading => 'Loading';
+
+	/// en: 'Submit disabled'
+	String get caseFormScaffoldDisabled => 'Submit disabled';
+
+	/// en: 'Submit enabled'
+	String get caseFormScaffoldEnabled => 'Submit enabled';
+
+	/// en: 'Submitting'
+	String get caseFormScaffoldSubmitting => 'Submitting';
+
+	/// en: 'Info'
+	String get caseAnnouncementsInfo => 'Info';
+
+	/// en: 'Success'
+	String get caseAnnouncementsSuccess => 'Success';
+
+	/// en: 'Warning'
+	String get caseAnnouncementsWarning => 'Warning';
+
+	/// en: 'Critical'
+	String get caseAnnouncementsCritical => 'Critical';
 
 	/// en: 'Default'
 	String get caseDefault => 'Default';
@@ -1307,6 +1435,79 @@ class Translations$profile$update$en {
 	String get discard => 'Discard changes';
 }
 
+// Path: announcements.fixtures
+class Translations$announcements$fixtures$en {
+	Translations$announcements$fixtures$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$announcements$fixtures$welcome$en welcome = Translations$announcements$fixtures$welcome$en.internal(_root);
+	late final Translations$announcements$fixtures$changelog$en changelog = Translations$announcements$fixtures$changelog$en.internal(_root);
+	late final Translations$announcements$fixtures$deprecation$en deprecation = Translations$announcements$fixtures$deprecation$en.internal(_root);
+	late final Translations$announcements$fixtures$outage$en outage = Translations$announcements$fixtures$outage$en.internal(_root);
+}
+
+// Path: announcements.fixtures.welcome
+class Translations$announcements$fixtures$welcome$en {
+	Translations$announcements$fixtures$welcome$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Welcome to the starter'
+	String get title => 'Welcome to the starter';
+
+	/// en: 'A durable foundation for your next product. Dismiss this to explore the shell.'
+	String get message => 'A durable foundation for your next product. Dismiss this to explore the shell.';
+}
+
+// Path: announcements.fixtures.changelog
+class Translations$announcements$fixtures$changelog$en {
+	Translations$announcements$fixtures$changelog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New in this version'
+	String get title => 'New in this version';
+
+	/// en: 'Announcements keep everyone in the loop without an app update.'
+	String get message => 'Announcements keep everyone in the loop without an app update.';
+}
+
+// Path: announcements.fixtures.deprecation
+class Translations$announcements$fixtures$deprecation$en {
+	Translations$announcements$fixtures$deprecation$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'A newer version is available'
+	String get title => 'A newer version is available';
+
+	/// en: 'This build will be deprecated soon. Update when you can.'
+	String get message => 'This build will be deprecated soon. Update when you can.';
+}
+
+// Path: announcements.fixtures.outage
+class Translations$announcements$fixtures$outage$en {
+	Translations$announcements$fixtures$outage$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Service outage'
+	String get title => 'Service outage';
+
+	/// en: 'Some actions may fail while we resolve a service disruption.'
+	String get message => 'Some actions may fail while we resolve a service disruption.';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -1529,6 +1730,29 @@ extension on Translations {
 			'softUpdate.body' => 'Update to the latest version for the latest improvements and fixes.',
 			'softUpdate.update' => 'Update',
 			'softUpdate.later' => 'Later',
+			'splash.loading' => 'Starting up',
+			'splash.tagline' => 'A thoughtful starting point',
+			'splash.error' => 'We couldn\'t finish starting up.',
+			'states.emptyTitle' => 'Nothing here yet',
+			'states.emptyBody' => 'When content is available, it will appear here.',
+			'states.errorTitle' => 'Could not load this',
+			'states.errorBody' => 'Something went wrong while loading. Try again.',
+			'states.loadingTitle' => 'Loading…',
+			'announcements.dismiss' => 'Dismiss',
+			'announcements.actionLearnMore' => 'Learn more',
+			'announcements.dismissFailed' => 'Couldn\'t dismiss the announcement.',
+			'announcements.severityInfo' => 'Information',
+			'announcements.severitySuccess' => 'Success',
+			'announcements.severityWarning' => 'Warning',
+			'announcements.severityCritical' => 'Critical',
+			'announcements.fixtures.welcome.title' => 'Welcome to the starter',
+			'announcements.fixtures.welcome.message' => 'A durable foundation for your next product. Dismiss this to explore the shell.',
+			'announcements.fixtures.changelog.title' => 'New in this version',
+			'announcements.fixtures.changelog.message' => 'Announcements keep everyone in the loop without an app update.',
+			'announcements.fixtures.deprecation.title' => 'A newer version is available',
+			'announcements.fixtures.deprecation.message' => 'This build will be deprecated soon. Update when you can.',
+			'announcements.fixtures.outage.title' => 'Service outage',
+			'announcements.fixtures.outage.message' => 'Some actions may fail while we resolve a service disruption.',
 			'validation.required' => ({required Object field}) => '${field} is required.',
 			'validation.email' => 'Enter a valid email address.',
 			'validation.passwordWeak' => 'Use at least 8 characters with an uppercase letter and a number.',
@@ -1613,6 +1837,23 @@ extension on Translations {
 			'devGallery.screenBusy' => 'Busy indicators',
 			'devGallery.screenSystem' => 'System surfaces',
 			'devGallery.screenOverlays' => 'Overlays',
+			'devGallery.screenSplash' => 'In-app splash',
+			'devGallery.screenStateViews' => 'State views',
+			'devGallery.screenFormScaffolding' => 'Form scaffolding',
+			'devGallery.screenAnnouncements' => 'Announcements banner',
+			'devGallery.caseSplashLoading' => 'Loading',
+			'devGallery.caseSplashReady' => 'Ready',
+			'devGallery.caseSplashError' => 'Startup error',
+			'devGallery.caseStateEmpty' => 'Empty',
+			'devGallery.caseStateError' => 'Error',
+			'devGallery.caseStateLoading' => 'Loading',
+			'devGallery.caseFormScaffoldDisabled' => 'Submit disabled',
+			'devGallery.caseFormScaffoldEnabled' => 'Submit enabled',
+			'devGallery.caseFormScaffoldSubmitting' => 'Submitting',
+			'devGallery.caseAnnouncementsInfo' => 'Info',
+			'devGallery.caseAnnouncementsSuccess' => 'Success',
+			'devGallery.caseAnnouncementsWarning' => 'Warning',
+			'devGallery.caseAnnouncementsCritical' => 'Critical',
 			'devGallery.caseDefault' => 'Default',
 			'devGallery.caseHardBlock' => 'Hard block',
 			'devGallery.caseSoftUpdate' => 'Soft update',

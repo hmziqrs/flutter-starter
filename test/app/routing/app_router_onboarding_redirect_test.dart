@@ -11,9 +11,11 @@ import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
+import 'package:starter/infrastructure/platform/app_build_info.dart';
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
 void main() {
@@ -211,6 +213,16 @@ AppDependencies _dependencies({
     versionGateStore: InMemoryVersionGateStore(),
     versionCheck: const UpdateRequirementNone(),
     connectivityService: FakeConnectivityService(),
+    // Splash seed mirrors AppDependencies.inMemory: a resolved success so the
+    // onboarding-redirect path under test boots without re-running init, and
+    // no dismissed announcements so the banner feed is unaffected.
+    appStartupResult: const AppStartupResult(
+      buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
+      settingsLoaded: true,
+      localeApplied: true,
+    ),
+    buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
+    initialDismissedAnnouncementIds: const <String>{},
   );
 }
 

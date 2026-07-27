@@ -253,6 +253,45 @@
     "update": "更新",
     "later": "稍后"
   },
+  "splash": {
+    "loading": "正在启动",
+    "tagline": "精心打造的起点",
+    "error": "无法完成启动。"
+  },
+  "states": {
+    "emptyTitle": "暂时没有内容",
+    "emptyBody": "内容可用后将显示在这里。",
+    "errorTitle": "无法加载",
+    "errorBody": "加载时出现问题。请重试。",
+    "loadingTitle": "加载中…"
+  },
+  "announcements": {
+    "dismiss": "关闭",
+    "actionLearnMore": "了解更多",
+    "dismissFailed": "无法关闭此公告。",
+    "severityInfo": "信息",
+    "severitySuccess": "成功",
+    "severityWarning": "警告",
+    "severityCritical": "严重",
+    "fixtures": {
+      "welcome": {
+        "title": "欢迎使用本起步模板",
+        "message": "为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。"
+      },
+      "changelog": {
+        "title": "本版本的新内容",
+        "message": "公告让所有人无需应用更新即可获知最新动态。"
+      },
+      "deprecation": {
+        "title": "有更新版本可用",
+        "message": "此版本即将停止维护，请尽快更新。"
+      },
+      "outage": {
+        "title": "服务中断",
+        "message": "我们正在处理服务故障，部分操作可能失败。"
+      }
+    }
+  },
   "validation": {
     "required": "$field 为必填项。",
     "email": "请输入有效的电子邮箱。",
@@ -346,6 +385,23 @@
     "screenBusy": "忙碌指示器",
     "screenSystem": "系统界面",
     "screenOverlays": "浮层",
+    "screenSplash": "应用内启动页",
+    "screenStateViews": "状态视图",
+    "screenFormScaffolding": "表单脚手架",
+    "screenAnnouncements": "公告栏",
+    "caseSplashLoading": "启动中",
+    "caseSplashReady": "就绪",
+    "caseSplashError": "启动错误",
+    "caseStateEmpty": "空状态",
+    "caseStateError": "错误",
+    "caseStateLoading": "加载中",
+    "caseFormScaffoldDisabled": "提交已禁用",
+    "caseFormScaffoldEnabled": "提交已启用",
+    "caseFormScaffoldSubmitting": "提交中",
+    "caseAnnouncementsInfo": "信息",
+    "caseAnnouncementsSuccess": "成功",
+    "caseAnnouncementsWarning": "警告",
+    "caseAnnouncementsCritical": "严重",
     "caseDefault": "默认",
     "caseHardBlock": "强制阻止",
     "caseSoftUpdate": "建议更新",

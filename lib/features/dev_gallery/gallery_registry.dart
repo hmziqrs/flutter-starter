@@ -1,8 +1,12 @@
 import 'package:starter/app/config/app_config.dart';
+import 'package:starter/features/dev_gallery/cases/announcements_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/busy_indicator_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/connectivity_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/force_update_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/form_scaffolding_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/production_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/splash_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/state_views_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/system/system_gallery_cases.dart';
 
@@ -13,6 +17,11 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildConnectivityGalleryCases(),
     ...buildForceUpdateGalleryCases(),
     ...buildBusyIndicatorGalleryCases(),
+    // Wave-3 shared widgets + screens.
+    ...buildStateViewsGalleryCases(),
+    ...buildFormScaffoldingGalleryCases(),
+    ...buildSplashGalleryCases(),
+    ...buildAnnouncementsGalleryCases(),
     ...buildSystemGalleryCases(config: config),
   ];
   final ids = <String>{};

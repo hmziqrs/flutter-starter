@@ -6,6 +6,9 @@ abstract final class AppRoutes {
   static const onboardingPaywall = 'onboarding-paywall';
   static const onboardingPaywallPath = '/onboarding/paywall';
 
+  static const splash = 'splash';
+  static const splashPath = '/splash';
+
   static const home = 'home';
   static const homePath = '/';
   static const settings = 'settings';

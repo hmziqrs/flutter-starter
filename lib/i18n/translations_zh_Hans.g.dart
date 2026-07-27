@@ -51,6 +51,9 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$profile$zh_Hans profile = _Translations$profile$zh_Hans._(_root);
 	@override late final _Translations$forceUpdate$zh_Hans forceUpdate = _Translations$forceUpdate$zh_Hans._(_root);
 	@override late final _Translations$softUpdate$zh_Hans softUpdate = _Translations$softUpdate$zh_Hans._(_root);
+	@override late final _Translations$splash$zh_Hans splash = _Translations$splash$zh_Hans._(_root);
+	@override late final _Translations$states$zh_Hans states = _Translations$states$zh_Hans._(_root);
+	@override late final _Translations$announcements$zh_Hans announcements = _Translations$announcements$zh_Hans._(_root);
 	@override late final _Translations$validation$zh_Hans validation = _Translations$validation$zh_Hans._(_root);
 	@override late final _Translations$routeError$zh_Hans routeError = _Translations$routeError$zh_Hans._(_root);
 	@override late final _Translations$startupFailure$zh_Hans startupFailure = _Translations$startupFailure$zh_Hans._(_root);
@@ -298,6 +301,49 @@ class _Translations$softUpdate$zh_Hans extends Translations$softUpdate$en {
 	@override String get later => '稍后';
 }
 
+// Path: splash
+class _Translations$splash$zh_Hans extends Translations$splash$en {
+	_Translations$splash$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '正在启动';
+	@override String get tagline => '精心打造的起点';
+	@override String get error => '无法完成启动。';
+}
+
+// Path: states
+class _Translations$states$zh_Hans extends Translations$states$en {
+	_Translations$states$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => '暂时没有内容';
+	@override String get emptyBody => '内容可用后将显示在这里。';
+	@override String get errorTitle => '无法加载';
+	@override String get errorBody => '加载时出现问题。请重试。';
+	@override String get loadingTitle => '加载中…';
+}
+
+// Path: announcements
+class _Translations$announcements$zh_Hans extends Translations$announcements$en {
+	_Translations$announcements$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get dismiss => '关闭';
+	@override String get actionLearnMore => '了解更多';
+	@override String get dismissFailed => '无法关闭此公告。';
+	@override String get severityInfo => '信息';
+	@override String get severitySuccess => '成功';
+	@override String get severityWarning => '警告';
+	@override String get severityCritical => '严重';
+	@override late final _Translations$announcements$fixtures$zh_Hans fixtures = _Translations$announcements$fixtures$zh_Hans._(_root);
+}
+
 // Path: validation
 class _Translations$validation$zh_Hans extends Translations$validation$en {
 	_Translations$validation$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
@@ -425,6 +471,23 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get screenBusy => '忙碌指示器';
 	@override String get screenSystem => '系统界面';
 	@override String get screenOverlays => '浮层';
+	@override String get screenSplash => '应用内启动页';
+	@override String get screenStateViews => '状态视图';
+	@override String get screenFormScaffolding => '表单脚手架';
+	@override String get screenAnnouncements => '公告栏';
+	@override String get caseSplashLoading => '启动中';
+	@override String get caseSplashReady => '就绪';
+	@override String get caseSplashError => '启动错误';
+	@override String get caseStateEmpty => '空状态';
+	@override String get caseStateError => '错误';
+	@override String get caseStateLoading => '加载中';
+	@override String get caseFormScaffoldDisabled => '提交已禁用';
+	@override String get caseFormScaffoldEnabled => '提交已启用';
+	@override String get caseFormScaffoldSubmitting => '提交中';
+	@override String get caseAnnouncementsInfo => '信息';
+	@override String get caseAnnouncementsSuccess => '成功';
+	@override String get caseAnnouncementsWarning => '警告';
+	@override String get caseAnnouncementsCritical => '严重';
 	@override String get caseDefault => '默认';
 	@override String get caseHardBlock => '强制阻止';
 	@override String get caseSoftUpdate => '建议更新';
@@ -627,6 +690,63 @@ class _Translations$profile$update$zh_Hans extends Translations$profile$update$e
 	@override String get discardBody => '未保存的个人资料更改将被清除。';
 	@override String get stay => '继续编辑';
 	@override String get discard => '放弃更改';
+}
+
+// Path: announcements.fixtures
+class _Translations$announcements$fixtures$zh_Hans extends Translations$announcements$fixtures$en {
+	_Translations$announcements$fixtures$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$announcements$fixtures$welcome$zh_Hans welcome = _Translations$announcements$fixtures$welcome$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$changelog$zh_Hans changelog = _Translations$announcements$fixtures$changelog$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$deprecation$zh_Hans deprecation = _Translations$announcements$fixtures$deprecation$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$outage$zh_Hans outage = _Translations$announcements$fixtures$outage$zh_Hans._(_root);
+}
+
+// Path: announcements.fixtures.welcome
+class _Translations$announcements$fixtures$welcome$zh_Hans extends Translations$announcements$fixtures$welcome$en {
+	_Translations$announcements$fixtures$welcome$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '欢迎使用本起步模板';
+	@override String get message => '为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。';
+}
+
+// Path: announcements.fixtures.changelog
+class _Translations$announcements$fixtures$changelog$zh_Hans extends Translations$announcements$fixtures$changelog$en {
+	_Translations$announcements$fixtures$changelog$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '本版本的新内容';
+	@override String get message => '公告让所有人无需应用更新即可获知最新动态。';
+}
+
+// Path: announcements.fixtures.deprecation
+class _Translations$announcements$fixtures$deprecation$zh_Hans extends Translations$announcements$fixtures$deprecation$en {
+	_Translations$announcements$fixtures$deprecation$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '有更新版本可用';
+	@override String get message => '此版本即将停止维护，请尽快更新。';
+}
+
+// Path: announcements.fixtures.outage
+class _Translations$announcements$fixtures$outage$zh_Hans extends Translations$announcements$fixtures$outage$en {
+	_Translations$announcements$fixtures$outage$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '服务中断';
+	@override String get message => '我们正在处理服务故障，部分操作可能失败。';
 }
 
 /// The flat map containing all translations for locale <zh-Hans>.
@@ -851,6 +971,29 @@ extension on TranslationsZhHans {
 			'softUpdate.body' => '更新至最新版本以获取最新改进和修复。',
 			'softUpdate.update' => '更新',
 			'softUpdate.later' => '稍后',
+			'splash.loading' => '正在启动',
+			'splash.tagline' => '精心打造的起点',
+			'splash.error' => '无法完成启动。',
+			'states.emptyTitle' => '暂时没有内容',
+			'states.emptyBody' => '内容可用后将显示在这里。',
+			'states.errorTitle' => '无法加载',
+			'states.errorBody' => '加载时出现问题。请重试。',
+			'states.loadingTitle' => '加载中…',
+			'announcements.dismiss' => '关闭',
+			'announcements.actionLearnMore' => '了解更多',
+			'announcements.dismissFailed' => '无法关闭此公告。',
+			'announcements.severityInfo' => '信息',
+			'announcements.severitySuccess' => '成功',
+			'announcements.severityWarning' => '警告',
+			'announcements.severityCritical' => '严重',
+			'announcements.fixtures.welcome.title' => '欢迎使用本起步模板',
+			'announcements.fixtures.welcome.message' => '为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。',
+			'announcements.fixtures.changelog.title' => '本版本的新内容',
+			'announcements.fixtures.changelog.message' => '公告让所有人无需应用更新即可获知最新动态。',
+			'announcements.fixtures.deprecation.title' => '有更新版本可用',
+			'announcements.fixtures.deprecation.message' => '此版本即将停止维护，请尽快更新。',
+			'announcements.fixtures.outage.title' => '服务中断',
+			'announcements.fixtures.outage.message' => '我们正在处理服务故障，部分操作可能失败。',
 			'validation.required' => ({required Object field}) => '${field} 为必填项。',
 			'validation.email' => '请输入有效的电子邮箱。',
 			'validation.passwordWeak' => '至少使用 8 个字符，并包含一个大写字母和一个数字。',
@@ -935,6 +1078,23 @@ extension on TranslationsZhHans {
 			'devGallery.screenBusy' => '忙碌指示器',
 			'devGallery.screenSystem' => '系统界面',
 			'devGallery.screenOverlays' => '浮层',
+			'devGallery.screenSplash' => '应用内启动页',
+			'devGallery.screenStateViews' => '状态视图',
+			'devGallery.screenFormScaffolding' => '表单脚手架',
+			'devGallery.screenAnnouncements' => '公告栏',
+			'devGallery.caseSplashLoading' => '启动中',
+			'devGallery.caseSplashReady' => '就绪',
+			'devGallery.caseSplashError' => '启动错误',
+			'devGallery.caseStateEmpty' => '空状态',
+			'devGallery.caseStateError' => '错误',
+			'devGallery.caseStateLoading' => '加载中',
+			'devGallery.caseFormScaffoldDisabled' => '提交已禁用',
+			'devGallery.caseFormScaffoldEnabled' => '提交已启用',
+			'devGallery.caseFormScaffoldSubmitting' => '提交中',
+			'devGallery.caseAnnouncementsInfo' => '信息',
+			'devGallery.caseAnnouncementsSuccess' => '成功',
+			'devGallery.caseAnnouncementsWarning' => '警告',
+			'devGallery.caseAnnouncementsCritical' => '严重',
 			'devGallery.caseDefault' => '默认',
 			'devGallery.caseHardBlock' => '强制阻止',
 			'devGallery.caseSoftUpdate' => '建议更新',
