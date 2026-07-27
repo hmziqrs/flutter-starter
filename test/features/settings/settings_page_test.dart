@@ -99,6 +99,45 @@ void main() {
     expect(find.text('blue'), findsNothing);
     expect(Directionality.of(tester.element(find.text('أزرق'))), TextDirection.rtl);
   });
+
+  testWidgets('wide settings navigation keeps equal gaps at medium and expanded widths', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(640, 844));
+    await LocaleSettings.setLocale(AppLocale.en);
+
+    for (final width in [640.0, 1024.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
+      await tester.pumpAndSettle();
+
+      final itemRects = [
+        tester.getRect(find.byKey(const ValueKey('settings-wide-appearance'))),
+        tester.getRect(find.byKey(const ValueKey('settings-wide-language'))),
+        tester.getRect(find.byKey(const ValueKey('settings-wide-account'))),
+        tester.getRect(find.byKey(const ValueKey('settings-wide-subscription'))),
+        tester.getRect(find.byKey(const ValueKey('settings-wide-privacy-about'))),
+      ];
+      final gaps = [
+        for (var index = 1; index < itemRects.length; index++)
+          itemRects[index].top - itemRects[index - 1].bottom,
+      ];
+
+      expect(gaps.first, greaterThan(0));
+      for (final gap in gaps.skip(1)) {
+        expect(gap, closeTo(gaps.first, 0.01));
+      }
+
+      expect(
+        tester
+            .widget<FSidebarItem>(
+              find.byKey(const ValueKey('settings-wide-appearance')),
+            )
+            .selected,
+        isTrue,
+      );
+    }
+  });
 }
 
 Widget _app({required String initialLocation}) {

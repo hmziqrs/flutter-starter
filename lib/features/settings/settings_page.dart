@@ -12,6 +12,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
 
 enum SettingsSection {
   appearance('appearance'),
@@ -223,35 +224,45 @@ class _SettingsWideLayout extends StatelessWidget {
                   style: context.theme.typography.display.xl,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                FSidebarItem(
-                  selected: section == SettingsSection.appearance,
-                  icon: const Icon(FLucideIcons.palette),
-                  label: Text(translations.settings.appearance),
-                  onPress: onOpenAppearance,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.language,
-                  icon: const Icon(FLucideIcons.languages),
-                  label: Text(translations.settings.language),
-                  onPress: onOpenLanguage,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.account,
-                  icon: const Icon(FLucideIcons.userRound),
-                  label: Text(translations.settings.account),
-                  onPress: onOpenAccount,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.subscription,
-                  icon: const Icon(FLucideIcons.creditCard),
-                  label: Text(translations.settings.subscription),
-                  onPress: onOpenSubscription,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.privacyAbout,
-                  icon: const Icon(FLucideIcons.shieldCheck),
-                  label: Text(translations.settings.privacyAbout),
-                  onPress: onOpenPrivacyAbout,
+                AppSidebarItemGroup(
+                  key: const ValueKey('settings-wide-navigation'),
+                  children: [
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-appearance'),
+                      selected: section == SettingsSection.appearance,
+                      icon: const Icon(FLucideIcons.palette),
+                      label: Text(translations.settings.appearance),
+                      onPress: onOpenAppearance,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-language'),
+                      selected: section == SettingsSection.language,
+                      icon: const Icon(FLucideIcons.languages),
+                      label: Text(translations.settings.language),
+                      onPress: onOpenLanguage,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-account'),
+                      selected: section == SettingsSection.account,
+                      icon: const Icon(FLucideIcons.userRound),
+                      label: Text(translations.settings.account),
+                      onPress: onOpenAccount,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-subscription'),
+                      selected: section == SettingsSection.subscription,
+                      icon: const Icon(FLucideIcons.creditCard),
+                      label: Text(translations.settings.subscription),
+                      onPress: onOpenSubscription,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-privacy-about'),
+                      selected: section == SettingsSection.privacyAbout,
+                      icon: const Icon(FLucideIcons.shieldCheck),
+                      label: Text(translations.settings.privacyAbout),
+                      onPress: onOpenPrivacyAbout,
+                    ),
+                  ],
                 ),
               ],
             ),

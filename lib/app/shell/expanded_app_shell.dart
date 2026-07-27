@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
 
 class ExpandedAppShell extends StatelessWidget {
   const ExpandedAppShell({
@@ -53,28 +54,30 @@ class ExpandedAppShell extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.symmetric(horizontal: navigationInset),
             children: [
-              FSidebarItem(
-                key: const ValueKey('expanded-navigation-home'),
-                selected: selectedIndex == 0,
-                icon: const Icon(FLucideIcons.house),
-                label: Text(translations.navigation.home),
-                onPress: () => onSelectTab(0),
-              ),
-              SizedBox(height: context.spacing.xs),
-              FSidebarItem(
-                key: const ValueKey('expanded-navigation-pricing'),
-                selected: selectedIndex == 1,
-                icon: const Icon(FLucideIcons.badgeDollarSign),
-                label: Text(translations.navigation.pricing),
-                onPress: () => onSelectTab(1),
-              ),
-              SizedBox(height: context.spacing.xs),
-              FSidebarItem(
-                key: const ValueKey('expanded-navigation-settings'),
-                selected: selectedIndex == 2,
-                icon: const Icon(FLucideIcons.settings),
-                label: Text(translations.navigation.settings),
-                onPress: () => onSelectTab(2),
+              AppSidebarItemGroup(
+                children: [
+                  FSidebarItem(
+                    key: const ValueKey('expanded-navigation-home'),
+                    selected: selectedIndex == 0,
+                    icon: const Icon(FLucideIcons.house),
+                    label: Text(translations.navigation.home),
+                    onPress: () => onSelectTab(0),
+                  ),
+                  FSidebarItem(
+                    key: const ValueKey('expanded-navigation-pricing'),
+                    selected: selectedIndex == 1,
+                    icon: const Icon(FLucideIcons.badgeDollarSign),
+                    label: Text(translations.navigation.pricing),
+                    onPress: () => onSelectTab(1),
+                  ),
+                  FSidebarItem(
+                    key: const ValueKey('expanded-navigation-settings'),
+                    selected: selectedIndex == 2,
+                    icon: const Icon(FLucideIcons.settings),
+                    label: Text(translations.navigation.settings),
+                    onPress: () => onSelectTab(2),
+                  ),
+                ],
               ),
             ],
           ),
