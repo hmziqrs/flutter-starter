@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/infrastructure/secure_storage/secure_store_backend.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
@@ -25,6 +28,7 @@ class DiagnosticsPage extends ConsumerWidget {
       expandedMin: breakpoints.lg,
     );
     final interactionPolicy = ref.watch(interactionPolicyProvider);
+    final lifecyclePhase = ref.watch(appLifecyclePhaseProvider);
     final capabilities = PlatformCapabilities.current();
     final locale = TranslationProvider.of(context).locale;
 
@@ -65,12 +69,28 @@ class DiagnosticsPage extends ConsumerWidget {
                             value: interactionPolicy.name,
                           ),
                           _DiagnosticTile(
+                            label: translations.diagnostics.lifecycle,
+                            value: lifecyclePhase.kind.name,
+                          ),
+                          _DiagnosticTile(
                             label: translations.diagnostics.locale,
                             value: locale.languageTag,
                           ),
                           _DiagnosticTile(
                             label: translations.diagnostics.capabilities,
                             value: capabilities.redactedSummary,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.secureStorage,
+                            value: resolveSecureStoreBackend().name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.crashReporting,
+                            value: switch (ref.watch(crashReporterBackendProvider)) {
+                              NoopCrashReporterBackend() =>
+                                translations.diagnostics.crashReportingNone,
+                              RemoteCrashReporterBackend(:final host) => host,
+                            },
                           ),
                         ],
                       ),

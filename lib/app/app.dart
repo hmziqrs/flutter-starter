@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
@@ -11,6 +12,8 @@ import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/motion/app_page_transitions.dart';
@@ -34,6 +37,9 @@ class App extends StatelessWidget {
       overrides: [
         settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
+        secureStoreProvider.overrideWithValue(dependencies.secureStore),
+        crashReporterProvider.overrideWithValue(dependencies.crashReporter),
+        crashReporterBackendProvider.overrideWithValue(dependencies.crashReporterBackend),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -56,16 +62,28 @@ class _AppView extends ConsumerStatefulWidget {
   ConsumerState<_AppView> createState() => _AppViewState();
 }
 
-class _AppViewState extends ConsumerState<_AppView> {
+class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver {
   late final GoRouter _router = buildAppRouter(
     config: widget.config,
     initialLocation: widget.initialLocation ?? '/',
   );
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _router.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    ref.read(appLifecyclePhaseProvider.notifier).transitionTo(state);
   }
 
   @override

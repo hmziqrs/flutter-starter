@@ -262,8 +262,12 @@
     "build": "Build",
     "layout": "Layout class",
     "interaction": "Interaction policy",
+    "lifecycle": "App lifecycle",
     "locale": "Locale",
     "capabilities": "Platform capabilities",
+    "secureStorage": "Secure storage",
+    "crashReporting": "Crash reporting",
+    "crashReportingNone": "Not configured",
     "redactedNotice": "Diagnostics exclude credentials and user content."
   },
   "devGallery": {

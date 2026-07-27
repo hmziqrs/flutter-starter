@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starter/app/app.dart';
@@ -5,6 +7,8 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
@@ -17,7 +21,13 @@ Future<void> bootstrap(
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  _installErrorHandlers(appLogger);
+  // No-backend default. The optional SentryCrashReporter is constructed here
+  // (and SentryFlutter.init run once) only once a crash-reporting DSN field
+  // is added to AppConfig; until then the honest no-op sink is used (C2).
+  // This runs before createApplication / the ProviderScope exists, so the
+  // reporter is a direct parameter — never read via a provider here.
+  const CrashReporter crashReporter = NoopCrashReporter();
+  _installErrorHandlers(appLogger, crashReporter);
   appLogger.info(
     'Starting application',
     context: <String, Object?>{'environment': config.environment.name},
@@ -76,13 +86,16 @@ Future<void> showStartupFailure({
   );
 }
 
-void _installErrorHandlers(AppLogger logger) {
+void _installErrorHandlers(AppLogger logger, CrashReporter reporter) {
   FlutterError.onError = (details) {
     logger.error(
       'Flutter framework error',
       error: details.exception,
       stackTrace: details.stack,
     );
+    // Fire-and-forget: the handler is synchronous and must never block the
+    // framework error path. [unawaited] documents the intent.
+    unawaited(reporter.recordFlutterError(details));
   };
 
   PlatformDispatcher.instance.onError = (error, stackTrace) {
@@ -90,6 +103,13 @@ void _installErrorHandlers(AppLogger logger) {
       'Uncaught platform error',
       error: error,
       stackTrace: stackTrace,
+    );
+    unawaited(
+      reporter.recordError(
+        error,
+        stackTrace,
+        context: <String, Object?>{'source': 'platform'},
+      ),
     );
     return true;
   };

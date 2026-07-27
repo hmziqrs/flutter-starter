@@ -577,11 +577,23 @@ class Translations$diagnostics$en {
 	/// en: 'Interaction policy'
 	String get interaction => 'Interaction policy';
 
+	/// en: 'App lifecycle'
+	String get lifecycle => 'App lifecycle';
+
 	/// en: 'Locale'
 	String get locale => 'Locale';
 
 	/// en: 'Platform capabilities'
 	String get capabilities => 'Platform capabilities';
+
+	/// en: 'Secure storage'
+	String get secureStorage => 'Secure storage';
+
+	/// en: 'Crash reporting'
+	String get crashReporting => 'Crash reporting';
+
+	/// en: 'Not configured'
+	String get crashReportingNone => 'Not configured';
 
 	/// en: 'Diagnostics exclude credentials and user content.'
 	String get redactedNotice => 'Diagnostics exclude credentials and user content.';
@@ -1432,8 +1444,12 @@ extension on Translations {
 			'diagnostics.build' => 'Build',
 			'diagnostics.layout' => 'Layout class',
 			'diagnostics.interaction' => 'Interaction policy',
+			'diagnostics.lifecycle' => 'App lifecycle',
 			'diagnostics.locale' => 'Locale',
 			'diagnostics.capabilities' => 'Platform capabilities',
+			'diagnostics.secureStorage' => 'Secure storage',
+			'diagnostics.crashReporting' => 'Crash reporting',
+			'diagnostics.crashReportingNone' => 'Not configured',
 			'diagnostics.redactedNotice' => 'Diagnostics exclude credentials and user content.',
 			'devGallery.title' => 'Production screen gallery',
 			'devGallery.search' => 'Search cases',

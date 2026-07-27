@@ -119,3 +119,9 @@ build target:
 # iOS release without code signing (matches CI).
 build-ios:
     {{flutter}} build ios --release --no-codesign --dart-define-from-file={{prod_config}}
+
+# --- in-repo test server (C3) -------------------------------------------------
+# Start the standalone shelf test server on a configurable port (default 8080).
+# Never compiled into the app — runs via `dart run` from tools/test_server.
+test-server port='8080':
+    dart run tools/test_server/bin/server.dart --port {{port}}

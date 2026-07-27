@@ -262,8 +262,12 @@
     "build": "الإصدار",
     "layout": "فئة التخطيط",
     "interaction": "سياسة التفاعل",
+    "lifecycle": "دورة حياة التطبيق",
     "locale": "اللغة",
     "capabilities": "إمكانات المنصة",
+    "secureStorage": "التخزين الآمن",
+    "crashReporting": "الإبلاغ عن الأعطال",
+    "crashReportingNone": "غير مُهيَّأ",
     "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم."
   },
   "devGallery": {

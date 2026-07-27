@@ -262,8 +262,12 @@
     "build": "构建版本",
     "layout": "布局类别",
     "interaction": "交互策略",
+    "lifecycle": "应用生命周期",
     "locale": "语言区域",
     "capabilities": "平台能力",
+    "secureStorage": "安全存储",
+    "crashReporting": "崩溃报告",
+    "crashReportingNone": "未配置",
     "redactedNotice": "诊断信息不包含凭据或用户内容。"
   },
   "devGallery": {

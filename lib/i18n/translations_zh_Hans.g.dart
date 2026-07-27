@@ -310,8 +310,12 @@ class _Translations$diagnostics$zh_Hans extends Translations$diagnostics$en {
 	@override String get build => '构建版本';
 	@override String get layout => '布局类别';
 	@override String get interaction => '交互策略';
+	@override String get lifecycle => '应用生命周期';
 	@override String get locale => '语言区域';
 	@override String get capabilities => '平台能力';
+	@override String get secureStorage => '安全存储';
+	@override String get crashReporting => '崩溃报告';
+	@override String get crashReportingNone => '未配置';
 	@override String get redactedNotice => '诊断信息不包含凭据或用户内容。';
 }
 
@@ -804,8 +808,12 @@ extension on TranslationsZhHans {
 			'diagnostics.build' => '构建版本',
 			'diagnostics.layout' => '布局类别',
 			'diagnostics.interaction' => '交互策略',
+			'diagnostics.lifecycle' => '应用生命周期',
 			'diagnostics.locale' => '语言区域',
 			'diagnostics.capabilities' => '平台能力',
+			'diagnostics.secureStorage' => '安全存储',
+			'diagnostics.crashReporting' => '崩溃报告',
+			'diagnostics.crashReportingNone' => '未配置',
 			'diagnostics.redactedNotice' => '诊断信息不包含凭据或用户内容。',
 			'devGallery.title' => '生产页面图库',
 			'devGallery.search' => '搜索用例',

@@ -310,8 +310,12 @@ class _Translations$diagnostics$ar extends Translations$diagnostics$en {
 	@override String get build => 'الإصدار';
 	@override String get layout => 'فئة التخطيط';
 	@override String get interaction => 'سياسة التفاعل';
+	@override String get lifecycle => 'دورة حياة التطبيق';
 	@override String get locale => 'اللغة';
 	@override String get capabilities => 'إمكانات المنصة';
+	@override String get secureStorage => 'التخزين الآمن';
+	@override String get crashReporting => 'الإبلاغ عن الأعطال';
+	@override String get crashReportingNone => 'غير مُهيَّأ';
 	@override String get redactedNotice => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.';
 }
 
@@ -804,8 +808,12 @@ extension on TranslationsAr {
 			'diagnostics.build' => 'الإصدار',
 			'diagnostics.layout' => 'فئة التخطيط',
 			'diagnostics.interaction' => 'سياسة التفاعل',
+			'diagnostics.lifecycle' => 'دورة حياة التطبيق',
 			'diagnostics.locale' => 'اللغة',
 			'diagnostics.capabilities' => 'إمكانات المنصة',
+			'diagnostics.secureStorage' => 'التخزين الآمن',
+			'diagnostics.crashReporting' => 'الإبلاغ عن الأعطال',
+			'diagnostics.crashReportingNone' => 'غير مُهيَّأ',
 			'diagnostics.redactedNotice' => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.',
 			'devGallery.title' => 'معرض شاشات الإنتاج',
 			'devGallery.search' => 'البحث في الحالات',
