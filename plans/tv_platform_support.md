@@ -1,6 +1,6 @@
 # tvOS and Android TV Support Plan
 
-**Status:** Proposed implementation specification
+**Status:** Audited implementation specification
 
 **Prepared:** 27 July 2026
 
@@ -12,8 +12,8 @@
 forking the application, duplicating feature pages, or introducing platform checks throughout the
 widget tree.
 
-**Related architecture:** [architecture.md](../architecture.md),
-[initial.md](initial.md), [initial_ui.md](initial_ui.md), and
+**Related architecture:** [architecture.md](../docs/architecture.md),
+[completed/initial.md](completed/initial.md), [completed/initial_ui.md](completed/initial_ui.md), and
 [feature_contracts.md](feature_contracts.md)
 
 ---
@@ -51,6 +51,30 @@ is feasible, but it uses the independent
 [`flutter-tvos`](https://fluttertv.dev/) engine and CLI rather than the stock Flutter SDK. The
 [`flutter_tvos`](https://pub.dev/packages/flutter_tvos) package supplies detection and Siri Remote
 integration; the package alone does not create or build a tvOS application.
+
+### 1.1 Audited compatibility snapshot
+
+This plan was audited on 27 July 2026 against the committed dependency graph, Flutter/ForUI
+sources, current Android TV quality requirements, Apple guidance, and the released
+`flutter-tvos` toolchain.
+
+The implementation baseline is:
+
+| Concern | Audited value / decision |
+| --- | --- |
+| Stock Flutter | `3.44.7`, Dart `3.12.2` |
+| tvOS toolchain | `v3.44.7-tvos.1.4.2`, commit `aeedf41831c8bc2546afacbb7e686a4431ddb1d4` |
+| Newer upstream TV release | `v3.44.8-tvos.1.4.3`; do not adopt independently of the stock SDK |
+| `flutter_tvos` | `^1.1.2` |
+| `shared_preferences_tvos` | `^0.0.2` |
+| `package_info_plus_tvos` | `^0.0.1` |
+| Android TV quality floor | Tier 3 — TV Ready |
+| tvOS deployment target | tvOS 13+ initially |
+| tvOS App Store build SDK | tvOS 26 SDK or later under the current submission requirement |
+
+The `pubspec.yaml` range is not the tvOS engine compatibility authority. Stock framework revision,
+TV framework revision, engine artifacts, CLI, plugin registrant, Xcode, and tvOS SDK must be
+recorded together. An upgrade changes them as one reviewed unit.
 
 ---
 
@@ -171,6 +195,14 @@ The current application:
 - Has no Android Leanback launcher, TV feature declaration, TV banner, or touchscreen-optional
   declaration.
 - Has no `tvos/` target and has not audited native dependencies against federated tvOS plugins.
+- Uses `talker_flutter`, which transitively adds `path_provider`, `share_plus`, and launcher
+  implementations even though the application only consumes the core `Talker` logger.
+- Uses direct `AppSpacing.*` constants substantially more often than context-resolved spacing, so
+  central TV spacing would not currently reach every feature.
+- Relies on ForUI's input-derived focus-highlight mode, which can make the initial autofocus
+  invisible before the first remote event.
+- Has not proven ForUI activation for every Android remote alias or suppressed repeated
+  Enter/Select activation centrally.
 
 ### 4.3 Core architectural rule
 
@@ -248,7 +280,6 @@ final class PlatformCapabilities {
   const PlatformCapabilities({
     required this.platform,
     required this.isWeb,
-    required this.supportsFileSystem,
     required this.tvPlatform,
   });
 
@@ -262,6 +293,10 @@ final class PlatformCapabilities {
 platform-specific branch is permitted only for behavior that actually differs between Android TV
 and tvOS, such as remote initialization, native exit policy, store integration, or platform
 plugin selection.
+
+Do not keep a broad `supportsFileSystem: !kIsWeb` assumption. Television sandboxes and plugin
+availability make it misleading. Add a narrowly named capability only when a real file-system
+caller exists, and resolve it through that caller's infrastructure adapter.
 
 ### 5.3 Interaction policy
 
@@ -287,9 +322,14 @@ Required semantics:
 | `remote` | Directional focus | No assumption | TV tokens | Never |
 | `hybridRemote` | Directional focus and pointer | Yes | TV tokens | Never required |
 
-Remote observation is monotonic for the application session, like current pointer observations.
+Resolved TV capability establishes `remote` immediately; it is not inferred from seeing a remote
+key. Pointer observation can monotonically upgrade that policy to `hybridRemote`.
 Connecting a mouse must not downgrade a television to desktop density. Disconnecting a controller
 must not rebuild the entire application or clear focused state.
+
+Extend `AppInteractionPlatformDefault` with `remoteFirst`. A known television resolves to
+`remote` before any event is observed and to `hybridRemote` after a precision pointer is observed.
+It must never pass through the existing Android/iOS `touchFirst` baseline.
 
 ### 5.4 Presentation policy
 
@@ -325,49 +365,71 @@ stable policy. Do not pass the policy through every page constructor.
 
 ### 5.5 Detection adapter
 
-Introduce one infrastructure port only because production and tests require different
-implementations:
+Introduce one concrete infrastructure resolver:
 
 ```text
-lib/infrastructure/platform/tv_platform_detector.dart
-lib/infrastructure/platform/native_tv_platform_detector.dart
+lib/infrastructure/platform/platform_capabilities_resolver.dart
 ```
 
-Suggested contract:
+Suggested shape:
 
 ```dart
-abstract interface class TvPlatformDetector {
-  Future<AppTvPlatform> detect();
-  Future<void> initializeRemoteSupport();
+final class PlatformCapabilitiesResolver {
+  const PlatformCapabilitiesResolver();
+
+  Future<PlatformCapabilities> resolve();
 }
 ```
 
 Production behavior:
 
-- tvOS: use `TvOSInfo.isTvOS`; initialize `TvRemoteController` once.
-- Android: query native `UiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION`
-  through a narrow platform channel or a proven maintained package.
-- Other platforms and web: return `none`; initialization is a no-op.
+- tvOS: use the fork/package's authoritative runtime identity. `defaultTargetPlatform` remains
+  `TargetPlatform.iOS`, so it is not sufficient.
+- Android: use Android's recommended
+  `PackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)` check through a narrow
+  platform channel. `UiModeManager` may be retained only as an OEM diagnostic/fallback.
+- Android's dedicated `TvActivity` entry is an additional authoritative TV signal if an OEM
+  feature query fails.
+- Other platforms and web: return `none`.
 
 Test behavior:
 
-- `AppDependencies.inMemory` accepts `AppTvPlatform`, defaulting to `none`.
+- `AppDependencies.inMemory` accepts a complete `PlatformCapabilities` value with a non-TV default.
+  This prevents internally inconsistent test combinations as the capability value grows.
 - Tests never mock a method channel when a dependency override expresses the scenario.
 
-Detection runs during `AppDependencies.production`. Failures are logged through `AppLogger` and
-fall back to `none`; platform detection must not prevent startup. The redacted diagnostic summary
-may include `tv=androidTv|tvOS|none`, but never remote identifiers or account data.
+There is no detector interface solely for tests because tests inject the resolved immutable
+capability. Extract a port later only if a real second production detector appears.
+
+Detection runs during `AppDependencies.production`. Optional detail-query failures are logged
+through `AppLogger` and must not prevent startup. A known tvOS binary fails safe to
+`tvOS + tenFoot + remote`; it must never fall back to iOS touch mode. Android entered through
+`TvActivity` similarly fails safe to Android TV. Only an actually ambiguous ordinary Android
+launch may fall back to non-TV behavior.
+
+Basic Siri Remote navigation does **not** require `TvRemoteController.init()`: the embedder already
+maps swipes, Select, and Menu into Flutter events. Do not initialize the controller in the current
+scope. Add a `TvRemoteCustomizationAdapter` only when raw touch/swipe listeners or non-default
+`TvRemoteConfig` has a real caller.
+
+The redacted diagnostic summary consumes the injected capabilities provider; it must never call
+`PlatformCapabilities.current()` or the native channel independently. It may include
+`tv=androidTv|tvOS|none`, but never controller/device identifiers or account data.
+`PlatformCapabilities.platform` must report tvOS distinctly instead of using
+`defaultTargetPlatform.name`, which would incorrectly report `iOS`.
 
 ### 5.6 Root composition
 
 Root changes are intentionally narrow:
 
 1. `bootstrap.dart` ensures bindings and creates production dependencies.
-2. `AppDependencies.production` resolves platform capabilities and initializes remote support.
+2. `AppDependencies.production` resolves platform capabilities.
 3. `App` overrides the immutable capability provider.
 4. `_AppView` resolves presentation policy and passes it to the theme and scope.
 5. `AppInputObserver` observes pointer/controller categories without owning navigation.
 6. `AppKeyboardHost` continues to process only registered global shortcuts and modifier previews.
+7. The page-transition theme is resolved from `AppPresentationPolicy`; tvOS must not inherit the
+   current iOS/Cupertino touch transition merely because `defaultTargetPlatform` reports iOS.
 
 Siri Remote and D-pad arrow events must not be consumed by `AppKeyboardHost`. They flow into
 Flutter's normal focus system. Remote Back/Menu is handled through navigation actions or Flutter's
@@ -396,11 +458,15 @@ Instead:
 
 ### 6.2 Central TV tokens
 
-Add a hand-written application token extension, not changes to generated ForUI files:
+Add a hand-written `ThemeExtension` installed through `FThemeData.extensions`, not changes to
+generated ForUI files:
 
 ```text
 lib/shared/theme/app_presentation_tokens.dart
 ```
+
+Expose it as `context.presentationTokens`. Include resolved form/readable/wide widths and icon
+sizes so `AppSizes` constants do not silently bypass TV policy.
 
 The resolved token set should cover:
 
@@ -420,16 +486,39 @@ sample. Recommended starting policy:
 
 ```text
 near-field page inset: existing responsive spacing tokens
-ten-foot safe frame: max(48 logical px, 5% of each display dimension), bounded
+ten-foot horizontal safe frame: max(viewPadding.horizontal edge, width × 5%)
+ten-foot vertical safe frame: max(viewPadding.vertical edge, height × 5%)
 ten-foot body scale: approximately 1.30–1.45 before user/system scale
-ten-foot minimum control height: approximately 56–64 logical px
+ten-foot minimum focus/control bounds: 66×66 logical points
+ten-foot visual icon/content bounds: independently configurable, approximately 56×56
 ten-foot focus outline: at least 3 logical px with non-color shape/elevation change
 ten-foot readable line length: approximately 45–75 characters
 ```
 
-The 5% frame is a conservative overscan-safe starting point from Android TV guidance. Apply the
-maximum of platform `MediaQuery.padding`, display-feature avoidance, and the TV frame; do not add
-them blindly and double-pad content.
+At Android's 960×540 reference canvas, 5% is 48 logical pixels horizontally and 27 vertically; do
+not impose a 48-pixel minimum on top and bottom. The safe frame applies to content, while route and
+launch backgrounds remain full bleed and opaque.
+
+Combine each axis with persistent `MediaQuery.viewPadding` and display-feature avoidance. Handle
+temporary `viewInsets` such as an IME separately. Do not add `padding`, `viewPadding`, TV margins,
+and nested `SafeArea`s blindly.
+
+### 6.2.1 One-time spacing migration and enforcement
+
+Central TV metrics cannot affect a compile-time `AppSpacing.*` value. The current codebase has many
+direct constant uses, so M2 includes a deliberate one-time migration:
+
+- Layout-facing feature and shell spacing moves to `context.spacing.*`.
+- `AppSpacingValues` composes `AppUnit` with the current presentation metrics.
+- Static constants remain only where Flutter requires a constant or where a physical design token
+  intentionally must not respond to presentation policy.
+- Any retained direct use receives a short allowlist entry explaining why it is invariant.
+- A hardening/architecture test rejects new direct `AppSpacing.*` usage in production feature and
+  shell layout code outside the allowlist.
+- Generated ForUI sources remain untouched; root factory inputs provide their presentation scale.
+
+This migration is mechanical but must be reviewed visually. It is preferable to adding TV padding
+branches to approximately every screen.
 
 ### 6.3 Text scaling composition
 
@@ -453,10 +542,24 @@ Rules:
 - If the product later needs a separate TV preference, add it only after user research; do not
   silently persist a different value per platform now.
 
-### 6.4 Shared screen frame
+### 6.4 Presentation viewport and shared screen frame
 
 The existing route-transition builder paints opaque route backgrounds. TV additionally needs
-consistent content bounds. Introduce or extend one shared route frame:
+consistent content bounds.
+
+Add an `AppPresentationViewport` in `MaterialApp.builder`, outside the Router/Navigator subtree.
+In ten-foot mode it:
+
+- Paints the active full-display hard background.
+- Applies the component-wise TV edge frame around the Navigator, shell, and overlay subtree.
+- Removes the consumed `MediaQuery.padding`/`viewPadding` from descendants so existing
+  `SafeArea`s cannot reapply it.
+- Preserves `MediaQuery.viewInsets` for software keyboards.
+- Leaves interior `DisplayFeature`s intact; a fold/hinge is not reducible to an edge inset.
+- Leaves near-field constraints and media-query values unchanged.
+
+This root viewport is the sole owner of TV safe content margins. `AppScreenFrame` remains a
+smaller, reusable route-content primitive for readable width and scroll behavior:
 
 ```dart
 class AppScreenFrame extends StatelessWidget {
@@ -464,19 +567,14 @@ class AppScreenFrame extends StatelessWidget {
     required this.child,
     this.scrollController,
     this.maxContentWidth,
-    this.applyHorizontalSafeFrame = true,
-    this.applyVerticalSafeFrame = true,
   });
 }
 ```
 
 Responsibilities:
 
-- Paint the active theme's hard background.
-- Combine system safe area, display features, and ten-foot content frame.
 - Constrain readable width.
-- Avoid bottom-navigation padding when the TV shell has no bottom navigation.
-- Expose standard scroll reveal padding.
+- Expose the resolved content rectangle to focus reveal logic.
 - Preserve ordinary mobile/desktop behavior.
 
 It must not:
@@ -484,10 +582,20 @@ It must not:
 - Add its own `Scaffold` per feature.
 - Infer navigation chrome from route strings.
 - own feature headings, actions, or form state.
-- Apply nested safe areas that clip tab content.
+- Reapply system or TV edge insets.
 
-Tabbed shell screens should receive safe content from the shell/frame exactly once. Full-screen
-routes use the same frame outside the tab shell. Tests must explicitly detect doubled insets.
+The ownership rule is:
+
+- `AppPresentationViewport` owns the hard background and TV safe frame for shell chrome, routes,
+  and overlays.
+- The active feature route may use `AppScreenFrame` for readable width/scroll behavior, never for
+  another safe area.
+- Full-screen routes use the same frame only when they need its readable-width/scroll contract.
+- Dialogs/sheets inherit the root safe frame and apply only their own bounded overlay geometry.
+
+M2 enables the viewport and then migrates repeated per-screen readable-width/page-padding families
+without changing safe margins. Tests must explicitly detect doubled insets and the empty clipped
+region previously seen on tabbed screens.
 
 ### 6.5 TV shell
 
@@ -521,11 +629,20 @@ The television shell may initially resemble the expanded sidebar, but it must ha
 and focus behavior. Reusing `ExpandedAppShell` through scattered boolean flags is discouraged once
 the differences exceed width and padding.
 
+Mirroring in RTL changes placement, reading order, and the initial top-leading target. It must not
+swap physical Left and Right key meanings: Left always moves visually left and Right visually
+right.
+
 ### 6.6 Focus presentation
 
 ForUI's existing `FTappable`-based controls already support focused outlines. Configure their
 theme centrally:
 
+- The first actionable target is focused and visibly highlighted on the cold first frame, before
+  any remote event.
+- TV composition supplies `FTheme.accessibility` with `focusHighlight: true` while preserving
+  platform accessible-navigation and motion settings. Do not rely on Flutter switching to
+  traditional highlight mode after the first key press.
 - Focus must remain distinguishable when the control is also selected.
 - Focus must not rely only on accent color.
 - Light and dark backgrounds need equivalent contrast.
@@ -553,14 +670,54 @@ class AppFocusableSurface extends StatelessWidget {
 It should be based on `FocusableActionDetector` and standard `ActivateIntent`. It must expose
 semantics and use the same focused-state tokens as ForUI. It is not a general layout wrapper.
 
+### 6.6.1 ForUI remote compatibility gate
+
+ForUI 0.24.1 internally provides Enter activation for `FTappable`, while Flutter's application
+defaults also recognize Enter, numpad Enter, Space, Select, and game button A. M0 must verify, on
+both native embeddings, that the nearest ForUI shortcut manager does not prevent each platform's
+actual logical key from activating:
+
+```text
+Enter
+Numpad Enter
+LogicalKeyboardKey.select
+LogicalKeyboardKey.gameButtonA
+Android DPAD_CENTER translated through the embedding
+tvOS Select translated by flutter-tvos
+```
+
+If aliases fail, fix or contribute the mapping at ForUI/input normalization level. Do not add
+per-button shortcut maps or application wrappers around every control.
+
+### 6.6.2 ForUI theme and behavior coverage
+
+M0 records this matrix against ForUI 0.24.1. A row is "central" only when one root theme/token
+change controls every instance; otherwise the documented shared adapter is the sole exception.
+
+| ForUI family | TV size/focus source | Native-device gate |
+| --- | --- | --- |
+| Button, icon button, tappable row | `FThemeData` component styles | focus, Select aliases, repeat suppression |
+| Card/navigation tile | shared card/navigation styles | selected+focused, no clipping, RTL handoff |
+| Text field/OTP | `AppTvEditableField` plus field theme | full-screen keyboard, secure/multiline, restoration |
+| Slider | ForUI behavior plus range-semantics adapter if required | arrows, repeat, TalkBack/VoiceOver |
+| Switch/radio/segmented | component themes and standard intents | state semantics, arrows, RTL |
+| Dialog/sheet/popover/tooltip | overlay styles plus route/focus coordinator | trap, Back/Menu, invoker restoration |
+| Toast | root overlay style | safe-frame placement, one announcement, no focus theft |
+
+If a family cannot be fixed centrally, document the exact upstream gap and prefer an upstream
+ForUI correction before introducing an application wrapper.
+
 ### 6.7 Low-manual-work contract for future screens
 
 A future feature should become basically TV-compatible by following the ordinary application
 architecture. The expected authoring contract is:
 
 ```text
-Use AppScreenFrame
-  -> background, safe content bounds, readable width, and reveal padding are automatic
+Run under AppPresentationViewport
+  -> hard background and TV safe content bounds are automatic
+
+Use AppScreenFrame where content scrolls or needs readable-width bounds
+  -> readable width and reveal geometry are shared
 
 Use ForUI controls
   -> activation, semantics, minimum TV size, and focused styling are automatic
@@ -580,6 +737,7 @@ Per-screen work should normally be limited to:
 - Choosing the initial semantic focus target.
 - Declaring a `FocusTraversalGroup` around a genuine grid or nested region.
 - Giving dynamic actionable items stable keys.
+- Declaring the small expected focus-ID set used by the TV contract test.
 - Verifying that long content scrolls and that all actions remain reachable.
 
 Per-screen code must not specify:
@@ -596,16 +754,21 @@ Add a reusable TV screen contract test harness under `test/hardening/tv/`. Given
 the harness should:
 
 1. Force `tenFoot + remote`.
-2. Find the declared initial focus target.
-3. Walk reachable controls using directional keys with a bounded step count.
-4. Assert every enabled semantic action is reachable.
+2. Find the declared initial `AppFocusId`.
+3. Explore from deterministic anchors while recording focused IDs.
+4. Compare the reached set with the case's expected focus-ID manifest.
 5. Activate safe deterministic controls where the fixture permits it.
 6. Assert no focused render box falls outside the resolved safe content rectangle.
 7. Repeat in RTL and at maximum text scale for selected canonical cases.
 
-This harness reduces future manual test boilerplate, but it must not guess destructive or
-state-changing activation. Each gallery case supplies an allowlist of safe activations or marks
-itself traversal-only.
+Bounded directional walking alone cannot prove graph completeness in a cyclic/ragged layout, and
+semantics nodes cannot always be mapped back to an internal ForUI focus node. The small per-case
+focus-ID manifest is therefore required verification metadata, not product UI work. Semantics
+completeness remains a separate assertion.
+
+This harness reduces future test boilerplate, but it must not guess destructive or state-changing
+activation. Each gallery case supplies an allowlist of safe activations or marks itself
+traversal-only.
 
 ---
 
@@ -631,6 +794,10 @@ Default Flutter reading-order traversal remains the baseline for simple vertical
 - A dialog or sheet must trap focus.
 - Visual order differs from source order at responsive breakpoints.
 
+`FocusTraversalGroup` selects traversal policy; it does not trap focus. Route/modal
+`FocusScope`s and traversal-edge behavior own trapping. `TelevisionAppShell` owns navigation/content
+region handoff. Verify ForUI's existing dialog/sheet scopes before adding another trap.
+
 Do not assign numeric `FocusOrder` to every control. Explicit orders are reserved for layouts where
 reading order cannot express the visual relationship.
 
@@ -650,30 +817,40 @@ Prefer Flutter's directional traversal behavior first. Implement a custom
 `FocusTraversalPolicy` only if device tests prove the default spatial policy produces unstable
 results for responsive grids.
 
+Column count must not be chosen from `AppLayoutClass` alone. Home, Pricing, and Paywall derive
+their count from allocated width, resolved minimum card extent, and effective text scale. At high
+application/system scale they fall back to two or one column rather than shrinking or truncating
+required content. If the same behavior is proven across those callers, extract one shared
+adaptive/spatial-grid primitive after the first two implementations.
+
 ### 7.3 Route focus restoration
 
-Add a root-owned, router-adjacent focus restoration mechanism rather than storing `FocusNode`s in
-Riverpod:
+First test Flutter's Navigator/`FocusScope` restoration with the application's persistent
+`FocusNode`s for route pop, dialog dismiss, mounted shell branches, and locale/theme rebuilds.
+Do not build a global registry when default restoration already works.
 
-- Each route/shell branch may register a stable semantic focus key.
-- Before pushing a child route or opening an overlay, remember the current key.
-- On pop, restore the matching mounted node after layout.
-- If the node no longer exists, focus the route's default target.
-- Switching tabs remembers focus independently per branch.
-- Resetting a tab to its initial location resets its remembered child-route focus but may focus
-  the tab's primary content target.
-- Direct links use the route default because there is no prior target.
-- Focus memory is ephemeral and must not be persisted across application restarts.
+Where tests demonstrate a failure:
 
-Focus restoration should be implemented only after tests demonstrate the exact lifecycle. Avoid a
-generic global `Map<String, FocusNode>` that owns disposable widget objects.
+- Add a route-level `FocusScope` and deterministic default.
+- Use a narrow `AppFocusId` plus `AppFocusAnchor` for route defaults or dynamic actionable items.
+- Before a push/overlay, remember only the current ID—not its `FocusNode`.
+- On pop, restore the matching mounted anchor after layout or use the route default.
+- Keep branch memory independent only if default mounted-branch restoration fails.
+- Reset a branch's remembered child ID when `goBranch(... initialLocation: true)` resets it.
+- Direct links use the route default.
+- Focus memory remains ephemeral.
+
+Widget `Key`, semantics identity, and `AppFocusId` are distinct concepts. Never store `FocusNode`s
+in Riverpod or a global map.
 
 ### 7.4 Scrolling and reveal
 
 When focus moves:
 
 - The target must be fully visible inside the TV safe frame.
-- `Scrollable.ensureVisible` uses central reveal padding and reduced-motion behavior.
+- A focus-reveal coordinator measures the target against the safe/chrome/IME-visible rectangle,
+  invokes `Scrollable.ensureVisible` or the viewport reveal API, then corrects scroll offset when
+  necessary. `ensureVisible` itself has no reveal-padding parameter.
 - Repeated remote key events must not queue long animations.
 - A list reaching its edge must not transfer focus to unrelated chrome accidentally.
 - Focused content must not hide beneath a pinned header, toast, keyboard, or overscan margin.
@@ -693,6 +870,16 @@ directional handoff and should otherwise be avoided.
 - Long-press remote gestures are not assigned app behavior until a product requirement exists.
 - Play/Pause and media keys remain unhandled by non-media screens.
 
+Extend the existing sole `AppKeyboardHost` with a TV-only activation-repeat guard; do not add a
+second global hardware listener. In remote mode it consumes `KeyRepeatEvent` for Enter, numpad
+Enter, Space, Select, and game button A while allowing arrow repeats and text-editing behavior that
+has been explicitly verified. A first key-down still flows through Flutter `Shortcuts`/`Actions`.
+
+Native/device tests must also cover diagonal or ambiguous Siri swipes, click while touchpad motion
+is in progress, Select down/up cancellation, rapid directional repeat, reconnect while a key is
+logically held, and simultaneous keyboard/controller input. Raw tvOS touch tuning, if ever added,
+is process-wide and cannot vary per screen.
+
 ---
 
 ## 8. Navigation and Back/Menu behavior
@@ -708,10 +895,23 @@ Back/Menu resolves in this order:
 5. Pop the current `go_router` route.
 6. If inside a non-initial shell branch route, return to that branch root.
 7. At an application root, follow platform policy:
-   - Android TV: allow the operating system to leave/finish the application when appropriate.
-   - tvOS: do not fake an application exit; let the system handle Menu/Home conventions.
+   - Android TV: leave Back unhandled so the activity/system can return to TV Home.
+   - tvOS: `flutter-tvos` currently treats root `popRoute` as a graceful no-op; the system Home
+     button remains system-controlled.
 
 Do not implement Back as `goNamed(login)` or `goNamed(home)`. It must preserve stack semantics.
+Do not call `SystemNavigator.pop`, install a second raw-key pop, or promise that tvOS Menu exits the
+application.
+
+The priority list is an implementation requirement, not automatic framework behavior.
+Navigator-backed dialogs/sheets participate in route popping. ForUI tooltips, popovers, and some
+select surfaces may use `OverlayPortal` and therefore may not receive `popRoute` first. M0/M2 must
+inventory every production overlay and either:
+
+- Integrate non-route overlays with one shared TV dismiss owner/local history entry, or
+- Use a route-backed surface on TV.
+
+Never let Back pop the underlying route while a non-route overlay remains visible.
 
 ### 8.2 Existing auth flow
 
@@ -746,6 +946,10 @@ and tvOS.
   surface.
 - Input is debounced or directed to the destination while a transition is committing.
 - Reduced motion completes immediately without leaving two focus scopes active.
+- A presentation-aware transition builder selects the TV transition even though tvOS reports
+  `TargetPlatform.iOS`; it remains wrapped by `OpaquePageTransitionsBuilder`.
+- tvOS never receives the Cupertino edge-swipe transition, and Android TV does not inherit the
+  mobile zoom transition.
 
 ---
 
@@ -772,33 +976,60 @@ and tvOS.
 
 Settings font scale is a required special case:
 
-- Select/Enter enters adjustment mode if plain arrow traversal would otherwise leave the slider.
-- Left/Right changes the value by one defined step; RTL must follow the control's logical value
-  semantics, not blindly reverse application code.
-- Up/Down either adjusts according to platform convention or exits/transfers focus consistently;
-  choose one behavior and test both platforms.
-- Back exits adjustment mode before leaving the page.
+- Keep ForUI's existing horizontal-slider contract unless a native-device test disproves it:
+  Left/Right changes the value and Up/Down remains available for traversal.
+- Do not add a second "adjustment mode" state merely for TV. It would conflict with the current
+  ForUI key handling and create an invisible mode the user has to discover.
+- RTL follows the slider's logical value semantics supplied by the control; application code must
+  not reverse the value a second time.
 - The current percentage is announced after a change without duplicate live-region output.
 - Key repeat may adjust continuously but remains bounded and does not overwhelm persistence writes.
-- Persistence failure restores the previous value and retains usable focus.
+- Keep the visual value responsive while coalescing persistence, preferably committing from the
+  control's interaction-complete callback rather than on every repeated key event.
+- Persistence failure reports the failure and retains usable focus; it must not cause rapid
+  value/focus oscillation.
+- The shared slider adapter must expose range semantics, including `onIncrease`, `onDecrease`,
+  current value, and bounds, if the installed ForUI version does not already do so.
 
-If ForUI's slider already supplies correct keyboard semantics, configure and test it rather than
-wrapping it.
+This behavior is a release gate on real Android TV and Apple TV hardware with TalkBack/VoiceOver.
 
 ### 9.4 Text fields and software keyboard
 
-- Focusing a text field does not automatically open the keyboard unless the platform convention
-  expects it; Select should enter editing when required.
-- tvOS uses the embedder's native text-field bridge and on-screen keyboard.
-- Android TV uses the configured IME; test Gboard-style and vendor keyboard behavior.
-- The field, validation error, and primary action remain reachable after keyboard dismissal.
-- Next/Previous actions follow logical localized field order.
-- Submit from a single-line final field is allowed only by the existing form contract.
-- Bio remains multiline; Enter inserts a newline and never submits.
-- Passwords and OTP values are never included in diagnostics, focus restoration keys, or state
-  restoration.
-- Pasting from a paired device/keyboard follows existing validation.
-- Autofill may be absent on televisions; forms must not depend on it.
+Television text entry is not treated as ordinary desktop keyboard entry. The shared
+`AppTvEditableField` owns the policy so feature screens do not add per-field TV branches:
+
+1. In TV presentation, the traversal target is a focusable field-summary/activation surface. It
+   shows label, safe masked/current state, validation state, and an edit affordance.
+2. Select activates the real `FTextField`/editable control and transfers editing focus.
+3. Done, Cancel, Back/Menu, or keyboard dismissal returns directional focus to the activation
+   surface or the next declared action.
+4. On mobile/desktop the same wrapper renders the ordinary field directly; validation and typed
+   form state remain feature-owned and shared.
+
+This indirection is mandatory if the M0 device spike confirms the current tvOS embedder behavior:
+merely focusing an editable field can open Apple's full-screen keyboard. Therefore a real editable
+field must never be the cold-start default focus on tvOS.
+
+Platform details:
+
+- tvOS uses Apple's native, full-screen text-entry experience through the embedder. It is not a
+  Flutter overlay and may not produce useful `viewInsets`, so layout code must not rely on inset
+  animation to infer visibility.
+- Test Select-to-edit, secure entry, multiline entry, OTP, Next, Done, Cancel/Menu, dismissal,
+  hardware keyboard, and the paired iPhone Remote keyboard during M0.
+- Flutter clipboard operations may be unavailable/no-op on tvOS. Do not promise paste or require
+  it to complete a flow.
+- Android TV uses the installed IME. Test Gboard TV in left/center/right floating positions,
+  vendor IMEs, voice input, a physical keyboard, and Back dismissal. IME occlusion may be central
+  even when `viewInsets` is zero.
+- Voice entry is owned by the IME; the app must not request `RECORD_AUDIO` merely to enable the
+  keyboard microphone.
+- The field, validation error, and primary action remain reachable after dismissal.
+- Next/Previous follows logical localized field order. A final single-line submit follows the
+  existing form contract; Bio remains multiline and Enter inserts a newline.
+- Passwords and OTP values are absent from diagnostics, analytics, focus keys, restoration, and
+  logs.
+- Autofill and paired-device input are conveniences, never prerequisites.
 
 To reduce manual input in a real product, consider QR/device-code sign-in later. It is not part of
 this static starter plan.
@@ -883,7 +1114,7 @@ branch is allowed only for the differences listed below.
   complete focused borders.
 - Directional transitions between sidebars and content mirror in RTL.
 - Appearance buttons use TV target sizes.
-- Font-scale slider follows the adjustment-mode contract.
+- Font-scale slider follows the shared horizontal-slider contract.
 - Language selection preserves focus identity after the entire app rebuilds in a new locale.
 - Theme/accent changes preserve focused item and ensure the new focus indicator remains visible.
 
@@ -896,9 +1127,11 @@ branch is allowed only for the differences listed below.
 **TV adaptation:**
 
 - `AuthPageScaffold` gains ten-foot constraints and larger vertical rhythm centrally.
-- Default focus is the first incomplete field, or the primary recovery action on an error surface.
+- Default focus is the first incomplete field's activation surface, or the primary recovery action
+  on an error surface. It is never the underlying editable control on TV.
 - Field traversal is sequential and scroll-revealed.
-- On-screen keyboard lifecycle is tested.
+- `AppTvEditableField` owns entry activation, completion/cancellation, and focus restoration for
+  every auth form, including OTP.
 - Footer links remain reachable without traversing decorative content.
 - Completing nested recovery preserves the original caller stack.
 
@@ -941,12 +1174,17 @@ branch is allowed only for the differences listed below.
 - Primary recovery action receives initial focus.
 - A direct invalid route does not expose a non-functional Back action.
 - Diagnostic copy wraps within readable width.
+- The startup-failure app is dependency-free enough to render before platform capabilities,
+  router services, preferences, or the keyboard host exist. When native TV identity is available
+  it still supplies an opaque TV surface and a deterministic focused recovery action.
 
 **Risk:** Startup capability detection failure must not prevent the fallback app from rendering.
 
 ### 10.8 Development gallery and diagnostics
 
-- Add `tenFootRemote` as an explicit preview environment, not a fake platform.
+- Extend `GalleryEnvironment` with presentation/capability overrides rather than adding a second
+  unrelated `tenFootRemote` enum. The preview consumes the same `ViewingEnvironment`,
+  `InteractionPolicy`, and `PlatformCapabilities` data as production.
 - Preview at logical 1920×1080 and a 4K-equivalent logical surface if the embedder reports a
   different device-pixel ratio.
 - Allow forced `androidTv` and `tvOS` capability labels for diagnostics without importing native
@@ -961,31 +1199,42 @@ branch is allowed only for the differences listed below.
 
 ### 11.1 Application manifest
 
-The Android application must add:
+Use two thin native activities that share the same Dart entrypoint:
+
+- Existing `MainActivity` keeps `MAIN` + ordinary `LAUNCHER` for phones/tablets.
+- `TvActivity : FlutterActivity` owns `MAIN` + `LEANBACK_LAUNCHER`, landscape orientation, the TV
+  launch theme, and the TV banner. It contains no feature UI or navigation logic.
+- Both activities use the same Flutter application and route state contract. Dart capability
+  resolution treats launch through `TvActivity` as a safe affirmative TV signal.
+
+This separation avoids leaking TV orientation/theme/launcher metadata into phones while keeping all
+product UI shared. The merged manifest must include Flutter's required configuration changes plus
+`navigation`.
+
+The Android application must also add:
 
 - `android.software.leanback` with `android:required="false"` so one application can support both
   mobile and TV.
 - `android.hardware.touchscreen` with `android:required="false"`.
-- A `LEANBACK_LAUNCHER` category for the TV launcher.
-- A TV banner resource and localized brand treatment.
+- A `LEANBACK_LAUNCHER` category only on `TvActivity`.
+- An opaque TV launch/normal theme whose color matches the first Flutter surface.
+- A 320×180 full-size TV banner and at least 160×160 xhdpi launcher icon, with localized banner
+  resources for supported store locales.
 - A home-screen icon appropriate for TV launchers.
 
-Keep the ordinary `LAUNCHER` category for phones and tablets.
+Use `@string/app_name`, not a hard-coded manifest label. A validation script checks the activity,
+features, banner/icon dimensions, localized resources, orientation, and merged-manifest result.
 
-Decide during the platform spike whether to:
-
-1. Use the existing `MainActivity` with both launcher categories and runtime UI-mode detection, or
-2. Add a thin `TvActivity` when TV-only native theme, orientation, banner, or lifecycle behavior
-   genuinely differs.
-
-Prefer one activity initially. Add `TvActivity` only when a concrete native difference justifies
-it.
+Audit the merged manifest—not only the source manifest—for requirements introduced by permissions
+or plugins. Mark touchscreen/faketouch, telephony, camera/autofocus, GPS/location, NFC, microphone,
+sensors, portrait, and Wi-Fi hardware non-required unless an implemented feature truly requires
+one. Do not advertise `supports_touch_screen` unless remote-plus-touch is an intentional product
+mode.
 
 ### 11.2 Orientation and window behavior
 
 - TV presentation assumes landscape.
-- Do not lock the shared mobile activity to landscape unless detection reliably scopes the policy
-  to television devices.
+- Lock only `TvActivity` to landscape; `MainActivity` preserves the current mobile policy.
 - Handle 720p, 1080p, and 4K output through logical constraints, not hard-coded pixels.
 - Handle display mode changes and app resume without resetting route or focus unnecessarily.
 - Keep a hard native launch/normal window background matching the Flutter route background to
@@ -1000,28 +1249,45 @@ Expected mappings:
 | Remote control | Flutter/application behavior |
 | --- | --- |
 | D-pad arrows | Directional focus or active-control adjustment |
-| Centre/Select | `ActivateIntent` |
-| Back | Overlay/keyboard/router/platform priority |
+| Centre/Select, Enter, Numpad Enter, Button A | normalized `ActivateIntent` |
+| Back, Button B | overlay/keyboard/router/platform priority |
 | Play/Pause | Unhandled outside media |
 | Long press | Repeat traversal only; never repeat destructive activation |
 | Game controller D-pad | Same as remote arrows |
 | Keyboard Tab | Normal traversal |
 
-Test vendor variations that report centre selection as Enter, Select, or game-button events. Add a
-translation layer only for an observed incompatible event; do not pre-empt Flutter's standard
-bindings.
+Normalize aliases once in the existing `AppKeyboardHost`; individual screens must never call
+`router.pop()` from raw events. A game-button alias is added only when a device proves it reaches
+Dart without the expected intent. Android Home is never intercepted. Multiple paired controllers
+share one focus cursor and the host serializes simultaneous events.
+
+Use `PopScope`/`NavigatorPopHandler` and verify API 33+ system/predictive Back so one physical press
+cannot trigger both a Flutter pop and a native exit.
 
 ### 11.4 Store/discovery requirements
 
 Before release:
 
-- Supply the required banner dimensions and localized variants.
+- Meet Google TV app quality Tier 3 at minimum; Tier 2 is the product-quality goal.
+- Supply the required banner/icon dimensions, localized variants, landscape screenshots, listing,
+  and reviewer credentials.
 - Confirm the app appears in the TV launcher and Play Store TV catalogue.
 - Remove touchscreen, telephony, camera, GPS, and other hardware requirements unless a real
   feature needs them.
 - Complete Android TV quality checklist testing.
 - Verify Back behavior follows Android TV expectations.
 - Test fresh install, upgrade from a mobile-compatible build, and settings persistence.
+- Keep `minSdk` at or below 31 (the repository's 24 is valid), target the current Play requirement
+  (the repository is currently 36), and ship an Android App Bundle.
+- Replace the placeholder `com.example.starter` application ID and debug release signing before
+  distribution.
+- From 1 August 2026, validate both 32-bit and 64-bit TV support and 16 KB page-size compatibility.
+  Run `zipalign -c -P 16` and boot the release build on a 16 KB emulator/device.
+- Test low-RAM devices, baseline-profile startup, 4K output, device-code-friendly login, and the
+  Play device catalogue as part of the Tier 2 target.
+
+The native Android target intentionally remains Flutter/ForUI-only. Do not add Compose for TV or
+Leanback UI dependencies unless a future native-only surface has a concrete requirement.
 
 Primary reference:
 [Create and run a TV app](https://developer.android.com/training/tv/get-started/create).
@@ -1034,23 +1300,29 @@ Primary reference:
 
 tvOS is not an official stock Flutter target. Use the independent `flutter-tvos` distribution:
 
-- Pin an exact toolchain tag compatible with the repository's Flutter 3.44 constraint.
+- Pin `v3.44.7-tvos.1.4.2` at commit
+  `aeedf281d7d2446404980113140b3fd55f4aa571`; do not substitute a newer upstream tag while stock
+  Flutter remains 3.44.7.
 - Record the tag and installation steps in repository tooling.
 - Run `flutter-tvos doctor` in development setup and CI.
 - Generate and commit the dedicated `tvos/` project.
 - Keep stock Flutter for existing platforms; use `flutter-tvos` commands only for tvOS.
 - Do not replace the repository's ordinary Flutter SDK globally.
+- CI clones the fork outside the repository, checks out the detached commit, and never runs
+  `flutter-tvos upgrade`. Record the tag, framework commit, engine checksum, Xcode version, tvOS
+  SDK, and shared `pubspec.lock` in build provenance.
 
-The plan currently targets tvOS 13+ because that is the toolchain/package requirement. Reassess the
-minimum version against product analytics and plugin requirements before release.
+Deployment target and store build SDK are separate constraints: the app targets tvOS 13+, while
+App Store uploads on or after 28 April 2026 must be built with the tvOS 26 SDK or later.
 
 ### 12.2 Remote initialization
 
-- Add `flutter_tvos` only in the slice with the first real detector/initializer.
-- Call `TvRemoteController.instance.init()` exactly once through the infrastructure adapter.
-- Treat initialization as idempotent and a no-op elsewhere.
-- Use standard focus events for ordinary navigation.
+- Add `flutter_tvos` only for authoritative tvOS detection. Its current public API does not require
+  remote initialization for ordinary Siri Remote navigation.
+- Use Flutter's standard focus/key events for ordinary navigation.
 - Add raw touch/swipe listeners only for a future media/custom-surface requirement.
+- If future APIs require subscriptions, a root stateful host owns one idempotent subscription and
+  disposes it. `AppDependencies` must not own widget-lifecycle listeners.
 - Menu delegates to Flutter navigation/pop behavior; do not also dispatch a second manual pop.
 - Select activates the focused control through `ActivateIntent`.
 
@@ -1064,8 +1336,13 @@ The committed `tvos/` project must define:
 - Launch screen/background matching the Flutter theme.
 - Signing team and profile through developer-local/CI configuration, not committed secrets.
 - Supported orientations.
-- Swift Package Manager or CocoaPods strategy, consistently applied to federated plugins.
+- A deliberate hybrid plugin strategy: `shared_preferences_tvos` integrates through Swift Package
+  Manager, while the currently selected `package_info_plus_tvos` implementation is podspec-only.
+  Both paths are exercised in a clean build.
 - Privacy usage descriptions only for capabilities actually used.
+- A layered tvOS App Icon and a static Top Shelf image for the first release; a dynamic Top Shelf
+  extension is explicitly deferred.
+- `PrivacyInfo.xcprivacy` plus an archive-time audit of merged plugin privacy manifests.
 
 Do not hand-copy the iOS project and rename it. Generate the tvOS target with the supported
 toolchain so its embedder, plugin registrant, build modes, and device deployment remain coherent.
@@ -1080,6 +1357,19 @@ toolchain so its embedder, plugin registrant, build modes, and device deployment
   feature state.
 - Memory pressure may dispose cached/offstage content; navigation must recover safely.
 - Do not assume a touch screen, browser, share sheet, photo picker, or arbitrary file system exists.
+- Preferences are installation-wide device settings, not an authenticated account/profile store.
+  Decide multi-user ownership before real authentication. Add `flutter_secure_storage_tvos` only
+  when a secret-storage caller exists and its behavior is verified.
+- Terms and privacy content must be available in-app or through a second-screen/device-code
+  experience; do not depend on WebKit or arbitrary URL launching.
+
+App Store submission also requires:
+
+- One to ten screenshots at 1920×1080 or 3840×2160 without alpha.
+- Apple TV-specific privacy-policy text in App Store Connect.
+- Accurate App Privacy disclosures and a review of every merged required-reason API declaration.
+- Upload through official Xcode/Transporter/App Store Connect tooling; do not copy an upstream
+  sample `notarytool` workflow intended for a different platform.
 
 ### 12.5 Maintenance risk
 
@@ -1093,6 +1383,8 @@ toolchain so its embedder, plugin registrant, build modes, and device deployment
 - Maintain a documented rollback path that can disable tvOS builds without affecting Android,
   iOS, or desktop targets.
 - Track upstream engine, Xcode, signing, and plugin changes in release work.
+- Use a controlled compatibility lane to evaluate newer fork releases; adoption is a separate
+  decision with full golden, integration, plugin, and native-device validation.
 
 ---
 
@@ -1102,20 +1394,32 @@ Every dependency must be classified before the tvOS target is accepted.
 
 ### 13.1 Current package assessment
 
-| Dependency | Type | Android TV expectation | tvOS action |
+The audit is performed against the full resolved dependency graph in `pubspec.lock`, not just
+direct dependencies:
+
+| Dependency | Android TV | Pinned tvOS plan | Decision/gate |
 | --- | --- | --- | --- |
-| Flutter SDK widgets/localizations | Framework | Supported | Use fork's unmodified framework |
-| `flutter_riverpod` | Dart/framework | No special work | No special work expected |
-| `forui` / `forui_assets` | Dart/widgets/assets | Verify focus and assets | Verify compile, focus, and assets |
-| `go_router` | Dart/framework | No special work | No special work expected |
-| `intl` | Dart | No special work | No special work expected |
-| `slang` / `slang_flutter` | Dart/framework | Verify locale resolution | Verify locale resolution |
-| `simple_animations` | Dart/widgets | Honor reduced motion | Honor reduced motion |
-| `exui` | Dart/widgets | No special work expected | Verify compile |
-| `talker_flutter` | Dart/framework | Verify console behavior | Verify compile/logging |
-| `shared_preferences` | Federated native plugin | Existing Android implementation | Add/validate `shared_preferences_tvos` |
-| `package_info_plus` | Federated native plugin | Existing Android implementation | Validate support or port a tvOS implementation |
-| `flutter_tvos` | tvOS plugin | No-op | Add for detection/remote support |
+| Flutter SDK/localizations | supported | fork framework | identical Dart sources and lockfile |
+| `flutter_riverpod`, `go_router`, `intl`, `slang*` | shared Dart/framework | shared Dart/framework | compile, locale, router restoration tests |
+| `forui` 0.24.1 / assets | shared widgets | shared widgets | complete §6.6.2 matrix on devices |
+| `simple_animations` | shared | shared | reduced-motion and focus-jank gate |
+| `exui` | expected shared | compile with fork | inspect its resolved closure too |
+| `shared_preferences` 2.5.5 | Android implementation | `shared_preferences_tvos ^0.0.2` | SPM clean build, persistence/restart/privacy manifest |
+| `package_info_plus` 10.2.1 | Android implementation | `package_info_plus_tvos ^0.0.1` | CocoaPods clean build; tolerate `installerStore == null` |
+| `flutter_tvos ^1.1.2` | no-op/not registered | detection only | no remote initializer; verify runtime identity |
+| `talker_flutter` 5.1.19 | works but oversized closure | do not carry forward | replace with direct pure-Dart `talker` if current logging needs no Flutter UI integration |
+| transitive `path_provider*` | currently pulled by logging closure | unsupported/unneeded | remove with `talker_flutter`; add a verified TV adapter only for a real caller |
+| transitive `share_plus*` | currently pulled by logging closure | unsupported/unneeded | remove; TV features must not expose share-sheet behavior |
+| transitive `url_launcher*` implementations | currently in lockfile closure | unavailable by product contract | remove where closure permits; Terms/Privacy use in-app/second screen |
+
+Before the tvOS target lands, capture `flutter pub deps --style=compact` with stock Flutter and the
+pinned fork. Diff native plugins, registrants, SPM packages, and Pods. A package that is "Dart
+only" by its direct API is not exempt if its resolved closure adds native plugins.
+
+Replacing `talker_flutter` is a deliberate cleanup, not a blind package swap: first confirm the app
+uses only logger/observer APIs available from `talker`, change the infrastructure adapter, and run
+all logging/redaction tests. If a Flutter-only integration is genuinely required, isolate it from
+the tvOS target rather than registering unsupported transitive plugins.
 
 ### 13.2 Audit gate for future packages
 
@@ -1136,6 +1440,11 @@ The build must fail clearly when a required TV plugin implementation is missing.
 capabilities must degrade explicitly rather than throw `MissingPluginException` during user
 interaction.
 
+For each accepted native package, record: owner, exact version, implementation package/version,
+integration mechanism, minimum OS, required entitlements/permissions, privacy manifest, simulator
+result, real-device result, fallback behavior, and upgrade test. This inventory is a checked-in
+release artifact.
+
 ---
 
 ## 14. Accessibility and localization
@@ -1148,6 +1457,8 @@ interaction.
 - Headings and regions remain meaningful to screen readers.
 - Focus movement does not cause duplicate live-region announcements.
 - Toasts announce important feedback once without becoming focus targets.
+- Sliders and other range controls expose current value, bounds, and increase/decrease actions;
+  visual arrow handling alone is insufficient.
 
 ### 14.2 TalkBack and VoiceOver
 
@@ -1159,6 +1470,8 @@ Directional focus and accessibility focus are related but not assumed identical.
 - Rotor/navigation behavior where available.
 - Text input and password privacy.
 - Overlay focus trapping and restoration.
+- Android range-control adjustment using TalkBack actions.
+- tvOS Switch Control as well as VoiceOver, including activation surfaces for text entry.
 
 Do not fix screen-reader issues by disabling semantics around the entire TV shell.
 
@@ -1180,6 +1493,8 @@ Arabic requirements:
 - High-contrast platform settings retain boundaries.
 - Reduced motion disables focus scale/fade animation without hiding focus.
 - Repeated D-pad navigation never causes motion sickness through large parallax or zoom effects.
+- On tvOS, focus may use a restrained depth/parallax treatment consistent with Apple TV, but it
+  must remain sharp at the focused scale, leave enough surrounding space, and never be clipped.
 
 ---
 
@@ -1199,6 +1514,12 @@ Arabic requirements:
 - Suspend/resume does not duplicate listeners.
 - Hot reload/restart in development does not register the remote controller more than once.
 - Any platform-channel stream is cancelled/disposed with its owner.
+- On 1 GB low-RAM Android TV hardware, total foreground memory
+  `(Anon + Swap + Graphics + File)` stays below 280 MB; target below 200 MB for
+  `(Anon + Swap + Graphics)`. Profile cold Home, Settings, auth keyboard, and rapid navigation.
+- Remove unused native/plugin libraries and avoid decoding assets above the actual UI resolution.
+- Static screens may opt into the platform's ambient behavior where applicable; do not add a
+  blanket wake lock.
 
 ---
 
@@ -1228,13 +1549,18 @@ Use Flutter key events to model D-pad behavior:
 - Focus restoration after route pop, tab switch, locale change, theme change, and overlay dismiss.
 - Scroll reveal for first/last controls.
 - Disabled/hidden/offstage controls are skipped.
-- Slider adjustment and persistence failure.
-- Text field and OTP traversal.
+- Slider arrows/range semantics, repeat coalescing, and persistence failure.
+- TV field activation, safe summary/masking, cancellation/completion restoration, and OTP
+  traversal.
 - Onboarding PageView does not steal navigation keys.
 - Inactive shell branches remain unfocusable.
 
 Do not assert implementation-specific `FocusNode` instances. Assert the semantic control key and
 visible focus state.
+
+Widget tests cannot certify native remote key mapping, tvOS full-screen keyboard behavior,
+Menu/system Back, native plugins, VoiceOver/TalkBack, activity metadata, signing, or a release
+binary. Those remain integration/manual device gates.
 
 ### 16.3 Responsive and gallery tests
 
@@ -1293,6 +1619,18 @@ Platform smoke:
 - Controller disconnect/reconnect.
 - Software keyboard open/dismiss.
 - Clean install and settings restart.
+- Native key injection on Android (`adb shell input keyevent`/instrumentation) for
+  DPAD_UP/DOWN/LEFT/RIGHT/CENTER, Enter, Numpad Enter, Back, game Button A/B, repeats, and Home.
+- `flutter-tvos drive` feasibility is proven with the pinned fork; if unavailable or unreliable,
+  retain simulator compilation plus an explicit scripted/manual Apple TV matrix rather than
+  claiming automated coverage.
+- tvOS device entry with Siri Remote, paired iPhone keyboard, physical keyboard, secure field,
+  multiline field, OTP, Next/Done/Cancel, and Menu.
+- TalkBack and VoiceOver/Switch Control runs on release-like device builds.
+- Android 16 KB page-size emulator and a representative 1 GB low-RAM TV device/profile.
+
+ForUI compatibility tests target public behavior and semantics. If an upstream change breaks key
+handling, the gate should fail without binding application tests to private ForUI types.
 
 ### 16.6 Existing regression gates
 
@@ -1319,11 +1657,14 @@ The TV toolchain must not alter generated output for existing stock Flutter targ
 ### 17.1 Toolchain isolation
 
 - Keep the stock Flutter version pinned for ordinary targets.
-- Pin `flutter-tvos` independently by tag/commit.
+- Pin `flutter-tvos` to the exact tag/commit in §12.1 and verify the engine checksum.
+- Install it in an isolated CI path, use detached HEAD, and never invoke upgrade.
 - Add `just` recipes such as `tvos-doctor`, `tvos-run`, `tvos-build`, and `android-tv-run`.
 - Every recipe continues to pass
   `--dart-define-from-file=config/<environment>.json`.
 - Cache toolchains independently.
+- Cache keys include exact framework/engine commits, Xcode/tvOS SDK, host architecture, and
+  `pubspec.lock`; cache restoration never changes the pin.
 - Never place signing credentials or secrets in configuration JSON.
 
 ### 17.2 CI stages
@@ -1332,10 +1673,12 @@ Recommended stages:
 
 1. Existing format, analysis, generation drift, unit/widget tests.
 2. Existing platform builds.
-3. Android TV compile on Linux/macOS.
-4. tvOS simulator compile on pinned macOS/Xcode.
-5. Emulator/simulator smoke where stable.
-6. Scheduled real-device or manual release validation.
+3. Android merged-manifest/resource validation and Android TV release App Bundle compile.
+4. Android APK/AAB ABI and 16 KB page-size validation.
+5. tvOS clean dependency resolution plus simulator Debug/Profile/Release compilation on pinned
+   macOS/Xcode.
+6. Emulator/simulator smoke where stable.
+7. Scheduled real-device/manual release validation, privacy report, and archive inspection.
 
 Initially allow the independent tvOS build to be an explicitly reported experimental gate. Promote
 it to required only after the pinned toolchain is reproducible. Android TV should become required
@@ -1346,6 +1689,7 @@ once its manifest and shared UI changes land.
 For every Flutter/Xcode/Android Gradle upgrade:
 
 - Check the tvOS fork's compatibility release.
+- Do not adopt it automatically; test it in an isolated candidate lane.
 - Compile every federated tvOS plugin.
 - Re-run focus/key event smoke tests.
 - Inspect native project drift.
@@ -1366,11 +1710,24 @@ Each milestone is independently reviewable and must leave existing platforms gre
 - Audit all current dependencies.
 - Validate ForUI button/tile/slider focus and activation.
 - Record actual key events for both remotes.
-- Decide SPM versus CocoaPods.
-- Confirm `shared_preferences` and build-info strategy.
+- Confirm the required SPM/CocoaPods hybrid and exact federated implementations.
+- Verify all ForUI families in §6.6.2, including remote aliases and the tvOS text-field keyboard.
+- Capture the full transitive plugin graph and prove the `talker_flutter` replacement path.
 
 **Exit:** Both targets boot, blockers and exact versions are documented, and no architecture code is
 merged from the throwaway target.
+
+### M0.5 — Minimal native skeleton and continuous compile gates
+
+- Commit the generated tvOS target pinned to the audited fork.
+- Add thin Android `TvActivity`, Leanback launcher metadata, placeholder-valid banner/icon
+  resources, and authoritative detector channel.
+- Add `flutter_tvos`, `shared_preferences_tvos`, and `package_info_plus_tvos` at the audited
+  versions; remove/replace unsupported logging transitive plugins.
+- Establish Android TV and tvOS clean compile jobs before shared UI refactoring begins.
+
+**Exit:** Every later architecture/UI commit is checked against both target embeddings, preventing
+months of shared work from accumulating behind an untested native integration.
 
 ### M1 — Capability and presentation policy
 
@@ -1379,7 +1736,6 @@ merged from the throwaway target.
 - Add remote/hybrid-remote interaction policies.
 - Add `AppPresentationPolicy` and scope.
 - Extend diagnostics and tests.
-- Initialize tvOS remote support once through infrastructure.
 
 **Exit:** A macOS widget test/gallery can force exactly the same TV policy used in production.
 
@@ -1387,7 +1743,8 @@ merged from the throwaway target.
 
 - Add TV presentation tokens.
 - Update `ForuiThemeFactory` without editing generated theme sources.
-- Add/extend `AppScreenFrame`.
+- Add root `AppPresentationViewport`; keep `AppScreenFrame` responsible only for scrolling and
+  readable-width constraints.
 - Add `AppFocusableSurface` only for proven custom interactive surfaces.
 - Implement scroll reveal and reduced-motion behavior.
 - Add focused-state gallery cases.
@@ -1425,19 +1782,19 @@ same contract.
 
 ### M5 — Android TV packaging
 
-- Manifest features and launcher.
-- Banner/icon/launch background.
-- Runtime TV detection.
+- Harden the M0.5 manifest/activity/resources and validate the merged manifest.
+- Final localized banner/icon/launch background and production identifier/signing.
+- AAB, ABI, 16 KB page-size, low-RAM, Tier 3/Tier 2, and Play device-catalogue gates.
 - Emulator and device smoke.
-- Store-quality checklist.
+- Store listing/reviewer material and quality checklist.
 
 **Exit:** Installable Android artifact appears in the TV launcher and remains mobile-compatible.
 
 ### M6 — tvOS packaging
 
-- Commit generated `tvos/` project.
-- Wire federated plugins.
-- Add assets, identifiers, launch background, and signing seams.
+- Harden the M0.5 project and hybrid plugin integration.
+- Add layered icon, static Top Shelf, screenshots, identifiers, launch background, privacy
+  manifest/report, App Privacy details, and signing seams.
 - Simulator and device smoke.
 - Document toolchain maintenance.
 
@@ -1467,9 +1824,12 @@ Assuming one engineer familiar with the repository:
 | All current demo screens remote-usable | 2–3 platform days | 3–5 platform days | About 2–3 engineer-weeks combined |
 | Production/store hardening | 1–2 additional weeks | 2–3 additional weeks | About 4–6 engineer-weeks total |
 
-Estimates assume no blocking plugin port or toolchain/Xcode incompatibility. Media playback,
-purchases, account linking, catalogue integration, or extensive TV-specific product redesign are
-not included.
+These are planning ranges, not commitments. They assume M0 proves all ForUI key aliases, validates
+the `AppTvEditableField` approach against Apple's full-screen keyboard, removes the unsupported
+logging dependency closure, and confirms that the pinned fork builds with the required Xcode/tvOS
+SDK. A ForUI upstream fix, native plugin port, fork/SDK incompatibility, signing delay, or store
+rejection adds unbounded discovery/remediation time. Media playback, purchases, account linking,
+catalogue integration, or extensive TV-specific product redesign are not included.
 
 ---
 
@@ -1483,15 +1843,19 @@ not included.
 | Focus path becomes unpredictable | High | Traversal groups, semantic keys, D-pad tests, real remotes | Every action reachable |
 | Focus lost after rebuild/navigation | High | Route/branch restoration contract | Locale/theme/pop tests |
 | Safe frame double-applied | Medium | Single shell/frame owner; inset unit/widget tests | No clipped/empty tab space |
-| Remote event double-dispatched | High | Standard Flutter events; one initializer; avoid parallel raw listener | One action per press |
+| Remote event double-dispatched | High | Standard Flutter events; one root keyboard host; no parallel raw listener | One action per press |
 | Held Select repeats destructive action | High | Ignore repeat activation | Repeat-event tests |
 | Software keyboard traps focus | High | Explicit edit/dismiss/reveal flows | Auth/profile device smoke |
 | RTL reverses navigation incorrectly | High | Visual traversal tests and Arabic device review | RTL matrix |
 | Focus scale clips/overlaps cards | Medium | Paint transform, outer spacing, clip audit | Golden/device review |
-| TV mode leaks to mobile Android | High | UI-mode detection and injected test cases | Phone regression build/test |
+| TV mode leaks to mobile Android | High | Separate `TvActivity`, Leanback feature detection, injected cases | Phone regression build/test |
 | Platform detection failure blocks startup | High | Logged fallback to non-TV | Failure-path test |
 | Settings writes flood during slider repeat | Medium | Coalesce/persist on completion | Persistence stress test |
 | Screen reader and visual focus diverge | High | TalkBack/VoiceOver device testing | Accessibility sign-off |
+| Traversal focus opens tvOS keyboard | High | Activation-surface wrapper; never autofocus editable control | Full text-entry device matrix |
+| Transitive plugin breaks tvOS build/review | High | Lockfile closure inventory; replace `talker_flutter`; archive audit | Clean compile + plugin inventory |
+| Android manifest implies unsupported hardware | High | Merged-manifest audit and resource validator | Play device-catalogue check |
+| Release misses changing store/toolchain policy | High | Dated requirements, official-source review per release | Release-readiness sign-off |
 
 ---
 
@@ -1516,6 +1880,8 @@ not included.
 - [ ] Mouse connected to Android TV.
 - [ ] Pointer hover plus remote focus on the same control.
 - [ ] Unknown/vendor-specific key codes.
+- [ ] DPAD centre/Enter/Numpad Enter/Select/game Button A aliases activate exactly once.
+- [ ] Back/game Button B aliases pop exactly once; Home remains system-owned.
 - [ ] Play/Pause ignored outside media.
 - [ ] Modifier chord overlay does not appear for ordinary remote arrows.
 - [ ] Remote arrows are never swallowed by the global keyboard host.
@@ -1555,14 +1921,18 @@ not included.
 - [ ] Empty/invalid/valid submit.
 - [ ] First invalid field reveal.
 - [ ] Software keyboard occlusion.
+- [ ] tvOS traversal focus does not open the keyboard; Select explicitly enters editing.
+- [ ] tvOS full-screen keyboard with Siri Remote, paired iPhone keyboard, and hardware keyboard.
+- [ ] Android floating IME in left, centre, and right positions when `viewInsets` is zero.
 - [ ] Next/Previous/Done actions.
 - [ ] Password visibility semantics.
 - [ ] OTP auto-advance and deletion.
 - [ ] OTP expiry/resend without focus theft.
 - [ ] Multiline Bio Enter behavior.
-- [ ] Slider adjustment mode and boundaries.
+- [ ] Slider Left/Right, Up/Down traversal, semantics actions, repeat, and boundaries.
 - [ ] Persistence failure rollback.
 - [ ] External keyboard paste/autofill.
+- [ ] tvOS clipboard unavailable/no-op fallback.
 - [ ] Sensitive values absent from logs/restoration.
 
 ### Visual/accessibility
@@ -1591,6 +1961,9 @@ not included.
 - [ ] Startup error app works without TV dependencies.
 - [ ] Clean install, upgrade, and restart.
 - [ ] Development tools remain absent from production.
+- [ ] Android low-RAM foreground memory limits.
+- [ ] Android 32/64-bit ABI and 16 KB page-size release validation.
+- [ ] tvOS privacy manifests/privacy report and store metadata validation.
 
 ---
 
@@ -1603,6 +1976,8 @@ not included.
 - [ ] Existing public feature constructors and typed values remain source-compatible.
 - [ ] `AppLayoutClass` remains width-only.
 - [ ] TV capability and presentation policy are injectable and gallery-testable.
+- [ ] `AppDependencies.inMemory` injects a coherent complete capability value.
+- [ ] Diagnostics reads the injected provider and never performs separate platform detection.
 - [ ] Generated ForUI and Slang files are changed only through generation.
 - [ ] New shared abstractions have multiple real callers or a genuine platform implementation
       boundary.
@@ -1612,6 +1987,8 @@ not included.
 - [ ] Every action is reachable by remote.
 - [ ] Focus is always visible and restores predictably.
 - [ ] TV safe frame is applied exactly once.
+- [ ] Root, nested routes, overlays, startup failure, and transition surfaces remain opaque.
+- [ ] TV editable fields use the one shared activation/editing abstraction.
 - [ ] Text and controls are readable at ten feet.
 - [ ] No necessary information depends on hover or swipe.
 - [ ] Back/Menu follows documented priority.
@@ -1623,7 +2000,11 @@ not included.
 - [ ] Android TV launcher/device smoke passes.
 - [ ] tvOS simulator/device smoke passes.
 - [ ] Plugin audit is complete.
+- [ ] Full transitive plugin closure is recorded; unsupported logger/share/launcher/path plugins
+      are removed or explicitly gated.
 - [ ] Accessibility and localization matrices pass.
+- [ ] Android Tier 3 passes and Tier 2 deviations are documented.
+- [ ] tvOS icon/Top Shelf/screenshots/privacy/App Store metadata are complete.
 - [ ] Toolchain and upgrade policy are documented.
 - [ ] Signing, identifiers, icons, legal, backend, and store blockers are recorded in release
       readiness.

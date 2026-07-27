@@ -1,7 +1,7 @@
 # Canonical Flutter goldens
 
 These baselines implement the intentional 13-case pairwise matrix in
-`plans/initial_ui.md` section 16.3.
+`plans/completed/initial_ui.md` section 16.3.
 
 The reviewed baseline environment is:
 

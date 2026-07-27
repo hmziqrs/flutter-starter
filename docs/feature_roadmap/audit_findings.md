@@ -82,7 +82,7 @@ Five narrow edits (docs only — no `lib/`, `pubspec.yaml`, or codegen touched):
    three claims rewritten to "reuses the D5 helper; installs its auth-required predicate into it."
 3. **[features/analytics.md](features/analytics.md)** — the doc added `analyticsOptIn` to `SettingsState`
    *while persisting it via `SecureStore``. `SettingsState` fields are 1:1 with `SettingsStore` keys via
-   `SettingsRepository` (the settings boundary in [`architecture.md`](../../architecture.md)); a
+   `SettingsRepository` (the settings boundary in [`architecture.md`](../architecture.md)); a
    `SecureStore`-persisted value must not live on it. Replaced the `SettingsState` edit with a small
    handwritten `analyticsOptInControllerProvider` (`Notifier<bool>`) backed by a thin `SecureStore`
    wrapper, surfaced in the settings page via its own watch. Consistent with

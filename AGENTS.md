@@ -8,7 +8,7 @@ motion, theme, and widget primitives belong in `lib/shared/`. Root composition,
 routing, and configuration live in `lib/app/`, while logging, platform, and
 preferences adapters live in `lib/infrastructure/`. Mirror source areas under
 `test/`; desktop smoke coverage belongs in `integration_test/`. Fonts and other
-bundled resources live in `assets/`. Read `architecture.md` and
+bundled resources live in `assets/`. Read `docs/architecture.md` and
 `plans/feature_contracts.md` before changing public feature boundaries.
 
 ## Build, Test, and Development Commands

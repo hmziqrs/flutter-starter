@@ -29,7 +29,7 @@ feature is built **for real** behind a four-part contract:
    [`AppDependencies.production`](../../lib/app/dependencies.dart) and overridden at the
    `ProviderScope`. The app runs green with **zero backend**; actions needing one surface
    `common.notConnected` / `globalError` honestly and **never fake success** (the no-backend
-   rule in [`architecture.md`](../../architecture.md) is load-bearing).
+   rule in [`architecture.md`](../architecture.md) is load-bearing).
 3. **Optional real impl** — the production adapter (Sentry, Firebase, a real HTTP client) is an
    **override** a consumer constructs only when they wire credentials. It is never constructed
    by default.

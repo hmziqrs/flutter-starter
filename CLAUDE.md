@@ -3,12 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 The two imported files below are the authoritative guidance — read them before making changes.
-`architecture.md` is a subsystem index (per-concern "start here" files, add-a-screen/setting/feature
+`docs/architecture.md` is a subsystem index (per-concern "start here" files, add-a-screen/setting/feature
 recipes, guardrails); `AGENTS.md` covers project structure, style, testing, and commit conventions.
 Consult `plans/feature_contracts.md` before changing any feature's public API.
 
 @AGENTS.md
-@architecture.md
+@docs/architecture.md
 
 ## Command quick reference
 

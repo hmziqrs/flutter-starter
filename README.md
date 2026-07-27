@@ -5,12 +5,14 @@ It provides explicit compile-time environments, ForUI, Riverpod, `go_router`,
 Slang localization, adaptive layouts, persisted settings, deterministic static
 screen states, a development gallery, and a multi-platform verification suite.
 
-The architecture decisions live in [`plans/initial.md`](plans/initial.md), the
-static UI contract in [`plans/initial_ui.md`](plans/initial_ui.md), and the
+The architecture decisions live in [`plans/completed/initial.md`](plans/completed/initial.md), the
+static UI contract in [`plans/completed/initial_ui.md`](plans/completed/initial_ui.md), and the
 execution sequence in
-[`plans/implementation_workflow.md`](plans/implementation_workflow.md).
+[`plans/completed/implementation_workflow.md`](plans/completed/implementation_workflow.md).
 The post-implementation abstraction decisions are summarized in
 [`docs/baseline_architecture_report.md`](docs/baseline_architecture_report.md).
+The subsystem index — the per-concern "start here" map of the codebase — is
+[`docs/architecture.md`](docs/architecture.md).
 
 ## Supported SDK and targets
 
