@@ -17,9 +17,16 @@
     "next": "التالي",
     "optional": "اختياري",
     "loading": "جارٍ التحميل",
+    "saving": "جارٍ الحفظ…",
     "notConnected": "هذا الإجراء غير متصل بعد.",
     "legalPlaceholderTitle": "معاينة المعلومات",
     "legalPlaceholderBody": "يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج."
+  },
+  "connectivity": {
+    "online": "متصل",
+    "offline": "أنت غير متصل. قد لا تتوفر بعض الإجراءات.",
+    "backOnline": "عاد الاتصال بالإنترنت.",
+    "limited": "اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة."
   },
   "navigation": {
     "home": "الرئيسية",
@@ -235,6 +242,17 @@
       "discard": "تجاهل التغييرات"
     }
   },
+  "forceUpdate": {
+    "title": "يلزم تحديث التطبيق",
+    "body": "لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.",
+    "updateNow": "تحديث الآن"
+  },
+  "softUpdate": {
+    "title": "يتوفر إصدار أحدث",
+    "body": "حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.",
+    "update": "تحديث",
+    "later": "لاحقًا"
+  },
   "validation": {
     "required": "حقل $field مطلوب.",
     "email": "أدخل بريدًا إلكترونيًا صالحًا.",
@@ -322,9 +340,18 @@
     "screenProfile": "تحديث الملف الشخصي",
     "screenPricing": "الأسعار",
     "screenSettings": "الإعدادات",
+    "screenConnectivity": "شريط حالة الاتصال",
+    "screenForceUpdate": "تحديث إلزامي",
+    "screenSoftUpdate": "تحديث اختياري",
+    "screenBusy": "مؤشرات الانشغال",
     "screenSystem": "واجهات النظام",
     "screenOverlays": "الطبقات العلوية",
     "caseDefault": "افتراضية",
+    "caseHardBlock": "حظر إلزامي",
+    "caseSoftUpdate": "تحديث اختياري",
+    "caseBusyIndeterminate": "غير محدد",
+    "caseBusyDeterminate": "محدد",
+    "caseBusyOverlay": "طبقة مشروطة",
     "caseExpandedCopy": "نص موسّع",
     "caseFirst": "الأولى",
     "caseMiddle": "الوسطى",

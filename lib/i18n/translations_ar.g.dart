@@ -41,6 +41,7 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	// Translations
 	@override late final _Translations$app$ar app = _Translations$app$ar._(_root);
 	@override late final _Translations$common$ar common = _Translations$common$ar._(_root);
+	@override late final _Translations$connectivity$ar connectivity = _Translations$connectivity$ar._(_root);
 	@override late final _Translations$navigation$ar navigation = _Translations$navigation$ar._(_root);
 	@override late final _Translations$onboarding$ar onboarding = _Translations$onboarding$ar._(_root);
 	@override late final _Translations$pricing$ar pricing = _Translations$pricing$ar._(_root);
@@ -48,6 +49,8 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$settings$ar settings = _Translations$settings$ar._(_root);
 	@override late final _Translations$auth$ar auth = _Translations$auth$ar._(_root);
 	@override late final _Translations$profile$ar profile = _Translations$profile$ar._(_root);
+	@override late final _Translations$forceUpdate$ar forceUpdate = _Translations$forceUpdate$ar._(_root);
+	@override late final _Translations$softUpdate$ar softUpdate = _Translations$softUpdate$ar._(_root);
 	@override late final _Translations$validation$ar validation = _Translations$validation$ar._(_root);
 	@override late final _Translations$routeError$ar routeError = _Translations$routeError$ar._(_root);
 	@override late final _Translations$startupFailure$ar startupFailure = _Translations$startupFailure$ar._(_root);
@@ -86,9 +89,23 @@ class _Translations$common$ar extends Translations$common$en {
 	@override String get next => 'التالي';
 	@override String get optional => 'اختياري';
 	@override String get loading => 'جارٍ التحميل';
+	@override String get saving => 'جارٍ الحفظ…';
 	@override String get notConnected => 'هذا الإجراء غير متصل بعد.';
 	@override String get legalPlaceholderTitle => 'معاينة المعلومات';
 	@override String get legalPlaceholderBody => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.';
+}
+
+// Path: connectivity
+class _Translations$connectivity$ar extends Translations$connectivity$en {
+	_Translations$connectivity$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get online => 'متصل';
+	@override String get offline => 'أنت غير متصل. قد لا تتوفر بعض الإجراءات.';
+	@override String get backOnline => 'عاد الاتصال بالإنترنت.';
+	@override String get limited => 'اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة.';
 }
 
 // Path: navigation
@@ -256,6 +273,31 @@ class _Translations$profile$ar extends Translations$profile$en {
 	@override late final _Translations$profile$update$ar update = _Translations$profile$update$ar._(_root);
 }
 
+// Path: forceUpdate
+class _Translations$forceUpdate$ar extends Translations$forceUpdate$en {
+	_Translations$forceUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يلزم تحديث التطبيق';
+	@override String get body => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.';
+	@override String get updateNow => 'تحديث الآن';
+}
+
+// Path: softUpdate
+class _Translations$softUpdate$ar extends Translations$softUpdate$en {
+	_Translations$softUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يتوفر إصدار أحدث';
+	@override String get body => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.';
+	@override String get update => 'تحديث';
+	@override String get later => 'لاحقًا';
+}
+
 // Path: validation
 class _Translations$validation$ar extends Translations$validation$en {
 	_Translations$validation$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -377,9 +419,18 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenProfile => 'تحديث الملف الشخصي';
 	@override String get screenPricing => 'الأسعار';
 	@override String get screenSettings => 'الإعدادات';
+	@override String get screenConnectivity => 'شريط حالة الاتصال';
+	@override String get screenForceUpdate => 'تحديث إلزامي';
+	@override String get screenSoftUpdate => 'تحديث اختياري';
+	@override String get screenBusy => 'مؤشرات الانشغال';
 	@override String get screenSystem => 'واجهات النظام';
 	@override String get screenOverlays => 'الطبقات العلوية';
 	@override String get caseDefault => 'افتراضية';
+	@override String get caseHardBlock => 'حظر إلزامي';
+	@override String get caseSoftUpdate => 'تحديث اختياري';
+	@override String get caseBusyIndeterminate => 'غير محدد';
+	@override String get caseBusyDeterminate => 'محدد';
+	@override String get caseBusyOverlay => 'طبقة مشروطة';
 	@override String get caseExpandedCopy => 'نص موسّع';
 	@override String get caseFirst => 'الأولى';
 	@override String get caseMiddle => 'الوسطى';
@@ -601,9 +652,14 @@ extension on TranslationsAr {
 			'common.next' => 'التالي',
 			'common.optional' => 'اختياري',
 			'common.loading' => 'جارٍ التحميل',
+			'common.saving' => 'جارٍ الحفظ…',
 			'common.notConnected' => 'هذا الإجراء غير متصل بعد.',
 			'common.legalPlaceholderTitle' => 'معاينة المعلومات',
 			'common.legalPlaceholderBody' => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.',
+			'connectivity.online' => 'متصل',
+			'connectivity.offline' => 'أنت غير متصل. قد لا تتوفر بعض الإجراءات.',
+			'connectivity.backOnline' => 'عاد الاتصال بالإنترنت.',
+			'connectivity.limited' => 'اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة.',
 			'navigation.home' => 'الرئيسية',
 			'navigation.pricing' => 'الأسعار',
 			'navigation.settings' => 'الإعدادات',
@@ -788,6 +844,13 @@ extension on TranslationsAr {
 			'profile.update.discardBody' => 'سيتم مسح تغييرات الملف الشخصي غير المحفوظة.',
 			'profile.update.stay' => 'متابعة التحرير',
 			'profile.update.discard' => 'تجاهل التغييرات',
+			'forceUpdate.title' => 'يلزم تحديث التطبيق',
+			'forceUpdate.body' => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.',
+			'forceUpdate.updateNow' => 'تحديث الآن',
+			'softUpdate.title' => 'يتوفر إصدار أحدث',
+			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.',
+			'softUpdate.update' => 'تحديث',
+			'softUpdate.later' => 'لاحقًا',
 			'validation.required' => ({required Object field}) => 'حقل ${field} مطلوب.',
 			'validation.email' => 'أدخل بريدًا إلكترونيًا صالحًا.',
 			'validation.passwordWeak' => 'استخدم 8 أحرف على الأقل مع حرف لاتيني كبير ورقم.',
@@ -866,9 +929,18 @@ extension on TranslationsAr {
 			'devGallery.screenProfile' => 'تحديث الملف الشخصي',
 			'devGallery.screenPricing' => 'الأسعار',
 			'devGallery.screenSettings' => 'الإعدادات',
+			'devGallery.screenConnectivity' => 'شريط حالة الاتصال',
+			'devGallery.screenForceUpdate' => 'تحديث إلزامي',
+			'devGallery.screenSoftUpdate' => 'تحديث اختياري',
+			'devGallery.screenBusy' => 'مؤشرات الانشغال',
 			'devGallery.screenSystem' => 'واجهات النظام',
 			'devGallery.screenOverlays' => 'الطبقات العلوية',
 			'devGallery.caseDefault' => 'افتراضية',
+			'devGallery.caseHardBlock' => 'حظر إلزامي',
+			'devGallery.caseSoftUpdate' => 'تحديث اختياري',
+			'devGallery.caseBusyIndeterminate' => 'غير محدد',
+			'devGallery.caseBusyDeterminate' => 'محدد',
+			'devGallery.caseBusyOverlay' => 'طبقة مشروطة',
 			'devGallery.caseExpandedCopy' => 'نص موسّع',
 			'devGallery.caseFirst' => 'الأولى',
 			'devGallery.caseMiddle' => 'الوسطى',

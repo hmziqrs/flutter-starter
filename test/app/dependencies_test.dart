@@ -14,6 +14,7 @@ void main() {
       'appearance.accent',
       'appearance.font_scale',
       'localization.locale',
+      'onboarding.completed',
     });
     expect(
       SettingsRepository.persistedKeys,

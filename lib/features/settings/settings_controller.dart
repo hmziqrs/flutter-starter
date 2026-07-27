@@ -37,6 +37,17 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(fontScale: normalized));
   }
 
+  /// Marks first-launch onboarding complete with an optimistic in-memory write
+  /// through [SettingsRepository.save]. The synchronous `state =` inside
+  /// [_replace] happens before the first await, so a caller that fires this and
+  /// then navigates with `context.goNamed(home)` on the same tick is observable
+  /// to the onboarding redirect's live `container.read(...)` lookup — the
+  /// redirect never sees a stale `false`. Persistence failure rolls the flag
+  /// back to its previous value and rethrows.
+  Future<void> markOnboardingComplete() {
+    return _replace(state.copyWith(hasCompletedOnboarding: true));
+  }
+
   Future<void> setLocale(AppLocale? locale) async {
     final previous = state;
     final next = locale == null

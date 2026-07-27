@@ -9,11 +9,13 @@ final class SettingsRepository {
   static const accentKey = 'appearance.accent';
   static const fontScaleKey = 'appearance.font_scale';
   static const localeKey = 'localization.locale';
+  static const onboardingKey = 'onboarding.completed';
   static const persistedKeys = <String>[
     themeModeKey,
     accentKey,
     fontScaleKey,
     localeKey,
+    onboardingKey,
   ];
 
   final SettingsStore _store;
@@ -25,6 +27,7 @@ final class SettingsRepository {
         _store.readString(accentKey),
         _store.readString(fontScaleKey),
         _store.readString(localeKey),
+        _store.readString(onboardingKey),
       ]);
 
       return SettingsState(
@@ -32,6 +35,9 @@ final class SettingsRepository {
         accent: _enumByName(AppAccent.values, values[1]) ?? AppAccent.neutral,
         fontScale: _parseFontScale(values[2]),
         localeOverride: _parseLocale(values[3]),
+        // Treat any non-"true" value (missing, "false", legacy) as incomplete so
+        // fresh installs and pre-flag installs both gate through onboarding.
+        hasCompletedOnboarding: values[4] == 'true',
       );
     } on SettingsStoreException catch (error) {
       throw SettingsFailure.read(error.operation);
@@ -47,6 +53,10 @@ final class SettingsRepository {
         switch (state.localeOverride) {
           final locale? => _store.writeString(localeKey, locale.languageTag),
           null => _store.remove(localeKey),
+        },
+        switch (state.hasCompletedOnboarding) {
+          true => _store.writeString(onboardingKey, 'true'),
+          false => _store.remove(onboardingKey),
         },
       ]);
     } on SettingsStoreException catch (error) {

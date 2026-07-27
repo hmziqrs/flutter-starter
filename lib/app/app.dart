@@ -9,8 +9,12 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/routing/app_router.dart';
+import 'package:starter/features/connectivity/connectivity_banner.dart';
+import 'package:starter/features/connectivity/connectivity_controller.dart';
+import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
@@ -37,9 +41,15 @@ class App extends StatelessWidget {
       overrides: [
         settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
+        settingsStoreProvider.overrideWithValue(dependencies.settingsStore),
         secureStoreProvider.overrideWithValue(dependencies.secureStore),
         crashReporterProvider.overrideWithValue(dependencies.crashReporter),
         crashReporterBackendProvider.overrideWithValue(dependencies.crashReporterBackend),
+        versionGateStoreProvider.overrideWithValue(dependencies.versionGateStore),
+        // Precomputed in createApplication so the redirect reads a ready
+        // AsyncData and the check never re-fires on rebuild (C5).
+        versionCheckProvider.overrideWith((ref) async => dependencies.versionCheck),
+        connectivityServiceProvider.overrideWithValue(dependencies.connectivityService),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -66,6 +76,11 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   late final GoRouter _router = buildAppRouter(
     config: widget.config,
     initialLocation: widget.initialLocation ?? '/',
+    // Cold-start seed for the onboarding redirect. The redirect itself reads
+    // LIVE settingsControllerProvider state so the in-session Skip path is
+    // observable on the same tick; this seed is the fallback used by harnesses
+    // that build the router without a ProviderScope above MaterialApp.router.
+    hasCompletedOnboarding: ref.read(initialSettingsProvider).hasCompletedOnboarding,
   );
 
   @override
@@ -151,7 +166,9 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                 ],
                 child: FToaster(
                   child: FTooltipGroup(
-                    child: child ?? const SizedBox.shrink(),
+                    child: ConnectivityBanner(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),

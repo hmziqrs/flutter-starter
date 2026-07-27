@@ -12,6 +12,7 @@ import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef OtpSubmitCallback = FutureOr<void> Function(OtpFormValue value);
 typedef OtpResendCallback = FutureOr<void> Function();
@@ -96,13 +97,17 @@ class _OtpViewState extends ConsumerState<_OtpView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final (title, body) = _copy(context);
-    return AuthPageScaffold(
-      screenId: 'otp',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.badgeCheck,
-      title: title,
-      body: body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: context.t.auth.otp.submitting,
+      child: AuthPageScaffold(
+        screenId: 'otp',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.badgeCheck,
+        title: title,
+        body: body,
+        form: form,
+      ),
     );
   }
 
@@ -186,7 +191,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
               onPress: _submitting ? null : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting ? translations.auth.otp.submitting : translations.auth.otp.submit,
+                translations.auth.otp.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

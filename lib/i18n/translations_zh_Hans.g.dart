@@ -41,6 +41,7 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	// Translations
 	@override late final _Translations$app$zh_Hans app = _Translations$app$zh_Hans._(_root);
 	@override late final _Translations$common$zh_Hans common = _Translations$common$zh_Hans._(_root);
+	@override late final _Translations$connectivity$zh_Hans connectivity = _Translations$connectivity$zh_Hans._(_root);
 	@override late final _Translations$navigation$zh_Hans navigation = _Translations$navigation$zh_Hans._(_root);
 	@override late final _Translations$onboarding$zh_Hans onboarding = _Translations$onboarding$zh_Hans._(_root);
 	@override late final _Translations$pricing$zh_Hans pricing = _Translations$pricing$zh_Hans._(_root);
@@ -48,6 +49,8 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$settings$zh_Hans settings = _Translations$settings$zh_Hans._(_root);
 	@override late final _Translations$auth$zh_Hans auth = _Translations$auth$zh_Hans._(_root);
 	@override late final _Translations$profile$zh_Hans profile = _Translations$profile$zh_Hans._(_root);
+	@override late final _Translations$forceUpdate$zh_Hans forceUpdate = _Translations$forceUpdate$zh_Hans._(_root);
+	@override late final _Translations$softUpdate$zh_Hans softUpdate = _Translations$softUpdate$zh_Hans._(_root);
 	@override late final _Translations$validation$zh_Hans validation = _Translations$validation$zh_Hans._(_root);
 	@override late final _Translations$routeError$zh_Hans routeError = _Translations$routeError$zh_Hans._(_root);
 	@override late final _Translations$startupFailure$zh_Hans startupFailure = _Translations$startupFailure$zh_Hans._(_root);
@@ -86,9 +89,23 @@ class _Translations$common$zh_Hans extends Translations$common$en {
 	@override String get next => '下一步';
 	@override String get optional => '可选';
 	@override String get loading => '正在加载';
+	@override String get saving => '正在保存…';
 	@override String get notConnected => '此操作尚未连接。';
 	@override String get legalPlaceholderTitle => '信息预览';
 	@override String get legalPlaceholderBody => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。';
+}
+
+// Path: connectivity
+class _Translations$connectivity$zh_Hans extends Translations$connectivity$en {
+	_Translations$connectivity$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get online => '已连接';
+	@override String get offline => '你已离线。部分操作可能不可用。';
+	@override String get backOnline => '网络已恢复。';
+	@override String get limited => '连接受限。部分操作可能缓慢或不可用。';
 }
 
 // Path: navigation
@@ -256,6 +273,31 @@ class _Translations$profile$zh_Hans extends Translations$profile$en {
 	@override late final _Translations$profile$update$zh_Hans update = _Translations$profile$update$zh_Hans._(_root);
 }
 
+// Path: forceUpdate
+class _Translations$forceUpdate$zh_Hans extends Translations$forceUpdate$en {
+	_Translations$forceUpdate$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '需要更新';
+	@override String get body => '此版本已不再受支持。请更新至最新版本以继续。';
+	@override String get updateNow => '立即更新';
+}
+
+// Path: softUpdate
+class _Translations$softUpdate$zh_Hans extends Translations$softUpdate$en {
+	_Translations$softUpdate$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '有新版本可用';
+	@override String get body => '更新至最新版本以获取最新改进和修复。';
+	@override String get update => '更新';
+	@override String get later => '稍后';
+}
+
 // Path: validation
 class _Translations$validation$zh_Hans extends Translations$validation$en {
 	_Translations$validation$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
@@ -377,9 +419,18 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get screenProfile => '更新资料';
 	@override String get screenPricing => '方案定价';
 	@override String get screenSettings => '设置';
+	@override String get screenConnectivity => '连接状态栏';
+	@override String get screenForceUpdate => '强制更新';
+	@override String get screenSoftUpdate => '建议更新';
+	@override String get screenBusy => '忙碌指示器';
 	@override String get screenSystem => '系统界面';
 	@override String get screenOverlays => '浮层';
 	@override String get caseDefault => '默认';
+	@override String get caseHardBlock => '强制阻止';
+	@override String get caseSoftUpdate => '建议更新';
+	@override String get caseBusyIndeterminate => '不确定进度';
+	@override String get caseBusyDeterminate => '确定进度';
+	@override String get caseBusyOverlay => '模态遮罩';
 	@override String get caseExpandedCopy => '扩展文案';
 	@override String get caseFirst => '第一步';
 	@override String get caseMiddle => '中间';
@@ -601,9 +652,14 @@ extension on TranslationsZhHans {
 			'common.next' => '下一步',
 			'common.optional' => '可选',
 			'common.loading' => '正在加载',
+			'common.saving' => '正在保存…',
 			'common.notConnected' => '此操作尚未连接。',
 			'common.legalPlaceholderTitle' => '信息预览',
 			'common.legalPlaceholderBody' => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。',
+			'connectivity.online' => '已连接',
+			'connectivity.offline' => '你已离线。部分操作可能不可用。',
+			'connectivity.backOnline' => '网络已恢复。',
+			'connectivity.limited' => '连接受限。部分操作可能缓慢或不可用。',
 			'navigation.home' => '主页',
 			'navigation.pricing' => '价格',
 			'navigation.settings' => '设置',
@@ -788,6 +844,13 @@ extension on TranslationsZhHans {
 			'profile.update.discardBody' => '未保存的个人资料更改将被清除。',
 			'profile.update.stay' => '继续编辑',
 			'profile.update.discard' => '放弃更改',
+			'forceUpdate.title' => '需要更新',
+			'forceUpdate.body' => '此版本已不再受支持。请更新至最新版本以继续。',
+			'forceUpdate.updateNow' => '立即更新',
+			'softUpdate.title' => '有新版本可用',
+			'softUpdate.body' => '更新至最新版本以获取最新改进和修复。',
+			'softUpdate.update' => '更新',
+			'softUpdate.later' => '稍后',
 			'validation.required' => ({required Object field}) => '${field} 为必填项。',
 			'validation.email' => '请输入有效的电子邮箱。',
 			'validation.passwordWeak' => '至少使用 8 个字符，并包含一个大写字母和一个数字。',
@@ -866,9 +929,18 @@ extension on TranslationsZhHans {
 			'devGallery.screenProfile' => '更新资料',
 			'devGallery.screenPricing' => '方案定价',
 			'devGallery.screenSettings' => '设置',
+			'devGallery.screenConnectivity' => '连接状态栏',
+			'devGallery.screenForceUpdate' => '强制更新',
+			'devGallery.screenSoftUpdate' => '建议更新',
+			'devGallery.screenBusy' => '忙碌指示器',
 			'devGallery.screenSystem' => '系统界面',
 			'devGallery.screenOverlays' => '浮层',
 			'devGallery.caseDefault' => '默认',
+			'devGallery.caseHardBlock' => '强制阻止',
+			'devGallery.caseSoftUpdate' => '建议更新',
+			'devGallery.caseBusyIndeterminate' => '不确定进度',
+			'devGallery.caseBusyDeterminate' => '确定进度',
+			'devGallery.caseBusyOverlay' => '模态遮罩',
 			'devGallery.caseExpandedCopy' => '扩展文案',
 			'devGallery.caseFirst' => '第一步',
 			'devGallery.caseMiddle' => '中间',

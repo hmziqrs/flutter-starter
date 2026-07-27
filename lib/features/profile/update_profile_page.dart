@@ -9,6 +9,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 typedef ProfileSaveCallback = FutureOr<void> Function(ProfileDraft draft);
@@ -506,7 +507,7 @@ class _ProfileForm extends StatelessWidget {
             key: const ValueKey('profile-save'),
             onPress: _enabled ? onSave : null,
             prefix: phase == ProfilePresentationPhase.saving
-                ? FCircularProgress(semanticsLabel: profile.saving)
+                ? BusyIndicator(severity: BusySeverity.saving, semanticsLabel: profile.saving)
                 : const Icon(FLucideIcons.save),
             child: Text(
               phase == ProfilePresentationPhase.saving ? profile.saving : profile.save,

@@ -12,13 +12,15 @@ final class SettingsState {
     required this.accent,
     required this.fontScale,
     required this.localeOverride,
+    this.hasCompletedOnboarding = false,
   });
 
   const SettingsState.defaults()
     : themeMode = AppThemeMode.system,
       accent = AppAccent.neutral,
       fontScale = 1,
-      localeOverride = null;
+      localeOverride = null,
+      hasCompletedOnboarding = false;
 
   static const minimumFontScale = 0.85;
   static const maximumFontScale = 1.6;
@@ -29,11 +31,19 @@ final class SettingsState {
   final double fontScale;
   final AppLocale? localeOverride;
 
+  /// Whether the first-launch onboarding flow has been completed. Seeded
+  /// synchronously from persisted settings at cold start and toggled by the
+  /// settings controller's mark-onboarding-complete action. The onboarding
+  /// redirect reads the live controller state (not a captured bool) so the
+  /// in-session Skip transition reaches home on the same tick.
+  final bool hasCompletedOnboarding;
+
   SettingsState copyWith({
     AppThemeMode? themeMode,
     AppAccent? accent,
     double? fontScale,
     AppLocale? localeOverride,
+    bool? hasCompletedOnboarding,
     bool followSystemLocale = false,
   }) {
     return SettingsState(
@@ -41,6 +51,7 @@ final class SettingsState {
       accent: accent ?? this.accent,
       fontScale: fontScale ?? this.fontScale,
       localeOverride: followSystemLocale ? null : (localeOverride ?? this.localeOverride),
+      hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
     );
   }
 
@@ -51,9 +62,11 @@ final class SettingsState {
             themeMode == other.themeMode &&
             accent == other.accent &&
             fontScale == other.fontScale &&
-            localeOverride == other.localeOverride;
+            localeOverride == other.localeOverride &&
+            hasCompletedOnboarding == other.hasCompletedOnboarding;
   }
 
   @override
-  int get hashCode => Object.hash(themeMode, accent, fontScale, localeOverride);
+  int get hashCode =>
+      Object.hash(themeMode, accent, fontScale, localeOverride, hasCompletedOnboarding);
 }

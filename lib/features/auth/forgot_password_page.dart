@@ -11,6 +11,7 @@ import 'package:starter/features/auth/forgot_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef ForgotPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -101,13 +102,17 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final translations = context.t.auth.forgotPassword;
-    return AuthPageScaffold(
-      screenId: 'forgot-password',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.keyRound,
-      title: translations.title,
-      body: translations.body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: translations.submitting,
+      child: AuthPageScaffold(
+        screenId: 'forgot-password',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.keyRound,
+        title: translations.title,
+        body: translations.body,
+        form: form,
+      ),
     );
   }
 
@@ -171,9 +176,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
               onPress: _submitting ? null : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting
-                    ? translations.auth.forgotPassword.submitting
-                    : translations.auth.forgotPassword.submit,
+                translations.auth.forgotPassword.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

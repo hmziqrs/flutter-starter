@@ -42,6 +42,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	// Translations
 	late final Translations$app$en app = Translations$app$en.internal(_root);
 	late final Translations$common$en common = Translations$common$en.internal(_root);
+	late final Translations$connectivity$en connectivity = Translations$connectivity$en.internal(_root);
 	late final Translations$navigation$en navigation = Translations$navigation$en.internal(_root);
 	late final Translations$onboarding$en onboarding = Translations$onboarding$en.internal(_root);
 	late final Translations$pricing$en pricing = Translations$pricing$en.internal(_root);
@@ -49,6 +50,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
 	late final Translations$profile$en profile = Translations$profile$en.internal(_root);
+	late final Translations$forceUpdate$en forceUpdate = Translations$forceUpdate$en.internal(_root);
+	late final Translations$softUpdate$en softUpdate = Translations$softUpdate$en.internal(_root);
 	late final Translations$validation$en validation = Translations$validation$en.internal(_root);
 	late final Translations$routeError$en routeError = Translations$routeError$en.internal(_root);
 	late final Translations$startupFailure$en startupFailure = Translations$startupFailure$en.internal(_root);
@@ -118,6 +121,9 @@ class Translations$common$en {
 	/// en: 'Loading'
 	String get loading => 'Loading';
 
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
 	/// en: 'This action is not connected yet.'
 	String get notConnected => 'This action is not connected yet.';
 
@@ -126,6 +132,27 @@ class Translations$common$en {
 
 	/// en: 'This starter shows deterministic placeholder content until product-specific legal text is approved.'
 	String get legalPlaceholderBody => 'This starter shows deterministic placeholder content until product-specific legal text is approved.';
+}
+
+// Path: connectivity
+class Translations$connectivity$en {
+	Translations$connectivity$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Online'
+	String get online => 'Online';
+
+	/// en: 'You are offline. Some actions may be unavailable.'
+	String get offline => 'You are offline. Some actions may be unavailable.';
+
+	/// en: 'You are back online.'
+	String get backOnline => 'You are back online.';
+
+	/// en: 'Limited connection. Some actions may be slow or unavailable.'
+	String get limited => 'Limited connection. Some actions may be slow or unavailable.';
 }
 
 // Path: navigation
@@ -482,6 +509,45 @@ class Translations$profile$en {
 	late final Translations$profile$update$en update = Translations$profile$update$en.internal(_root);
 }
 
+// Path: forceUpdate
+class Translations$forceUpdate$en {
+	Translations$forceUpdate$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Update required'
+	String get title => 'Update required';
+
+	/// en: 'This version is no longer supported. Update to the latest version to continue.'
+	String get body => 'This version is no longer supported. Update to the latest version to continue.';
+
+	/// en: 'Update now'
+	String get updateNow => 'Update now';
+}
+
+// Path: softUpdate
+class Translations$softUpdate$en {
+	Translations$softUpdate$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'A newer version is available'
+	String get title => 'A newer version is available';
+
+	/// en: 'Update to the latest version for the latest improvements and fixes.'
+	String get body => 'Update to the latest version for the latest improvements and fixes.';
+
+	/// en: 'Update'
+	String get update => 'Update';
+
+	/// en: 'Later'
+	String get later => 'Later';
+}
+
 // Path: validation
 class Translations$validation$en {
 	Translations$validation$en.internal(this._root);
@@ -760,6 +826,18 @@ class Translations$devGallery$en {
 	/// en: 'Settings'
 	String get screenSettings => 'Settings';
 
+	/// en: 'Connectivity banner'
+	String get screenConnectivity => 'Connectivity banner';
+
+	/// en: 'Force update'
+	String get screenForceUpdate => 'Force update';
+
+	/// en: 'Soft update'
+	String get screenSoftUpdate => 'Soft update';
+
+	/// en: 'Busy indicators'
+	String get screenBusy => 'Busy indicators';
+
 	/// en: 'System surfaces'
 	String get screenSystem => 'System surfaces';
 
@@ -768,6 +846,21 @@ class Translations$devGallery$en {
 
 	/// en: 'Default'
 	String get caseDefault => 'Default';
+
+	/// en: 'Hard block'
+	String get caseHardBlock => 'Hard block';
+
+	/// en: 'Soft update'
+	String get caseSoftUpdate => 'Soft update';
+
+	/// en: 'Indeterminate'
+	String get caseBusyIndeterminate => 'Indeterminate';
+
+	/// en: 'Determinate'
+	String get caseBusyDeterminate => 'Determinate';
+
+	/// en: 'Modal overlay'
+	String get caseBusyOverlay => 'Modal overlay';
 
 	/// en: 'Expanded copy'
 	String get caseExpandedCopy => 'Expanded copy';
@@ -1237,9 +1330,14 @@ extension on Translations {
 			'common.next' => 'Next',
 			'common.optional' => 'Optional',
 			'common.loading' => 'Loading',
+			'common.saving' => 'Saving…',
 			'common.notConnected' => 'This action is not connected yet.',
 			'common.legalPlaceholderTitle' => 'Information preview',
 			'common.legalPlaceholderBody' => 'This starter shows deterministic placeholder content until product-specific legal text is approved.',
+			'connectivity.online' => 'Online',
+			'connectivity.offline' => 'You are offline. Some actions may be unavailable.',
+			'connectivity.backOnline' => 'You are back online.',
+			'connectivity.limited' => 'Limited connection. Some actions may be slow or unavailable.',
 			'navigation.home' => 'Home',
 			'navigation.pricing' => 'Pricing',
 			'navigation.settings' => 'Settings',
@@ -1424,6 +1522,13 @@ extension on Translations {
 			'profile.update.discardBody' => 'Your unsaved profile changes will be cleared.',
 			'profile.update.stay' => 'Keep editing',
 			'profile.update.discard' => 'Discard changes',
+			'forceUpdate.title' => 'Update required',
+			'forceUpdate.body' => 'This version is no longer supported. Update to the latest version to continue.',
+			'forceUpdate.updateNow' => 'Update now',
+			'softUpdate.title' => 'A newer version is available',
+			'softUpdate.body' => 'Update to the latest version for the latest improvements and fixes.',
+			'softUpdate.update' => 'Update',
+			'softUpdate.later' => 'Later',
 			'validation.required' => ({required Object field}) => '${field} is required.',
 			'validation.email' => 'Enter a valid email address.',
 			'validation.passwordWeak' => 'Use at least 8 characters with an uppercase letter and a number.',
@@ -1502,9 +1607,18 @@ extension on Translations {
 			'devGallery.screenProfile' => 'Update profile',
 			'devGallery.screenPricing' => 'Pricing',
 			'devGallery.screenSettings' => 'Settings',
+			'devGallery.screenConnectivity' => 'Connectivity banner',
+			'devGallery.screenForceUpdate' => 'Force update',
+			'devGallery.screenSoftUpdate' => 'Soft update',
+			'devGallery.screenBusy' => 'Busy indicators',
 			'devGallery.screenSystem' => 'System surfaces',
 			'devGallery.screenOverlays' => 'Overlays',
 			'devGallery.caseDefault' => 'Default',
+			'devGallery.caseHardBlock' => 'Hard block',
+			'devGallery.caseSoftUpdate' => 'Soft update',
+			'devGallery.caseBusyIndeterminate' => 'Indeterminate',
+			'devGallery.caseBusyDeterminate' => 'Determinate',
+			'devGallery.caseBusyOverlay' => 'Modal overlay',
 			'devGallery.caseExpandedCopy' => 'Expanded copy',
 			'devGallery.caseFirst' => 'First',
 			'devGallery.caseMiddle' => 'Middle',

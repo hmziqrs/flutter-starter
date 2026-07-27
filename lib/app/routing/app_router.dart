@@ -19,6 +19,11 @@ import 'package:starter/features/auth/register_page.dart';
 import 'package:starter/features/auth/reset_password_page.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 import 'package:starter/features/dev_gallery/screen_gallery_page.dart';
+import 'package:starter/features/force_update/force_update_page.dart';
+import 'package:starter/features/force_update/force_update_state.dart';
+import 'package:starter/features/force_update/soft_update_dialog.dart';
+import 'package:starter/features/force_update/update_requirement.dart';
+import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/home/home_page.dart';
 import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/features/onboarding/onboarding_page.dart';
@@ -27,18 +32,28 @@ import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/pricing/pricing_page.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
+import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
+import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 GoRouter buildAppRouter({
   required AppConfig config,
   String initialLocation = AppRoutes.homePath,
+  bool hasCompletedOnboarding = false,
 }) {
+  // The cold-start seed mirrors AppDependencies.initialSettings
+  // .hasCompletedOnboarding and is threaded from createApplication -> App ->
+  // _AppView. It is a fallback for test harnesses that build the router
+  // without a ProviderScope above MaterialApp.router; the live redirect reads
+  // settingsControllerProvider so the in-session Skip path observes the
+  // optimistic write on the same tick (see _redirectSettingsDeepLinks).
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -113,7 +128,7 @@ GoRouter buildAppRouter({
         name: AppRoutes.onboarding,
         path: AppRoutes.onboardingPath,
         builder: (context, state) => OnboardingPage(
-          onSkip: () => context.goNamed(AppRoutes.home),
+          onSkip: () => _completeOnboardingAndGoHome(context),
           onOpenPaywall: () => context.goNamed(AppRoutes.onboardingPaywall),
         ),
       ),
@@ -122,8 +137,8 @@ GoRouter buildAppRouter({
         path: AppRoutes.onboardingPaywallPath,
         builder: (context, state) => PaywallPage(
           plans: PricingFixtures.standard(context.t),
-          onSkip: () => context.goNamed(AppRoutes.home),
-          onContinue: (_, _) => context.goNamed(AppRoutes.home),
+          onSkip: () => _completeOnboardingAndGoHome(context),
+          onContinue: (_, _) => _completeOnboardingAndGoHome(context),
           onRestore: () => _showInformationDialog(
             context,
             title: context.t.pricing.restore,
@@ -138,6 +153,27 @@ GoRouter buildAppRouter({
             title: context.t.pricing.privacy,
           ),
         ),
+      ),
+      GoRoute(
+        name: AppRoutes.forceUpdate,
+        path: AppRoutes.forceUpdatePath,
+        builder: (context, state) {
+          final requirement = ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(versionCheckProvider).value;
+          final hard = requirement is UpdateRequirementHard
+              ? requirement
+              : const UpdateRequirementHard(
+                  minVersion: '',
+                  latestVersion: '',
+                  storeUrl: '',
+                );
+          return ForceUpdatePage(
+            state: ForceUpdateState.from(hard),
+            onUpdateNow: () => unawaited(_launchStoreUrl(hard.storeUrl)),
+          );
+        },
       ),
       GoRoute(
         name: AppRoutes.login,
@@ -248,22 +284,44 @@ GoRouter buildAppRouter({
       ],
     ],
     errorBuilder: _routeErrorPage,
-    redirect: _redirectSettingsDeepLinks,
+    redirect: (context, state) => _redirectSettingsDeepLinks(
+      context,
+      state,
+      hasCompletedOnboardingSeed: hasCompletedOnboarding,
+    ),
   );
 }
 
-// Normalizes dedicated settings detail deep links (/settings/appearance,
-// /settings/language) to the /settings?section=… query form. A cold-start
-// deep-link to a dedicated path would otherwise leave the settings branch
-// holding a page keyed ValueKey("/settings/appearance"); a subsequent wide
-// section switch (replaceNamed to /settings?section=…) changes the matched
-// path/key and fires the platform page transition the migration exists to
-// remove. Normalizing on entry keeps the page key ValueKey("/settings") for
-// all settings pages on medium/expanded, so wide section switches run no
-// transition. Content is unchanged: SettingsPage reads ?section=, so the
-// appearance/language content still renders.
-String? _redirectSettingsDeepLinks(BuildContext context, GoRouterState state) {
+// One redirect (C5): predicates chained in priority order. Each block returns
+// the first non-null target. Order: (1) update-blocker HARD block (wins over
+// everything); (2) settings deep-link normalization (existing); (3) onboarding
+// gate (sends shell-tab destinations to /onboarding when the flag is unset).
+//
+// Update-blocker HARD must run first so a hard block wins over onboarding and
+// settings normalization. SOFT never redirects — it triggers a post-frame
+// dialog gated by a once-per-process flag plus the snooze timestamp. NONE /
+// loading / error fall through.
+String? _redirectSettingsDeepLinks(
+  BuildContext context,
+  GoRouterState state, {
+  bool hasCompletedOnboardingSeed = false,
+}) {
   final path = state.uri.path;
+
+  // (1) Update-blocker HARD: any route other than /force-update redirects to
+  // /force-update; on /force-update returns null (no loop).
+  final requirement = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(versionCheckProvider).value;
+  if (requirement is UpdateRequirementHard) {
+    return path == AppRoutes.forceUpdatePath ? null : AppRoutes.forceUpdatePath;
+  }
+  if (requirement is UpdateRequirementSoft) {
+    _maybeShowSoftUpdateDialog(context, requirement);
+  }
+
+  // (2) Existing settings deep-link normalization.
   if (path == AppRoutes.appearanceSettingsPath) {
     return state.uri
         .replace(
@@ -280,7 +338,108 @@ String? _redirectSettingsDeepLinks(BuildContext context, GoRouterState state) {
         )
         .toString();
   }
+
+  // (3) Onboarding gate. Skip when already on an onboarding or auth route —
+  // deep links and auth flows must not be hijacked into an onboarding loop.
+  if (_isOnboardingOrAuthRoute(path)) {
+    return null;
+  }
+  // Only the shell-tab destinations gate through onboarding. Detail routes
+  // (/profile/edit, /dev/*) are reachable from the shell and only render after
+  // the shell itself has cleared onboarding, so they do not need to redirect
+  // independently.
+  if (!_isShellTabDestination(path)) {
+    return null;
+  }
+  // Read LIVE controller state so the in-session Skip -> markOnboardingComplete
+  // -> goName(home) path is observable here on the same tick. A captured bool
+  // would re-evaluate against the stale pre-mark value and bounce home ->
+  // onboarding until relaunch. The seed is a fallback for test harnesses that
+  // build the router without a ProviderScope above MaterialApp.router.
+  final hasCompleted = _readLiveHasCompletedOnboarding(context) ?? hasCompletedOnboardingSeed;
+  if (!hasCompleted) {
+    return AppRoutes.onboardingPath;
+  }
   return null;
+}
+
+bool _isShellTabDestination(String path) =>
+    path == AppRoutes.homePath || path == AppRoutes.pricingPath || path == AppRoutes.settingsPath;
+
+bool _isOnboardingOrAuthRoute(String path) =>
+    path == AppRoutes.onboardingPath ||
+    path.startsWith('${AppRoutes.onboardingPath}/') ||
+    path.startsWith('/auth/');
+
+bool? _readLiveHasCompletedOnboarding(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    return container.read(settingsControllerProvider).hasCompletedOnboarding;
+  } on Object {
+    // Test-harness fallback (no ProviderScope above the router); production
+    // always wires the scope so the live read wins.
+    return null;
+  }
+}
+
+/// Once-per-process guard so the soft-update prompt never nags within a single
+/// session (the snooze timestamp covers cross-launch suppression).
+bool _softUpdatePromptShown = false;
+
+void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requirement) {
+  if (_softUpdatePromptShown) {
+    return;
+  }
+  final container = ProviderScope.containerOf(context, listen: false);
+  final store = container.read(settingsStoreProvider);
+  _softUpdatePromptShown = true;
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) {
+      return;
+    }
+    unawaited(
+      store.readString(SoftUpdateSnooze.key).then((stored) {
+        if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
+          return;
+        }
+        unawaited(
+          showSoftUpdateDialog(
+            context,
+            state: ForceUpdateState.from(requirement),
+            onUpdate: () => unawaited(_launchStoreUrl(requirement.storeUrl)),
+            onLater: () => store.writeString(SoftUpdateSnooze.key, SoftUpdateSnooze.encode()),
+          ),
+        );
+      }),
+    );
+  });
+}
+
+Future<void> _launchStoreUrl(String storeUrl) async {
+  final uri = Uri.tryParse(storeUrl);
+  if (uri == null) {
+    return;
+  }
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } on Object {
+    // Store deep-link is best-effort; never break the hard-block UI on failure.
+  }
+}
+
+/// Marks first-launch onboarding complete (optimistic in-memory write through
+/// the settings controller) and then navigates to home. Called from every
+/// home-navigating onboarding callback — OnboardingPage.onSkip, the paywall
+/// onContinue, and PaywallPage.onSkip — so the redirect's live read sees
+/// hasCompletedOnboarding = true on the same tick as goNamed(home) and does
+/// not bounce back into onboarding. Persistence is fire-and-forget: the
+/// synchronous `state =` inside SettingsController._replace runs before the
+/// first await, and a rollback on persistence failure only re-opens onboarding
+/// on the next cold start (acceptable — the user already saw home).
+void _completeOnboardingAndGoHome(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  unawaited(container.read(settingsControllerProvider.notifier).markOnboardingComplete());
+  context.goNamed(AppRoutes.home);
 }
 
 const _passwordResetComplete = 'password-reset-complete';

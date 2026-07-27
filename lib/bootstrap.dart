@@ -10,6 +10,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/platform/app_build_info.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
 
@@ -45,7 +46,11 @@ Future<App> createApplication(
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  final dependencies = await AppDependencies.production(appLogger);
+  // Load AppBuildInfo ONCE and run the version check once in the composition
+  // root (C5: never in a widget build). The result is carried on
+  // AppDependencies.versionCheck and read by the redirect / force-update route.
+  final buildInfo = await AppBuildInfo.load();
+  final dependencies = await AppDependencies.production(appLogger, buildInfo: buildInfo);
   if (dependencies.initialSettings.localeOverride case final locale?) {
     await LocaleSettings.setLocale(locale);
   } else {

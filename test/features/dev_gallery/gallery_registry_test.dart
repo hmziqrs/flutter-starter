@@ -8,7 +8,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(82));
+    expect(cases, hasLength(90));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -19,6 +19,11 @@ void main() {
         'profile.update.discardPrompt',
         'system.startupFailure',
         'overlays.keyboardInset',
+        // Wave-2 feature surfaces registered by their gallery contributors.
+        'connectivity.offline',
+        'forceUpdate.hard',
+        'softUpdate.card',
+        'busy.overlay',
       ]),
     );
     expect(

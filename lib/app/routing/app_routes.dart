@@ -29,6 +29,9 @@ abstract final class AppRoutes {
   static const resetPassword = 'reset-password';
   static const resetPasswordPath = '/auth/reset-password';
 
+  static const forceUpdate = 'force-update';
+  static const forceUpdatePath = '/force-update';
+
   static const updateProfile = 'update-profile';
   static const updateProfilePath = '/profile/edit';
   static const pricing = 'pricing';

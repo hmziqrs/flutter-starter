@@ -17,9 +17,16 @@
     "next": "Next",
     "optional": "Optional",
     "loading": "Loading",
+    "saving": "Saving…",
     "notConnected": "This action is not connected yet.",
     "legalPlaceholderTitle": "Information preview",
     "legalPlaceholderBody": "This starter shows deterministic placeholder content until product-specific legal text is approved."
+  },
+  "connectivity": {
+    "online": "Online",
+    "offline": "You are offline. Some actions may be unavailable.",
+    "backOnline": "You are back online.",
+    "limited": "Limited connection. Some actions may be slow or unavailable."
   },
   "navigation": {
     "home": "Home",
@@ -235,6 +242,17 @@
       "discard": "Discard changes"
     }
   },
+  "forceUpdate": {
+    "title": "Update required",
+    "body": "This version is no longer supported. Update to the latest version to continue.",
+    "updateNow": "Update now"
+  },
+  "softUpdate": {
+    "title": "A newer version is available",
+    "body": "Update to the latest version for the latest improvements and fixes.",
+    "update": "Update",
+    "later": "Later"
+  },
   "validation": {
     "required": "$field is required.",
     "email": "Enter a valid email address.",
@@ -322,9 +340,18 @@
     "screenProfile": "Update profile",
     "screenPricing": "Pricing",
     "screenSettings": "Settings",
+    "screenConnectivity": "Connectivity banner",
+    "screenForceUpdate": "Force update",
+    "screenSoftUpdate": "Soft update",
+    "screenBusy": "Busy indicators",
     "screenSystem": "System surfaces",
     "screenOverlays": "Overlays",
     "caseDefault": "Default",
+    "caseHardBlock": "Hard block",
+    "caseSoftUpdate": "Soft update",
+    "caseBusyIndeterminate": "Indeterminate",
+    "caseBusyDeterminate": "Determinate",
+    "caseBusyOverlay": "Modal overlay",
     "caseExpandedCopy": "Expanded copy",
     "caseFirst": "First",
     "caseMiddle": "Middle",

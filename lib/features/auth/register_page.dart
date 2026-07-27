@@ -11,6 +11,7 @@ import 'package:starter/features/auth/register_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 typedef RegisterSubmitCallback = FutureOr<void> Function(RegisterFormValue value);
@@ -145,13 +146,17 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
     return PopScope<Object?>(
       canPop: _allowPop || !_dirty,
       onPopInvokedWithResult: _handlePop,
-      child: AuthPageScaffold(
-        screenId: 'register',
-        layoutClass: layoutClass,
-        icon: FLucideIcons.userRoundPlus,
-        title: translations.title,
-        body: translations.body,
-        form: form,
+      child: BusyOverlay(
+        isBusy: _submitting,
+        label: translations.submitting,
+        child: AuthPageScaffold(
+          screenId: 'register',
+          layoutClass: layoutClass,
+          icon: FLucideIcons.userRoundPlus,
+          title: translations.title,
+          body: translations.body,
+          form: form,
+        ),
       ),
     );
   }
@@ -348,11 +353,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
             FButton(
               key: const ValueKey('auth-register-submit'),
               onPress: _submitting ? null : () => unawaited(_submit()),
-              child: Text(
-                _submitting
-                    ? translations.auth.register.submitting
-                    : translations.auth.register.submit,
-              ),
+              child: Text(translations.auth.register.submit),
             ),
             const SizedBox(height: AppSpacing.md),
             FButton(

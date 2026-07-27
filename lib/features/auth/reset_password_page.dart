@@ -11,6 +11,7 @@ import 'package:starter/features/auth/reset_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef ResetPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -106,13 +107,17 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final translations = context.t.auth.resetPassword;
-    return AuthPageScaffold(
-      screenId: 'reset-password',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.lockKeyhole,
-      title: translations.title,
-      body: translations.body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: translations.submitting,
+      child: AuthPageScaffold(
+        screenId: 'reset-password',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.lockKeyhole,
+        title: translations.title,
+        body: translations.body,
+        form: form,
+      ),
     );
   }
 
@@ -216,9 +221,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
               onPress: _submitting ? null : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting
-                    ? translations.auth.resetPassword.submitting
-                    : translations.auth.resetPassword.submit,
+                translations.auth.resetPassword.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
