@@ -88,9 +88,17 @@ Future<void> _sendRemoteKey(
   required LogicalKeyboardKey logicalKey,
   required PhysicalKeyboardKey physicalKey,
 }) async {
-  await tester.sendKeyDownEvent(logicalKey, physicalKey: physicalKey);
+  await tester.sendKeyDownEvent(
+    logicalKey,
+    platform: 'android',
+    physicalKey: physicalKey,
+  );
   await tester.pump();
-  await tester.sendKeyUpEvent(logicalKey, physicalKey: physicalKey);
+  await tester.sendKeyUpEvent(
+    logicalKey,
+    platform: 'android',
+    physicalKey: physicalKey,
+  );
 }
 
 bool _focusIsWithin(WidgetTester tester, String key) {
