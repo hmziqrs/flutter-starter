@@ -3,10 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-Widget authTestApp({required Widget home}) {
-  return _localizedTestApp(home: home);
+Widget authTestApp({
+  required Widget home,
+  AppPresentationPolicy? presentationPolicy,
+}) {
+  return _localizedTestApp(
+    home: home,
+    presentationPolicy: presentationPolicy,
+  );
 }
 
 Widget authTestRouter({
@@ -38,6 +46,7 @@ Widget _localizedTestApp({
   Widget? home,
   String? initialRoute,
   Map<String, WidgetBuilder> routes = const {},
+  AppPresentationPolicy? presentationPolicy,
 }) {
   return ProviderScope(
     child: TranslationProvider(
@@ -54,11 +63,19 @@ Widget _localizedTestApp({
             supportedLocales: AppLocaleUtils.supportedLocales,
             localizationsDelegates: FLocalizations.localizationsDelegates,
             theme: theme.toApproximateMaterialTheme(),
-            builder: (context, child) => FTheme(
-              data: theme,
-              child: FToaster(
-                child: FTooltipGroup(
-                  child: child ?? const SizedBox.shrink(),
+            builder: (context, child) => AppPresentationScope(
+              policy:
+                  presentationPolicy ??
+                  const AppPresentationPolicy(
+                    viewingEnvironment: AppViewingEnvironment.nearField,
+                    interactionPolicy: AppInteractionPolicy.touch,
+                  ),
+              child: FTheme(
+                data: theme,
+                child: FToaster(
+                  child: FTooltipGroup(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

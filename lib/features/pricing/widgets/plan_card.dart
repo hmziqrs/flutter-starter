@@ -44,13 +44,13 @@ class PlanCard extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: EdgeInsets.all(context.spacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: context.spacing.sm,
+                runSpacing: context.spacing.sm,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(plan.name, style: context.theme.typography.display.xl),
@@ -60,21 +60,21 @@ class PlanCard extends StatelessWidget {
                     FBadge(variant: .destructive, child: Text(label)),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              SizedBox(height: context.spacing.sm),
               Text(plan.description, style: context.theme.typography.body.sm),
-              const SizedBox(height: AppSpacing.xl),
+              SizedBox(height: context.spacing.xl),
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.end,
-                spacing: AppSpacing.sm,
+                spacing: context.spacing.sm,
                 children: [
                   Text(formattedPrice, style: context.theme.typography.display.xl2),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                    padding: EdgeInsets.only(bottom: context.spacing.xs),
                     child: Text(periodLabel, style: context.theme.typography.body.sm),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
+              SizedBox(height: context.spacing.lg),
               for (final benefit in plan.benefits) ...[
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,13 +83,13 @@ class PlanCard extends StatelessWidget {
                       padding: EdgeInsets.only(top: 2),
                       child: Icon(FLucideIcons.check, size: 18),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(width: context.spacing.sm),
                     Expanded(child: Text(benefit)),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                SizedBox(height: context.spacing.sm),
               ],
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: context.spacing.md),
               FButton(
                 key: ValueKey('select-plan-${plan.id}'),
                 variant: selected ? .primary : .outline,

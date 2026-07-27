@@ -472,6 +472,7 @@ void _showInformationDialog(
                 const SizedBox(height: AppSpacing.xl),
                 FButton(
                   key: const ValueKey('information-dialog-close'),
+                  autofocus: true,
                   onPress: () => Navigator.of(context).pop(),
                   child: Text(context.t.common.close),
                 ),

@@ -7,6 +7,8 @@ enum AppInteractionPolicy {
   touch,
   precisionPointer,
   hybrid,
+  remote,
+  hybridRemote,
 }
 
 /// The platform's conservative input default before runtime input is observed.
@@ -16,6 +18,7 @@ enum AppInteractionPolicy {
 enum AppInteractionPlatformDefault {
   touchFirst,
   desktopFirst,
+  remoteFirst,
 }
 
 /// An input category observed during the current application session.
@@ -60,6 +63,8 @@ final class AppInteractionPolicyResolver {
         observedPrecisionPointer ? AppInteractionPolicy.hybrid : AppInteractionPolicy.touch,
       AppInteractionPlatformDefault.desktopFirst =>
         observedTouch ? AppInteractionPolicy.hybrid : AppInteractionPolicy.precisionPointer,
+      AppInteractionPlatformDefault.remoteFirst =>
+        observedPrecisionPointer ? AppInteractionPolicy.hybridRemote : AppInteractionPolicy.remote,
     };
   }
 }

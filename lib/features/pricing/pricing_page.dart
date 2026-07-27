@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -8,7 +10,7 @@ import 'package:starter/features/pricing/widgets/plan_comparison.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class PricingPage extends ConsumerStatefulWidget {
@@ -64,14 +66,18 @@ class _PricingPageState extends ConsumerState<PricingPage> {
         children: [
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
+              constraints: BoxConstraints(
+                maxWidth: context.presentationTokens.wideContentMaxWidth,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(translations.pricing.title, style: context.theme.typography.display.xl3),
                   SizedBox(height: context.spacing.md),
                   ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
+                    constraints: BoxConstraints(
+                      maxWidth: context.presentationTokens.readingContentMaxWidth,
+                    ),
                     child: Text(
                       translations.pricing.body,
                       style: context.theme.typography.body.lg,
@@ -124,15 +130,15 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: context.spacing.xl2),
                   PlanComparison(
                     title: translations.pricing.comparisonTitle,
                     plans: widget.plans,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: context.spacing.xl),
                   FCard(
                     child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      padding: EdgeInsets.all(context.spacing.xl),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -140,19 +146,19 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                             translations.pricing.faqTitle,
                             style: context.theme.typography.display.lg,
                           ),
-                          const SizedBox(height: AppSpacing.md),
+                          SizedBox(height: context.spacing.md),
                           Text(
                             translations.pricing.faqQuestion,
                             style: context.theme.typography.body.lg,
                           ),
-                          const SizedBox(height: AppSpacing.sm),
+                          SizedBox(height: context.spacing.sm),
                           Text(translations.pricing.faqAnswer),
-                          const SizedBox(height: AppSpacing.lg),
+                          SizedBox(height: context.spacing.lg),
                           Text(translations.pricing.staticPurchaseNotice),
-                          const SizedBox(height: AppSpacing.lg),
+                          SizedBox(height: context.spacing.lg),
                           Wrap(
-                            spacing: AppSpacing.sm,
-                            runSpacing: AppSpacing.sm,
+                            spacing: context.spacing.sm,
+                            runSpacing: context.spacing.sm,
                             children: [
                               FButton(
                                 key: const ValueKey('pricing-terms'),
@@ -207,14 +213,24 @@ class _PlanGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth - (AppSpacing.lg * (columns - 1));
-        final cardWidth = availableWidth / columns;
-        return Wrap(
-          spacing: AppSpacing.lg,
-          runSpacing: AppSpacing.lg,
-          children: [
-            for (final child in children) SizedBox(width: cardWidth, child: child),
-          ],
+        final gap = context.spacing.lg;
+        final minimumCardExtent = context.presentationTokens.focusTargetMinSize * 5;
+        final fittingColumns = math.max(
+          1,
+          ((constraints.maxWidth + gap) / (minimumCardExtent + gap)).floor(),
+        );
+        final resolvedColumns = math.min(columns, fittingColumns);
+        final availableWidth = constraints.maxWidth - (gap * (resolvedColumns - 1));
+        final cardWidth = availableWidth / resolvedColumns;
+        return FocusTraversalGroup(
+          policy: ReadingOrderTraversalPolicy(),
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final child in children) SizedBox(width: cardWidth, child: child),
+            ],
+          ),
         );
       },
     );

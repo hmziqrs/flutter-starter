@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 Widget systemGalleryTestApp({
@@ -11,6 +13,11 @@ Widget systemGalleryTestApp({
   double bottomViewInset = 0,
 }) {
   return ProviderScope(
+    overrides: [
+      platformCapabilitiesProvider.overrideWithValue(
+        const PlatformCapabilities.nonTelevision(),
+      ),
+    ],
     child: TranslationProvider(
       child: Builder(
         builder: (context) {

@@ -18,7 +18,14 @@ void main() {
         ('at-expanded', Size(1024, 768)),
         ('desktop', Size(1440, 900)),
         ('narrow-desktop', Size(700, 700)),
+        ('tv-720p', Size(1280, 720)),
+        ('tv-1080p', Size(1920, 1080)),
+        ('tv-4k-equivalent', Size(1920, 1080)),
       ],
+    );
+    expect(
+      GalleryViewportPresets.byId('tv-4k-equivalent').devicePixelRatio,
+      2,
     );
     expect(
       GalleryViewportPresets.byId('at-expanded').label(AppLocale.en.buildSync()),

@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/auth/register_form_value.dart';
 import 'package:starter/features/auth/register_page.dart';
 import 'package:starter/features/auth/register_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
 import 'auth_test_harness.dart';
 
@@ -143,6 +146,47 @@ void main() {
     );
   });
 
+  testWidgets('TV submission retains focus and blocks duplicate registration', (
+    tester,
+  ) async {
+    final completer = Completer<void>();
+    var submitCount = 0;
+    setAuthTestViewport(tester, const Size(1920, 1080));
+    await tester.pumpWidget(
+      authTestApp(
+        presentationPolicy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.tenFoot,
+          interactionPolicy: AppInteractionPolicy.remote,
+        ),
+        home: _register(
+          onSubmit: (_) {
+            submitCount += 1;
+            return completer.future;
+          },
+        ),
+      ),
+    );
+    await _enterValidTvRegistration(tester);
+    await tapAuthControl(tester, 'auth-register-accept-terms');
+    await tapAuthControl(tester, 'auth-register-submit');
+
+    expect(
+      _focusIsWithin(tester, 'auth-register-submit'),
+      isTrue,
+      reason: FocusManager.instance.primaryFocus?.toStringDeep(),
+    );
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-register-submit'))).onPress,
+      isNotNull,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(submitCount, 1);
+
+    completer.complete();
+    await tester.pump();
+  });
+
   testWidgets('renders every deterministic registration fixture', (tester) async {
     final cases = <(RegisterPresentationState, String?)>[
       (const RegisterPresentationState(), null),
@@ -268,6 +312,45 @@ Future<void> _enterValidRegistration(
   );
 }
 
+Future<void> _enterValidTvRegistration(WidgetTester tester) async {
+  await _enterTvField(
+    tester,
+    activationKey: 'auth-register-display-name-activation',
+    fieldKey: 'auth-register-display-name',
+    text: 'Person Name',
+  );
+  await _enterTvField(
+    tester,
+    activationKey: 'auth-register-email-activation',
+    fieldKey: 'auth-register-email',
+    text: 'person@example.com',
+  );
+  await _enterTvField(
+    tester,
+    activationKey: 'auth-register-password-activation',
+    fieldKey: 'auth-register-password',
+    text: 'Password1',
+  );
+  await _enterTvField(
+    tester,
+    activationKey: 'auth-register-confirm-password-activation',
+    fieldKey: 'auth-register-confirm-password',
+    text: 'Password1',
+  );
+}
+
+Future<void> _enterTvField(
+  WidgetTester tester, {
+  required String activationKey,
+  required String fieldKey,
+  required String text,
+}) async {
+  await tapAuthControl(tester, activationKey);
+  await tester.enterText(find.byKey(ValueKey(fieldKey)), text);
+  await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+  await tester.pump();
+}
+
 EditableText _editable(WidgetTester tester, String fieldKey) {
   return tester.widget<EditableText>(
     find.descendant(
@@ -275,4 +358,24 @@ EditableText _editable(WidgetTester tester, String fieldKey) {
       matching: find.byType(EditableText),
     ),
   );
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }

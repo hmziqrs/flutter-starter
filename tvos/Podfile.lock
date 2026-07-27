@@ -1,0 +1,16 @@
+PODS:
+  - package_info_plus_tvos (0.0.1)
+
+DEPENDENCIES:
+  - package_info_plus_tvos (from `.symlinks/plugins/package_info_plus_tvos/tvos`)
+
+EXTERNAL SOURCES:
+  package_info_plus_tvos:
+    :path: ".symlinks/plugins/package_info_plus_tvos/tvos"
+
+SPEC CHECKSUMS:
+  package_info_plus_tvos: 073cd723f2962bcdef16e93e53f001b8f4967c8b
+
+PODFILE CHECKSUM: 16f151bd2f87dc8e7fe8542b935508da1b626de2
+
+COCOAPODS: 1.16.2

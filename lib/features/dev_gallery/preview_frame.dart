@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
+import 'package:starter/app/presentation/app_presentation_viewport.dart';
+import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
@@ -28,13 +33,28 @@ class PreviewFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = environment.viewport.size;
-    final unit = AppUnit.fromSize(size, devicePixelRatio: 1);
+    final devicePixelRatio = environment.viewport.devicePixelRatio;
+    final unit = AppUnit.fromSize(size, devicePixelRatio: devicePixelRatio);
+    final presentationPolicy = AppPresentationPolicy(
+      viewingEnvironment: environment.viewingEnvironment,
+      interactionPolicy: environment.interactionPolicy,
+    );
+    final platformCapabilities = PlatformCapabilities(
+      platform: switch (environment.tvPlatform) {
+        AppTvPlatform.none => 'gallery',
+        AppTvPlatform.androidTv => 'android',
+        AppTvPlatform.tvOS => 'tvOS',
+      },
+      isWeb: false,
+      tvPlatform: environment.tvPlatform,
+    );
     final theme = ForuiThemeFactory.build(
       brightness: environment.brightness,
       accent: environment.accent,
       fontScale: environment.appFontScale,
       interactionPolicy: environment.interactionPolicy,
       responsiveFontScale: unit.typographyScale,
+      presentationPolicy: presentationPolicy,
     );
     final safeArea = environment.safeAreaEnabled ? safeAreaPadding : EdgeInsets.zero;
     final keyboardInsets = environment.keyboardInsetsEnabled
@@ -57,7 +77,7 @@ class PreviewFrame extends StatelessWidget {
     };
     final mediaQuery = MediaQuery.of(context).copyWith(
       size: size,
-      devicePixelRatio: 1,
+      devicePixelRatio: devicePixelRatio,
       textScaler: environment.textScaler,
       padding: safeArea,
       viewPadding: safeArea,
@@ -85,6 +105,12 @@ class PreviewFrame extends StatelessWidget {
                 interactionPolicyOverrideProvider.overrideWithValue(
                   environment.interactionPolicy,
                 ),
+                platformCapabilitiesProvider.overrideWithValue(
+                  platformCapabilities,
+                ),
+                presentationPolicyOverrideProvider.overrideWithValue(
+                  presentationPolicy,
+                ),
               ],
               child: MediaQuery(
                 data: mediaQuery,
@@ -93,33 +119,49 @@ class PreviewFrame extends StatelessWidget {
                   locale: environment.locale.flutterLocale,
                   child: Directionality(
                     textDirection: direction,
-                    child: Theme(
-                      key: const ValueKey('gallery-preview-material-theme'),
-                      data: theme.toApproximateMaterialTheme(),
-                      child: FTheme(
-                        key: const ValueKey('gallery-preview-forui-theme'),
-                        data: theme,
-                        motion: FThemeMotion(
-                          duration: environment.animationsEnabled
-                              ? AppMotion.standard
-                              : Duration.zero,
-                          curve: AppMotion.standardCurve,
-                        ),
-                        child: AppLayoutScope(
-                          builder: (_, _) => FToaster(
-                            child: FTooltipGroup(
-                              child: Navigator(
-                                pages: [
-                                  MaterialPage<void>(
-                                    key: const ValueKey('gallery-preview-root-page'),
-                                    child: child,
+                    child: AppPresentationScope(
+                      policy: presentationPolicy,
+                      child: Theme(
+                        key: const ValueKey('gallery-preview-material-theme'),
+                        data: theme.toApproximateMaterialTheme(),
+                        child: FTheme(
+                          key: const ValueKey('gallery-preview-forui-theme'),
+                          data: theme,
+                          accessibility: presentationPolicy.usesDirectionalFocus
+                              ? FAccessibility(
+                                  accessibleNavigation: false,
+                                  motion: environment.animationsEnabled
+                                      ? FAccessibilityMotion.all
+                                      : FAccessibilityMotion.disabled,
+                                  focusHighlight: true,
+                                )
+                              : null,
+                          motion: FThemeMotion(
+                            duration: environment.animationsEnabled
+                                ? AppMotion.standard
+                                : Duration.zero,
+                            curve: AppMotion.standardCurve,
+                          ),
+                          child: AppPresentationViewport(
+                            child: AppLayoutScope(
+                              builder: (_, _) => FToaster(
+                                child: FTooltipGroup(
+                                  child: Navigator(
+                                    pages: [
+                                      MaterialPage<void>(
+                                        key: const ValueKey(
+                                          'gallery-preview-root-page',
+                                        ),
+                                        child: child,
+                                      ),
+                                    ],
+                                    onDidRemovePage: (_) {
+                                      throw StateError(
+                                        'The gallery preview root page cannot be removed.',
+                                      );
+                                    },
                                   ),
-                                ],
-                                onDidRemovePage: (_) {
-                                  throw StateError(
-                                    'The gallery preview root page cannot be removed.',
-                                  );
-                                },
+                                ),
                               ),
                             ),
                           ),

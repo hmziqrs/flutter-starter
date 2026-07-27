@@ -40,6 +40,12 @@ Record the exact hardware/emulator and OS beside each completed item.
       the documented policy.
 - [ ] Browser/OS Back works where supported; direct router locations recover
       correctly without claiming universal-link or desktop-protocol support.
+- [ ] Android TV at 720p, 1080p, and 4K: the app launches from TV Home, every
+      action is reachable by D-pad, focus remains inside the safe frame, and
+      Back follows overlay -> keyboard/form -> route -> system priority.
+- [ ] Apple TV at 1080p and 4K: Siri Remote Select/Menu, directional focus,
+      suspend/resume, controller reconnect, and full-screen text entry follow
+      the documented policy without duplicate actions.
 
 ## Touch, keyboard, and pointer input
 
@@ -57,6 +63,9 @@ Record the exact hardware/emulator and OS beside each completed item.
       information or make an enabled control unreachable.
 - [ ] Resize or input-policy changes do not duplicate a submit, navigation, or
       overlay action.
+- [ ] Remote, game-controller, and keyboard activation aliases trigger exactly
+      once; held Select/Enter/Button A never repeats submit, navigation,
+      resend, restore, or destructive actions.
 
 ## Localization, scaling, and motion
 
@@ -83,6 +92,9 @@ Record the exact hardware/emulator and OS beside each completed item.
       understandable and operable without sight.
 - [ ] TalkBack on Android: Login -> Register -> registration OTP -> Home is
       understandable and operable without sight.
+- [ ] TalkBack on Android TV and VoiceOver/Switch Control on Apple TV preserve
+      remote navigation, range-control adjustment, overlay focus trapping, and
+      private text-entry semantics.
 - [ ] Fields expose localized labels, required/invalid state, current value
       policy, and actionable error messages without duplicate announcements.
 - [ ] OTP cells announce purpose, position/value policy, validation, expiry,
@@ -117,6 +129,12 @@ Record the exact hardware/emulator and OS beside each completed item.
 ## Artifact review
 
 - [ ] Android APK installs and cold-starts on a supported physical device.
+- [ ] Android release APK/AAB passes `tool/android_tv/validate_android_tv.py`,
+      contains 32-bit and 64-bit ARM Flutter libraries, passes 16 KB
+      `zipalign`, appears in the TV launcher, and remains phone-installable.
+- [ ] tvOS Debug/Profile/Release simulator builds use the pinned fork and clean
+      mixed SwiftPM/CocoaPods plugin integration; a signed archive installs and
+      launches on a real Apple TV before distribution.
 - [ ] Unsigned iOS compilation is green; signed archive/install validation is
       tracked below and must be completed before distribution.
 - [ ] macOS bundle launches, resizes, accepts keyboard/pointer input, and passes
@@ -139,6 +157,8 @@ public release.
 | Signing | Replace Android debug-key release signing; configure Apple certificates/profiles and macOS hardened runtime/notarization; define Windows signing if distributed | Signed installable artifacts, protected CI credentials, rotation/ownership record |
 | Identifiers | Replace `com.example.starter` and all placeholder bundle/application IDs consistently | Store-registered unique IDs and clean install/upgrade tests |
 | Icons and brand | Replace template icons, launch visuals, app name, and neutral placeholder brand assets | Reviewed assets at every required platform size and light/dark context |
+| Android TV store | Final localized TV banner/icon/screenshots, Tier 3/Tier 2 quality review, Play device catalogue, low-RAM/device and 16 KB validation | TV launcher/store discovery, release AAB inspection, device matrix and reviewer evidence |
+| tvOS store | Final layered icon, Top Shelf artwork, screenshots, privacy manifest/report, App Privacy text, identifiers and signing | Signed Apple TV install, archive/privacy inspection, App Store Connect validation and reviewer evidence |
 | Telemetry | Decide whether analytics, crash reporting, and performance tracing are needed; add only behind application contracts | Data inventory, environment separation, redaction tests, retention/access policy |
 | Consent and privacy | Define consent, opt-out/deletion, regional behavior, privacy disclosures, and legal destinations before telemetry or personal data collection | Approved copy/UX, policy links, consent-state tests, store privacy declarations |
 | Native workflows | Identify real permissions, notifications, background tasks, purchases, links, uploads, or other native boundaries | Device tests (and Patrol only if justified), denial/recovery cases, platform configuration |

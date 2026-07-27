@@ -1,6 +1,7 @@
 # tvOS and Android TV Support Plan
 
-**Status:** Audited implementation specification
+**Status:** In progress — shared policy/UI, Android TV packaging, and the tvOS simulator target are
+implemented; physical-device, signing, and store hardening remain gated
 
 **Prepared:** 27 July 2026
 
