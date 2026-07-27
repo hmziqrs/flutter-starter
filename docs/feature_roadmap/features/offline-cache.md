@@ -76,9 +76,9 @@ and "no backend" means no remote data source is wired — features that try to r
 - **Test-server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
   implements a generic cacheable data-source route group so the offline-aware read primitive is
   exercised against real network paths:
-  - `GET /cache/{key}` -> `200 {data, etag, ttlSeconds}` or `304` (when `If-None-Match` matches)
+  - `GET /v1/cache/{key}` -> `200 {data, etag, ttlSeconds}` or `304` (when `If-None-Match` matches)
     or `404`
-  - `GET /cache/{key}?minEpoch=<ts>` -> `200` only if newer, else `304`
+  - `GET /v1/cache/{key}?minEpoch=<ts>` -> `200` only if newer, else `304`
   Integration tests start the server on a random port, prime the cache, toggle
   `ConnectivityService` offline (via a `StreamController` fake), and assert the stale entry is
   served; toggle back online and assert the refresh runs.

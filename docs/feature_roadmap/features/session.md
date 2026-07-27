@@ -44,7 +44,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   - `lib/features/session/in_memory_auth_repository.dart` (default fake, surfaces
     `common.notConnected`)
   - `lib/features/session/session_view_data.dart` (typed state for any session UI)
-  - **EDIT** `lib/app/routing/app_router.dart` — first `redirect:` helper; reads session state
+  - **EDIT** `lib/app/routing/app_router.dart` — reuse the [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) redirect helper; install session's auth-required predicate; reads session state
   - **EDIT** `lib/app/dependencies.dart` — wire in-memory default + optional real override
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - `test/features/session/session_controller_test.dart`

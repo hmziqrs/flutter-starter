@@ -35,9 +35,9 @@ Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optio
 - **Noop/InMemory production default:** `InMemoryOtpRepository` is constructed in [`AppDependencies.production`](../../../lib/app/dependencies.dart) and overridden at the `ProviderScope`. It runs green with **zero backend**; `issue`/`verify`/`resend` all surface `common.notConnected` via `OtpRepositoryException` and **never fake success** — the OTP screen stays a faithful static demo until a consumer wires a real impl.
 - **Optional real impl:** `HttpOtpRepository` (a consumer-owned adapter in `lib/infrastructure/auth/`) is an **override** constructed only when a consumer wires credentials. It is never constructed by default; the starter ships without it.
 - **`tools/test_server/` contract** ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)): the minimal Dart server implements the OTP route group:
-  - `POST /otp/issue` — body `{purpose: "mfa"|"registration"|"password-reset", identifier}` → `{attempt_token, expires_at, channel}` (channel is `"sms"`/`"email"`/`"authenticator"`; for tests the server also returns the code in a `dev_code` field **only** when the request carries the development API key).
-  - `POST /otp/verify` — body `{attempt_token, code}` → `{valid: bool}` or `409 {error: "expired"}` or `429 {error: "locked", retry_after_seconds}`.
-  - `POST /otp/resend` — body `{identifier, purpose}` → `{attempt_token, expires_at}` (rate-limited server-side).
+  - `POST /v1/otp/issue` — body `{purpose: "mfa"|"registration"|"password-reset", identifier}` → `{attempt_token, expires_at, channel}` (channel is `"sms"`/`"email"`/`"authenticator"`; for tests the server also returns the code in a `dev_code` field **only** when the request carries the development API key).
+  - `POST /v1/otp/verify` — body `{attempt_token, code}` → `{valid: bool}` or `409 {error: "expired"}` or `429 {error: "locked", retry_after_seconds}`.
+  - `POST /v1/otp/resend` — body `{identifier, purpose}` → `{attempt_token, expires_at}` (rate-limited server-side).
   - Integration tests start the server on a random port and point `HttpOtpRepository` at it via override; the `development` config may point at a fixed local URL. The server is **never** compiled into release builds.
 - **Fakes:** in-memory / `FakeAsync` for the controller's expiry Timer; `StreamController` for the repo if a stream API is added. **No Mocktail.**
 

@@ -42,7 +42,7 @@ Backend-free — the default impl **is** the real `connectivity_plus` sensor (lo
 - [x] No-backend honored as a port — **pass**: backend-free; default is the real local sensor, never fakes a result.
 - [x] Feature-first ownership; no core/ utils/ buckets — **pass**: port under `lib/infrastructure/connectivity/` (cross-feature per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)), UI under `lib/features/connectivity/`.
 - [x] shared/widgets extraction only if >=3 consumers — **n/a**: banner stays feature-local; the port (not the widget) is the shared surface.
-- [x] Motion guarded — **pass**: any sonar/pulse on the banner sources durations/curves from [`AppMotion`](../../lib/shared/motion/app_motion.dart) and guards with `MediaQuery.disableAnimationsOf(context)` + a static fallback.
+- [x] Motion guarded — **pass**: any sonar/pulse on the banner **and** the `ConnectivityBanner` enter/exit (appear on offline, dismiss on online) source durations/curves from [`AppMotion`](../../lib/shared/motion/app_motion.dart) and guard with `MediaQuery.disableAnimationsOf(context)` + a non-animated fallback that still toggles visibility.
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
 - [x] Strict-analysis clean — **pass**: typed `ConnectivityState`, exhaustive `fromResult`, no `dynamic`.

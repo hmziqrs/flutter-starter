@@ -60,9 +60,9 @@ fakes success.
   constructed by default.
 - **Test-server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
   implements the feedback ingest route group:
-  - `POST /feedback` `{message, email?, screenshotMime?, screenshotBase64?, appMetadata:{version,platform,locale}}`
+  - `POST /v1/feedback` `{message, email?, screenshotMime?, screenshotBase64?, appMetadata:{version,platform,locale}}`
     -> `201 {id}` or `422` (validation) or `413` (payload too large)
-  - `GET /feedback/{id}/status` -> `{state: queued|triaged}` (optional, for a future status view)
+  - `GET /v1/feedback/{id}/status` -> `{state: queued|triaged}` (optional, for a future status view)
   Integration tests start the server on a random port and point `HttpFeedbackTransport` at it;
   the screenshot path is covered with a tiny in-repo fixture.
 - **Fakes** — `InMemoryFeedbackTransport` (configurable `result` + recorded submissions list)

@@ -24,7 +24,7 @@ that the docs already flag honestly — they are left to the implementer, not au
 | [lifecycle-observer](features/lifecycle-observer.md) | pass | Backend-free foundation; typed `AppLifecyclePhase`, exhaustive switch, no UI. |
 | [secure-store](features/secure-store.md) | **fixed** | Corrected `encruptedSharedPreferences` typo (→ `encryptedSharedPreferences`, ×2). |
 | [crash-reporting](features/crash-reporting.md) | pass | Noop + test-server `/v1/crashes` + existing `_installErrorHandlers` seam; honest. |
-| [connectivity](features/connectivity.md) | pass | Owns the shared `ConnectivityService`; banner mounted in `app.dart` builder; motion guarded. |
+| [connectivity](features/connectivity.md) | pass | Owns the shared `ConnectivityService`; banner mounted in `app.dart` builder; motion guarded incl. banner enter/exit (offline↔online). |
 | [onboarding-gate](features/onboarding-gate.md) | pass | Reuses `SettingsStore`; candidate to establish the D5 redirect; no new port. |
 | [native-splash](features/native-splash.md) | pass | Pure codegen, correctly bypasses `lib/`; brand assets tracked as release blocker. |
 | [state-views](features/state-views.md) | **warn** | Shared `lib/shared/widgets/states/` with only 1 concrete consumer today (D1 vs checklist #3). |
@@ -223,8 +223,8 @@ duplicate proposed (`connectivityStatusProvider` in offline-cache) was removed d
 | `AnalyticsClient` | [analytics](features/analytics.md) → `lib/infrastructure/analytics/` | `GoRouter` `observers:` (screen views) + a handful of CTA call sites | Plugs into the existing router-observer seam; Noop default. |
 | `go_router` redirect helper ([D5](decisions.md#d5--one-go_router-redirect-pattern-reused)) | [update-blocker](features/update-blocker.md) or [onboarding-gate](features/onboarding-gate.md) establishes it | update-blocker → onboarding-gate → [session](features/session.md) → [biometric](features/biometric.md) → [pin-autolock](features/pin-autolock.md) (documented precedence) | One helper, composed predicates. session's "establishes" claim corrected (see Fixed #2). |
 | `AttemptTracker` | [auth-ratelimit](features/auth-ratelimit.md) → `lib/features/auth/` | login; [mfa-otp](features/mfa-otp.md) OTP; [pin-autolock](features/pin-autolock.md) | 3 consumers; pure-Dart, feature-local (no `shared/` bucket needed). |
-| `AppLinkHandler` | [deep-linking](features/deep-linking.md) → `lib/app/routing/` | [mfa-otp](features/mfa-otp.md) magic-link; [push-notifications](features/push-notifications.md) tap; future referral | Inbound-routing primitive; host allowlist from compile-time config. |
-| `SettingsStore` (existing) | settings → `lib/features/settings/` | onboarding-gate, announcements, auth-ratelimit, haptics, a11y-presets, pin-autolock (config only), push-notifications (token/perm), state-restoration (last-route), feedback (draft), ab-experiments (stable id) | Pre-existing port; new features extend `SettingsState` + `persistedKeys` correctly. |
+| `AppLinkHandler` | [deep-linking](features/deep-linking.md) → `lib/app/routing/` | future referral; mfa-otp magic-link (conditional — only if a magic-link flow is added; mfa-otp does not document one today); push-notifications tap (resolves via `context.pushNamed` + `AppRoutes` helpers today, not `AppLinkHandler`) | Inbound-routing primitive; host allowlist from compile-time config. Readers conditional/future — re-audit when magic-link or tap indirection lands. |
+| `SettingsStore` (existing) | settings → `lib/features/settings/` | onboarding-gate, announcements, haptics, a11y-presets, pin-autolock (config only), push-notifications (token/perm), state-restoration (last-route), feedback (draft), ab-experiments (stable id) | Pre-existing port; new features extend `SettingsState` + `persistedKeys` correctly. ([auth-ratelimit](features/auth-ratelimit.md) deliberately uses `SecureStore`, not `SettingsStore`, so a user cannot clear a lockout by clearing prefs.) |
 
 ### Re-verification of the twelve guardrails (whole-set view)
 
@@ -252,3 +252,50 @@ duplicate proposed (`connectivityStatusProvider` in offline-cache) was removed d
     bootstrap, analytics → router observer; one duplicate removed. **Pass (after fix).**
 12. **Config rule** — no runtime env switcher; all gates via `verboseLoggingEnabled` /
     `developmentToolsEnabled`; deep-link host allowlist from compile-time config. **Pass.**
+
+## Re-verification (independent pass)
+
+An independent re-audit of this file against the feature docs, `decisions.md`, and the checklist
+(47 findings, each adversarially re-checked) confirmed six narrow defects — all fixed in this pass
+(docs only; no `lib/`, `pubspec.yaml`, or codegen touched):
+
+1. **[features/connectivity.md](features/connectivity.md)** + summary row — the motion-guard `pass`
+   justified only the banner's sonar/pulse, not the banner's own enter/exit on the offline↔online
+   edge that checklist #5 names ("connectivity sonar, banner enter/exit"). Strengthened the Audit
+   bullet to explicitly commit to **both** surfaces (non-animated fallback still toggles visibility);
+   summary row now reads "motion guarded incl. banner enter/exit". Verdict stays `pass`.
+2. **[features/biometric.md](features/biometric.md)** Routes line called the lock redirect the
+   "second user" of the D5 helper, contradicting its own Risks line ("third reader") and the
+   owner-excluded count (onboarding-gate=1, session=2, biometric=3, pin-autolock=4). Corrected to
+   "third reader".
+3. **[features/biometric.md](features/biometric.md)** Risks parenthetical directed the predicate to
+   compose "`locked` short-circuits before session check" — the inverse of the canonical
+   session-before-biometric order ([D5](decisions.md#d5--one-go_router-redirect-pattern-reused),
+   [pin-autolock](features/pin-autolock.md)). Inverted to "the session check short-circuits before
+   `locked`".
+4. **Port map `AppLinkHandler` row** — overstated readers: mfa-otp has no magic-link flow today
+   (conditional per [deep-linking](features/deep-linking.md)), and push-notifications resolves taps
+   via `context.pushNamed` + `AppRoutes` helpers, not `AppLinkHandler`. Hedged both as
+   conditional/future; flagged for re-audit.
+5. **Port map `SettingsStore` row** — listed `auth-ratelimit` among readers, but
+   [auth-ratelimit](features/auth-ratelimit.md) deliberately persists via `SecureStore` (never
+   plaintext `SettingsStore`, so a lockout cannot be cleared by clearing prefs). Removed from the
+   readers cell; rationale noted in the row.
+6. **Route-prefix drift** — [mfa-otp](features/mfa-otp.md), [feedback](features/feedback.md), and
+   [offline-cache](features/offline-cache.md) documented un-prefixed `/otp/*`, `/feedback`,
+   `/cache/*` test-server routes, contradicting [D9](decisions.md#d9--test-server-route-conventions)'s
+   uniform `/v1/` prefix (which lists these groups WITH the prefix). Added `/v1/` to all six routes.
+
+Plus one minor consistency fix: [features/session.md](features/session.md) Files line still said
+session adds the "first `redirect:` helper" — a leftover from Fixed #2; rewritten to "reuse the D5
+redirect helper; install session's auth-required predicate".
+
+### Open (needs a decision, not auto-fixed)
+
+- **biometric ↔ pin-autolock redirect order** — [pin-autolock.md](features/pin-autolock.md) Risks
+  recommends `session → auto-lock → biometric → passcode`, but
+  [D5](decisions.md#d5--one-go_router-redirect-pattern-reused) and the port-map precedence cell say
+  `session → biometric → pin-autolock`. The two disagree on whether biometric prompts before or after
+  the auto-lock re-challenge. Fix #3 above only settles session-before-biometric (which all sources
+  agree on); the biometric-vs-pin-autolock order is a product decision left to the implementer — pick
+  one and align D5, the port map, and `pin-autolock.md`.
