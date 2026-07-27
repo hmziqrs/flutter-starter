@@ -296,3 +296,35 @@ jobs:
             build/app/outputs/flutter-apk/app-*-release.apk
             build/app/outputs/bundle/release/*.aab
           if-no-files-found: error
+
+  release:
+    name: Publish to GitHub Release
+    needs: [apple, windows, linux, android]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Attach to rolling "latest" pre-release
+        # Unsigned starter builds; signing is deferred (docs/release_readiness.md).
+        # Each push to master moves the `latest` tag and refreshes the assets.
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: latest
+          name: Latest build (unsigned)
+          prerelease: true
+          make_latest: false
+          files: artifacts/**/*
+          fail_on_unmatched_files: true
+          body: |
+            Unsigned release builds from the latest commit on `master`.
+
+            - `macos-universal.zip` — macOS app (arm64 + x64)
+            - `ios-arm64.zip` — unsigned iOS arm64 app
+            - `windows-x64.zip` / `windows-arm64.zip` — Windows builds
+            - `linux-x64.tar.gz` / `linux-arm64.tar.gz` — Linux bundles
+            - `android/*` — per-ABI APKs (armeabi-v7a, arm64-v8a, x86_64) + AAB
