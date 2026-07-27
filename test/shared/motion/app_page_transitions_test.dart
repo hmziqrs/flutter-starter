@@ -7,30 +7,73 @@ void main() {
   group('nativePageTransitionsTheme', () {
     test('maps each platform to its native builder', () {
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.iOS],
+        _delegateFor(TargetPlatform.iOS),
         isA<CupertinoPageTransitionsBuilder>(),
       );
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.android],
+        _delegateFor(TargetPlatform.android),
         isA<ZoomPageTransitionsBuilder>(),
       );
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.fuchsia],
+        _delegateFor(TargetPlatform.fuchsia),
         isA<ZoomPageTransitionsBuilder>(),
       );
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.macOS],
+        _delegateFor(TargetPlatform.macOS),
         isA<CrossFadePageTransitionsBuilder>(),
       );
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.windows],
+        _delegateFor(TargetPlatform.windows),
         isA<CrossFadePageTransitionsBuilder>(),
       );
       expect(
-        nativePageTransitionsTheme.builders[TargetPlatform.linux],
+        _delegateFor(TargetPlatform.linux),
         isA<CrossFadePageTransitionsBuilder>(),
       );
     });
+
+    test('wraps every platform delegate in the shared opaque page surface', () {
+      expect(
+        nativePageTransitionsTheme.builders.values,
+        everyElement(isA<OpaquePageTransitionsBuilder>()),
+      );
+    });
+  });
+
+  testWidgets('OpaquePageTransitionsBuilder paints the themed page background', (
+    tester,
+  ) async {
+    const pageColor = Color(0xFF123456);
+    const builder = OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    );
+    const animation = AlwaysStoppedAnimation<double>(1);
+    const secondary = AlwaysStoppedAnimation<double>(0);
+    final route = MaterialPageRoute<void>(
+      builder: (_) => const SizedBox.shrink(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(scaffoldBackgroundColor: pageColor),
+        home: Builder(
+          builder: (context) {
+            return builder.buildTransitions<void>(
+              route,
+              context,
+              animation,
+              secondary,
+              const SizedBox.expand(key: ValueKey('transparent-route-content')),
+            );
+          },
+        ),
+      ),
+    );
+
+    final surface = tester
+        .element(find.byKey(const ValueKey('transparent-route-content')))
+        .findAncestorWidgetOfExactType<ColoredBox>()!;
+    expect(surface.color, pageColor);
   });
 
   testWidgets('CrossFadePageTransitionsBuilder wraps the page in a fade, never a slide', (
@@ -74,4 +117,9 @@ void main() {
       reason: 'the incoming page opacity must track the route animation',
     );
   });
+}
+
+PageTransitionsBuilder _delegateFor(TargetPlatform platform) {
+  final builder = nativePageTransitionsTheme.builders[platform]! as OpaquePageTransitionsBuilder;
+  return builder.delegate;
 }

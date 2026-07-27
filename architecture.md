@@ -179,7 +179,7 @@ Files:
 
 Notes:
 - Source durations/curves from `AppMotion` only (quick/standard/deliberate, standardCurve/emphasizedCurve); never hardcode. `nativePageTransitionsTheme` is a top-level const applied via `pageTransitionsTheme` copyWith on both themes.
-- iOS uses `CupertinoPageTransitionsBuilder` (preserves swipe-back); desktop (macOS/windows/linux) cross-fades via `CrossFadePageTransitionsBuilder`.
+- Every platform transition is wrapped by `OpaquePageTransitionsBuilder`, which paints the active Material theme's scaffold background behind every routed page. This keeps route surfaces opaque without feature-level background declarations. iOS delegates to `CupertinoPageTransitionsBuilder` (preserves swipe-back); desktop (macOS/windows/linux) delegates to `CrossFadePageTransitionsBuilder`.
 - Guard every custom animation with `MediaQuery.disableAnimationsOf(context)` + a non-animated fallback that still completes the action (e.g. `jumpToPage` for navigation); reduce-motion is enforced per call site, not centralized.
 
 #### shared-widgets
