@@ -1,10 +1,13 @@
 import 'package:starter/app/config/app_config.dart';
+import 'package:starter/features/dev_gallery/cases/analytics_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/announcements_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/biometric_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/busy_indicator_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/connectivity_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/force_update_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/form_scaffolding_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/production_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/session_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/splash_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/state_views_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
@@ -22,6 +25,10 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildFormScaffoldingGalleryCases(),
     ...buildSplashGalleryCases(),
     ...buildAnnouncementsGalleryCases(),
+    // Wave-4 feature surfaces registered by their gallery contributors.
+    ...buildSessionGalleryCases(),
+    ...buildAnalyticsGalleryCases(),
+    ...buildBiometricGalleryCases(),
     ...buildSystemGalleryCases(config: config),
   ];
   final ids = <String>{};

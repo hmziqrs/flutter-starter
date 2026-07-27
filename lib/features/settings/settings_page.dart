@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -407,6 +408,8 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                   },
                 ),
               ),
+              const _BiometricUnlockTile(),
+              const _AnalyticsOptInTile(),
               FTile(
                 key: const ValueKey('settings-open-terms'),
                 title: Text(translations.settings.terms),
@@ -422,6 +425,144 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Biometric-unlock opt-in. Watches [settingsControllerProvider] (the
+/// enablement flag is a plaintext settings key, unlike the analytics opt-in
+/// which is SecureStore-backed). Surfaces `common.notConnected` on persistence
+/// failure, mirroring the appearance save-error pattern.
+class _BiometricUnlockTile extends ConsumerStatefulWidget {
+  const _BiometricUnlockTile();
+
+  @override
+  ConsumerState<_BiometricUnlockTile> createState() => _BiometricUnlockTileState();
+}
+
+class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).biometricUnlockEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'biometric',
+      label: Text(translations.settings.enableBiometric),
+      value: enabled,
+      onChange: (value) => _run(() => controller.setBiometricUnlockEnabled(enabled: value)),
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Analytics opt-in. Watches [analyticsOptInControllerProvider] (the opt-in is a
+/// SecureStore-backed sensitive preference, NOT a [SettingsState] field). The
+/// same controller is consulted by the real analytics client before every emit;
+/// the Noop default ignores it. Surfaces `common.notConnected` on failure.
+class _AnalyticsOptInTile extends ConsumerStatefulWidget {
+  const _AnalyticsOptInTile();
+
+  @override
+  ConsumerState<_AnalyticsOptInTile> createState() => _AnalyticsOptInTileState();
+}
+
+class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final optedIn = ref.watch(analyticsOptInControllerProvider);
+    final controller = ref.read(analyticsOptInControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'analytics',
+      label: Text(translations.settings.analytics.optInTitle),
+      description: Text(translations.settings.analytics.optInBody),
+      status: optedIn
+          ? translations.settings.analytics.statusOn
+          : translations.settings.analytics.statusOff,
+      value: optedIn,
+      onChange: (value) => _run(() => controller.setOptIn(value: value)),
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Shared FCard shell for a boolean opt-in toggle with a status line and an
+/// optional save-error notice. Used by the biometric and analytics tiles.
+class _ToggleCard extends StatelessWidget {
+  const _ToggleCard({
+    required this.keyName,
+    required this.label,
+    required this.value,
+    required this.onChange,
+    required this.saveFailed,
+    this.description,
+    this.status,
+  });
+
+  final String keyName;
+  final Widget label;
+  final Widget? description;
+  final String? status;
+  final bool value;
+  final ValueChanged<bool> onChange;
+  final bool saveFailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FSwitch(
+              key: ValueKey('settings-toggle-$keyName'),
+              value: value,
+              label: label,
+              description: description,
+              onChange: onChange,
+            ),
+            if (status case final status?) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(status, style: context.theme.typography.body.sm),
+            ],
+            if (saveFailed) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                translations.common.notConnected,
+                key: const ValueKey('settings-toggle-save-error'),
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.error,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -77,16 +77,58 @@ class _OtpViewState extends ConsumerState<_OtpView> {
   bool _callbackSubmitting = false;
   String _savedCode = '';
 
+  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
+  // decremented by a 1s Timer.periodic; submit and resend are OR-ed with _locked.
+  Timer? _countdownTimer;
+  int _liveLockedSeconds = 0;
+
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == OtpPresentationStatus.submitting;
 
   bool get _resending =>
       _callbackResending || widget.presentation.status == OtpPresentationStatus.resending;
 
-  bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0;
+  bool get _locked =>
+      widget.presentation.status == OtpPresentationStatus.locked && _liveLockedSeconds > 0;
+
+  bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0 || _locked;
+
+  @override
+  void initState() {
+    super.initState();
+    _liveLockedSeconds = widget.presentation.lockedSeconds;
+    _startLockoutCountdownIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OtpView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
+      _liveLockedSeconds = widget.presentation.lockedSeconds;
+      _startLockoutCountdownIfNeeded();
+    }
+  }
+
+  void _startLockoutCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    if (_liveLockedSeconds <= 0) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
+        if (_liveLockedSeconds <= 0) timer.cancel();
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _otpController.dispose();
     _otpFocus.dispose();
     super.dispose();
@@ -132,6 +174,10 @@ class _OtpViewState extends ConsumerState<_OtpView> {
             Text(title, style: context.theme.typography.display.xl2),
             const SizedBox(height: AppSpacing.md),
             Text(body, style: context.theme.typography.body.md),
+            if (_attemptsRemainingAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
             if (_feedbackAlert(context) case final alert?) ...[
               const SizedBox(height: AppSpacing.xl),
               alert,
@@ -162,7 +208,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
                     FilteringTextInputFormatter.allow(RegExp('[0-9]')),
                     LengthLimitingTextInputFormatter(6),
                   ],
-                  enabled: !_submitting,
+                  enabled: !(_submitting || _locked),
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: forcedError,
                   validator: (value) {
@@ -188,7 +234,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-otp-submit'),
-              onPress: _submitting ? null : () => unawaited(_submit()),
+              onPress: (_submitting || _locked) ? null : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 translations.auth.otp.submit,
@@ -249,7 +295,29 @@ class _OtpViewState extends ConsumerState<_OtpView> {
         ),
         icon: const Icon(FLucideIcons.circleCheck),
       ),
+      OtpPresentationStatus.locked => FAlert(
+        key: const ValueKey('auth-otp-locked'),
+        variant: .destructive,
+        title: Text(translations.auth.otp.lockedTitle),
+        subtitle: Text(
+          translations.auth.otp.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
+        ),
+      ),
     };
+  }
+
+  /// Non-destructive "attempts remaining" notice, shown while the user still
+  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// destructive [_feedbackAlert] carries the countdown instead).
+  Widget? _attemptsRemainingAlert(BuildContext context) {
+    final remaining = widget.presentation.attemptsRemaining;
+    if (remaining <= 0 || widget.presentation.status == OtpPresentationStatus.locked) {
+      return null;
+    }
+    return FAlert(
+      key: const ValueKey('auth-otp-attempts-remaining'),
+      title: Text(context.t.auth.otp.attemptsRemaining(n: remaining, count: remaining)),
+    );
   }
 
   (String, String) _copy(BuildContext context) {

@@ -6,6 +6,7 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 void main() {
@@ -57,7 +58,13 @@ void main() {
     ];
 
     for (final entry in cases) {
-      await _pumpApp(tester, AppRoutes.homePath);
+      // /profile/edit is auth-required (C5 session gate); seed an authenticated
+      // session so the quick action is not bounced to /auth/login.
+      await _pumpApp(
+        tester,
+        AppRoutes.homePath,
+        initialSession: entry.source == 'home-open-profile' ? _authenticatedSession : null,
+      );
       final source = find.byKey(ValueKey(entry.source));
       await tester.ensureVisible(source);
       await tester.pumpAndSettle();
@@ -72,7 +79,11 @@ void main() {
   });
 
   testWidgets('Profile save provides honest deterministic feedback', (tester) async {
-    await _pumpApp(tester, AppRoutes.updateProfilePath);
+    await _pumpApp(
+      tester,
+      AppRoutes.updateProfilePath,
+      initialSession: _authenticatedSession,
+    );
     await tester.enterText(
       find.byKey(const ValueKey('profile-bio')),
       'Updated locally for the static preview.',
@@ -180,7 +191,11 @@ Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpApp(WidgetTester tester, String initialLocation) async {
+Future<void> _pumpApp(
+  WidgetTester tester,
+  String initialLocation, {
+  AuthSession? initialSession,
+}) async {
   tester.view
     ..devicePixelRatio = 1
     ..physicalSize = const Size(390, 844);
@@ -190,7 +205,7 @@ Future<void> _pumpApp(WidgetTester tester, String initialLocation) async {
   await tester.pumpWidget(
     App(
       config: _productionConfig,
-      dependencies: AppDependencies.inMemory(),
+      dependencies: AppDependencies.inMemory(initialSession: initialSession),
       initialLocation: initialLocation,
     ),
   );
@@ -201,4 +216,13 @@ final _productionConfig = AppConfig(
   environment: AppEnvironment.production,
   enableVerboseLogging: false,
   enableDevTools: false,
+);
+
+/// Seeded authenticated session for auth-required destinations (/profile/edit,
+/// C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );

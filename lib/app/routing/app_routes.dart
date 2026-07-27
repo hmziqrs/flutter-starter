@@ -35,6 +35,9 @@ abstract final class AppRoutes {
   static const forceUpdate = 'force-update';
   static const forceUpdatePath = '/force-update';
 
+  static const biometricLock = 'biometric-lock';
+  static const biometricLockPath = '/lock';
+
   static const updateProfile = 'update-profile';
   static const updateProfilePath = '/profile/edit';
   static const pricing = 'pricing';

@@ -15,6 +15,7 @@ void main() {
       'appearance.font_scale',
       'localization.locale',
       'onboarding.completed',
+      'security.biometric_unlock_enabled',
     });
     expect(
       SettingsRepository.persistedKeys,

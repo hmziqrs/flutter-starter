@@ -29,6 +29,7 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -205,7 +206,13 @@ void main() {
   testWidgets(
     'pushed top-level overlay preserves the settings branch stack beneath it',
     (tester) async {
-      await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.settingsPath,
+        // /profile/edit is auth-required (C5 session gate); seed an authenticated
+        // session so the pushNamed(updateProfile) overlay is not bounced.
+        initialSession: _authenticatedSession,
+      );
 
       // Build a settings branch stack: overview -> account detail.
       await tester.tap(find.byKey(const ValueKey('settings-open-account')));
@@ -610,13 +617,14 @@ Future<void> _pumpApp(
   WidgetTester tester, {
   required String initialLocation,
   Size size = const Size(390, 844),
+  AuthSession? initialSession,
 }) async {
   _setViewport(tester, size);
   await LocaleSettings.setLocale(AppLocale.en);
   await tester.pumpWidget(
     App(
       config: _developmentConfig,
-      dependencies: AppDependencies.inMemory(),
+      dependencies: AppDependencies.inMemory(initialSession: initialSession),
       initialLocation: initialLocation,
     ),
   );
@@ -642,4 +650,13 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+);
+
+/// Seeded authenticated session for auth-required destinations (/profile/edit,
+/// C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );

@@ -147,7 +147,14 @@
     "privacyBody": "静态阶段仅保存外观和语言偏好。",
     "aboutBuild": "构建信息",
     "terms": "条款预览",
-    "privacy": "隐私预览"
+    "privacy": "隐私预览",
+    "enableBiometric": "使用生物识别解锁",
+    "analytics": {
+      "optInTitle": "分析",
+      "optInBody": "通过发送匿名使用数据帮助改进应用。您可以随时关闭。",
+      "statusOn": "已开启",
+      "statusOff": "已关闭"
+    }
   },
   "auth": {
     "common": {
@@ -169,7 +176,15 @@
       "submit": "登录",
       "submitting": "正在登录",
       "globalError": "无法完成静态登录，已保留输入内容。",
-      "success": "静态登录已完成。"
+      "success": "静态登录已完成。",
+      "lockedTitle": "尝试次数过多",
+      "tooManyAttempts": "失败尝试过多，请稍候。",
+      "attemptsRemaining(count)": {
+        "other": "剩余 $count 次尝试"
+      },
+      "lockedBody(seconds)": {
+        "other": "请在 $seconds 秒后重试。"
+      }
     },
     "register": {
       "title": "创建账户",
@@ -207,7 +222,15 @@
       "invalid": "验证码无效。",
       "expired": "验证码已过期，请申请新代码。",
       "registrationSuccess": "注册已验证。",
-      "passwordResetSuccess": "重置请求已验证。"
+      "passwordResetSuccess": "重置请求已验证。",
+      "lockedTitle": "尝试次数过多",
+      "tooManyAttempts": "失败尝试过多，请稍候。",
+      "attemptsRemaining(count)": {
+        "other": "剩余 $count 次尝试"
+      },
+      "lockedBody(seconds)": {
+        "other": "请在 $seconds 秒后重试。"
+      }
     },
     "resetPassword": {
       "title": "设置新密码",
@@ -242,6 +265,17 @@
       "discard": "放弃更改"
     }
   },
+  "security": {
+    "biometric": {
+      "lockTitle": "使用生物识别解锁",
+      "lockBody": "使用您的指纹或面容解锁应用。",
+      "unlock": "解锁",
+      "unlocking": "正在解锁",
+      "unavailableTitle": "生物识别解锁不可用",
+      "unavailableBody": "此设备不支持生物识别解锁。请改用您的设备凭据。",
+      "useFallback": "使用设备凭据"
+    }
+  },
   "forceUpdate": {
     "title": "需要更新",
     "body": "此版本已不再受支持。请更新至最新版本以继续。",
@@ -252,6 +286,12 @@
     "body": "更新至最新版本以获取最新改进和修复。",
     "update": "更新",
     "later": "稍后"
+  },
+  "session": {
+    "expired": "您的会话已过期，请重新登录。",
+    "signedOut": "您已退出登录。",
+    "signedInPreview": "已以 $userId 身份登录",
+    "unavailable": "登录功能尚未连接。"
   },
   "splash": {
     "loading": "正在启动",
@@ -325,6 +365,9 @@
     "secureStorage": "安全存储",
     "crashReporting": "崩溃报告",
     "crashReportingNone": "未配置",
+    "analytics": "分析",
+    "analyticsNone": "未配置",
+    "featureFlags": "功能开关",
     "redactedNotice": "诊断信息不包含凭据或用户内容。"
   },
   "devGallery": {
@@ -441,6 +484,12 @@
     "casePopover": "弹出层",
     "caseTooltip": "工具提示",
     "caseKeyboardInset": "键盘遮挡表单",
+    "screenSession": "会话",
+    "caseSessionLoggedOut": "已退出登录",
+    "caseSessionLoggedIn": "已登录",
+    "screenAnalytics": "分析数据选项",
+    "screenBiometricLock": "生物识别锁",
+    "caseLocked": "已锁定",
     "caseNotFound": "请求的图库用例未注册。"
   }
 }

@@ -5,16 +5,25 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/auth/auth_attempt_tracker.dart';
+import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
+import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/features/session/in_memory_auth_repository.dart';
+import 'package:starter/features/session/session_repository.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/analytics/analytics_client.dart';
+import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
+import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
@@ -201,11 +210,12 @@ AppDependencies _dependencies({
   InMemorySettingsStore? store,
 }) {
   final settingsStore = store ?? InMemorySettingsStore();
+  final secureStore = InMemorySecureStore();
   return AppDependencies(
     settingsRepository: SettingsRepository(settingsStore),
     settingsStore: settingsStore,
     initialSettings: initialSettings ?? const SettingsState.defaults(),
-    secureStore: InMemorySecureStore(),
+    secureStore: secureStore,
     crashReporter: const NoopCrashReporter(),
     crashReporterBackend: const NoopCrashReporterBackend(),
     // No-backend test defaults: the version gate never blocks (C2: never fake a
@@ -213,6 +223,18 @@ AppDependencies _dependencies({
     versionGateStore: InMemoryVersionGateStore(),
     versionCheck: const UpdateRequirementNone(),
     connectivityService: FakeConnectivityService(),
+    // Wave-4 no-backend defaults mirror AppDependencies.inMemory: the auth repo
+    // surfaces notConnected unseeded, analytics is noop, feature-flags fall back
+    // to defaults, and the biometric authenticator is the honest noop.
+    authRepository: InMemoryAuthRepository(),
+    sessionRepository: SessionRepository(secureStore),
+    initialSession: const AuthAnonymous(),
+    analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
+    analyticsClientBackend: const NoopAnalyticsBackend(),
+    initialAnalyticsOptIn: false,
+    featureFlagsSource: InMemoryFeatureFlagsSource(),
+    biometricAuthenticator: const NoopBiometricAuthenticator(),
+    attemptTracker: InMemoryAttemptTracker(),
     // Splash seed mirrors AppDependencies.inMemory: a resolved success so the
     // onboarding-redirect path under test boots without re-running init, and
     // no dismissed announcements so the banner feed is unaffected.

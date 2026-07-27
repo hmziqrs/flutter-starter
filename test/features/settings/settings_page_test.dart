@@ -6,13 +6,18 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 void main() {
   testWidgets('compact overview exposes every settings section and account flow', (tester) async {
     _setViewport(tester, const Size(390, 844));
     await LocaleSettings.setLocale(AppLocale.en);
-    await tester.pumpWidget(_app(initialLocation: '/settings'));
+    await tester.pumpWidget(
+      // The compact overview taps into Account -> Profile (/profile/edit), which
+      // is auth-required (C5 session gate); seed an authenticated session.
+      _app(initialLocation: '/settings', initialSession: _authenticatedSession),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
@@ -140,10 +145,10 @@ void main() {
   });
 }
 
-Widget _app({required String initialLocation}) {
+Widget _app({required String initialLocation, AuthSession? initialSession}) {
   return App(
     config: _developmentConfig,
-    dependencies: AppDependencies.inMemory(),
+    dependencies: AppDependencies.inMemory(initialSession: initialSession),
     initialLocation: initialLocation,
   );
 }
@@ -152,6 +157,15 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+);
+
+/// Seeded authenticated session for the auth-required /profile/edit destination
+/// (C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );
 
 void _setViewport(WidgetTester tester, Size size) {

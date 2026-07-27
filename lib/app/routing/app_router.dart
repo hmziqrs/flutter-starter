@@ -32,11 +32,16 @@ import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/pricing/pricing_page.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
+import 'package:starter/features/security/biometric_lock_page.dart';
+import 'package:starter/features/security/biometric_unlock_controller.dart';
+import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/splash/splash_page.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
@@ -48,6 +53,7 @@ GoRouter buildAppRouter({
   required AppConfig config,
   String initialLocation = AppRoutes.splashPath,
   bool hasCompletedOnboarding = false,
+  List<NavigatorObserver> observers = const <NavigatorObserver>[],
 }) {
   // The cold-start seed mirrors AppDependencies.initialSettings
   // .hasCompletedOnboarding and is threaded from createApplication -> App ->
@@ -190,6 +196,21 @@ GoRouter buildAppRouter({
         },
       ),
       GoRoute(
+        name: AppRoutes.biometricLock,
+        path: AppRoutes.biometricLockPath,
+        // Top-level (outside the shell) like /force-update and the auth routes:
+        // a full-screen gate. The C5 redirect sends protected destinations here
+        // when biometric unlock is enabled and the lock subsystem is locked.
+        builder: (context, state) => BiometricLockPage(
+          onUnlocked: () => context.goNamed(AppRoutes.home),
+          onUseFallback: () => _showInformationDialog(
+            context,
+            title: context.t.common.legalPlaceholderTitle,
+            body: context.t.common.notConnected,
+          ),
+        ),
+      ),
+      GoRoute(
         name: AppRoutes.login,
         path: AppRoutes.loginPath,
         builder: (context, state) => _LoginRoutePage(
@@ -298,6 +319,7 @@ GoRouter buildAppRouter({
       ],
     ],
     errorBuilder: _routeErrorPage,
+    observers: observers,
     redirect: (context, state) => _redirectSettingsDeepLinks(
       context,
       state,
@@ -307,9 +329,17 @@ GoRouter buildAppRouter({
 }
 
 // One redirect (C5): predicates chained in priority order. Each block returns
-// the first non-null target. Order: (1) update-blocker HARD block (wins over
-// everything); (2) settings deep-link normalization (existing); (3) onboarding
-// gate (sends shell-tab destinations to /onboarding when the flag is unset).
+// the first non-null target. Behavioral precedence: update-blocker HARD ->
+// onboarding -> SESSION -> BIOMETRIC. Code order differs from precedence only
+// for the session gate, which is guarded by `hasCompletedOnboarding` so the
+// onboarding gate still wins for fresh installs (see block 3a below).
+//
+//   (1)  update-blocker HARD (wins over everything)
+//   (2)  settings deep-link normalization
+//   (3a) SESSION auth-required gate (only when onboarding is complete; sends
+//        an anonymous user hitting an auth-only destination to /auth/login)
+//   (3b) onboarding gate (shell-tab destinations -> /onboarding when unset)
+//   (4)  BIOMETRIC gate (locked subsystem -> /lock for shell-tab destinations)
 //
 // Update-blocker HARD must run first so a hard block wins over onboarding and
 // settings normalization. SOFT never redirects — it triggers a post-frame
@@ -353,7 +383,28 @@ String? _redirectSettingsDeepLinks(
         .toString();
   }
 
-  // (3) Onboarding gate. Skip when already on an onboarding or auth route —
+  // (3a) Session auth-required gate. Composed into the single C5 redirect
+  // (no new callback). Reuses AppRoutes.login — NO new route. Behavioral
+  // precedence is update -> onboarding -> SESSION -> biometric; the session
+  // gate is placed before the onboarding gate but guarded by
+  // `hasCompletedOnboarding` so onboarding still wins for fresh installs. An
+  // auth-only destination (today: /profile/edit) reached by an anonymous user
+  // is sent to /auth/login. Detail routes like /profile/edit are only reachable
+  // from the settings shell tab, which onboarding already gates for fresh
+  // installs, so the hasCompletedOnboarding guard makes the fresh-install edge
+  // unreachable; for returning users the session gate fires correctly.
+  if (!_isOnboardingOrAuthRoute(path) && _isAuthRequiredDestination(path)) {
+    final hasCompletedOnboarding =
+        _readLiveHasCompletedOnboarding(context) ?? hasCompletedOnboardingSeed;
+    if (hasCompletedOnboarding) {
+      final session = _readLiveSession(context) ?? const AuthAnonymous();
+      if (session is! AuthAuthenticated) {
+        return AppRoutes.loginPath;
+      }
+    }
+  }
+
+  // (3b) Onboarding gate. Skip when already on an onboarding or auth route —
   // deep links and auth flows must not be hijacked into an onboarding loop.
   if (_isOnboardingOrAuthRoute(path)) {
     return null;
@@ -374,6 +425,15 @@ String? _redirectSettingsDeepLinks(
   if (!hasCompleted) {
     return AppRoutes.onboardingPath;
   }
+  // (4) BIOMETRIC gate. A returning user (onboarding complete) on a shell-tab
+  // destination whose biometric unlock is enabled AND whose lock subsystem is
+  // BiometricLockLocked is sent to /lock. Unavailable never redirects (the
+  // predicate acts only on BiometricLockLocked), so a device without biometric
+  // is never looped into a prompt that cannot succeed. /lock itself is not a
+  // shell-tab destination, so it already returned null above (no loop).
+  if (_readLiveBiometricUnlockActive(context)) {
+    return AppRoutes.biometricLockPath;
+  }
   return null;
 }
 
@@ -385,6 +445,10 @@ bool _isOnboardingOrAuthRoute(String path) =>
     path.startsWith('${AppRoutes.onboardingPath}/') ||
     path.startsWith('/auth/');
 
+/// Auth-only destinations: routes a user must be signed in to reach. Today only
+/// profile editing is gated; extend this set as auth-required surfaces grow.
+bool _isAuthRequiredDestination(String path) => path == AppRoutes.updateProfilePath;
+
 bool? _readLiveHasCompletedOnboarding(BuildContext context) {
   try {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -393,6 +457,33 @@ bool? _readLiveHasCompletedOnboarding(BuildContext context) {
     // Test-harness fallback (no ProviderScope above the router); production
     // always wires the scope so the live read wins.
     return null;
+  }
+}
+
+/// Reads LIVE session state so an in-session login/logout is observable on the
+/// same tick. Returns null on the test-harness no-scope case (mirrors
+/// [_readLiveHasCompletedOnboarding]).
+AuthSession? _readLiveSession(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    return container.read(sessionControllerProvider);
+  } on Object {
+    return null;
+  }
+}
+
+/// True when the biometric gate should fire: biometric unlock is enabled in
+/// settings AND the lock subsystem is [BiometricLockLocked]. Returns false on
+/// the test-harness no-scope case so tests that do not wire the controllers
+/// never trigger the gate. Unavailable and unlocked never gate.
+bool _readLiveBiometricUnlockActive(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    final enabled = container.read(settingsControllerProvider).biometricUnlockEnabled;
+    if (!enabled) return false;
+    return container.read(biometricUnlockControllerProvider) is BiometricLockLocked;
+  } on Object {
+    return false;
   }
 }
 

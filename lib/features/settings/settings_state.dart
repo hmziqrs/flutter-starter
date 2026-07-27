@@ -13,6 +13,7 @@ final class SettingsState {
     required this.fontScale,
     required this.localeOverride,
     this.hasCompletedOnboarding = false,
+    this.biometricUnlockEnabled = false,
   });
 
   const SettingsState.defaults()
@@ -20,7 +21,8 @@ final class SettingsState {
       accent = AppAccent.neutral,
       fontScale = 1,
       localeOverride = null,
-      hasCompletedOnboarding = false;
+      hasCompletedOnboarding = false,
+      biometricUnlockEnabled = false;
 
   static const minimumFontScale = 0.85;
   static const maximumFontScale = 1.6;
@@ -38,12 +40,19 @@ final class SettingsState {
   /// in-session Skip transition reaches home on the same tick.
   final bool hasCompletedOnboarding;
 
+  /// Whether the user has opted into biometric unlock. Read by the C5 redirect
+  /// (composition root) alongside the biometric lock state to gate protected
+  /// shell-tab destinations to the lock page. Default false; persisted through
+  /// the settings repository like every other plaintext preference.
+  final bool biometricUnlockEnabled;
+
   SettingsState copyWith({
     AppThemeMode? themeMode,
     AppAccent? accent,
     double? fontScale,
     AppLocale? localeOverride,
     bool? hasCompletedOnboarding,
+    bool? biometricUnlockEnabled,
     bool followSystemLocale = false,
   }) {
     return SettingsState(
@@ -52,6 +61,7 @@ final class SettingsState {
       fontScale: fontScale ?? this.fontScale,
       localeOverride: followSystemLocale ? null : (localeOverride ?? this.localeOverride),
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      biometricUnlockEnabled: biometricUnlockEnabled ?? this.biometricUnlockEnabled,
     );
   }
 
@@ -63,10 +73,17 @@ final class SettingsState {
             accent == other.accent &&
             fontScale == other.fontScale &&
             localeOverride == other.localeOverride &&
-            hasCompletedOnboarding == other.hasCompletedOnboarding;
+            hasCompletedOnboarding == other.hasCompletedOnboarding &&
+            biometricUnlockEnabled == other.biometricUnlockEnabled;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(themeMode, accent, fontScale, localeOverride, hasCompletedOnboarding);
+  int get hashCode => Object.hash(
+    themeMode,
+    accent,
+    fontScale,
+    localeOverride,
+    hasCompletedOnboarding,
+    biometricUnlockEnabled,
+  );
 }

@@ -49,8 +49,10 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$settings$ar settings = _Translations$settings$ar._(_root);
 	@override late final _Translations$auth$ar auth = _Translations$auth$ar._(_root);
 	@override late final _Translations$profile$ar profile = _Translations$profile$ar._(_root);
+	@override late final _Translations$security$ar security = _Translations$security$ar._(_root);
 	@override late final _Translations$forceUpdate$ar forceUpdate = _Translations$forceUpdate$ar._(_root);
 	@override late final _Translations$softUpdate$ar softUpdate = _Translations$softUpdate$ar._(_root);
+	@override late final _Translations$session$ar session = _Translations$session$ar._(_root);
 	@override late final _Translations$splash$ar splash = _Translations$splash$ar._(_root);
 	@override late final _Translations$states$ar states = _Translations$states$ar._(_root);
 	@override late final _Translations$announcements$ar announcements = _Translations$announcements$ar._(_root);
@@ -249,6 +251,8 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get aboutBuild => 'معلومات الإصدار';
 	@override String get terms => 'معاينة الشروط';
 	@override String get privacy => 'معاينة الخصوصية';
+	@override String get enableBiometric => 'إلغاء القفل بالقياس الحيوي';
+	@override late final _Translations$settings$analytics$ar analytics = _Translations$settings$analytics$ar._(_root);
 }
 
 // Path: auth
@@ -276,6 +280,16 @@ class _Translations$profile$ar extends Translations$profile$en {
 	@override late final _Translations$profile$update$ar update = _Translations$profile$update$ar._(_root);
 }
 
+// Path: security
+class _Translations$security$ar extends Translations$security$en {
+	_Translations$security$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$security$biometric$ar biometric = _Translations$security$biometric$ar._(_root);
+}
+
 // Path: forceUpdate
 class _Translations$forceUpdate$ar extends Translations$forceUpdate$en {
 	_Translations$forceUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -299,6 +313,19 @@ class _Translations$softUpdate$ar extends Translations$softUpdate$en {
 	@override String get body => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.';
 	@override String get update => 'تحديث';
 	@override String get later => 'لاحقًا';
+}
+
+// Path: session
+class _Translations$session$ar extends Translations$session$en {
+	_Translations$session$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get expired => 'انتهت جلستك. يُرجى تسجيل الدخول من جديد.';
+	@override String get signedOut => 'تم تسجيل خروجك.';
+	@override String signedInPreview({required Object userId}) => 'تم تسجيل دخولك بصفتك ${userId}';
+	@override String get unavailable => 'تسجيل الدخول غير متصل بعد.';
 }
 
 // Path: splash
@@ -404,6 +431,9 @@ class _Translations$diagnostics$ar extends Translations$diagnostics$en {
 	@override String get secureStorage => 'التخزين الآمن';
 	@override String get crashReporting => 'الإبلاغ عن الأعطال';
 	@override String get crashReportingNone => 'غير مُهيَّأ';
+	@override String get analytics => 'التحليلات';
+	@override String get analyticsNone => 'غير مُهيّأ';
+	@override String get featureFlags => 'ميزات تجريبية';
 	@override String get redactedNotice => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.';
 }
 
@@ -527,6 +557,12 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get casePopover => 'نافذة منبثقة';
 	@override String get caseTooltip => 'تلميح';
 	@override String get caseKeyboardInset => 'نموذج مع إزاحة لوحة المفاتيح';
+	@override String get screenSession => 'الجلسة';
+	@override String get caseSessionLoggedOut => 'تم تسجيل الخروج';
+	@override String get caseSessionLoggedIn => 'تم تسجيل الدخول';
+	@override String get screenAnalytics => 'الاشتراك في التحليلات';
+	@override String get screenBiometricLock => 'قفل القياس الحيوي';
+	@override String get caseLocked => 'مقفل';
 	@override String get caseNotFound => 'حالة المعرض المطلوبة غير مسجلة.';
 }
 
@@ -552,6 +588,19 @@ class _Translations$pricing$plans$ar extends Translations$pricing$plans$en {
 	@override String get teamBenefitOne => 'كل ما في الاحترافية';
 	@override String get teamBenefitTwo => 'قواعد جاهزة للفريق';
 	@override String get teamBenefitThree => 'سير إصدار متعدد المنصات';
+}
+
+// Path: settings.analytics
+class _Translations$settings$analytics$ar extends Translations$settings$analytics$en {
+	_Translations$settings$analytics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get optInTitle => 'التحليلات';
+	@override String get optInBody => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.';
+	@override String get statusOn => 'مُفعّل';
+	@override String get statusOff => 'غير مُفعّل';
 }
 
 // Path: auth.common
@@ -587,6 +636,24 @@ class _Translations$auth$login$ar extends Translations$auth$login$en {
 	@override String get submitting => 'جارٍ تسجيل الدخول';
 	@override String get globalError => 'تعذر إكمال تسجيل الدخول الثابت. تم الاحتفاظ بالقيم.';
 	@override String get success => 'اكتمل تسجيل الدخول الثابت.';
+	@override String get lockedTitle => 'محاولات كثيرة';
+	@override String get tooManyAttempts => 'محاولات فاشلة كثيرة. يرجى الانتظار.';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'لا محاولات متبقية',
+		one: 'محاولة واحدة متبقية',
+		two: 'محاولتان متبقيتان',
+		few: '${count} محاولات متبقية',
+		many: '${count} محاولة متبقية',
+		other: '${count} محاولة متبقية',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'أعد المحاولة الآن.',
+		one: 'أعد المحاولة خلال ثانية واحدة.',
+		two: 'أعد المحاولة خلال ثانيتين.',
+		few: 'أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'أعد المحاولة خلال ${seconds} ثانية.',
+		other: 'أعد المحاولة خلال ${seconds} ثانية.',
+	);
 }
 
 // Path: auth.register
@@ -646,6 +713,24 @@ class _Translations$auth$otp$ar extends Translations$auth$otp$en {
 	@override String get expired => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.';
 	@override String get registrationSuccess => 'تم التحقق من التسجيل.';
 	@override String get passwordResetSuccess => 'تم التحقق من طلب إعادة التعيين.';
+	@override String get lockedTitle => 'محاولات كثيرة';
+	@override String get tooManyAttempts => 'محاولات فاشلة كثيرة. يرجى الانتظار.';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'لا محاولات متبقية',
+		one: 'محاولة واحدة متبقية',
+		two: 'محاولتان متبقيتان',
+		few: '${count} محاولات متبقية',
+		many: '${count} محاولة متبقية',
+		other: '${count} محاولة متبقية',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'أعد المحاولة الآن.',
+		one: 'أعد المحاولة خلال ثانية واحدة.',
+		two: 'أعد المحاولة خلال ثانيتين.',
+		few: 'أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'أعد المحاولة خلال ${seconds} ثانية.',
+		other: 'أعد المحاولة خلال ${seconds} ثانية.',
+	);
 }
 
 // Path: auth.resetPassword
@@ -690,6 +775,22 @@ class _Translations$profile$update$ar extends Translations$profile$update$en {
 	@override String get discardBody => 'سيتم مسح تغييرات الملف الشخصي غير المحفوظة.';
 	@override String get stay => 'متابعة التحرير';
 	@override String get discard => 'تجاهل التغييرات';
+}
+
+// Path: security.biometric
+class _Translations$security$biometric$ar extends Translations$security$biometric$en {
+	_Translations$security$biometric$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get lockTitle => 'إلغاء القفل بالقياس الحيوي';
+	@override String get lockBody => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.';
+	@override String get unlock => 'إلغاء القفل';
+	@override String get unlocking => 'جارٍ إلغاء القفل';
+	@override String get unavailableTitle => 'إلغاء القفل بالقياس الحيوي غير متاح';
+	@override String get unavailableBody => 'لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.';
+	@override String get useFallback => 'استخدام بيانات الاعتماد';
 }
 
 // Path: announcements.fixtures
@@ -889,6 +990,11 @@ extension on TranslationsAr {
 			'settings.aboutBuild' => 'معلومات الإصدار',
 			'settings.terms' => 'معاينة الشروط',
 			'settings.privacy' => 'معاينة الخصوصية',
+			'settings.enableBiometric' => 'إلغاء القفل بالقياس الحيوي',
+			'settings.analytics.optInTitle' => 'التحليلات',
+			'settings.analytics.optInBody' => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.',
+			'settings.analytics.statusOn' => 'مُفعّل',
+			'settings.analytics.statusOff' => 'غير مُفعّل',
 			'auth.common.email' => 'البريد الإلكتروني',
 			'auth.common.password' => 'كلمة المرور',
 			'auth.common.confirmPassword' => 'تأكيد كلمة المرور',
@@ -906,6 +1012,10 @@ extension on TranslationsAr {
 			'auth.login.submitting' => 'جارٍ تسجيل الدخول',
 			'auth.login.globalError' => 'تعذر إكمال تسجيل الدخول الثابت. تم الاحتفاظ بالقيم.',
 			'auth.login.success' => 'اكتمل تسجيل الدخول الثابت.',
+			'auth.login.lockedTitle' => 'محاولات كثيرة',
+			'auth.login.tooManyAttempts' => 'محاولات فاشلة كثيرة. يرجى الانتظار.',
+			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
 			'auth.register.title' => 'إنشاء حسابك',
 			'auth.register.body' => 'أدخل التفاصيل المستخدمة لعرض سلوك التسجيل والتأكيد.',
 			'auth.register.acceptTerms' => 'أوافق على معاينة الشروط والخصوصية.',
@@ -938,6 +1048,10 @@ extension on TranslationsAr {
 			'auth.otp.expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.',
 			'auth.otp.registrationSuccess' => 'تم التحقق من التسجيل.',
 			'auth.otp.passwordResetSuccess' => 'تم التحقق من طلب إعادة التعيين.',
+			'auth.otp.lockedTitle' => 'محاولات كثيرة',
+			'auth.otp.tooManyAttempts' => 'محاولات فاشلة كثيرة. يرجى الانتظار.',
+			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
 			'auth.resetPassword.title' => 'اختر كلمة مرور جديدة',
 			'auth.resetPassword.body' => 'استخدم كلمة مرور قوية وأدخلها بالطريقة نفسها مرتين.',
 			'auth.resetPassword.newPassword' => 'كلمة المرور الجديدة',
@@ -964,6 +1078,13 @@ extension on TranslationsAr {
 			'profile.update.discardBody' => 'سيتم مسح تغييرات الملف الشخصي غير المحفوظة.',
 			'profile.update.stay' => 'متابعة التحرير',
 			'profile.update.discard' => 'تجاهل التغييرات',
+			'security.biometric.lockTitle' => 'إلغاء القفل بالقياس الحيوي',
+			'security.biometric.lockBody' => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.',
+			'security.biometric.unlock' => 'إلغاء القفل',
+			'security.biometric.unlocking' => 'جارٍ إلغاء القفل',
+			'security.biometric.unavailableTitle' => 'إلغاء القفل بالقياس الحيوي غير متاح',
+			'security.biometric.unavailableBody' => 'لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.',
+			'security.biometric.useFallback' => 'استخدام بيانات الاعتماد',
 			'forceUpdate.title' => 'يلزم تحديث التطبيق',
 			'forceUpdate.body' => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.',
 			'forceUpdate.updateNow' => 'تحديث الآن',
@@ -971,6 +1092,10 @@ extension on TranslationsAr {
 			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.',
 			'softUpdate.update' => 'تحديث',
 			'softUpdate.later' => 'لاحقًا',
+			'session.expired' => 'انتهت جلستك. يُرجى تسجيل الدخول من جديد.',
+			'session.signedOut' => 'تم تسجيل خروجك.',
+			'session.signedInPreview' => ({required Object userId}) => 'تم تسجيل دخولك بصفتك ${userId}',
+			'session.unavailable' => 'تسجيل الدخول غير متصل بعد.',
 			'splash.loading' => 'جارٍ التشغيل',
 			'splash.tagline' => 'نقطة انطلاق مدروسة',
 			'splash.error' => 'تعذّر إكمال التشغيل.',
@@ -1020,6 +1145,9 @@ extension on TranslationsAr {
 			'diagnostics.secureStorage' => 'التخزين الآمن',
 			'diagnostics.crashReporting' => 'الإبلاغ عن الأعطال',
 			'diagnostics.crashReportingNone' => 'غير مُهيَّأ',
+			'diagnostics.analytics' => 'التحليلات',
+			'diagnostics.analyticsNone' => 'غير مُهيّأ',
+			'diagnostics.featureFlags' => 'ميزات تجريبية',
 			'diagnostics.redactedNotice' => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.',
 			'devGallery.title' => 'معرض شاشات الإنتاج',
 			'devGallery.search' => 'البحث في الحالات',
@@ -1134,6 +1262,12 @@ extension on TranslationsAr {
 			'devGallery.casePopover' => 'نافذة منبثقة',
 			'devGallery.caseTooltip' => 'تلميح',
 			'devGallery.caseKeyboardInset' => 'نموذج مع إزاحة لوحة المفاتيح',
+			'devGallery.screenSession' => 'الجلسة',
+			'devGallery.caseSessionLoggedOut' => 'تم تسجيل الخروج',
+			'devGallery.caseSessionLoggedIn' => 'تم تسجيل الدخول',
+			'devGallery.screenAnalytics' => 'الاشتراك في التحليلات',
+			'devGallery.screenBiometricLock' => 'قفل القياس الحيوي',
+			'devGallery.caseLocked' => 'مقفل',
 			'devGallery.caseNotFound' => 'حالة المعرض المطلوبة غير مسجلة.',
 			_ => null,
 		};

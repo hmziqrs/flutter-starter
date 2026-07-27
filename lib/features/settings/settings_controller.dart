@@ -48,6 +48,13 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(hasCompletedOnboarding: true));
   }
 
+  /// Toggles the biometric-unlock opt-in. Read by the C5 redirect alongside the
+  /// biometric lock state; persisted through the repository like every other
+  /// setting. Optimistic update + rollback via [_replace].
+  Future<void> setBiometricUnlockEnabled({required bool enabled}) {
+    return _replace(state.copyWith(biometricUnlockEnabled: enabled));
+  }
+
   Future<void> setLocale(AppLocale? locale) async {
     final previous = state;
     final next = locale == null

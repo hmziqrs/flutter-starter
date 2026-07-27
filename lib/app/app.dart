@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,14 +14,21 @@ import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/announcements/announcement_banner.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
+import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
+import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
+import 'package:starter/features/session/session_controller.dart';
+import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/splash/app_startup_result_provider.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/analytics/analytics_client.dart';
+import 'package:starter/infrastructure/analytics/analytics_route_observer.dart';
+import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
@@ -68,6 +77,19 @@ class App extends StatelessWidget {
           dependencies.initialDismissedAnnouncementIds,
         ),
         appBuildInfoProvider.overrideWithValue(dependencies.buildInfo),
+        // Wave-4 ports: each override is a peer of the existing port overrides
+        // above. The composition root (AppDependencies) selected the no-backend
+        // default for every one of these; a consumer swaps in a real adapter
+        // only when credentials/an endpoint are configured.
+        authRepositoryProvider.overrideWithValue(dependencies.authRepository),
+        sessionRepositoryProvider.overrideWithValue(dependencies.sessionRepository),
+        initialSessionProvider.overrideWithValue(dependencies.initialSession),
+        analyticsClientProvider.overrideWithValue(dependencies.analyticsClient),
+        analyticsClientBackendProvider.overrideWithValue(dependencies.analyticsClientBackend),
+        initialAnalyticsOptInProvider.overrideWithValue(dependencies.initialAnalyticsOptIn),
+        featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
+        biometricAuthenticatorProvider.overrideWithValue(dependencies.biometricAuthenticator),
+        attemptTrackerProvider.overrideWithValue(dependencies.attemptTracker),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -103,12 +125,27 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     // observable on the same tick; this seed is the fallback used by harnesses
     // that build the router without a ProviderScope above MaterialApp.router.
     hasCompletedOnboarding: ref.read(initialSettingsProvider).hasCompletedOnboarding,
+    // Analytics plugs into the GoRouter via the single observers: seam (C4:
+    // zero per-page edits). The observer emits a ScreenView on every route
+    // change; its track() call is fire-and-forget and never throws, so
+    // navigation is never gated on analytics.
+    observers: [AnalyticsRouteObserver(client: ref.read(analyticsClientProvider))],
   );
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Cold-start session hydration: read any persisted refresh token from
+    // SecureStore and, if present, ask the auth repository to mint a fresh
+    // session. Fire-and-forget on the post-frame so the freshly created
+    // ProviderScope is used. With the no-backend default this surfaces
+    // AuthException.notConnected and stays anonymous (never fakes). The
+    // redirect reads LIVE controller state, so the moment hydration resolves
+    // the session flips and subsequent navigations observe it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
+    });
   }
 
   @override

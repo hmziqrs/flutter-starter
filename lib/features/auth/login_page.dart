@@ -70,13 +70,25 @@ class _LoginViewState extends ConsumerState<_LoginView> {
   bool _callbackSubmitting = false;
   bool _rememberMe = false;
 
+  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
+  // decremented by a 1s Timer.periodic; the submit gate is OR-ed with _locked.
+  Timer? _countdownTimer;
+  int _liveLockedSeconds = 0;
+
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == LoginPresentationStatus.submitting;
+
+  /// True while a rate-limit lockout is active. Independent of any animation so
+  /// the non-animated fallback still disables submit.
+  bool get _locked =>
+      widget.presentation.status == LoginPresentationStatus.locked && _liveLockedSeconds > 0;
 
   @override
   void initState() {
     super.initState();
+    _liveLockedSeconds = widget.presentation.lockedSeconds;
     _requestFixtureFocus();
+    _startLockoutCountdownIfNeeded();
   }
 
   @override
@@ -84,6 +96,10 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.presentation.status != widget.presentation.status) {
       _requestFixtureFocus();
+    }
+    if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
+      _liveLockedSeconds = widget.presentation.lockedSeconds;
+      _startLockoutCountdownIfNeeded();
     }
   }
 
@@ -95,8 +111,26 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     }
   }
 
+  void _startLockoutCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    if (_liveLockedSeconds <= 0) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
+        if (_liveLockedSeconds <= 0) timer.cancel();
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
@@ -147,6 +181,10 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               translations.auth.login.body,
               style: context.theme.typography.body.md,
             ),
+            if (_attemptsRemainingAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
             if (_feedbackAlert(context) case final alert?) ...[
               const SizedBox(height: AppSpacing.xl),
               alert,
@@ -160,7 +198,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               label: Text(translations.auth.common.email),
               textDirection: TextDirection.ltr,
               autofillHints: const [AutofillHints.username, AutofillHints.email],
-              enabled: !_submitting,
+              enabled: !(_submitting || _locked),
               autovalidateMode: AutovalidateMode.onUserInteractionIfError,
               forceErrorText: invalidFixture || fieldFailureFixture
                   ? translations.validation.email
@@ -186,7 +224,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               focusNode: _passwordFocus,
               label: Text(translations.auth.common.password),
               textInputAction: TextInputAction.done,
-              enabled: !_submitting,
+              enabled: !(_submitting || _locked),
               autovalidateMode: AutovalidateMode.onUserInteractionIfError,
               forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
               validator: (value) => validateAuthPassword(
@@ -216,7 +254,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
                   child: FCheckbox(
                     key: const ValueKey('auth-login-remember'),
                     value: field.value ?? false,
-                    enabled: !_submitting,
+                    enabled: !(_submitting || _locked),
                     label: Text(translations.auth.login.rememberMe),
                     error: field.errorText == null ? null : Text(field.errorText!),
                     onChange: field.didChange,
@@ -227,7 +265,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-login-submit'),
-              onPress: _submitting ? null : () => unawaited(_submit()),
+              onPress: (_submitting || _locked) ? null : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 translations.auth.login.submit,
@@ -304,7 +342,29 @@ class _LoginViewState extends ConsumerState<_LoginView> {
         title: Text(widget.presentation.successMessage ?? translations.auth.login.success),
         icon: const Icon(FLucideIcons.circleCheck),
       ),
+      LoginPresentationStatus.locked => FAlert(
+        key: const ValueKey('auth-login-locked'),
+        variant: .destructive,
+        title: Text(translations.auth.login.lockedTitle),
+        subtitle: Text(
+          translations.auth.login.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
+        ),
+      ),
     };
+  }
+
+  /// Non-destructive "attempts remaining" notice, shown while the user still
+  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// destructive [_feedbackAlert] carries the countdown instead).
+  Widget? _attemptsRemainingAlert(BuildContext context) {
+    final remaining = widget.presentation.attemptsRemaining;
+    if (remaining <= 0 || widget.presentation.status == LoginPresentationStatus.locked) {
+      return null;
+    }
+    return FAlert(
+      key: const ValueKey('auth-login-attempts-remaining'),
+      title: Text(context.t.auth.login.attemptsRemaining(n: remaining, count: remaining)),
+    );
   }
 
   Future<void> _submit() async {

@@ -4,7 +4,10 @@ import 'package:forui/forui.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/features/feature_flags/feature_flags.dart';
+import 'package:starter/features/feature_flags/feature_flags_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
@@ -31,6 +34,8 @@ class DiagnosticsPage extends ConsumerWidget {
     final lifecyclePhase = ref.watch(appLifecyclePhaseProvider);
     final capabilities = PlatformCapabilities.current();
     final locale = TranslationProvider.of(context).locale;
+    final analyticsBackend = ref.watch(analyticsClientBackendProvider);
+    final flags = ref.watch(featureFlagsControllerProvider);
 
     return FScaffold(
       child: SafeArea(
@@ -92,6 +97,19 @@ class DiagnosticsPage extends ConsumerWidget {
                               RemoteCrashReporterBackend(:final host) => host,
                             },
                           ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.analytics,
+                            value: switch (analyticsBackend) {
+                              NoopAnalyticsBackend() => translations.diagnostics.analyticsNone,
+                              RemoteAnalyticsBackend(:final host) => host,
+                            },
+                          ),
+                          if (config.developmentToolsEnabled)
+                            for (final flag in FeatureFlag.values)
+                              _DiagnosticTile(
+                                label: '${translations.diagnostics.featureFlags}.${flag.wireKey}',
+                                value: flags.isEnabled(flag).toString(),
+                              ),
                         ],
                       ),
                     ),

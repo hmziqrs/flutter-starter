@@ -8,7 +8,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(103));
+    expect(cases, hasLength(109));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -29,6 +29,13 @@ void main() {
         'stateViews.empty',
         'formScaffold.enabled',
         'announcements.critical',
+        // Wave-4 feature surfaces registered by their gallery contributors.
+        'session.loggedOut',
+        'session.loggedIn',
+        'analytics.optIn.on',
+        'analytics.optIn.off',
+        'biometric.locked',
+        'biometric.unavailable',
       ]),
     );
     expect(

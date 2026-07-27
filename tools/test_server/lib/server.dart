@@ -1,7 +1,9 @@
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import 'routes/auth.dart' as auth;
 import 'routes/crashes.dart' as crashes;
+import 'routes/events.dart' as events;
 import 'routes/remote_config.dart' as remote_config;
 
 /// A function that mounts one route group onto the server [Router].
@@ -17,7 +19,9 @@ typedef RouteRegistrar = void Function(Router router);
 /// backend contract groups here — one import + one line is the whole wiring
 /// surface for a new endpoint group.
 final List<RouteRegistrar> _registrars = <RouteRegistrar>[
+  auth.registerRoutes,
   crashes.registerRoutes,
+  events.registerRoutes,
   remote_config.registerRoutes,
 ];
 

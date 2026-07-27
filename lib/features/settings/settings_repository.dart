@@ -10,12 +10,14 @@ final class SettingsRepository {
   static const fontScaleKey = 'appearance.font_scale';
   static const localeKey = 'localization.locale';
   static const onboardingKey = 'onboarding.completed';
+  static const biometricUnlockKey = 'security.biometric_unlock_enabled';
   static const persistedKeys = <String>[
     themeModeKey,
     accentKey,
     fontScaleKey,
     localeKey,
     onboardingKey,
+    biometricUnlockKey,
   ];
 
   final SettingsStore _store;
@@ -28,6 +30,7 @@ final class SettingsRepository {
         _store.readString(fontScaleKey),
         _store.readString(localeKey),
         _store.readString(onboardingKey),
+        _store.readString(biometricUnlockKey),
       ]);
 
       return SettingsState(
@@ -38,6 +41,7 @@ final class SettingsRepository {
         // Treat any non-"true" value (missing, "false", legacy) as incomplete so
         // fresh installs and pre-flag installs both gate through onboarding.
         hasCompletedOnboarding: values[4] == 'true',
+        biometricUnlockEnabled: values[5] == 'true',
       );
     } on SettingsStoreException catch (error) {
       throw SettingsFailure.read(error.operation);
@@ -57,6 +61,10 @@ final class SettingsRepository {
         switch (state.hasCompletedOnboarding) {
           true => _store.writeString(onboardingKey, 'true'),
           false => _store.remove(onboardingKey),
+        },
+        switch (state.biometricUnlockEnabled) {
+          true => _store.writeString(biometricUnlockKey, 'true'),
+          false => _store.remove(biometricUnlockKey),
         },
       ]);
     } on SettingsStoreException catch (error) {

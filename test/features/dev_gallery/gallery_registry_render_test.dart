@@ -9,6 +9,7 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 import 'package:starter/features/dev_gallery/preview_frame.dart';
+import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -59,6 +60,10 @@ class _RegistryCaseHost extends StatelessWidget {
       overrides: [
         settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
+        // Mirror the production composition root (app.dart): the DiagnosticsPage
+        // gallery case reads featureFlagsControllerProvider, which throws until
+        // the source port is overridden. Seed the no-backend default.
+        featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
       ],
       child: TranslationProvider(
         child: MaterialApp(

@@ -50,8 +50,10 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
 	late final Translations$profile$en profile = Translations$profile$en.internal(_root);
+	late final Translations$security$en security = Translations$security$en.internal(_root);
 	late final Translations$forceUpdate$en forceUpdate = Translations$forceUpdate$en.internal(_root);
 	late final Translations$softUpdate$en softUpdate = Translations$softUpdate$en.internal(_root);
+	late final Translations$session$en session = Translations$session$en.internal(_root);
 	late final Translations$splash$en splash = Translations$splash$en.internal(_root);
 	late final Translations$states$en states = Translations$states$en.internal(_root);
 	late final Translations$announcements$en announcements = Translations$announcements$en.internal(_root);
@@ -485,6 +487,11 @@ class Translations$settings$en {
 
 	/// en: 'Privacy preview'
 	String get privacy => 'Privacy preview';
+
+	/// en: 'Unlock with biometrics'
+	String get enableBiometric => 'Unlock with biometrics';
+
+	late final Translations$settings$analytics$en analytics = Translations$settings$analytics$en.internal(_root);
 }
 
 // Path: auth
@@ -510,6 +517,16 @@ class Translations$profile$en {
 
 	// Translations
 	late final Translations$profile$update$en update = Translations$profile$update$en.internal(_root);
+}
+
+// Path: security
+class Translations$security$en {
+	Translations$security$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$security$biometric$en biometric = Translations$security$biometric$en.internal(_root);
 }
 
 // Path: forceUpdate
@@ -549,6 +566,27 @@ class Translations$softUpdate$en {
 
 	/// en: 'Later'
 	String get later => 'Later';
+}
+
+// Path: session
+class Translations$session$en {
+	Translations$session$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Your session has expired. Please sign in again.'
+	String get expired => 'Your session has expired. Please sign in again.';
+
+	/// en: 'You are signed out.'
+	String get signedOut => 'You are signed out.';
+
+	/// en: 'Signed in as $userId'
+	String signedInPreview({required Object userId}) => 'Signed in as ${userId}';
+
+	/// en: 'Sign-in is not connected yet.'
+	String get unavailable => 'Sign-in is not connected yet.';
 }
 
 // Path: splash
@@ -737,6 +775,15 @@ class Translations$diagnostics$en {
 
 	/// en: 'Not configured'
 	String get crashReportingNone => 'Not configured';
+
+	/// en: 'Analytics'
+	String get analytics => 'Analytics';
+
+	/// en: 'Not configured'
+	String get analyticsNone => 'Not configured';
+
+	/// en: 'Feature flags'
+	String get featureFlags => 'Feature flags';
 
 	/// en: 'Diagnostics exclude credentials and user content.'
 	String get redactedNotice => 'Diagnostics exclude credentials and user content.';
@@ -1089,6 +1136,24 @@ class Translations$devGallery$en {
 	/// en: 'Keyboard-inset form'
 	String get caseKeyboardInset => 'Keyboard-inset form';
 
+	/// en: 'Session'
+	String get screenSession => 'Session';
+
+	/// en: 'Logged out'
+	String get caseSessionLoggedOut => 'Logged out';
+
+	/// en: 'Logged in'
+	String get caseSessionLoggedIn => 'Logged in';
+
+	/// en: 'Analytics opt-in'
+	String get screenAnalytics => 'Analytics opt-in';
+
+	/// en: 'Biometric lock'
+	String get screenBiometricLock => 'Biometric lock';
+
+	/// en: 'Locked'
+	String get caseLocked => 'Locked';
+
 	/// en: 'The requested gallery case is not registered.'
 	String get caseNotFound => 'The requested gallery case is not registered.';
 }
@@ -1145,6 +1210,27 @@ class Translations$pricing$plans$en {
 
 	/// en: 'Multi-platform release workflow'
 	String get teamBenefitThree => 'Multi-platform release workflow';
+}
+
+// Path: settings.analytics
+class Translations$settings$analytics$en {
+	Translations$settings$analytics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Analytics'
+	String get optInTitle => 'Analytics';
+
+	/// en: 'Help improve the app by sending anonymous usage data. You can turn this off anytime.'
+	String get optInBody => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.';
+
+	/// en: 'On'
+	String get statusOn => 'On';
+
+	/// en: 'Off'
+	String get statusOff => 'Off';
 }
 
 // Path: auth.common
@@ -1214,6 +1300,24 @@ class Translations$auth$login$en {
 
 	/// en: 'Static sign-in complete.'
 	String get success => 'Static sign-in complete.';
+
+	/// en: 'Too many attempts'
+	String get lockedTitle => 'Too many attempts';
+
+	/// en: 'Too many failed attempts. Please wait.'
+	String get tooManyAttempts => 'Too many failed attempts. Please wait.';
+
+	/// en: '(one) {1 attempt remaining} (other) {$count attempts remaining}'
+	String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 attempt remaining',
+		other: '${count} attempts remaining',
+	);
+
+	/// en: '(one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Try again in 1 second.',
+		other: 'Try again in ${seconds} seconds.',
+	);
 }
 
 // Path: auth.register
@@ -1337,6 +1441,24 @@ class Translations$auth$otp$en {
 
 	/// en: 'Reset request verified.'
 	String get passwordResetSuccess => 'Reset request verified.';
+
+	/// en: 'Too many attempts'
+	String get lockedTitle => 'Too many attempts';
+
+	/// en: 'Too many failed attempts. Please wait.'
+	String get tooManyAttempts => 'Too many failed attempts. Please wait.';
+
+	/// en: '(one) {1 attempt remaining} (other) {$count attempts remaining}'
+	String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 attempt remaining',
+		other: '${count} attempts remaining',
+	);
+
+	/// en: '(one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Try again in 1 second.',
+		other: 'Try again in ${seconds} seconds.',
+	);
 }
 
 // Path: auth.resetPassword
@@ -1433,6 +1555,36 @@ class Translations$profile$update$en {
 
 	/// en: 'Discard changes'
 	String get discard => 'Discard changes';
+}
+
+// Path: security.biometric
+class Translations$security$biometric$en {
+	Translations$security$biometric$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Unlock with biometrics'
+	String get lockTitle => 'Unlock with biometrics';
+
+	/// en: 'Use your fingerprint or face to unlock the app.'
+	String get lockBody => 'Use your fingerprint or face to unlock the app.';
+
+	/// en: 'Unlock'
+	String get unlock => 'Unlock';
+
+	/// en: 'Unlocking'
+	String get unlocking => 'Unlocking';
+
+	/// en: 'Biometric unlock unavailable'
+	String get unavailableTitle => 'Biometric unlock unavailable';
+
+	/// en: 'Biometric unlock is not available on this device. Use your device credentials instead.'
+	String get unavailableBody => 'Biometric unlock is not available on this device. Use your device credentials instead.';
+
+	/// en: 'Use credentials'
+	String get useFallback => 'Use credentials';
 }
 
 // Path: announcements.fixtures
@@ -1648,6 +1800,11 @@ extension on Translations {
 			'settings.aboutBuild' => 'Build information',
 			'settings.terms' => 'Terms preview',
 			'settings.privacy' => 'Privacy preview',
+			'settings.enableBiometric' => 'Unlock with biometrics',
+			'settings.analytics.optInTitle' => 'Analytics',
+			'settings.analytics.optInBody' => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.',
+			'settings.analytics.statusOn' => 'On',
+			'settings.analytics.statusOff' => 'Off',
 			'auth.common.email' => 'Email address',
 			'auth.common.password' => 'Password',
 			'auth.common.confirmPassword' => 'Confirm password',
@@ -1665,6 +1822,10 @@ extension on Translations {
 			'auth.login.submitting' => 'Signing in',
 			'auth.login.globalError' => 'We could not complete the static sign-in. Your values were kept.',
 			'auth.login.success' => 'Static sign-in complete.',
+			'auth.login.lockedTitle' => 'Too many attempts',
+			'auth.login.tooManyAttempts' => 'Too many failed attempts. Please wait.',
+			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.register.title' => 'Create your account',
 			'auth.register.body' => 'Enter the details used to demonstrate registration and confirmation behavior.',
 			'auth.register.acceptTerms' => 'I agree to the terms and privacy preview.',
@@ -1697,6 +1858,10 @@ extension on Translations {
 			'auth.otp.expired' => 'That verification code has expired. Request a new code.',
 			'auth.otp.registrationSuccess' => 'Registration verified.',
 			'auth.otp.passwordResetSuccess' => 'Reset request verified.',
+			'auth.otp.lockedTitle' => 'Too many attempts',
+			'auth.otp.tooManyAttempts' => 'Too many failed attempts. Please wait.',
+			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.resetPassword.title' => 'Choose a new password',
 			'auth.resetPassword.body' => 'Use a strong password and enter it exactly the same way twice.',
 			'auth.resetPassword.newPassword' => 'New password',
@@ -1723,6 +1888,13 @@ extension on Translations {
 			'profile.update.discardBody' => 'Your unsaved profile changes will be cleared.',
 			'profile.update.stay' => 'Keep editing',
 			'profile.update.discard' => 'Discard changes',
+			'security.biometric.lockTitle' => 'Unlock with biometrics',
+			'security.biometric.lockBody' => 'Use your fingerprint or face to unlock the app.',
+			'security.biometric.unlock' => 'Unlock',
+			'security.biometric.unlocking' => 'Unlocking',
+			'security.biometric.unavailableTitle' => 'Biometric unlock unavailable',
+			'security.biometric.unavailableBody' => 'Biometric unlock is not available on this device. Use your device credentials instead.',
+			'security.biometric.useFallback' => 'Use credentials',
 			'forceUpdate.title' => 'Update required',
 			'forceUpdate.body' => 'This version is no longer supported. Update to the latest version to continue.',
 			'forceUpdate.updateNow' => 'Update now',
@@ -1730,6 +1902,10 @@ extension on Translations {
 			'softUpdate.body' => 'Update to the latest version for the latest improvements and fixes.',
 			'softUpdate.update' => 'Update',
 			'softUpdate.later' => 'Later',
+			'session.expired' => 'Your session has expired. Please sign in again.',
+			'session.signedOut' => 'You are signed out.',
+			'session.signedInPreview' => ({required Object userId}) => 'Signed in as ${userId}',
+			'session.unavailable' => 'Sign-in is not connected yet.',
 			'splash.loading' => 'Starting up',
 			'splash.tagline' => 'A thoughtful starting point',
 			'splash.error' => 'We couldn\'t finish starting up.',
@@ -1779,6 +1955,9 @@ extension on Translations {
 			'diagnostics.secureStorage' => 'Secure storage',
 			'diagnostics.crashReporting' => 'Crash reporting',
 			'diagnostics.crashReportingNone' => 'Not configured',
+			'diagnostics.analytics' => 'Analytics',
+			'diagnostics.analyticsNone' => 'Not configured',
+			'diagnostics.featureFlags' => 'Feature flags',
 			'diagnostics.redactedNotice' => 'Diagnostics exclude credentials and user content.',
 			'devGallery.title' => 'Production screen gallery',
 			'devGallery.search' => 'Search cases',
@@ -1893,6 +2072,12 @@ extension on Translations {
 			'devGallery.casePopover' => 'Popover',
 			'devGallery.caseTooltip' => 'Tooltip',
 			'devGallery.caseKeyboardInset' => 'Keyboard-inset form',
+			'devGallery.screenSession' => 'Session',
+			'devGallery.caseSessionLoggedOut' => 'Logged out',
+			'devGallery.caseSessionLoggedIn' => 'Logged in',
+			'devGallery.screenAnalytics' => 'Analytics opt-in',
+			'devGallery.screenBiometricLock' => 'Biometric lock',
+			'devGallery.caseLocked' => 'Locked',
 			'devGallery.caseNotFound' => 'The requested gallery case is not registered.',
 			_ => null,
 		};

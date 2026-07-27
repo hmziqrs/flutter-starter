@@ -147,7 +147,14 @@
     "privacyBody": "This starter stores only appearance and language preferences during the static phase.",
     "aboutBuild": "Build information",
     "terms": "Terms preview",
-    "privacy": "Privacy preview"
+    "privacy": "Privacy preview",
+    "enableBiometric": "Unlock with biometrics",
+    "analytics": {
+      "optInTitle": "Analytics",
+      "optInBody": "Help improve the app by sending anonymous usage data. You can turn this off anytime.",
+      "statusOn": "On",
+      "statusOff": "Off"
+    }
   },
   "auth": {
     "common": {
@@ -169,7 +176,17 @@
       "submit": "Sign in",
       "submitting": "Signing in",
       "globalError": "We could not complete the static sign-in. Your values were kept.",
-      "success": "Static sign-in complete."
+      "success": "Static sign-in complete.",
+      "lockedTitle": "Too many attempts",
+      "tooManyAttempts": "Too many failed attempts. Please wait.",
+      "attemptsRemaining(count)": {
+        "one": "1 attempt remaining",
+        "other": "$count attempts remaining"
+      },
+      "lockedBody(seconds)": {
+        "one": "Try again in 1 second.",
+        "other": "Try again in $seconds seconds."
+      }
     },
     "register": {
       "title": "Create your account",
@@ -207,7 +224,17 @@
       "invalid": "That verification code is not valid.",
       "expired": "That verification code has expired. Request a new code.",
       "registrationSuccess": "Registration verified.",
-      "passwordResetSuccess": "Reset request verified."
+      "passwordResetSuccess": "Reset request verified.",
+      "lockedTitle": "Too many attempts",
+      "tooManyAttempts": "Too many failed attempts. Please wait.",
+      "attemptsRemaining(count)": {
+        "one": "1 attempt remaining",
+        "other": "$count attempts remaining"
+      },
+      "lockedBody(seconds)": {
+        "one": "Try again in 1 second.",
+        "other": "Try again in $seconds seconds."
+      }
     },
     "resetPassword": {
       "title": "Choose a new password",
@@ -242,6 +269,17 @@
       "discard": "Discard changes"
     }
   },
+  "security": {
+    "biometric": {
+      "lockTitle": "Unlock with biometrics",
+      "lockBody": "Use your fingerprint or face to unlock the app.",
+      "unlock": "Unlock",
+      "unlocking": "Unlocking",
+      "unavailableTitle": "Biometric unlock unavailable",
+      "unavailableBody": "Biometric unlock is not available on this device. Use your device credentials instead.",
+      "useFallback": "Use credentials"
+    }
+  },
   "forceUpdate": {
     "title": "Update required",
     "body": "This version is no longer supported. Update to the latest version to continue.",
@@ -252,6 +290,12 @@
     "body": "Update to the latest version for the latest improvements and fixes.",
     "update": "Update",
     "later": "Later"
+  },
+  "session": {
+    "expired": "Your session has expired. Please sign in again.",
+    "signedOut": "You are signed out.",
+    "signedInPreview": "Signed in as $userId",
+    "unavailable": "Sign-in is not connected yet."
   },
   "splash": {
     "loading": "Starting up",
@@ -325,6 +369,9 @@
     "secureStorage": "Secure storage",
     "crashReporting": "Crash reporting",
     "crashReportingNone": "Not configured",
+    "analytics": "Analytics",
+    "analyticsNone": "Not configured",
+    "featureFlags": "Feature flags",
     "redactedNotice": "Diagnostics exclude credentials and user content."
   },
   "devGallery": {
@@ -441,6 +488,12 @@
     "casePopover": "Popover",
     "caseTooltip": "Tooltip",
     "caseKeyboardInset": "Keyboard-inset form",
+    "screenSession": "Session",
+    "caseSessionLoggedOut": "Logged out",
+    "caseSessionLoggedIn": "Logged in",
+    "screenAnalytics": "Analytics opt-in",
+    "screenBiometricLock": "Biometric lock",
+    "caseLocked": "Locked",
     "caseNotFound": "The requested gallery case is not registered."
   }
 }
