@@ -253,6 +253,8 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get privacy => '隐私预览';
 	@override String get enableBiometric => '使用生物识别解锁';
 	@override late final _Translations$settings$analytics$zh_Hans analytics = _Translations$settings$analytics$zh_Hans._(_root);
+	@override late final _Translations$settings$accessibility$zh_Hans accessibility = _Translations$settings$accessibility$zh_Hans._(_root);
+	@override late final _Translations$settings$haptics$zh_Hans haptics = _Translations$settings$haptics$zh_Hans._(_root);
 }
 
 // Path: auth
@@ -564,6 +566,25 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get screenBiometricLock => '生物识别锁';
 	@override String get caseLocked => '已锁定';
 	@override String get caseNotFound => '请求的图库用例未注册。';
+	@override String get screenAccessibility => '辅助功能预设';
+	@override String get caseAccessibilityComfortable => '舒适预设';
+	@override String get caseAccessibilityLarge => '大号预设';
+	@override String get caseAccessibilityDyslexia => '阅读障碍预设';
+	@override String get screenPullRefresh => '下拉刷新';
+	@override String get casePullRefreshList => '可刷新列表';
+	@override String get casePullRefreshGrid => '自适应网格';
+	@override String get screenHaptics => '触感反馈';
+	@override String get caseHapticKinds => '全部类型';
+	@override String get caseHapticSelection => '选择';
+	@override String get caseHapticImpactLight => '轻度震动';
+	@override String get caseHapticImpactMedium => '中度震动';
+	@override String get caseHapticImpactHeavy => '重度震动';
+	@override String get caseHapticSuccess => '成功';
+	@override String get caseHapticWarning => '警告';
+	@override String get caseHapticError => '错误';
+	@override String get screenSkeleton => '骨架加载';
+	@override String get caseSkeletonStatic => '静态（减少动态效果）';
+	@override String get caseSkeletonShimmer => '微光';
 }
 
 // Path: pricing.plans
@@ -601,6 +622,28 @@ class _Translations$settings$analytics$zh_Hans extends Translations$settings$ana
 	@override String get optInBody => '通过发送匿名使用数据帮助改进应用。您可以随时关闭。';
 	@override String get statusOn => '已开启';
 	@override String get statusOff => '已关闭';
+}
+
+// Path: settings.accessibility
+class _Translations$settings$accessibility$zh_Hans extends Translations$settings$accessibility$en {
+	_Translations$settings$accessibility$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '辅助功能';
+	@override late final _Translations$settings$accessibility$preset$zh_Hans preset = _Translations$settings$accessibility$preset$zh_Hans._(_root);
+}
+
+// Path: settings.haptics
+class _Translations$settings$haptics$zh_Hans extends Translations$settings$haptics$en {
+	_Translations$settings$haptics$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '触感反馈';
+	@override String get enable => '对关键操作启用触感反馈';
 }
 
 // Path: auth.common
@@ -784,6 +827,21 @@ class _Translations$announcements$fixtures$zh_Hans extends Translations$announce
 	@override late final _Translations$announcements$fixtures$changelog$zh_Hans changelog = _Translations$announcements$fixtures$changelog$zh_Hans._(_root);
 	@override late final _Translations$announcements$fixtures$deprecation$zh_Hans deprecation = _Translations$announcements$fixtures$deprecation$zh_Hans._(_root);
 	@override late final _Translations$announcements$fixtures$outage$zh_Hans outage = _Translations$announcements$fixtures$outage$zh_Hans._(_root);
+}
+
+// Path: settings.accessibility.preset
+class _Translations$settings$accessibility$preset$zh_Hans extends Translations$settings$accessibility$preset$en {
+	_Translations$settings$accessibility$preset$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get comfortable => '舒适';
+	@override String get comfortableDescription => '适合日常阅读的默认文字大小。';
+	@override String get large => '大号';
+	@override String get largeDescription => '更大的文字，便于一眼阅读。';
+	@override String get dyslexia => '阅读障碍友好';
+	@override String get dyslexiaDescription => '略大的文字，并在可用时使用阅读障碍友好字体。';
 }
 
 // Path: announcements.fixtures.welcome
@@ -975,6 +1033,15 @@ extension on TranslationsZhHans {
 			'settings.analytics.optInBody' => '通过发送匿名使用数据帮助改进应用。您可以随时关闭。',
 			'settings.analytics.statusOn' => '已开启',
 			'settings.analytics.statusOff' => '已关闭',
+			'settings.accessibility.title' => '辅助功能',
+			'settings.accessibility.preset.comfortable' => '舒适',
+			'settings.accessibility.preset.comfortableDescription' => '适合日常阅读的默认文字大小。',
+			'settings.accessibility.preset.large' => '大号',
+			'settings.accessibility.preset.largeDescription' => '更大的文字，便于一眼阅读。',
+			'settings.accessibility.preset.dyslexia' => '阅读障碍友好',
+			'settings.accessibility.preset.dyslexiaDescription' => '略大的文字，并在可用时使用阅读障碍友好字体。',
+			'settings.haptics.title' => '触感反馈',
+			'settings.haptics.enable' => '对关键操作启用触感反馈',
 			'auth.common.email' => '电子邮箱',
 			'auth.common.password' => '密码',
 			'auth.common.confirmPassword' => '确认密码',
@@ -1249,6 +1316,25 @@ extension on TranslationsZhHans {
 			'devGallery.screenBiometricLock' => '生物识别锁',
 			'devGallery.caseLocked' => '已锁定',
 			'devGallery.caseNotFound' => '请求的图库用例未注册。',
+			'devGallery.screenAccessibility' => '辅助功能预设',
+			'devGallery.caseAccessibilityComfortable' => '舒适预设',
+			'devGallery.caseAccessibilityLarge' => '大号预设',
+			'devGallery.caseAccessibilityDyslexia' => '阅读障碍预设',
+			'devGallery.screenPullRefresh' => '下拉刷新',
+			'devGallery.casePullRefreshList' => '可刷新列表',
+			'devGallery.casePullRefreshGrid' => '自适应网格',
+			'devGallery.screenHaptics' => '触感反馈',
+			'devGallery.caseHapticKinds' => '全部类型',
+			'devGallery.caseHapticSelection' => '选择',
+			'devGallery.caseHapticImpactLight' => '轻度震动',
+			'devGallery.caseHapticImpactMedium' => '中度震动',
+			'devGallery.caseHapticImpactHeavy' => '重度震动',
+			'devGallery.caseHapticSuccess' => '成功',
+			'devGallery.caseHapticWarning' => '警告',
+			'devGallery.caseHapticError' => '错误',
+			'devGallery.screenSkeleton' => '骨架加载',
+			'devGallery.caseSkeletonStatic' => '静态（减少动态效果）',
+			'devGallery.caseSkeletonShimmer' => '微光',
 			_ => null,
 		};
 	}

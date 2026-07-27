@@ -4,6 +4,7 @@ import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/text_preset.dart';
 
 void main() {
   test('updates and persists appearance settings', () async {
@@ -27,6 +28,7 @@ void main() {
         themeMode: AppThemeMode.dark,
         accent: AppAccent.blue,
         fontScale: 1.3,
+        textPreset: AppTextPreset.comfortable,
         localeOverride: null,
       ),
     );

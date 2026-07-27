@@ -253,6 +253,8 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get privacy => 'معاينة الخصوصية';
 	@override String get enableBiometric => 'إلغاء القفل بالقياس الحيوي';
 	@override late final _Translations$settings$analytics$ar analytics = _Translations$settings$analytics$ar._(_root);
+	@override late final _Translations$settings$accessibility$ar accessibility = _Translations$settings$accessibility$ar._(_root);
+	@override late final _Translations$settings$haptics$ar haptics = _Translations$settings$haptics$ar._(_root);
 }
 
 // Path: auth
@@ -564,6 +566,25 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenBiometricLock => 'قفل القياس الحيوي';
 	@override String get caseLocked => 'مقفل';
 	@override String get caseNotFound => 'حالة المعرض المطلوبة غير مسجلة.';
+	@override String get screenAccessibility => 'إعدادات إمكانية الوصول';
+	@override String get caseAccessibilityComfortable => 'الإعداد المريح';
+	@override String get caseAccessibilityLarge => 'الإعداد الكبير';
+	@override String get caseAccessibilityDyslexia => 'إعداد عسر القراءة';
+	@override String get screenPullRefresh => 'اسحب للتحديث';
+	@override String get casePullRefreshList => 'قائمة قابلة للتحديث';
+	@override String get casePullRefreshGrid => 'شبكة متجاوبة';
+	@override String get screenHaptics => 'الاهتزاز اللمسي';
+	@override String get caseHapticKinds => 'جميع الأنواع';
+	@override String get caseHapticSelection => 'التحديد';
+	@override String get caseHapticImpactLight => 'اهتزاز خفيف';
+	@override String get caseHapticImpactMedium => 'اهتزاز متوسط';
+	@override String get caseHapticImpactHeavy => 'اهتزاز قوي';
+	@override String get caseHapticSuccess => 'نجاح';
+	@override String get caseHapticWarning => 'تحذير';
+	@override String get caseHapticError => 'خطأ';
+	@override String get screenSkeleton => 'هيكل التحميل';
+	@override String get caseSkeletonStatic => 'ثابت (تقليل الحركة)';
+	@override String get caseSkeletonShimmer => 'وميض';
 }
 
 // Path: pricing.plans
@@ -601,6 +622,28 @@ class _Translations$settings$analytics$ar extends Translations$settings$analytic
 	@override String get optInBody => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.';
 	@override String get statusOn => 'مُفعّل';
 	@override String get statusOff => 'غير مُفعّل';
+}
+
+// Path: settings.accessibility
+class _Translations$settings$accessibility$ar extends Translations$settings$accessibility$en {
+	_Translations$settings$accessibility$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'إمكانية الوصول';
+	@override late final _Translations$settings$accessibility$preset$ar preset = _Translations$settings$accessibility$preset$ar._(_root);
+}
+
+// Path: settings.haptics
+class _Translations$settings$haptics$ar extends Translations$settings$haptics$en {
+	_Translations$settings$haptics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الاهتزاز اللمسي';
+	@override String get enable => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية';
 }
 
 // Path: auth.common
@@ -806,6 +849,21 @@ class _Translations$announcements$fixtures$ar extends Translations$announcements
 	@override late final _Translations$announcements$fixtures$outage$ar outage = _Translations$announcements$fixtures$outage$ar._(_root);
 }
 
+// Path: settings.accessibility.preset
+class _Translations$settings$accessibility$preset$ar extends Translations$settings$accessibility$preset$en {
+	_Translations$settings$accessibility$preset$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get comfortable => 'مريح';
+	@override String get comfortableDescription => 'حجم النص الافتراضي للقراءة اليومية.';
+	@override String get large => 'كبير';
+	@override String get largeDescription => 'نص أكبر لتسهيل القراءة بنظرة سريعة.';
+	@override String get dyslexia => 'ملاءم لعسر القراءة';
+	@override String get dyslexiaDescription => 'نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر.';
+}
+
 // Path: announcements.fixtures.welcome
 class _Translations$announcements$fixtures$welcome$ar extends Translations$announcements$fixtures$welcome$en {
 	_Translations$announcements$fixtures$welcome$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -995,6 +1053,15 @@ extension on TranslationsAr {
 			'settings.analytics.optInBody' => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.',
 			'settings.analytics.statusOn' => 'مُفعّل',
 			'settings.analytics.statusOff' => 'غير مُفعّل',
+			'settings.accessibility.title' => 'إمكانية الوصول',
+			'settings.accessibility.preset.comfortable' => 'مريح',
+			'settings.accessibility.preset.comfortableDescription' => 'حجم النص الافتراضي للقراءة اليومية.',
+			'settings.accessibility.preset.large' => 'كبير',
+			'settings.accessibility.preset.largeDescription' => 'نص أكبر لتسهيل القراءة بنظرة سريعة.',
+			'settings.accessibility.preset.dyslexia' => 'ملاءم لعسر القراءة',
+			'settings.accessibility.preset.dyslexiaDescription' => 'نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر.',
+			'settings.haptics.title' => 'الاهتزاز اللمسي',
+			'settings.haptics.enable' => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية',
 			'auth.common.email' => 'البريد الإلكتروني',
 			'auth.common.password' => 'كلمة المرور',
 			'auth.common.confirmPassword' => 'تأكيد كلمة المرور',
@@ -1269,6 +1336,25 @@ extension on TranslationsAr {
 			'devGallery.screenBiometricLock' => 'قفل القياس الحيوي',
 			'devGallery.caseLocked' => 'مقفل',
 			'devGallery.caseNotFound' => 'حالة المعرض المطلوبة غير مسجلة.',
+			'devGallery.screenAccessibility' => 'إعدادات إمكانية الوصول',
+			'devGallery.caseAccessibilityComfortable' => 'الإعداد المريح',
+			'devGallery.caseAccessibilityLarge' => 'الإعداد الكبير',
+			'devGallery.caseAccessibilityDyslexia' => 'إعداد عسر القراءة',
+			'devGallery.screenPullRefresh' => 'اسحب للتحديث',
+			'devGallery.casePullRefreshList' => 'قائمة قابلة للتحديث',
+			'devGallery.casePullRefreshGrid' => 'شبكة متجاوبة',
+			'devGallery.screenHaptics' => 'الاهتزاز اللمسي',
+			'devGallery.caseHapticKinds' => 'جميع الأنواع',
+			'devGallery.caseHapticSelection' => 'التحديد',
+			'devGallery.caseHapticImpactLight' => 'اهتزاز خفيف',
+			'devGallery.caseHapticImpactMedium' => 'اهتزاز متوسط',
+			'devGallery.caseHapticImpactHeavy' => 'اهتزاز قوي',
+			'devGallery.caseHapticSuccess' => 'نجاح',
+			'devGallery.caseHapticWarning' => 'تحذير',
+			'devGallery.caseHapticError' => 'خطأ',
+			'devGallery.screenSkeleton' => 'هيكل التحميل',
+			'devGallery.caseSkeletonStatic' => 'ثابت (تقليل الحركة)',
+			'devGallery.caseSkeletonShimmer' => 'وميض',
 			_ => null,
 		};
 	}

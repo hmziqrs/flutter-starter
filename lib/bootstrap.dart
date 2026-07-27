@@ -11,6 +11,8 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/infrastructure/platform/system_ui_controller.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
 
@@ -44,6 +46,13 @@ Future<App> createApplication(
   String? initialLocation,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Android 15 (API 35) enforces edge-to-edge; opt into transparent system
+  // bars once after binding init so the first frame renders behind them
+  // (system-ui feature). Idempotent; desktop/web short-circuit inside the
+  // controller. Runs before AppBuildInfo.load / AppDependencies.production so
+  // the posture is in place before any frame is constructed.
+  await SystemUiController.applyEdgeToEdge(capabilities: PlatformCapabilities.current());
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
   // Load AppBuildInfo ONCE and run the version check once in the composition

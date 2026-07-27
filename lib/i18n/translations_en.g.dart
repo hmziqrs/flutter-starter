@@ -492,6 +492,8 @@ class Translations$settings$en {
 	String get enableBiometric => 'Unlock with biometrics';
 
 	late final Translations$settings$analytics$en analytics = Translations$settings$analytics$en.internal(_root);
+	late final Translations$settings$accessibility$en accessibility = Translations$settings$accessibility$en.internal(_root);
+	late final Translations$settings$haptics$en haptics = Translations$settings$haptics$en.internal(_root);
 }
 
 // Path: auth
@@ -1156,6 +1158,63 @@ class Translations$devGallery$en {
 
 	/// en: 'The requested gallery case is not registered.'
 	String get caseNotFound => 'The requested gallery case is not registered.';
+
+	/// en: 'Accessibility presets'
+	String get screenAccessibility => 'Accessibility presets';
+
+	/// en: 'Comfortable preset'
+	String get caseAccessibilityComfortable => 'Comfortable preset';
+
+	/// en: 'Large preset'
+	String get caseAccessibilityLarge => 'Large preset';
+
+	/// en: 'Dyslexia preset'
+	String get caseAccessibilityDyslexia => 'Dyslexia preset';
+
+	/// en: 'Pull-to-refresh'
+	String get screenPullRefresh => 'Pull-to-refresh';
+
+	/// en: 'Refreshable list'
+	String get casePullRefreshList => 'Refreshable list';
+
+	/// en: 'Responsive grid'
+	String get casePullRefreshGrid => 'Responsive grid';
+
+	/// en: 'Haptics'
+	String get screenHaptics => 'Haptics';
+
+	/// en: 'All kinds'
+	String get caseHapticKinds => 'All kinds';
+
+	/// en: 'Selection'
+	String get caseHapticSelection => 'Selection';
+
+	/// en: 'Light impact'
+	String get caseHapticImpactLight => 'Light impact';
+
+	/// en: 'Medium impact'
+	String get caseHapticImpactMedium => 'Medium impact';
+
+	/// en: 'Heavy impact'
+	String get caseHapticImpactHeavy => 'Heavy impact';
+
+	/// en: 'Success'
+	String get caseHapticSuccess => 'Success';
+
+	/// en: 'Warning'
+	String get caseHapticWarning => 'Warning';
+
+	/// en: 'Error'
+	String get caseHapticError => 'Error';
+
+	/// en: 'Skeleton loading'
+	String get screenSkeleton => 'Skeleton loading';
+
+	/// en: 'Static (reduce-motion)'
+	String get caseSkeletonStatic => 'Static (reduce-motion)';
+
+	/// en: 'Shimmer'
+	String get caseSkeletonShimmer => 'Shimmer';
 }
 
 // Path: pricing.plans
@@ -1231,6 +1290,35 @@ class Translations$settings$analytics$en {
 
 	/// en: 'Off'
 	String get statusOff => 'Off';
+}
+
+// Path: settings.accessibility
+class Translations$settings$accessibility$en {
+	Translations$settings$accessibility$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Accessibility'
+	String get title => 'Accessibility';
+
+	late final Translations$settings$accessibility$preset$en preset = Translations$settings$accessibility$preset$en.internal(_root);
+}
+
+// Path: settings.haptics
+class Translations$settings$haptics$en {
+	Translations$settings$haptics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Haptic feedback'
+	String get title => 'Haptic feedback';
+
+	/// en: 'Enable haptic feedback on key actions'
+	String get enable => 'Enable haptic feedback on key actions';
 }
 
 // Path: auth.common
@@ -1600,6 +1688,33 @@ class Translations$announcements$fixtures$en {
 	late final Translations$announcements$fixtures$outage$en outage = Translations$announcements$fixtures$outage$en.internal(_root);
 }
 
+// Path: settings.accessibility.preset
+class Translations$settings$accessibility$preset$en {
+	Translations$settings$accessibility$preset$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Comfortable'
+	String get comfortable => 'Comfortable';
+
+	/// en: 'Default text size for everyday reading.'
+	String get comfortableDescription => 'Default text size for everyday reading.';
+
+	/// en: 'Large'
+	String get large => 'Large';
+
+	/// en: 'Larger text for easier reading at a glance.'
+	String get largeDescription => 'Larger text for easier reading at a glance.';
+
+	/// en: 'Dyslexia-friendly'
+	String get dyslexia => 'Dyslexia-friendly';
+
+	/// en: 'Slightly larger text with a dyslexia-friendly font where available.'
+	String get dyslexiaDescription => 'Slightly larger text with a dyslexia-friendly font where available.';
+}
+
 // Path: announcements.fixtures.welcome
 class Translations$announcements$fixtures$welcome$en {
 	Translations$announcements$fixtures$welcome$en.internal(this._root);
@@ -1805,6 +1920,15 @@ extension on Translations {
 			'settings.analytics.optInBody' => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.',
 			'settings.analytics.statusOn' => 'On',
 			'settings.analytics.statusOff' => 'Off',
+			'settings.accessibility.title' => 'Accessibility',
+			'settings.accessibility.preset.comfortable' => 'Comfortable',
+			'settings.accessibility.preset.comfortableDescription' => 'Default text size for everyday reading.',
+			'settings.accessibility.preset.large' => 'Large',
+			'settings.accessibility.preset.largeDescription' => 'Larger text for easier reading at a glance.',
+			'settings.accessibility.preset.dyslexia' => 'Dyslexia-friendly',
+			'settings.accessibility.preset.dyslexiaDescription' => 'Slightly larger text with a dyslexia-friendly font where available.',
+			'settings.haptics.title' => 'Haptic feedback',
+			'settings.haptics.enable' => 'Enable haptic feedback on key actions',
 			'auth.common.email' => 'Email address',
 			'auth.common.password' => 'Password',
 			'auth.common.confirmPassword' => 'Confirm password',
@@ -2079,6 +2203,25 @@ extension on Translations {
 			'devGallery.screenBiometricLock' => 'Biometric lock',
 			'devGallery.caseLocked' => 'Locked',
 			'devGallery.caseNotFound' => 'The requested gallery case is not registered.',
+			'devGallery.screenAccessibility' => 'Accessibility presets',
+			'devGallery.caseAccessibilityComfortable' => 'Comfortable preset',
+			'devGallery.caseAccessibilityLarge' => 'Large preset',
+			'devGallery.caseAccessibilityDyslexia' => 'Dyslexia preset',
+			'devGallery.screenPullRefresh' => 'Pull-to-refresh',
+			'devGallery.casePullRefreshList' => 'Refreshable list',
+			'devGallery.casePullRefreshGrid' => 'Responsive grid',
+			'devGallery.screenHaptics' => 'Haptics',
+			'devGallery.caseHapticKinds' => 'All kinds',
+			'devGallery.caseHapticSelection' => 'Selection',
+			'devGallery.caseHapticImpactLight' => 'Light impact',
+			'devGallery.caseHapticImpactMedium' => 'Medium impact',
+			'devGallery.caseHapticImpactHeavy' => 'Heavy impact',
+			'devGallery.caseHapticSuccess' => 'Success',
+			'devGallery.caseHapticWarning' => 'Warning',
+			'devGallery.caseHapticError' => 'Error',
+			'devGallery.screenSkeleton' => 'Skeleton loading',
+			'devGallery.caseSkeletonStatic' => 'Static (reduce-motion)',
+			'devGallery.caseSkeletonShimmer' => 'Shimmer',
 			_ => null,
 		};
 	}

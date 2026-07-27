@@ -8,7 +8,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(109));
+    expect(cases, hasLength(117));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -36,6 +36,15 @@ void main() {
         'analytics.optIn.off',
         'biometric.locked',
         'biometric.unavailable',
+        // Wave-5a feature surfaces registered by their gallery contributors.
+        'pullRefresh.list',
+        'pullRefresh.grid',
+        'skeleton.staticList',
+        'skeleton.shimmerList',
+        'haptics.kinds',
+        'accessibility.comfortable',
+        'accessibility.large',
+        'accessibility.dyslexia',
       ]),
     );
     expect(

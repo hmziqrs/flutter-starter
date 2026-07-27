@@ -119,6 +119,7 @@ void main() {
       final itemRects = [
         tester.getRect(find.byKey(const ValueKey('settings-wide-appearance'))),
         tester.getRect(find.byKey(const ValueKey('settings-wide-language'))),
+        tester.getRect(find.byKey(const ValueKey('settings-wide-accessibility'))),
         tester.getRect(find.byKey(const ValueKey('settings-wide-account'))),
         tester.getRect(find.byKey(const ValueKey('settings-wide-subscription'))),
         tester.getRect(find.byKey(const ValueKey('settings-wide-privacy-about'))),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
@@ -35,6 +36,25 @@ final class SettingsController extends Notifier<SettingsState> {
       SettingsState.maximumFontScale,
     );
     return _replace(state.copyWith(fontScale: normalized));
+  }
+
+  /// Applies a named accessibility text preset. Resolves the preset to its
+  /// clamped `(fontScale, fontFamily)` tuple and updates both `textPreset` and
+  /// `fontScale` atomically; `fontFamily` is derived from `textPreset` on
+  /// `SettingsState` so it tracks the preset without a separate field. The
+  /// manual [setFontScale] slider is left untouched by this method and does not
+  /// reset the preset label, so a user can fine-tune the scale after picking a
+  /// preset. Optimistic update + rollback via [_replace].
+  Future<void> setTextPreset(AppTextPreset preset) {
+    final resolved = preset.toSettings();
+    return _replace(state.copyWith(textPreset: preset, fontScale: resolved.fontScale));
+  }
+
+  /// Toggles the haptics opt-in. Default-on; each call site also gates on
+  /// `MediaQuery.disableAnimationsOf`. Persisted through the repository like
+  /// every other setting. Optimistic update + rollback via [_replace].
+  Future<void> setHapticsEnabled({required bool enabled}) {
+    return _replace(state.copyWith(hapticsEnabled: enabled));
   }
 
   /// Marks first-launch onboarding complete with an optimistic in-memory write

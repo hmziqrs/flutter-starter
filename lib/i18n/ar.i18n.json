@@ -154,6 +154,21 @@
       "optInBody": "ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.",
       "statusOn": "مُفعّل",
       "statusOff": "غير مُفعّل"
+    },
+    "accessibility": {
+      "title": "إمكانية الوصول",
+      "preset": {
+        "comfortable": "مريح",
+        "comfortableDescription": "حجم النص الافتراضي للقراءة اليومية.",
+        "large": "كبير",
+        "largeDescription": "نص أكبر لتسهيل القراءة بنظرة سريعة.",
+        "dyslexia": "ملاءم لعسر القراءة",
+        "dyslexiaDescription": "نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر."
+      }
+    },
+    "haptics": {
+      "title": "الاهتزاز اللمسي",
+      "enable": "تفعيل الاهتزاز اللمسي للإجراءات الرئيسية"
     }
   },
   "auth": {
@@ -510,6 +525,25 @@
     "screenAnalytics": "الاشتراك في التحليلات",
     "screenBiometricLock": "قفل القياس الحيوي",
     "caseLocked": "مقفل",
-    "caseNotFound": "حالة المعرض المطلوبة غير مسجلة."
+    "caseNotFound": "حالة المعرض المطلوبة غير مسجلة.",
+    "screenAccessibility": "إعدادات إمكانية الوصول",
+    "caseAccessibilityComfortable": "الإعداد المريح",
+    "caseAccessibilityLarge": "الإعداد الكبير",
+    "caseAccessibilityDyslexia": "إعداد عسر القراءة",
+    "screenPullRefresh": "اسحب للتحديث",
+    "casePullRefreshList": "قائمة قابلة للتحديث",
+    "casePullRefreshGrid": "شبكة متجاوبة",
+    "screenHaptics": "الاهتزاز اللمسي",
+    "caseHapticKinds": "جميع الأنواع",
+    "caseHapticSelection": "التحديد",
+    "caseHapticImpactLight": "اهتزاز خفيف",
+    "caseHapticImpactMedium": "اهتزاز متوسط",
+    "caseHapticImpactHeavy": "اهتزاز قوي",
+    "caseHapticSuccess": "نجاح",
+    "caseHapticWarning": "تحذير",
+    "caseHapticError": "خطأ",
+    "screenSkeleton": "هيكل التحميل",
+    "caseSkeletonStatic": "ثابت (تقليل الحركة)",
+    "caseSkeletonShimmer": "وميض"
   }
 }

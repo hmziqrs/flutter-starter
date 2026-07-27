@@ -1,4 +1,5 @@
 import 'package:starter/app/config/app_config.dart';
+import 'package:starter/features/dev_gallery/cases/a11y_presets_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/analytics_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/announcements_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/biometric_gallery_cases.dart';
@@ -6,8 +7,11 @@ import 'package:starter/features/dev_gallery/cases/busy_indicator_gallery_cases.
 import 'package:starter/features/dev_gallery/cases/connectivity_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/force_update_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/form_scaffolding_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/haptics_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/production_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/pull_refresh_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/session_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/skeleton_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/splash_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/state_views_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
@@ -20,8 +24,10 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildConnectivityGalleryCases(),
     ...buildForceUpdateGalleryCases(),
     ...buildBusyIndicatorGalleryCases(),
+    ...buildPullRefreshGalleryCases(),
     // Wave-3 shared widgets + screens.
     ...buildStateViewsGalleryCases(),
+    ...buildSkeletonGalleryCases(),
     ...buildFormScaffoldingGalleryCases(),
     ...buildSplashGalleryCases(),
     ...buildAnnouncementsGalleryCases(),
@@ -29,6 +35,9 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildSessionGalleryCases(),
     ...buildAnalyticsGalleryCases(),
     ...buildBiometricGalleryCases(),
+    // Wave-5a feature surfaces.
+    ...buildHapticsGalleryCases(),
+    ...buildA11yPresetsGalleryCases(),
     ...buildSystemGalleryCases(config: config),
   ];
   final ids = <String>{};

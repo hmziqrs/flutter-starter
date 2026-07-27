@@ -36,6 +36,7 @@ import 'package:starter/features/security/biometric_lock_page.dart';
 import 'package:starter/features/security/biometric_unlock_controller.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
+import 'package:starter/features/settings/accessibility_settings_page.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_store.dart';
@@ -126,6 +127,11 @@ GoRouter buildAppRouter({
                 name: AppRoutes.languageSettings,
                 path: AppRoutes.languageSettingsPath,
                 builder: (context, state) => _settingsPage(context, SettingsSection.language),
+              ),
+              GoRoute(
+                name: AppRoutes.accessibilitySettings,
+                path: AppRoutes.accessibilitySettingsPath,
+                builder: (context, state) => const AccessibilitySettingsPage(),
               ),
             ],
           ),
@@ -649,6 +655,7 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
     section: section,
     onOpenAppearance: () => _openSettingsSection(context, SettingsSection.appearance),
     onOpenLanguage: () => _openSettingsSection(context, SettingsSection.language),
+    onOpenAccessibility: () => context.pushNamed(AppRoutes.accessibilitySettings),
     onOpenAccount: () => _openSettingsSection(context, SettingsSection.account),
     onOpenSubscription: () => _openSettingsSection(context, SettingsSection.subscription),
     onOpenPrivacyAbout: () => _openSettingsSection(context, SettingsSection.privacyAbout),

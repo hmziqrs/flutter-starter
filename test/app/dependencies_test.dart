@@ -4,6 +4,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
@@ -13,9 +14,11 @@ void main() {
       'appearance.theme_mode',
       'appearance.accent',
       'appearance.font_scale',
+      'appearance.text_preset',
       'localization.locale',
       'onboarding.completed',
       'security.biometric_unlock_enabled',
+      'appearance.haptics_enabled',
     });
     expect(
       SettingsRepository.persistedKeys,
@@ -40,6 +43,7 @@ void main() {
       themeMode: AppThemeMode.dark,
       accent: AppAccent.violet,
       fontScale: 1.35,
+      textPreset: AppTextPreset.comfortable,
       localeOverride: AppLocale.zhHans,
     );
 

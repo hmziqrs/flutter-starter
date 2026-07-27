@@ -23,6 +23,7 @@ import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
+import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
@@ -235,6 +236,9 @@ AppDependencies _dependencies({
     featureFlagsSource: InMemoryFeatureFlagsSource(),
     biometricAuthenticator: const NoopBiometricAuthenticator(),
     attemptTracker: InMemoryAttemptTracker(),
+    // Haptics: Noop keeps the redirect test hermetic (a tap never reaches the
+    // platform channel). Mirrors AppDependencies.inMemory.
+    hapticService: NoopHapticService(),
     // Splash seed mirrors AppDependencies.inMemory: a resolved success so the
     // onboarding-redirect path under test boots without re-running init, and
     // no dismissed announcements so the banner feed is unaffected.

@@ -3,6 +3,7 @@ import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 void main() {
@@ -13,6 +14,7 @@ void main() {
       themeMode: AppThemeMode.dark,
       accent: AppAccent.violet,
       fontScale: 1.35,
+      textPreset: AppTextPreset.comfortable,
       localeOverride: AppLocale.zhHans,
     );
 
@@ -28,6 +30,7 @@ void main() {
       themeMode: AppThemeMode.light,
       accent: AppAccent.green,
       fontScale: 1,
+      textPreset: AppTextPreset.comfortable,
       localeOverride: AppLocale.ar,
     );
 

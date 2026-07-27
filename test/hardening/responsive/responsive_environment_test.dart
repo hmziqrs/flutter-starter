@@ -177,7 +177,7 @@ void main() {
     );
     expect(find.byKey(const ValueKey('settings-open-appearance')), findsNothing);
     expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
-    expect(find.byType(FSidebarItem), findsNWidgets(5));
+    expect(find.byType(FSidebarItem), findsNWidgets(6));
     expect(tester.takeException(), isNull);
   });
 

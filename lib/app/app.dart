@@ -30,6 +30,9 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_route_observer.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/haptics/haptic_service.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/infrastructure/platform/system_ui_controller.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -90,6 +93,11 @@ class App extends StatelessWidget {
         featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
         biometricAuthenticatorProvider.overrideWithValue(dependencies.biometricAuthenticator),
         attemptTrackerProvider.overrideWithValue(dependencies.attemptTracker),
+        // Haptic feedback port (Wave-5a). Peer of the other port overrides;
+        // the composition root selected DeviceHapticService (prod) or
+        // NoopHapticService (inMemory). The provider throws StateError until
+        // this override is present (HARD RULE 2).
+        hapticServiceProvider.overrideWithValue(dependencies.hapticService),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -169,12 +177,14 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       brightness: Brightness.light,
       accent: settings.accent,
       fontScale: settings.fontScale,
+      fontFamily: settings.fontFamily,
       interactionPolicy: interactionPolicy,
     );
     final darkTheme = ForuiThemeFactory.build(
       brightness: Brightness.dark,
       accent: settings.accent,
       fontScale: settings.fontScale,
+      fontFamily: settings.fontFamily,
       interactionPolicy: interactionPolicy,
     );
 
@@ -197,8 +207,21 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           brightness: Theme.of(context).brightness,
           accent: settings.accent,
           fontScale: settings.fontScale,
+          fontFamily: settings.fontFamily,
           interactionPolicy: interactionPolicy,
           responsiveFontScale: context.appUnit.typographyScale,
+        );
+
+        // Reactive system bars (system-ui): track the active brightness + accent
+        // so status / navigation bar icons flip with the ForUI theme. Synchronous
+        // by design — SystemChrome.setSystemUIOverlayStyle is itself synchronous
+        // — so no `await`/`unawaited` wrapper is needed in build. Idempotent.
+        // Desktop/web short-circuit inside the controller; navigation is never
+        // gated (this is a config command with no success/failure surface).
+        SystemUiController.applyOverlayStyle(
+          brightness: Theme.of(context).brightness,
+          accent: settings.accent,
+          capabilities: PlatformCapabilities.current(),
         );
 
         return Theme(

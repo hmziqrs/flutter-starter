@@ -25,6 +25,9 @@ import 'package:starter/infrastructure/connectivity/connectivity_plus_service.da
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
+import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
+import 'package:starter/infrastructure/haptics/haptic_service.dart';
+import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
@@ -55,6 +58,7 @@ final class AppDependencies {
     required this.featureFlagsSource,
     required this.biometricAuthenticator,
     required this.attemptTracker,
+    required this.hapticService,
   });
 
   factory AppDependencies.inMemory({
@@ -114,6 +118,9 @@ final class AppDependencies {
       featureFlagsSource: InMemoryFeatureFlagsSource(),
       biometricAuthenticator: const NoopBiometricAuthenticator(),
       attemptTracker: InMemoryAttemptTracker(),
+      // Haptics: Noop keeps hermeticity so a tap in a test/golden harness never
+      // reaches the platform channel.
+      hapticService: NoopHapticService(),
     );
   }
 
@@ -175,6 +182,13 @@ final class AppDependencies {
   /// per launch; shared by login, OTP, and the future pin-autolock surface.
   final AttemptTracker attemptTracker;
 
+  /// Haptic feedback port. The local device IS the production backend
+  /// ([DeviceHapticService] wraps `flutter/services` `HapticFeedback` — no
+  /// credentials, no faking, C2); [NoopHapticService] is the hermeticity-only
+  /// default for tests/goldens. Each call site additionally gates on
+  /// `MediaQuery.disableAnimationsOf` and the `hapticsEnabled` setting.
+  final HapticService hapticService;
+
   /// Returns a copy with the provided fields replaced. Used by
   /// `createApplication` to finalize the startup result's `localeApplied` flag
   /// once the locale apply has run (which happens after `AppDependencies.production`).
@@ -201,6 +215,7 @@ final class AppDependencies {
       featureFlagsSource: featureFlagsSource,
       biometricAuthenticator: biometricAuthenticator,
       attemptTracker: attemptTracker,
+      hapticService: hapticService,
     );
   }
 
@@ -297,6 +312,10 @@ final class AppDependencies {
       featureFlagsSource: InMemoryFeatureFlagsSource(),
       biometricAuthenticator: biometricAuthenticator,
       attemptTracker: InMemoryAttemptTracker(),
+      // Haptics: the local device IS the production backend (real
+      // HapticFeedback — no credentials, no faking, C2). The reduce-motion guard
+      // + hapticsEnabled setting are enforced at each call site, not here.
+      hapticService: const DeviceHapticService(),
     );
   }
 }

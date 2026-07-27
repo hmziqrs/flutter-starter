@@ -493,6 +493,7 @@ List<GalleryCase> _buildSettingsCases() {
       section: state,
       onOpenAppearance: () => _showUnavailableFeedback(context),
       onOpenLanguage: () => _showUnavailableFeedback(context),
+      onOpenAccessibility: () => _showUnavailableFeedback(context),
       onOpenAccount: () => _showUnavailableFeedback(context),
       onOpenSubscription: () => _showUnavailableFeedback(context),
       onOpenPrivacyAbout: () => _showUnavailableFeedback(context),

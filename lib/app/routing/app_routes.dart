@@ -17,6 +17,8 @@ abstract final class AppRoutes {
   static const appearanceSettingsPath = '/settings/appearance';
   static const languageSettings = 'language-settings';
   static const languageSettingsPath = '/settings/language';
+  static const accessibilitySettings = 'accessibility-settings';
+  static const accessibilitySettingsPath = '/settings/accessibility';
 
   static const login = 'login';
   static const loginPath = '/auth/login';

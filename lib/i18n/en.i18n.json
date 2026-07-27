@@ -154,6 +154,21 @@
       "optInBody": "Help improve the app by sending anonymous usage data. You can turn this off anytime.",
       "statusOn": "On",
       "statusOff": "Off"
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "preset": {
+        "comfortable": "Comfortable",
+        "comfortableDescription": "Default text size for everyday reading.",
+        "large": "Large",
+        "largeDescription": "Larger text for easier reading at a glance.",
+        "dyslexia": "Dyslexia-friendly",
+        "dyslexiaDescription": "Slightly larger text with a dyslexia-friendly font where available."
+      }
+    },
+    "haptics": {
+      "title": "Haptic feedback",
+      "enable": "Enable haptic feedback on key actions"
     }
   },
   "auth": {
@@ -494,6 +509,25 @@
     "screenAnalytics": "Analytics opt-in",
     "screenBiometricLock": "Biometric lock",
     "caseLocked": "Locked",
-    "caseNotFound": "The requested gallery case is not registered."
+    "caseNotFound": "The requested gallery case is not registered.",
+    "screenAccessibility": "Accessibility presets",
+    "caseAccessibilityComfortable": "Comfortable preset",
+    "caseAccessibilityLarge": "Large preset",
+    "caseAccessibilityDyslexia": "Dyslexia preset",
+    "screenPullRefresh": "Pull-to-refresh",
+    "casePullRefreshList": "Refreshable list",
+    "casePullRefreshGrid": "Responsive grid",
+    "screenHaptics": "Haptics",
+    "caseHapticKinds": "All kinds",
+    "caseHapticSelection": "Selection",
+    "caseHapticImpactLight": "Light impact",
+    "caseHapticImpactMedium": "Medium impact",
+    "caseHapticImpactHeavy": "Heavy impact",
+    "caseHapticSuccess": "Success",
+    "caseHapticWarning": "Warning",
+    "caseHapticError": "Error",
+    "screenSkeleton": "Skeleton loading",
+    "caseSkeletonStatic": "Static (reduce-motion)",
+    "caseSkeletonShimmer": "Shimmer"
   }
 }

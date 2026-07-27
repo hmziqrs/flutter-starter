@@ -43,6 +43,7 @@ class SettingsPage extends ConsumerWidget {
     required this.section,
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -58,6 +59,7 @@ class SettingsPage extends ConsumerWidget {
   final SettingsSection? section;
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -92,6 +94,7 @@ class SettingsPage extends ConsumerWidget {
             null => _SettingsOverview(
               onOpenAppearance: onOpenAppearance,
               onOpenLanguage: onOpenLanguage,
+              onOpenAccessibility: onOpenAccessibility,
               onOpenAccount: onOpenAccount,
               onOpenSubscription: onOpenSubscription,
               onOpenPrivacyAbout: onOpenPrivacyAbout,
@@ -101,6 +104,7 @@ class SettingsPage extends ConsumerWidget {
             section: effectiveSection,
             onOpenAppearance: onOpenAppearance,
             onOpenLanguage: onOpenLanguage,
+            onOpenAccessibility: onOpenAccessibility,
             onOpenAccount: onOpenAccount,
             onOpenSubscription: onOpenSubscription,
             onOpenPrivacyAbout: onOpenPrivacyAbout,
@@ -120,6 +124,7 @@ class _SettingsOverview extends StatelessWidget {
   const _SettingsOverview({
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -127,6 +132,7 @@ class _SettingsOverview extends StatelessWidget {
 
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -151,6 +157,13 @@ class _SettingsOverview extends StatelessWidget {
             title: Text(translations.settings.language),
             suffix: const _DirectionalChevron(),
             onPress: onOpenLanguage,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-accessibility'),
+            prefix: const Icon(FLucideIcons.accessibility),
+            title: Text(translations.settings.accessibility.title),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenAccessibility,
           ),
           FTile(
             key: const ValueKey('settings-open-account'),
@@ -184,6 +197,7 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.section,
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -198,6 +212,7 @@ class _SettingsWideLayout extends StatelessWidget {
   final SettingsSection section;
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -241,6 +256,12 @@ class _SettingsWideLayout extends StatelessWidget {
                       icon: const Icon(FLucideIcons.languages),
                       label: Text(translations.settings.language),
                       onPress: onOpenLanguage,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-accessibility'),
+                      icon: const Icon(FLucideIcons.accessibility),
+                      label: Text(translations.settings.accessibility.title),
+                      onPress: onOpenAccessibility,
                     ),
                     FSidebarItem(
                       key: const ValueKey('settings-wide-account'),
@@ -427,6 +448,46 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
         ],
       ),
     );
+  }
+}
+
+/// Haptic-feedback opt-in. Watches [settingsControllerProvider] for the
+/// `hapticsEnabled` flag (a plaintext settings key, default-on). The flag is a
+/// necessary-but-not-sufficient gate: each call site ALSO checks
+/// `MediaQuery.disableAnimationsOf` so the reduce-motion accessibility setting
+/// always wins. Surfaces `common.notConnected` on persistence failure.
+class _HapticsTile extends ConsumerStatefulWidget {
+  const _HapticsTile();
+
+  @override
+  ConsumerState<_HapticsTile> createState() => _HapticsTileState();
+}
+
+class _HapticsTileState extends ConsumerState<_HapticsTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).hapticsEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'haptics',
+      label: Text(translations.settings.haptics.title),
+      description: Text(translations.settings.haptics.enable),
+      value: enabled,
+      onChange: (value) => _run(() => controller.setHapticsEnabled(enabled: value)),
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
   }
 }
 
@@ -671,6 +732,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             title: translations.settings.motionPreview,
             child: const _AppearanceMotionPreview(),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          const _HapticsTile(),
           if (_saveFailed) ...[
             const SizedBox(height: AppSpacing.md),
             Text(

@@ -154,6 +154,21 @@
       "optInBody": "通过发送匿名使用数据帮助改进应用。您可以随时关闭。",
       "statusOn": "已开启",
       "statusOff": "已关闭"
+    },
+    "accessibility": {
+      "title": "辅助功能",
+      "preset": {
+        "comfortable": "舒适",
+        "comfortableDescription": "适合日常阅读的默认文字大小。",
+        "large": "大号",
+        "largeDescription": "更大的文字，便于一眼阅读。",
+        "dyslexia": "阅读障碍友好",
+        "dyslexiaDescription": "略大的文字，并在可用时使用阅读障碍友好字体。"
+      }
+    },
+    "haptics": {
+      "title": "触感反馈",
+      "enable": "对关键操作启用触感反馈"
     }
   },
   "auth": {
@@ -490,6 +505,25 @@
     "screenAnalytics": "分析数据选项",
     "screenBiometricLock": "生物识别锁",
     "caseLocked": "已锁定",
-    "caseNotFound": "请求的图库用例未注册。"
+    "caseNotFound": "请求的图库用例未注册。",
+    "screenAccessibility": "辅助功能预设",
+    "caseAccessibilityComfortable": "舒适预设",
+    "caseAccessibilityLarge": "大号预设",
+    "caseAccessibilityDyslexia": "阅读障碍预设",
+    "screenPullRefresh": "下拉刷新",
+    "casePullRefreshList": "可刷新列表",
+    "casePullRefreshGrid": "自适应网格",
+    "screenHaptics": "触感反馈",
+    "caseHapticKinds": "全部类型",
+    "caseHapticSelection": "选择",
+    "caseHapticImpactLight": "轻度震动",
+    "caseHapticImpactMedium": "中度震动",
+    "caseHapticImpactHeavy": "重度震动",
+    "caseHapticSuccess": "成功",
+    "caseHapticWarning": "警告",
+    "caseHapticError": "错误",
+    "screenSkeleton": "骨架加载",
+    "caseSkeletonStatic": "静态（减少动态效果）",
+    "caseSkeletonShimmer": "微光"
   }
 }

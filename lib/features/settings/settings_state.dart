@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 enum AppThemeMode { system, light, dark }
@@ -11,18 +12,22 @@ final class SettingsState {
     required this.themeMode,
     required this.accent,
     required this.fontScale,
+    required this.textPreset,
     required this.localeOverride,
     this.hasCompletedOnboarding = false,
     this.biometricUnlockEnabled = false,
+    this.hapticsEnabled = true,
   });
 
   const SettingsState.defaults()
     : themeMode = AppThemeMode.system,
       accent = AppAccent.neutral,
       fontScale = 1,
+      textPreset = AppTextPreset.comfortable,
       localeOverride = null,
       hasCompletedOnboarding = false,
-      biometricUnlockEnabled = false;
+      biometricUnlockEnabled = false,
+      hapticsEnabled = true;
 
   static const minimumFontScale = 0.85;
   static const maximumFontScale = 1.6;
@@ -31,6 +36,17 @@ final class SettingsState {
   final AppThemeMode themeMode;
   final AppAccent accent;
   final double fontScale;
+  final AppTextPreset textPreset;
+
+  /// The optional Latin-only font family derived from the active [textPreset]
+  /// (null for comfortable/large; the dyslexia family for the dyslexia preset).
+  /// Kept as a computed getter rather than a denormalized field so it can never
+  /// drift from [textPreset] — switching dyslexia -> comfortable clears it
+  /// without a copyWith clearability workaround. Persisted indirectly via
+  /// [textPreset] (no separate key); non-Latin locales keep their bundled
+  /// `Noto Sans Arabic` / `Noto Sans SC` fallback through `fontFamilyFallback`.
+  String? get fontFamily => textPreset.toSettings().fontFamily;
+
   final AppLocale? localeOverride;
 
   /// Whether the first-launch onboarding flow has been completed. Seeded
@@ -46,22 +62,32 @@ final class SettingsState {
   /// the settings repository like every other plaintext preference.
   final bool biometricUnlockEnabled;
 
+  /// Whether haptic feedback is enabled on key actions. Default true; only the
+  /// opt-out is persisted so a missing key reads as enabled. Each call site
+  /// additionally gates on `MediaQuery.disableAnimationsOf` (the reduce-motion
+  /// guard is load-bearing and applied per-consumer, never centrally).
+  final bool hapticsEnabled;
+
   SettingsState copyWith({
     AppThemeMode? themeMode,
     AppAccent? accent,
     double? fontScale,
+    AppTextPreset? textPreset,
     AppLocale? localeOverride,
     bool? hasCompletedOnboarding,
     bool? biometricUnlockEnabled,
+    bool? hapticsEnabled,
     bool followSystemLocale = false,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
       accent: accent ?? this.accent,
       fontScale: fontScale ?? this.fontScale,
+      textPreset: textPreset ?? this.textPreset,
       localeOverride: followSystemLocale ? null : (localeOverride ?? this.localeOverride),
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       biometricUnlockEnabled: biometricUnlockEnabled ?? this.biometricUnlockEnabled,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
     );
   }
 
@@ -72,9 +98,11 @@ final class SettingsState {
             themeMode == other.themeMode &&
             accent == other.accent &&
             fontScale == other.fontScale &&
+            textPreset == other.textPreset &&
             localeOverride == other.localeOverride &&
             hasCompletedOnboarding == other.hasCompletedOnboarding &&
-            biometricUnlockEnabled == other.biometricUnlockEnabled;
+            biometricUnlockEnabled == other.biometricUnlockEnabled &&
+            hapticsEnabled == other.hapticsEnabled;
   }
 
   @override
@@ -82,8 +110,10 @@ final class SettingsState {
     themeMode,
     accent,
     fontScale,
+    textPreset,
     localeOverride,
     hasCompletedOnboarding,
     biometricUnlockEnabled,
+    hapticsEnabled,
   );
 }

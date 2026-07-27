@@ -4,6 +4,7 @@ import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/text_preset.dart';
 
 void main() {
   group('SettingsRepository onboarding flag', () {
@@ -117,6 +118,7 @@ void main() {
         themeMode: AppThemeMode.dark,
         accent: AppAccent.violet,
         fontScale: 1.35,
+        textPreset: AppTextPreset.comfortable,
         localeOverride: null,
       );
       final store = InMemorySettingsStore();
