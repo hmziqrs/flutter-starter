@@ -9,9 +9,13 @@ import 'package:starter/infrastructure/logging/log_redactor.dart';
 /// itself is initialized there (`SentryFlutter.init`) with that DSN. Every SDK
 /// call is wrapped in `try/on Object` and any failure is dropped — a reporter
 /// must never break the error path it observes. Only the redacted
-/// [CrashReport] message is forwarded as error text; the stack trace is
-/// attached (as structured context) only when [verbose] is true, so a
-/// non-verbose build ships only the redacted message.
+/// [CrashReport] message leaves the device, forwarded as the exception text via
+/// Sentry's exception pipeline ([Sentry.captureException]) so reports land in
+/// the crash stream with native stack-based grouping/fingerprinting. The stack
+/// trace is forwarded through the same pipeline (enabling the native
+/// stack-triage view) only when [verbose] is true, so a non-verbose build ships
+/// only the redacted message. The SDK's own native-bit redaction is not trusted
+/// — [CrashReport.fromError] is the single redaction choke point.
 final class SentryCrashReporter implements CrashReporter {
   SentryCrashReporter({
     required this.verbose,
@@ -52,14 +56,17 @@ final class SentryCrashReporter implements CrashReporter {
   }
 
   Future<void> _capture(CrashReport report) async {
-    await Sentry.captureMessage(
-      report.message,
-      level: SentryLevel.error,
+    // Route through Sentry's exception pipeline (not captureMessage) so the
+    // report lands in the crash stream with stack-based grouping/fingerprinting
+    // and the native stack-triage view — the core value of crash reporting.
+    // The throwable's message is the already-redacted report text; the stack is
+    // the verbose-gated, already-redacted report.stack. Only redacted text
+    // leaves the device (the LogRedactor choke point in CrashReport.fromError).
+    await Sentry.captureException(
+      Exception(report.message),
+      stackTrace: report.stack != null ? StackTrace.fromString(report.stack!) : null,
       withScope: (scope) async {
         await scope.setContexts('context', report.context);
-        if (report.stack case final stack?) {
-          await scope.setContexts('stack_trace', stack);
-        }
       },
     );
   }

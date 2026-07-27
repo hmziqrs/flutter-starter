@@ -56,11 +56,9 @@ class EmptyStateView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Semantics(
-              label: title,
-              image: true,
-              child: Icon(icon, size: 32),
-            ),
+            // Decorative: the adjacent title Text carries the name. An explicit
+            // label here would duplicate the title in the AT announcement.
+            Icon(icon, size: 32),
             const SizedBox(height: AppSpacing.md),
             Text(
               title,

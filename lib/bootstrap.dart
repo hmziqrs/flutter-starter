@@ -28,7 +28,7 @@ Future<void> bootstrap(
   // This runs before createApplication / the ProviderScope exists, so the
   // reporter is a direct parameter — never read via a provider here.
   const CrashReporter crashReporter = NoopCrashReporter();
-  _installErrorHandlers(appLogger, crashReporter);
+  installErrorHandlers(appLogger, crashReporter);
   appLogger.info(
     'Starting application',
     context: <String, Object?>{'environment': config.environment.name},
@@ -111,7 +111,22 @@ Future<void> showStartupFailure({
   );
 }
 
-void _installErrorHandlers(AppLogger logger, CrashReporter reporter) {
+/// Wires the global error sinks so field failures reach triage.
+///
+/// Both [FlutterError.onError] (framework errors) and
+/// `PlatformDispatcher.instance.onError` (uncaught async / platform errors) are
+/// funneled to [AppLogger.error] for local dev visibility AND to [reporter]
+/// (`recordFlutterError` / `recordError`) for remote ingest. Each capture is
+/// fire-and-forget ([unawaited]) because the handler is synchronous and must
+/// never block the framework error path; the platform handler returns `true` so
+/// the error is treated as handled and never re-propagated.
+///
+/// Exposed for test access (annotated `@visibleForTesting`) so a regression that
+/// drops the reporter call, drops the `return true` swallow, or re-awaits the
+/// capture is caught by `test/bootstrap_test.dart` — the crash-reporting spec
+/// requires this install site to be under test.
+@visibleForTesting
+void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
   FlutterError.onError = (details) {
     logger.error(
       'Flutter framework error',

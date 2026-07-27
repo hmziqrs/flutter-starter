@@ -227,8 +227,19 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
   }
 
   @override
-  Widget build(BuildContext context) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Drive the pulse from the lifecycle, not build(): TickerMode / MediaQuery
+    // changes re-run this callback, so enable/disable stays in sync without
+    // mutating the _running field or starting/stopping the ticker during build.
+    // Performing that side effect in build() is a fragile anti-pattern that a
+    // future refactor could turn into a setState/markNeedsBuild-during-build
+    // assertion. The static fallback value is unchanged.
     _sync(!MediaQuery.disableAnimationsOf(context));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final icon = Icon(widget.icon, size: 18, color: widget.color);
     if (!_running) {
       return icon;

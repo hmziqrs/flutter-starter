@@ -153,7 +153,7 @@ class _SplashLoading extends StatelessWidget {
             style: context.theme.typography.body.md,
           )
         else
-          const _Spinner(),
+          _Spinner(semanticsLabel: translations.splash.loading),
       ],
     );
   }
@@ -260,8 +260,16 @@ class _BrandMark extends StatelessWidget {
 }
 
 /// A small indeterminate activity indicator for the loading phase.
+///
+/// Carries a [semanticsLabel] so the loading state is announced to assistive
+/// tech in the normal-motion branch (where there is no static label text),
+/// mirroring `BusyIndicator` / `LoadingStateView`. Without it the
+/// `CircularProgressIndicator` emits no semantics node and the loading phase is
+/// invisible to TalkBack/VoiceOver (audit checklist #6: accessible parity).
 class _Spinner extends StatelessWidget {
-  const _Spinner();
+  const _Spinner({required this.semanticsLabel});
+
+  final String semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +278,7 @@ class _Spinner extends StatelessWidget {
       height: 24,
       child: CircularProgressIndicator(
         strokeWidth: 2.5,
+        semanticsLabel: semanticsLabel,
         valueColor: AlwaysStoppedAnimation<Color>(context.theme.colors.primary),
       ),
     );

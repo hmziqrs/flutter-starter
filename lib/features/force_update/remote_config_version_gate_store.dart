@@ -1,38 +1,46 @@
-import 'dart:convert';
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:pub_semver/pub_semver.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_store.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/infrastructure/remote_config/remote_config_client.dart';
 
-/// Optional remote-config-backed [VersionGateStore].
+/// Optional remote-config-backed [VersionGateStore] — the update-blocker typed
+/// port's real impl.
+///
+/// This file lives with its feature because the typed PORT lives with its
+/// feature (C4: `lib/features/{force_update}/`, mirroring `SettingsStore`). It
+/// does **not** own a backend connection: it reads only the `versionPolicy`
+/// slice from the single shared [RemoteConfigClient] under
+/// `lib/infrastructure/remote_config/` — the one backend wrapper that the
+/// future `FeatureFlagsSource` and `ExperimentSource` real impls will also read
+/// from (one backend, three typed surfaces). The reader therefore never opens
+/// its own `HttpClient` and never duplicates the `GET /v1/remote-config`
+/// round-trip.
 ///
 /// Constructed at the composition root only when a consumer wires the backend;
-/// never the default. It is update-blocker's reader on the shared
-/// remote-config family (C4): it reads only the `versionPolicy` slice of the
-/// single `GET /v1/remote-config` response served by `tools/test_server` (C9)
-/// and mapped via `pub_semver` against [AppBuildInfo.version].
-///
-/// Every backend interaction is wrapped in `try/on Object` and degrades to
+/// never the default. Every backend interaction degrades to
 /// [UpdateRequirementNone] on any failure — a policy that cannot be fetched or
 /// parsed must never fabricate a hard or soft block (C2: never fake success, and
 /// never hard-lock a user we cannot verify).
 final class RemoteConfigVersionGateStore implements VersionGateStore {
+  /// Constructs a store that reads the `versionPolicy` slice from a
+  /// [RemoteConfigClient] configured with [baseUrl], [deviceId], and [timeout].
   RemoteConfigVersionGateStore({
-    required this.baseUrl,
-    this.deviceId,
-    this.timeout = const Duration(seconds: 5),
-  });
+    required Uri baseUrl,
+    String? deviceId,
+    Duration timeout = const Duration(seconds: 5),
+  }) : this.withClient(
+         RemoteConfigClient(baseUrl: baseUrl, deviceId: deviceId, timeout: timeout),
+       );
 
-  /// Base URL of the remote-config backend (no `/v1/remote-config` suffix).
-  final Uri baseUrl;
+  /// Constructs a store backed by an explicit [client]. The default
+  /// constructor redirects here; tests inject a stub client through this form.
+  @visibleForTesting
+  RemoteConfigVersionGateStore.withClient(this.client);
 
-  /// Optional device identifier sent as the `deviceId` query hint.
-  final String? deviceId;
-
-  /// Per-request connect / read timeout.
-  final Duration timeout;
+  /// The single shared remote-config backend wrapper (C4).
+  final RemoteConfigClient client;
 
   String? _storeUrl;
 
@@ -41,54 +49,17 @@ final class RemoteConfigVersionGateStore implements VersionGateStore {
 
   @override
   Future<UpdateRequirement> check(AppBuildInfo buildInfo) async {
-    final client = HttpClient();
-    try {
-      final request = await client.getUrl(_endpoint(buildInfo)).timeout(timeout);
-      final response = await request.close().timeout(timeout);
-      final body = await response.transform(utf8.decoder).join().timeout(timeout);
-      if (response.statusCode != HttpStatus.ok) {
-        return const UpdateRequirementNone();
-      }
-      return _map(body, buildInfo);
-    } on Object {
+    final payload = await client.fetch(buildInfo);
+    if (payload == null) {
       return const UpdateRequirementNone();
-    } finally {
-      client.close(force: true);
     }
+    return _mapPolicy(payload.versionPolicy, buildInfo);
   }
 
-  Uri _endpoint(AppBuildInfo buildInfo) {
-    final basePath = baseUrl.path;
-    final prefix = basePath.isEmpty || basePath == '/' ? '' : basePath;
-    final query = <String, String>{
-      'platform': Platform.operatingSystem,
-      'version': buildInfo.version,
-    };
-    final id = deviceId;
-    if (id != null) {
-      query['deviceId'] = id;
-    }
-    return baseUrl.replace(
-      path: '$prefix/v1/remote-config',
-      queryParameters: query,
-    );
-  }
-
-  UpdateRequirement _map(String body, AppBuildInfo buildInfo) {
-    final Object? decoded;
-    try {
-      decoded = jsonDecode(body);
-    } on FormatException {
+  UpdateRequirement _mapPolicy(Map<String, Object?>? policy, AppBuildInfo buildInfo) {
+    if (policy == null) {
       return const UpdateRequirementNone();
     }
-    if (decoded is! Map<String, Object?>) {
-      return const UpdateRequirementNone();
-    }
-    final policy = decoded['versionPolicy'];
-    if (policy is! Map<String, Object?>) {
-      return const UpdateRequirementNone();
-    }
-
     final hardBelow = _parseVersion(policy['hardBlockBelow']);
     final softBelow = _parseVersion(policy['softBlockBelow']);
     final storeUrl = policy['storeUrl'];
