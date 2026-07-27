@@ -45,7 +45,13 @@ jobs:
       - name: Check generated-code drift
         shell: bash
         run: |
-          dart run build_runner build --delete-conflicting-outputs
+          # build_runner 2.15+ removed --delete-conflicting-outputs; running
+          # `build` over the committed generated files throws
+          # InvalidOutputException ("Asset already exists"). Delete them first
+          # so the builder regenerates cleanly, then fail on any real drift.
+          # slang output is deterministic (build.yaml: timestamp: false).
+          rm -f lib/i18n/*.g.dart
+          dart run build_runner build
           git diff --exit-code
           if [[ -n "$(git status --porcelain)" ]]; then
             git status --short
