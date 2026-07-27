@@ -85,6 +85,10 @@ Notes:
 - Declare every route as paired name+path constants; navigate by name via `context.goNamed`/`pushNamed`; build parameterized paths via helpers like `AppRoutes.otpLocation(purpose)`.
 - Chrome-bearing destinations live inside one `StatefulShellRoute` with three branches (home, pricing, settings) and a cross-fading navigator container builder (`crossFadingBranchContainer`); full-screen flows (auth, onboarding) are top-level; gate dev routes behind `if (config.developmentToolsEnabled)` with `/dev/*` paths.
 - Branch GoRoutes keep absolute paths (a `StatefulShellBranch` is not a `ShellRouteBase`); `settings` must precede its detail routes so reset-on-retap lands on `/settings`. In-shell tab switches go through `goBranch` with reset-on-retap (`initialLocation: index == shell.currentIndex`). Top-level flows (onboarding, paywall, auth, profile, route-error) stay siblings of the shell: a `go` to one unmounts the shell and resets every branch stack, while a `pushNamed` overlay preserves branch stacks. Router is rebuilt, not reactive. `ProductionPageFactory<TState>` is a typedef in `lib/app/presentation/production_page_factory.dart`, not a class.
+- Password reset is a stack-preserving, typed-result flow: Forgot, reset OTP, and Reset Password
+  are pushed above the caller and unwind to the original Login. A directly opened reset URL has
+  no caller, so completion explicitly falls back to a root Login. This distinction keeps Home
+  available to Back only when Login was originally pushed from Home.
 
 #### state-settings
 

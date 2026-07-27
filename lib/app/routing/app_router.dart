@@ -142,15 +142,8 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.login,
         path: AppRoutes.loginPath,
-        builder: (context, state) => LoginPage(
-          presentation: state.uri.queryParameters['status'] == _passwordResetComplete
-              ? LoginPresentationState.success(
-                  successMessage: context.t.auth.resetPassword.success,
-                )
-              : const LoginPresentationState(),
-          onSubmit: (_) => context.goNamed(AppRoutes.home),
-          onForgotPassword: () => context.pushNamed(AppRoutes.forgotPassword),
-          onRegister: () => context.pushNamed(AppRoutes.register),
+        builder: (context, state) => _LoginRoutePage(
+          passwordResetComplete: state.uri.queryParameters['status'] == _passwordResetComplete,
         ),
       ),
       GoRoute(
@@ -160,7 +153,7 @@ GoRouter buildAppRouter({
           onSubmit: (_) => context.go(
             AppRoutes.otpLocation(OtpPurpose.registration),
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
+          onLogin: () => _returnToLogin(context),
           onOpenTerms: () => _showInformationDialog(
             context,
             title: context.t.auth.register.terms,
@@ -175,10 +168,11 @@ GoRouter buildAppRouter({
         name: AppRoutes.forgotPassword,
         path: AppRoutes.forgotPasswordPath,
         builder: (context, state) => ForgotPasswordPage(
-          onSubmit: (_) => context.go(
-            AppRoutes.otpLocation(OtpPurpose.passwordReset),
+          onSubmit: (_) => unawaited(_openPasswordResetOtp(context)),
+          onLogin: () => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.returnToLogin,
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
         ),
       ),
       GoRoute(
@@ -197,7 +191,7 @@ GoRouter buildAppRouter({
             purpose: purpose,
             onSubmit: (_) => switch (purpose) {
               OtpPurpose.registration => context.goNamed(AppRoutes.home),
-              OtpPurpose.passwordReset => context.goNamed(AppRoutes.resetPassword),
+              OtpPurpose.passwordReset => unawaited(_openResetPassword(context)),
             },
             onResend: () => _showInformationDialog(
               context,
@@ -211,11 +205,14 @@ GoRouter buildAppRouter({
         name: AppRoutes.resetPassword,
         path: AppRoutes.resetPasswordPath,
         builder: (context, state) => ResetPasswordPage(
-          onSubmit: (_) => context.goNamed(
-            AppRoutes.login,
-            queryParameters: {'status': _passwordResetComplete},
+          onSubmit: (_) => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.completed,
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
+          onLogin: () => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.returnToLogin,
+          ),
         ),
       ),
       GoRoute(
@@ -287,6 +284,101 @@ String? _redirectSettingsDeepLinks(BuildContext context, GoRouterState state) {
 }
 
 const _passwordResetComplete = 'password-reset-complete';
+
+enum _PasswordResetFlowResult {
+  completed,
+  returnToLogin,
+}
+
+class _LoginRoutePage extends StatefulWidget {
+  const _LoginRoutePage({required this.passwordResetComplete});
+
+  final bool passwordResetComplete;
+
+  @override
+  State<_LoginRoutePage> createState() => _LoginRoutePageState();
+}
+
+class _LoginRoutePageState extends State<_LoginRoutePage> {
+  late bool _passwordResetComplete = widget.passwordResetComplete;
+
+  @override
+  void didUpdateWidget(covariant _LoginRoutePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.passwordResetComplete != oldWidget.passwordResetComplete) {
+      _passwordResetComplete = widget.passwordResetComplete;
+    }
+  }
+
+  Future<void> _openForgotPassword() async {
+    final result = await context.pushNamed<_PasswordResetFlowResult>(
+      AppRoutes.forgotPassword,
+    );
+    if (!mounted || result != _PasswordResetFlowResult.completed) {
+      return;
+    }
+    setState(() => _passwordResetComplete = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LoginPage(
+      presentation: _passwordResetComplete
+          ? LoginPresentationState.success(
+              successMessage: context.t.auth.resetPassword.success,
+            )
+          : const LoginPresentationState(),
+      onSubmit: (_) => context.goNamed(AppRoutes.home),
+      onForgotPassword: () => unawaited(_openForgotPassword()),
+      onRegister: () => context.pushNamed(AppRoutes.register),
+    );
+  }
+}
+
+Future<void> _openPasswordResetOtp(BuildContext context) async {
+  final result = await context.push<_PasswordResetFlowResult>(
+    AppRoutes.otpLocation(OtpPurpose.passwordReset),
+  );
+  if (result != null && context.mounted) {
+    _finishPasswordResetFlow(context, result);
+  }
+}
+
+Future<void> _openResetPassword(BuildContext context) async {
+  final result = await context.pushNamed<_PasswordResetFlowResult>(
+    AppRoutes.resetPassword,
+  );
+  if (result != null && context.mounted) {
+    _finishPasswordResetFlow(context, result);
+  }
+}
+
+void _finishPasswordResetFlow(
+  BuildContext context,
+  _PasswordResetFlowResult result,
+) {
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop(result);
+    return;
+  }
+
+  context.goNamed(
+    AppRoutes.login,
+    queryParameters: result == _PasswordResetFlowResult.completed
+        ? {'status': _passwordResetComplete}
+        : const {},
+  );
+}
+
+void _returnToLogin(BuildContext context) {
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop();
+    return;
+  }
+  context.goNamed(AppRoutes.login);
+}
 
 SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
   return SettingsPage(

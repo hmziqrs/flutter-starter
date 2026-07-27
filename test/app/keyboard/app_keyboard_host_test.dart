@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
@@ -62,6 +63,49 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
     await tester.pumpAndSettle();
   });
+
+  testWidgets('password reset returns to the original login and preserves its Home back edge', (
+    tester,
+  ) async {
+    await _pumpApp(tester);
+    await _tapVisible(tester, 'home-open-login');
+    await _tapVisible(tester, 'auth-login-forgot-password');
+
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-forgot-password-email')),
+      'person@example.com',
+    );
+    await _tapVisible(tester, 'auth-forgot-password-submit');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-otp-code')),
+      '654321',
+    );
+    await _tapVisible(tester, 'auth-otp-submit');
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-new')),
+      'Password1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-confirm')),
+      'Password1',
+    );
+    await _tapVisible(tester, 'auth-reset-password-submit');
+
+    final login = find.byKey(const ValueKey('auth-login-page'));
+    expect(login, findsOneWidget);
+    expect(find.byKey(const ValueKey('auth-login-success')), findsOneWidget);
+    expect(GoRouter.of(tester.element(login)).canPop(), isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.backspace);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.backspace);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.pumpAndSettle();
+  });
 }
 
 Future<void> _pumpApp(WidgetTester tester) async {
@@ -77,6 +121,16 @@ Future<void> _pumpApp(WidgetTester tester) async {
       dependencies: AppDependencies.inMemory(),
     ),
   );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
+  final target = find.byKey(ValueKey(valueKey));
+  tester.binding.focusManager.primaryFocus?.unfocus();
+  await tester.pump();
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
   await tester.pumpAndSettle();
 }
 
