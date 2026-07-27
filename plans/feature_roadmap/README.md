@@ -2,8 +2,7 @@
 
 A tracked, auditable plan for growing `starter` from its compact baseline into a
 fully-featured cross-platform product. This directory is the **intake + tracking** layer;
-[`plans/feature_contracts.md`](../../plans/feature_contracts.md) remains the freeze layer for
-public APIs once a feature is implemented.
+[contracts.md](contracts.md) also holds the implemented-feature API freeze layer.
 
 - **Contracts:** [contracts.md](contracts.md) — the binding contracts (scope, backend stance,
   test server, port reuse, redirect pattern) **and** the guardrail checklist every feature must

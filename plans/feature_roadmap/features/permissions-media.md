@@ -108,7 +108,7 @@ the noop impls ARE the fakes.
 - **Callback signature change is breaking.** `onAvatarFeedback: VoidCallback` →
   `onAvatarPicked(PickedMedia?)` on `UpdateProfilePage`/`_AvatarEditor`; update
   [`app_router.dart`](../../lib/app/routing/app_router.dart) and the feature-contract doc together
-  (see [`plans/feature_contracts.md`](../../plans/feature_contracts.md)).
+  (see [contracts.md](../contracts.md)).
 - **Notification permission is owned by [push-notifications](./push-notifications.md)** — it is the
   canonical owner of the OS notification-permission request (`NotificationsRepository.requestPermission`
   + `NotificationPermissionStatus`); this feature does not request notification permission or declare a

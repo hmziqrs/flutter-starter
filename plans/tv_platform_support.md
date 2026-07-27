@@ -14,7 +14,7 @@ widget tree.
 
 **Related architecture:** [architecture.md](../docs/architecture.md),
 [completed/initial.md](completed/initial.md), [completed/initial_ui.md](completed/initial_ui.md), and
-[feature_contracts.md](feature_contracts.md)
+[feature_roadmap/contracts.md](feature_roadmap/contracts.md)
 
 ---
 
@@ -179,7 +179,7 @@ The following existing contracts remain authoritative:
 - `AppKeyboardHost` remains the only focus-independent application shortcut listener.
 - Feature fixtures and the gallery remain the deterministic presentation test seam.
 
-No public constructor in [feature_contracts.md](feature_contracts.md) needs a TV parameter.
+No public constructor in [feature_roadmap/contracts.md](feature_roadmap/contracts.md) needs a TV parameter.
 
 ### 4.2 Gaps to close
 
