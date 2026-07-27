@@ -87,6 +87,29 @@ jobs:
           APP="$(ls -d build/macos/Build/Products/Release/*.app | head -n1)"
           ditto -c -k --keepParent "$APP" build/archive/macos-universal.zip
 
+      - name: Split macOS app into single-arch builds (arm64, x64)
+        # Thin the universal binary into per-arch apps (~10 MB smaller each) for
+        # users who want a single-architecture download. `ditto --arch` thins
+        # every Mach-O in the bundle (executable + frameworks).
+        run: |
+          APP="$(ls -d build/macos/Build/Products/Release/*.app | head -n1)"
+          ditto -c -k --keepParent --arch arm64  "$APP" build/archive/macos-arm64.zip
+          ditto -c -k --keepParent --arch x86_64 "$APP" build/archive/macos-x64.zip
+
+      - name: Upload macOS arm64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: build/archive/macos-arm64.zip
+          if-no-files-found: error
+
+      - name: Upload macOS x64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-x64
+          path: build/archive/macos-x64.zip
+          if-no-files-found: error
+
       - name: Package iOS app
         run: |
           APP="$(ls -d build/ios/iphoneos/*.app | head -n1)"
@@ -323,7 +346,8 @@ jobs:
           body: |
             Unsigned release builds from the latest commit on `master`.
 
-            - `macos-universal.zip` — macOS app (arm64 + x64)
+            - `macos-universal.zip` — macOS app (arm64 + x64, runs on any Mac)
+            - `macos-arm64.zip` / `macos-x64.zip` — single-arch macOS builds
             - `ios-arm64.zip` — unsigned iOS arm64 app
             - `windows-x64.zip` / `windows-arm64.zip` — Windows builds
             - `linux-x64.tar.gz` / `linux-arm64.tar.gz` — Linux bundles
