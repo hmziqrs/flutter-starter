@@ -1,0 +1,260 @@
+name: Release builds
+
+# Produces unsigned release artifacts for every desktop OS (arm64 + x64), for
+# Android (per-ABI APKs + App Bundle), and for iOS (arm64), each time code lands
+# on the default branch. Signing is intentionally deferred by this starter, so
+# every artifact is unsigned / debug-signed / `--no-codesign` (see
+# docs/release_readiness.md).
+#
+# Architecture coverage:
+#   - macOS  → one universal `.app` (arm64 + x64 slices, merged by `lipo`).
+#              Flutter release builds are universal by default, so a single job
+#              covers both arches (passing `--target-platform` for macOS is a
+#              no-op — it cannot select the arch).
+#   - Windows → x64 and arm64, each built natively on a matching runner
+#              (`windows-2022` / `windows-11-arm`). Windows cross-compiles are
+#              not supported; the tool keys the arch off the host.
+#   - Linux   → x64 and arm64, each built natively on a matching runner
+#              (`ubuntu-24.04` / `ubuntu-24.04-arm`). x64→arm64 cross-build is
+#              hard-blocked (flutter/flutter#74929).
+#   - Android → `--split-per-abi` yields armeabi-v7a, arm64-v8a, and x86_64 APKs
+#              plus a single App Bundle covering all ABIs.
+#   - iOS     → arm64 device build, `--no-codesign`.
+#
+# The arm64 desktop jobs install Flutter via a pinned `git clone` because
+# Flutter publishes arm64 host artifacts (dart-sdk + engine) but no combined
+# arm64 SDK tarball, so `subosito/flutter-action` cannot install it.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.7
+  PROD_CONFIG: config/production.json
+
+jobs:
+  apple:
+    name: macOS universal + iOS arm64
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build macOS universal release
+        run: >-
+          flutter build macos --release --no-codesign
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Build unsigned iOS release
+        run: >-
+          flutter build ios --release --no-codesign
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Package macOS app
+        # `ditto` (not `zip`) preserves Framework symlinks and macOS metadata,
+        # otherwise the app reports as "damaged" on launch.
+        run: |
+          mkdir -p build/archive
+          APP="$(ls -d build/macos/Build/Products/Release/*.app | head -n1)"
+          ditto -c -k --keepParent "$APP" build/archive/macos-universal.zip
+
+      - name: Package iOS app
+        run: |
+          APP="$(ls -d build/ios/iphoneos/*.app | head -n1)"
+          ditto -c -k --keepParent "$APP" build/archive/ios-arm64.zip
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: build/archive/macos-universal.zip
+          if-no-files-found: error
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-arm64
+          path: build/archive/ios-arm64.zip
+          if-no-files-found: error
+
+  windows:
+    name: Windows ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2022
+          - arch: arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter (x64)
+        if: matrix.arch == 'x64'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Set up Flutter (arm64)
+        # Flutter ships arm64 host artifacts but no arm64 SDK tarball, so install
+        # from a pinned git checkout. Forward-slash PATH entries work on Windows.
+        if: matrix.arch == 'arm64'
+        shell: bash
+        run: |
+          git clone --depth 1 --branch '${{ env.FLUTTER_VERSION }}' \
+            https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          # Prime the arm64 dart-sdk + engine download for later steps.
+          "$RUNNER_TEMP/flutter/bin/flutter" --version
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: >-
+          flutter build windows --release
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Package Windows build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build/archive | Out-Null
+          Compress-Archive -Path build\windows\*\runner\Release\* `
+            -DestinationPath "build/archive/windows-${{ matrix.arch }}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: build/archive/windows-${{ matrix.arch }}.zip
+          if-no-files-found: error
+
+  linux:
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Linux desktop prerequisites
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang cmake libgtk-3-dev libstdc++-12-dev ninja-build pkg-config
+
+      - name: Set up Flutter (x64)
+        if: matrix.arch == 'x64'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Set up Flutter (arm64)
+        # See the windows/arm64 step: Flutter has no arm64 SDK tarball.
+        if: matrix.arch == 'arm64'
+        run: |
+          git clone --depth 1 --branch '${{ env.FLUTTER_VERSION }}' \
+            https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/flutter/bin/flutter" --version
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build Linux release
+        run: >-
+          flutter build linux --release
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Package Linux bundle
+        run: |
+          mkdir -p build/archive
+          BUNDLE="$(ls -d build/linux/*/release/bundle | head -n1)"
+          tar -C "$BUNDLE" -czf "build/archive/linux-${{ matrix.arch }}.tar.gz" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: build/archive/linux-${{ matrix.arch }}.tar.gz
+          if-no-files-found: error
+
+  android:
+    name: Android APKs (arm/arm64/x86_64) + AAB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build per-ABI APKs
+        # Emits app-armeabi-v7a, app-arm64-v8a, and app-x86_64 release APKs.
+        run: >-
+          flutter build apk --release --split-per-abi
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Build App Bundle
+        run: >-
+          flutter build appbundle --release
+          --dart-define-from-file=${{ env.PROD_CONFIG }}
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: |
+            build/app/outputs/flutter-apk/app-*-release.apk
+            build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
