@@ -196,7 +196,8 @@ The current application:
   declaration.
 - Has no `tvos/` target and has not audited native dependencies against federated tvOS plugins.
 - Uses `talker_flutter`, which transitively adds `path_provider`, `share_plus`, and launcher
-  implementations even though the application only consumes the core `Talker` logger.
+  implementations even though the application only consumes the core `Talker` logger. These need
+  build and call-site verification, but unused optional capabilities do not need to be ported.
 - Uses direct `AppSpacing.*` constants substantially more often than context-resolved spacing, so
   central TV spacing would not currently reach every feature.
 - Relies on ForUI's input-derived focus-highlight mode, which can make the initial autofocus
@@ -237,15 +238,15 @@ Do not add `television` to `AppLayoutClass`.
 
 ```mermaid
 flowchart TD
-    Native["Android UI mode / tvOS runtime"] --> Adapter["infrastructure/platform TV detector"]
+    Native["Android Leanback/TvActivity / tvOS runtime"] --> Adapter["platform TV detector"]
     Adapter --> Dependencies["AppDependencies"]
     Dependencies --> Provider["root capability provider"]
     Provider --> Policy["AppPresentationPolicy resolver"]
-    Input["observed pointer / remote input"] --> Policy
+    Input["observed precision-pointer input"] --> Policy
     Policy --> Scope["AppPresentationScope"]
     Scope --> Theme["ForuiThemeFactory"]
     Scope --> Shell["AppShell"]
-    Scope --> Frame["AppScreenFrame / TvSafeFrame"]
+    Scope --> Frame["AppPresentationViewport / AppScreenFrame"]
     Scope --> Focus["focus traversal and route focus restoration"]
     Shell --> Features["existing feature pages"]
     Theme --> Features
@@ -291,8 +292,8 @@ final class PlatformCapabilities {
 
 `AppTvPlatform` is a capability and packaging fact. Feature pages must not branch on it. A
 platform-specific branch is permitted only for behavior that actually differs between Android TV
-and tvOS, such as remote initialization, native exit policy, store integration, or platform
-plugin selection.
+and tvOS, such as future custom remote subscriptions, native exit policy, store integration, or
+platform plugin selection.
 
 Do not keep a broad `supportsFileSystem: !kIsWeb` assumption. Television sandboxes and plugin
 availability make it misleading. Add a narrowly named capability only when a real file-system
@@ -448,7 +449,7 @@ Instead:
 
 - Configure focused, pressed, disabled, selected, error, and size behavior in
   `ForuiThemeFactory`.
-- Apply safe content bounds once in the shell or shared route frame.
+- Apply safe content bounds once in the root presentation viewport.
 - Use standard ForUI controls so activation and semantics continue to work.
 - Add a shared focusable wrapper only for custom interactive surfaces that are not already ForUI
   controls.
@@ -811,7 +812,8 @@ Home quick actions, foundation cards, recent activity, and pricing cards need sp
 - Hidden, disabled, or offstage cards are excluded.
 - Resizing or locale changes recompute traversal without losing the currently focused semantic
   item when it still exists.
-- LTR and RTL mirror horizontal intent while preserving logical item identity.
+- LTR and RTL mirror layout/order while physical Left still moves visually left and physical
+  Right still moves visually right; logical item identity is preserved.
 
 Prefer Flutter's directional traversal behavior first. Implement a custom
 `FocusTraversalPolicy` only if device tests prove the default spatial policy produces unstable
@@ -1301,7 +1303,7 @@ Primary reference:
 tvOS is not an official stock Flutter target. Use the independent `flutter-tvos` distribution:
 
 - Pin `v3.44.7-tvos.1.4.2` at commit
-  `aeedf281d7d2446404980113140b3fd55f4aa571`; do not substitute a newer upstream tag while stock
+  `aeedf41831c8bc2546afacbb7e686a4431ddb1d4`; do not substitute a newer upstream tag while stock
   Flutter remains 3.44.7.
 - Record the tag and installation steps in repository tooling.
 - Run `flutter-tvos doctor` in development setup and CI.
@@ -1407,19 +1409,28 @@ direct dependencies:
 | `shared_preferences` 2.5.5 | Android implementation | `shared_preferences_tvos ^0.0.2` | SPM clean build, persistence/restart/privacy manifest |
 | `package_info_plus` 10.2.1 | Android implementation | `package_info_plus_tvos ^0.0.1` | CocoaPods clean build; tolerate `installerStore == null` |
 | `flutter_tvos ^1.1.2` | no-op/not registered | detection only | no remote initializer; verify runtime identity |
-| `talker_flutter` 5.1.19 | works but oversized closure | do not carry forward | replace with direct pure-Dart `talker` if current logging needs no Flutter UI integration |
-| transitive `path_provider*` | currently pulled by logging closure | unsupported/unneeded | remove with `talker_flutter`; add a verified TV adapter only for a real caller |
-| transitive `share_plus*` | currently pulled by logging closure | unsupported/unneeded | remove; TV features must not expose share-sheet behavior |
-| transitive `url_launcher*` implementations | currently in lockfile closure | unavailable by product contract | remove where closure permits; Terms/Privacy use in-app/second screen |
+| `talker_flutter` 5.1.19 | works | retain initially if clean TV builds pass | app uses only core logging; do not expose Talker download/share UI on tvOS |
+| transitive `path_provider*` | normal Android implementation works on Android TV | supported through separately added `path_provider_tvos` | no action while unused; add/test the tvOS implementation only for a real file caller |
+| transitive `share_plus*` | Android implementation can run, but a phone-style share sheet is not assumed usable on every TV | no tvOS implementation in the audited catalogue | leave dormant; do not call share-dependent Talker features on tvOS |
+| transitive `url_launcher*` implementations | present through the resolved closure | no arbitrary tvOS launcher assumed | leave dormant; Terms/Privacy use in-app/second-screen presentation |
 
 Before the tvOS target lands, capture `flutter pub deps --style=compact` with stock Flutter and the
 pinned fork. Diff native plugins, registrants, SPM packages, and Pods. A package that is "Dart
 only" by its direct API is not exempt if its resolved closure adds native plugins.
 
-Replacing `talker_flutter` is a deliberate cleanup, not a blind package swap: first confirm the app
-uses only logger/observer APIs available from `talker`, change the infrastructure adapter, and run
-all logging/redaction tests. If a Flutter-only integration is genuinely required, isolate it from
-the tvOS target rather than registering unsupported transitive plugins.
+Do not port, replace, or reimplement an unsupported optional package merely because it exists in
+the resolved graph. The decision order is:
+
+1. Prove clean compile/link/archive on both TV targets.
+2. Verify application call sites cannot reach the unsupported capability.
+3. Hide or omit that feature where the capability is unavailable.
+4. Add a narrow infrastructure capability/fallback only when a real product caller exists.
+5. Replace or port only if the dependency blocks the build, is invoked despite the guard, or the
+   product explicitly requires the capability.
+
+Current call-site inspection finds no Talker screen, log-download, or share invocation. Retaining
+`talker_flutter` with those features absent is therefore the default. Migrating to pure-Dart
+`talker` remains optional dependency-size cleanup, not a TV prerequisite.
 
 ### 13.2 Audit gate for future packages
 
@@ -1712,7 +1723,8 @@ Each milestone is independently reviewable and must leave existing platforms gre
 - Record actual key events for both remotes.
 - Confirm the required SPM/CocoaPods hybrid and exact federated implementations.
 - Verify all ForUI families in §6.6.2, including remote aliases and the tvOS text-field keyboard.
-- Capture the full transitive plugin graph and prove the `talker_flutter` replacement path.
+- Capture the full transitive plugin graph, prove `talker_flutter` cleanly builds, and verify its
+  unsupported download/share paths remain unreachable.
 
 **Exit:** Both targets boot, blockers and exact versions are documented, and no architecture code is
 merged from the throwaway target.
@@ -1723,7 +1735,8 @@ merged from the throwaway target.
 - Add thin Android `TvActivity`, Leanback launcher metadata, placeholder-valid banner/icon
   resources, and authoritative detector channel.
 - Add `flutter_tvos`, `shared_preferences_tvos`, and `package_info_plus_tvos` at the audited
-  versions; remove/replace unsupported logging transitive plugins.
+  versions; keep unsupported optional logging/export capabilities unreachable, replacing a
+  dependency only if the clean target build proves it necessary.
 - Establish Android TV and tvOS clean compile jobs before shared UI refactoring begins.
 
 **Exit:** Every later architecture/UI commit is checked against both target embeddings, preventing
@@ -1853,7 +1866,7 @@ catalogue integration, or extensive TV-specific product redesign are not include
 | Settings writes flood during slider repeat | Medium | Coalesce/persist on completion | Persistence stress test |
 | Screen reader and visual focus diverge | High | TalkBack/VoiceOver device testing | Accessibility sign-off |
 | Traversal focus opens tvOS keyboard | High | Activation-surface wrapper; never autofocus editable control | Full text-entry device matrix |
-| Transitive plugin breaks tvOS build/review | High | Lockfile closure inventory; replace `talker_flutter`; archive audit | Clean compile + plugin inventory |
+| Transitive plugin breaks tvOS build/review | High | Closure/call-site inventory; disable unsupported optional features; replace/port only if blocking | Clean compile + archive audit |
 | Android manifest implies unsupported hardware | High | Merged-manifest audit and resource validator | Play device-catalogue check |
 | Release misses changing store/toolchain policy | High | Dated requirements, official-source review per release | Release-readiness sign-off |
 
@@ -2017,14 +2030,37 @@ catalogue integration, or extensive TV-specific product redesign are not include
   and Siri Remote mapping to Flutter focus/key events.
 - [`flutter-tvos` toolchain](https://fluttertv.dev/): custom tvOS engine/embedder, CLI, platform
   project, and federated plugin model.
+- [`flutter-tvos` pinned tag](https://github.com/fluttertv/flutter-tvos/tree/v3.44.7-tvos.1.4.2):
+  exact 3.44.7-compatible source used by this plan.
+- [`shared_preferences_tvos`](https://pub.dev/packages/shared_preferences_tvos) and
+  [`fluttertv.dev` plugin catalogue](https://pub.dev/publishers/fluttertv.dev/packages):
+  selected federated implementations and integration metadata.
 - [Flutter focus and keyboard behavior](https://docs.flutter.dev/ui/interactivity/focus):
   `Focus`, traversal, actions, shortcuts, and focusable action detectors.
 - [Android TV application setup](https://developer.android.com/training/tv/get-started/create):
-  Leanback launcher, TV feature, touchscreen declaration, banner, and packaging.
+  separate TV activity, Leanback launcher, TV feature, touchscreen declaration, and packaging.
 - [Android TV navigation](https://developer.android.com/training/tv/get-started/navigation):
   D-pad reachability, focused state, and Back behavior.
+- [Android TV quality tiers](https://developer.android.com/docs/quality-guidelines/tv-app-quality):
+  current Tier 3/Tier 2 criteria, launcher assets, SDK floor, AAB, ABI, and page-size requirements.
+- [Android TV distribution](https://developer.android.com/training/tv/publishing/distribute):
+  Play listing and 1 August 2026 64-bit/16 KB requirements.
+- [Android TV memory guidance](https://developer.android.com/training/tv/playback/memory):
+  measured low-RAM category and total limits.
+- [Android activity manifest reference](https://developer.android.com/guide/topics/manifest/activity-element):
+  activity configuration changes including D-pad navigation.
 - [Adaptive application guidance for TV](https://developer.android.com/develop/adaptive-apps/guides/tv/build-adaptive-apps-for-tv):
   ten-foot presentation, landscape composition, readability, and safe content bounds.
+- [Apple focus and selection](https://developer.apple.com/design/human-interface-guidelines/focus-and-selection/):
+  directional reachability, separate focus/selection, scale, and tvOS depth treatment.
+- [Apple screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/):
+  Apple TV dimensions, count, and alpha restrictions.
+- [Apple App Privacy management](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/):
+  tvOS privacy-policy text and data-practice disclosures.
+- [Apple privacy manifests](https://developer.apple.com/documentation/bundleresources/privacy-manifest-files):
+  app/plugin collection and required-reason API declarations.
+- [Apple SDK submission requirements](https://developer.apple.com/news/upcoming-requirements/):
+  current Xcode/tvOS SDK upload floor.
 
 These are implementation inputs, not a substitute for testing the pinned Flutter/tvOS toolchain
 and actual target devices at the time of delivery.

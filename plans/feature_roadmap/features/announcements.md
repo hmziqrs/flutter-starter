@@ -53,7 +53,7 @@ If a remote variant is added later, it does **not** get a new surface: introduce
 default and an optional HTTP source as an override at the `ProviderScope`; the controller and
 banner stay unchanged. Keep that extraction deferred until a remote source is actually wired —
 do not add an empty port now (per the
-[baseline report](../../baseline_architecture_report.md): "deferred product capabilities remain
+[baseline report](../../../docs/baseline_architecture_report.md): "deferred product capabilities remain
 decisions, not empty interfaces").
 
 ## Tests
@@ -94,7 +94,7 @@ decisions, not empty interfaces").
   `lib/shared/widgets/announcement_banner.dart`, but there is a **single** mount site (the
   `app.dart` builder). Keep it feature-local at `lib/features/announcements/announcement_banner.dart`
   until a second consumer appears (per
-  [baseline report](../../baseline_architecture_report.md) ≥3-consumer rule). This doc pins it
+  [baseline report](../../../docs/baseline_architecture_report.md) ≥3-consumer rule). This doc pins it
   feature-local.
 - [x] **pass** — Motion guarded: enter/exit sourced from
   [`AppMotion`](../../../lib/shared/motion/app_motion.dart) (`standard`/`standardCurve`) and

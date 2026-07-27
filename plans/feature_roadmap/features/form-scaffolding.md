@@ -85,5 +85,5 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
   [busy-indicators.md](busy-indicators.md) so submit affordance is consistent — sequence after
   or alongside it.
 - **No form codegen.** Handwritten `*_presentation_state` is the locked pattern
-  ([architecture.md](../../architecture.md) state-settings). Do not introduce
+  ([architecture.md](../../../docs/architecture.md) state-settings). Do not introduce
   `flutter_form_builder` / `reactive_forms`.

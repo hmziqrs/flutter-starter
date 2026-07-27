@@ -12,7 +12,7 @@ pattern are kept (e.g. PIN *and* biometric *and* auto-lock) rather than collapse
 example, because the goal is a fork-and-ship product, not a single demonstration per pattern.
 
 This overrides the lean/architecture-first instinct recorded in
-[`docs/baseline_architecture_report.md`](../baseline_architecture_report.md), which bounded
+[`docs/baseline_architecture_report.md`](../../docs/baseline_architecture_report.md), which bounded
 abstractions to those with current callers. The roadmap introduces capabilities that have no
 caller yet; each is gated by the audit checklist below so it still earns its place
 structurally (port + Noop default + test surface), not by premature usage.
@@ -29,7 +29,7 @@ feature is built **for real** behind a four-part contract:
    [`AppDependencies.production`](../../lib/app/dependencies.dart) and overridden at the
    `ProviderScope`. The app runs green with **zero backend**; actions needing one surface
    `common.notConnected` / `globalError` honestly and **never fake success** (the no-backend
-   rule in [`architecture.md`](../architecture.md) is load-bearing).
+   rule in [`architecture.md`](../../docs/architecture.md) is load-bearing).
 3. **Optional real impl** — the production adapter (Sentry, Firebase, a real HTTP client) is an
    **override** a consumer constructs only when they wire credentials. It is never constructed
    by default.
@@ -125,10 +125,10 @@ so the table is the single live view of progress.
 - [`plans/feature_contracts.md`](../../plans/feature_contracts.md) freezes **current** feature
   public APIs. New features get a contract entry there before their public surface is finalized;
   this roadmap is the *intake* list, feature_contracts is the *freeze*.
-- [`docs/baseline_architecture_report.md`](../baseline_architecture_report.md) records kept/
+- [`docs/baseline_architecture_report.md`](../../docs/baseline_architecture_report.md) records kept/
   rejected abstractions for the **existing** baseline; D1 amends its "deferred" stance for new
   roadmap work.
-- [`docs/release_readiness.md`](../release_readiness.md) tracks release blockers (signing,
+- [`docs/release_readiness.md`](../../docs/release_readiness.md) tracks release blockers (signing,
   brand assets, real credentials, device sign-off) — orthogonal to this roadmap but referenced
   by backend features' "optional real impl" step.
 

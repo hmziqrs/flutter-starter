@@ -1,7 +1,7 @@
 # Feature audit checklist
 
 The guardrails every feature doc — and every feature implementation — must satisfy. The
-[audit pass](audit_findings.md) scores each feature against this list; implementers re-run it
+[audit pass](audit_deep_findings.md) scores each feature against this list; implementers re-run it
 before marking a feature `done` in the [README](README.md) status table.
 
 Each item: verify the condition, then mark the feature's in-doc checklist `pass` / `warn` /
@@ -28,7 +28,7 @@ Anything under `lib/shared/widgets/` or `lib/shared/forms/` needs **≥3 consume
 today, or **designated** under [D1](decisions.md#d1--scope-is-comprehensive): the feature doc
 lists the ≥3 intended consumer features as deferred consumers and re-audits when they land
 (demote to feature-local if they never materialize). This relaxes the baseline's strict
-"current callers only" rule ([baseline report](../baseline_architecture_report.md)) for the
+"current callers only" rule ([baseline report](../../docs/baseline_architecture_report.md)) for the
 foundational UX primitives the comprehensive roadmap deliberately introduces. Pure-Dart
 primitives under `lib/shared/state/` (e.g. `PagedStateNotifier`) need only **≥1 consumer + a
 documented reuse intent** — the ≥3 bar is for widget/form extraction, not state helpers. Verify

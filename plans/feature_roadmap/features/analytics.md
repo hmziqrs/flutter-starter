@@ -30,7 +30,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
     secret/sensitive preference); the real client consults this before emitting. **Not** a field on
     [`SettingsState`](../../../lib/features/settings/settings_state.dart) (SettingsState is
     `SettingsStore`-backed 1:1 via `SettingsRepository` — see the settings boundary in
-    [`architecture.md`](../../architecture.md)).
+    [`architecture.md`](../../../docs/architecture.md)).
 - **Routes:** none (no new routes; the observer attaches to the existing `GoRouter`).
 - **Files:**
   - `lib/infrastructure/analytics/analytics_client.dart` (port + `AnalyticsException`)
@@ -51,7 +51,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
     [`SettingsState`](../../../lib/features/settings/settings_state.dart) — `SettingsState` fields are
     1:1 with `SettingsStore` keys via `SettingsRepository`; a `SecureStore`-persisted value must stay
     off it (see [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends) + the settings boundary
-    in [`architecture.md`](../../architecture.md)). The settings page renders the toggle by watching
+    in [`architecture.md`](../../../docs/architecture.md)). The settings page renders the toggle by watching
     this controller, not `settingsControllerProvider`.
   - `test/infrastructure/analytics/analytics_route_observer_test.dart`
   - `test/infrastructure/analytics/noop_analytics_client_test.dart`

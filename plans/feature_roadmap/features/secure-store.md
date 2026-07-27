@@ -99,7 +99,7 @@ throw `SecureStoreException` on unsupported platforms (do not silently fall thro
   (`*.entitlements`); Android needs the `encryptedSharedPreferences` Gradle setup. If the
   consumer forgets the entitlement, reads silently return `null` on macOS — surface this on
   `DiagnosticsPage` and in the PR description. Track under
-  [`docs/release_readiness.md`](../../release_readiness.md).
+  [`docs/release_readiness.md`](../../../docs/release_readiness.md).
 - **No `clearAll`.** A "wipe everything" flow (logout, factory reset) iterates the known key
   set and calls `delete` per key. Hardcoding the key catalog in one place keeps the discipline.
 - **Sequencing:** build this **before** any other security feature. The

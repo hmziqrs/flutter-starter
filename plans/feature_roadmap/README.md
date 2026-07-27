@@ -9,8 +9,8 @@ public APIs once a feature is implemented.
   port reuse, redirect pattern.
 - **Audit checklist:** [audit_checklist.md](audit_checklist.md) — the guardrails every feature
   must pass.
-- **Audit findings:** [audit_findings.md](audit_findings.md) — the adversarial pass results and
-  fixes applied.
+- **Audit findings:** [audit_deep_findings.md](audit_deep_findings.md) — the authoritative deep
+  audit (61 findings, 4 high-severity).
 - **Feature specs:** [features/](features/) — one doc per feature.
 
 ## How to use it
@@ -18,7 +18,7 @@ public APIs once a feature is implemented.
 - **Track:** each feature doc has a `Status:` header (`planned` → `in-progress` → `done` /
   `blocked`). The status table below mirrors it; update both together.
 - **Audit:** before marking a feature `done`, re-run the [checklist](audit_checklist.md) and
-  resolve every non-`n/a` `warn`. Log results in [audit_findings.md](audit_findings.md).
+  resolve every non-`n/a` `warn`. Log results in [audit_deep_findings.md](audit_deep_findings.md).
 - **Scope a change:** amend [decisions.md](decisions.md) first, then the affected feature docs,
   then this table.
 
