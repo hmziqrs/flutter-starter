@@ -47,7 +47,7 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
 
 - **Production default = `InMemoryFeatureFlagsSource`** — returns `FeatureFlags.defaults()`,
   runs green with zero backend, emits no changes. The default never claims a flag is enabled
-  when the baseline says disabled (the [honest-feedback guardrail](../audit_checklist.md#13--honest-feedback-no-faked-success)
+  when the baseline says disabled (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
   is satisfied because flags have no user-facing success state).
 - **Optional real impl** — `RemoteConfigFeatureFlagsSource` wraps Firebase Remote Config /
   GrowthBook / LaunchDarkly, constructed in `AppDependencies.production` only when the

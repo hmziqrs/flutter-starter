@@ -5,20 +5,19 @@ fully-featured cross-platform product. This directory is the **intake + tracking
 [`plans/feature_contracts.md`](../../plans/feature_contracts.md) remains the freeze layer for
 public APIs once a feature is implemented.
 
-- **Decisions:** [decisions.md](decisions.md) — scope, backend stance, the minimal test server,
-  port reuse, redirect pattern.
-- **Audit checklist:** [audit_checklist.md](audit_checklist.md) — the guardrails every feature
-  must pass.
-- **Audit findings:** [audit_deep_findings.md](audit_deep_findings.md) — the authoritative deep
-  audit (61 findings, 4 high-severity).
-- **Feature specs:** [features/](features/) — one doc per feature.
+- **Decisions & checklist:** [decisions.md](decisions.md) — the locked decisions (scope, backend
+  stance, test server, port reuse, redirect pattern) **and** the guardrail checklist every feature
+  must pass before `done`. This is the single rules document; read it alongside the feature spec.
+- **Feature specs:** [features/](features/) — one doc per feature, each self-contained with its own
+  inline `## Audit` block.
 
 ## How to use it
 
 - **Track:** each feature doc has a `Status:` header (`planned` → `in-progress` → `done` /
   `blocked`). The status table below mirrors it; update both together.
-- **Audit:** before marking a feature `done`, re-run the [checklist](audit_checklist.md) and
-  resolve every non-`n/a` `warn`. Log results in [audit_deep_findings.md](audit_deep_findings.md).
+- **Audit:** before marking a feature `done`, re-run the checklist in [decisions.md](decisions.md)
+  and resolve every non-`n/a` `warn`; record the verdict in the feature spec's own inline `## Audit`
+  block.
 - **Scope a change:** amend [decisions.md](decisions.md) first, then the affected feature docs,
   then this table.
 

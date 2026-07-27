@@ -44,7 +44,7 @@ it writes to the OS keychain/keystore, not a server. There is no Noop default an
 success: every operation either returns the stored value (or `null`) or throws
 `SecureStoreException`. The `InMemorySecureStore` is a **test fake only**, never constructed in
 production code paths (the
-[honest-feedback guardrail](../audit_checklist.md#13--honest-feedback-no-faked-success)).
+[honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)).
 
 Configure platform options once in the prod impl: `AndroidOptions(encryptedSharedPreferences:
 true)`, `IOSOptions(accessibility: KeychainAccessibility.first_unlock)`, and the macOS

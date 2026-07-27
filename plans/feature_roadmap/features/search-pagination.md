@@ -91,7 +91,7 @@ constructed in `AppDependencies` only when a consumer wires a source;
   [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) gives
   Escape-to-dismiss.
 - **Root composition edits.** New `AppRoutes` search constants + the `app_router.dart` `GoRoute`
-  are the only composition-root touches ([checklist #4](../audit_checklist.md#4--composition-root-confined));
+  are the only composition-root touches ([checklist #4](../decisions.md#4--composition-root-confined));
   no providers are wired outside `AppDependencies` + the `ProviderScope`.
 - **Reject `infinite_scroll_pagination`.** It assumes a repository and a backend, breaking the
   no-backend port shape. The hand-rolled `PagedStateNotifier` + `PageFetcher` port preserves it.

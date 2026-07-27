@@ -50,7 +50,7 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 
 - **Production default = `NoopCrashReporter`** — runs green with zero backend, swallows errors
   silently after `AppLogger.error` has already logged them locally. It does **not** fake
-  upload success (the [honest-feedback guardrail](../audit_checklist.md#13--honest-feedback-no-faked-success)
+  upload success (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
   is satisfied trivially because crash ingest has no user-facing success state).
 - **Optional real impl** — `SentryCrashReporter` (or `FirebaseCrashReporter`) constructed in
   `AppDependencies.production` **only** when `AppConfig` exposes a DSN. The consumer flips one

@@ -59,7 +59,7 @@ empty/error state-view ([state-views.md](state-views.md)).
 - [x] No-backend honored as a port — **n/a** (backend-free; driven by the `isLoading` flag)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`, peer of state-views)
 - [ ] shared/widgets extraction ≥3 consumers — **warn** (no concrete consumer today; reach the threshold by adopting on home + pricing + profile load states together, else defer)
-- [x] Motion guarded — **pass** (shimmer guarded by `disableAnimationsOf` + a static fallback that still lays out; the hand-rolled FSkeleton path sources its shimmer duration/curve from `AppMotion` tokens — skeletonizer's timing is package-owned and exempt; critical — [checklist #5](../audit_checklist.md#5--motion-guarded) names skeleton shimmer explicitly)
+- [x] Motion guarded — **pass** (shimmer guarded by `disableAnimationsOf` + a static fallback that still lays out; the hand-rolled FSkeleton path sources its shimmer duration/curve from `AppMotion` tokens — skeletonizer's timing is package-owned and exempt; critical — [checklist #5](../decisions.md#5--motion-guarded) names skeleton shimmer explicitly)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
 - [x] Strict-analysis clean — **pass** (typed style, no `dynamic`)
@@ -68,7 +68,7 @@ empty/error state-view ([state-views.md](state-views.md)).
 
 ## Risks / notes
 
-- **Motion guardrail is load-bearing here.** [Audit checklist #5](../audit_checklist.md#5--motion-guarded)
+- **Motion guardrail is load-bearing here.** [Audit checklist #5](../decisions.md#5--motion-guarded)
   names skeleton shimmer directly: the animated path MUST have a `disableAnimationsOf` check
   plus a non-animated fallback; goldens run against the static path.
 - **Depends on state-views.** Sequence after [state-views.md](state-views.md) — the skeleton is

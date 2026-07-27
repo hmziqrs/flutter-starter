@@ -63,7 +63,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 
 - **Production default = `NoopAnalyticsClient`** — runs green with zero backend, drops events
   silently after routing them through `AppLogger` for verbose dev inspection. Never fakes
-  upload success (the [honest-feedback guardrail](../audit_checklist.md#13--honest-feedback-no-faked-success)
+  upload success (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
   is satisfied because analytics has no user-facing success state).
 - **Optional real impl** — `PosthogAnalyticsClient` (or Amplitude/Firebase/Mixpanel) constructed
   in `AppDependencies.production` only when (a) the consumer wires credentials AND (b) the user

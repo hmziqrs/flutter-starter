@@ -77,7 +77,7 @@ state; the action's outcome still surfaces `common.notConnected` when there is n
 
 - **Never gate navigation on the spinner.** Under reduce-motion and in test pumps the action
   must still call its `onResult` / `goNamed` — never wait on animation completion
-  ([audit checklist #5](../audit_checklist.md#5--motion-guarded)). Tests use `pumpAppFrames`.
+  ([audit checklist #5](../decisions.md#5--motion-guarded)). Tests use `pumpAppFrames`.
 - **Do not fork a progress primitive.** `FCircularProgress` / `FDeterminateProgress` are the
   ForUI primitives — [`update_profile_page.dart:509`](../../lib/features/profile/update_profile_page.dart)
   already proves the API. (Research noted "zero usages"; there is exactly one.) Do not introduce

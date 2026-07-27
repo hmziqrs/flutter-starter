@@ -57,7 +57,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 - **Production default = `InMemoryAuthRepository`** — runs green with zero backend. `login`
   succeeds with a synthetic session **only** when seeded; otherwise it surfaces
   `common.notConnected` and never fakes success (the
-  [honest-feedback guardrail](../audit_checklist.md#13--honest-feedback-no-faked-success)).
+  [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)).
   `logout` clears the in-memory and persisted refresh token.
 - **Optional real impl** — constructed in `AppDependencies.production` only when the consumer
   provides an endpoint; never by default. Same override shape as the optional real
