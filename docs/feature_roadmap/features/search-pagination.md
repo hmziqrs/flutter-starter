@@ -19,16 +19,16 @@ one spec because they share the content-scale primitives (`DataListView`, shared
     (`Future<PagedResult<T>> Function(T? cursor)`); `PagedStateNotifierBase<T>` injects the
     fetcher. Per the SettingsStore discipline, the fetcher is a typed port — never a concrete
     service in a widget.
-- **Providers:** `debouncedQueryProvider` (handwritten `NotifierProvider`, overridden at the
-  `ProviderScope` exactly like `settingsRepositoryProvider`); a `pagedStateProvider` family
-  keyed by fetcher.
+- **Providers:** `debouncedQueryProvider` (handwritten NotifierProvider, self-contained — no
+  production override; override only in tests via FakeAsync/provider override); a
+  `pagedStateProvider` family keyed by fetcher.
 - **Routes:** paired `AppRoutes.searchName` / `AppRoutes.searchPath` constants in
   [`lib/app/routing/app_routes.dart`](../../lib/app/routing/app_routes.dart); a **top-level**
   `GoRoute` in [`app_router.dart`](../../lib/app/routing/app_router.dart) (full-screen flows live
   top-level, not inside the `ShellRoute`). No redirect.
 - **Files:**
   - add `lib/shared/widgets/search/search_field.dart` — themed `TextField` / `SearchBar`
-  - add `lib/shared/search/debounced_query_controller.dart` — handwritten Riverpod
+  - add `lib/features/search/debounced_query_controller.dart` — handwritten Riverpod (feature-local, matching the `settings_controller.dart` precedent; not a new `lib/shared/search/` bucket)
   - add `lib/features/search/search_page.dart` + `lib/features/search/search_view_data.dart`
     (page + typed view-data trio)
   - add `lib/shared/state/paged_state.dart` + `lib/shared/state/paged_state_notifier.dart`
@@ -36,8 +36,9 @@ one spec because they share the content-scale primitives (`DataListView`, shared
     [pull-refresh.md](pull-refresh.md)
   - edit `lib/app/routing/app_routes.dart` + `app_router.dart` — search route (**root composition
     edits**, checklist #4 — the only composition-root touches)
-  - add `test/shared/search/debounced_query_controller_test.dart` +
-    `test/shared/state/paged_state_notifier_test.dart`
+  - add `test/features/search/debounced_query_controller_test.dart` +
+    `test/shared/state/paged_state_notifier_test.dart` +
+    `test/shared/widgets/lists/paged_list_view_test.dart`
 - **Dependencies:** none (hand-rolled). `infinite_scroll_pagination ^4.1.0` is **explicitly
   rejected** — it assumes a repository and fights the no-backend port shape.
 
@@ -72,7 +73,7 @@ constructed in `AppDependencies` only when a consumer wires a source;
 ## Audit
 
 - [x] No-backend honored as a port — **pass** (`PageFetcher<T>` port; Noop default surfaces `notConnected`, never fakes pages; search matches local data)
-- [x] Feature-first ownership — **pass** (search feature under `lib/features/search/`; shared primitives under `lib/shared/{search,state,widgets/lists/}`)
+- [x] Feature-first ownership — **pass** (search feature under `lib/features/search/`, including the feature-local `debounced_query_controller.dart`; shared primitives under `lib/shared/{state,widgets/lists/}`)
 - [ ] shared/widgets extraction ≥3 consumers — **warn** (`search_field` / `paged_list` have one concrete consumer today; clear the bar by reusing on home/settings/search, or defer)
 - [x] Motion guarded — **pass** (no custom animation; route transition uses `nativePageTransitionsTheme`; scroll-triggered `loadNext` is not animation-gated)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**

@@ -1,6 +1,6 @@
 # Push notifications
 
-> **Tier:** P2 · **Domain:** engagement · **Backend:** test-server · **Status:** planned · **Depends on:** settings, lifecycle-observer, secure-store
+> **Tier:** P2 · **Domain:** engagement · **Backend:** test-server · **Status:** planned · **Depends on:** settings
 
 ## Summary
 
@@ -64,9 +64,9 @@ fakes success.
   [D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server) known limitation). The
   [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
   Dart server therefore implements **only the token-registration/permission path**:
-  - `POST /notifications/register-token` `{token, platform, deviceId}` -> `204` (idempotent store)
-  - `DELETE /notifications/register-token/{token}` -> `204`
-  - `POST /notifications/permission-revoked` `{deviceId}` -> `204`
+  - `POST /v1/notifications/register-token` `{token, platform, deviceId}` -> `204` (idempotent store)
+  - `DELETE /v1/notifications/register-token/{token}` -> `204`
+  - `POST /v1/notifications/permission-revoked` `{deviceId}` -> `204`
   Integration tests start the server on a random port and point a thin
   `HttpNotificationsRegistrationClient` (real impl, constructed only in the test/dev graph) at
   it; the foreground-message rendering path is covered by `flutter_local_notifications` + a fake
@@ -137,8 +137,11 @@ fakes success.
 - **Logs auto-redact.** Token/permission flows go through
   [`AppLogger`](../../../lib/infrastructure/logging/app_logger.dart) with structured context;
   never pre-redact — the [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart) scrubs tokens by pattern.
-- **Web/desktop skipped** via [`PlatformCapabilities`](../../../lib/infrastructure/platform/platform_capabilities.dart)
-  (`isWeb`/`supportsFileSystem`); the Noop default is selected there regardless of override.
+- **Web/desktop skipped** via [`PlatformCapabilities`](../../../lib/infrastructure/platform/platform_capabilities.dart):
+  select the Noop default whenever `platform` is **not** `ios` or `android` (`firebase_messaging`
+  has no desktop/web support). `isWeb`/`supportsFileSystem` alone are insufficient —
+  `supportsFileSystem = !isWeb` is true on every native platform and cannot distinguish desktop
+  from mobile.
 - **Not a backend for other features.** Unlike [`ConnectivityService`](connectivity.md) or the
   remote-config family, the notifications port has a single reader; do not generalize it into a
   messaging bus.

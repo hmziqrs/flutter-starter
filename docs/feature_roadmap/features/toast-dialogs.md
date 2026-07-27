@@ -67,7 +67,7 @@ confirmation dialog — never a success toast for an action that did not succeed
 
 - [x] No-backend honored as a port — **n/a** (backend-free; `notConnected` surfaced via the error toast, never success for a no-backend action)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/feedback/`, peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [x] shared/widgets extraction ≥3 consumers — **pass** (`app_router.dart` `_showInformationDialog` ×10+, `register_page`, `update_profile_page`, dev-gallery fixtures = well over three)
+- [x] shared/widgets extraction ≥3 consumers — **pass** (verified consumers served by the proposed API: `register_page` discard → `destroy`, `update_profile_page` discard → `destroy`, `system_overlay_fixture` `showFToast` → toast, dev-gallery `PreviewFrame` fixtures = four. The `_showInformationDialog` call sites in `app_router.dart` are single-button informational dialogs the `ConfirmationIntent{confirm,destroy}` API cannot serve; that refactor stays in Files as opportunistic and is not counted toward the threshold.)
 - [x] Motion guarded — **pass** (toast/dialog enter-exit is ForUI-native; any custom transition uses `AppMotion` + `disableAnimationsOf` + a fallback that completes the dismiss)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`common.confirm` / `success` / `discard` / `error` added to three locales)

@@ -125,5 +125,5 @@ decisions, not empty interfaces").
   a future "outage" announcement wants to auto-derive from connectivity, read the
   [`connectivity`](connectivity.md) provider inside the controller rather than duplicating the
   sensor.
-- **Sequencing.** No upstream dependency beyond [`settings`](../README.md); ship in the pure-UI
-  P1 wave. It forces a golden re-baseline alongside `state-views` and `onboarding-gate`.
+- **Sequencing.** No upstream dependency beyond [`settings`](../README.md); ship in a later
+  pure-UI wave. It forces its own golden re-baseline.

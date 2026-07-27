@@ -57,6 +57,6 @@ On-device fingerprint / Face ID / device-credential authentication used to gate 
 ## Risks / notes
 
 - **Sequencing:** the `biometricUnlockEnabled` flag is persisted via `SettingsStore` (plaintext) — fine for a boolean toggle, but if the toggle itself must be tamper-resistant route it through `SecureStore` ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)) instead. Decide before freezing the contract.
-- **Redirect reuse:** this is the **third** reader of the [D5 redirect helper](../decisions.md#d5--one-go_router-redirect-pattern-reused) (after update-blocker + session). Coordinate the redirect predicate merge order so it composes (the session check short-circuits before `locked`).
+- **Redirect reuse:** this is the **third** reader of the [D5 redirect helper](../decisions.md#d5--one-go_router-redirect-pattern-reused) (after onboarding-gate + session). Coordinate the redirect predicate merge order so it composes (the session check short-circuits before `locked`).
 - **Platform divergence:** `local_auth` throws on desktop without Keychain setup; `NoopBiometricAuthenticator` is the safety net keyed off `PlatformCapabilities`, not a try/catch at call sites.
 - **Pairs with [pin-autolock](pin-autolock.md):** when biometric is unavailable the lock page falls through to the PIN entry screen; build the handoff seam even if PIN ships later.

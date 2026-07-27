@@ -10,6 +10,15 @@ implementer.
 **After post-audit resolutions:** **31 pass · 4 designated (rule-compliant) · 0 warn · 0 fail** —
 see [Resolutions](#resolutions-post-audit).
 
+> **⚠️ Superseded for per-feature verdicts by [`audit_deep_findings.md`](audit_deep_findings.md).**
+> A subsequent independent deep re-audit of all 35 specs against the checklist found **61 further
+> defects** (4 high-severity contract breaks, 21 medium, 36 low) that this original pass missed —
+> including a false "router has no redirect" premise in D5, D4/D9 cross-doc drift, and several
+> over-claimed `pass` verdicts. The summary table and cells below are the **original** audit pass
+> (cells touched by the deep audit are annotated inline); treat `audit_deep_findings.md` as
+> authoritative for current per-feature status, and `decisions.md` D3/D4/D5/D9 for the corrected
+> cross-cutting contracts.
+
 The spec set is unusually disciplined: every backend feature ships the full D2 four-part contract
 (port + Noop/InMemory default + optional override + `tools/test_server/` route), no widget calls a
 plugin directly, no `core/`/`utils/` buckets are proposed, and no generated file is hand-edited. The
@@ -25,11 +34,11 @@ that the docs already flag honestly — they are left to the implementer, not au
 | [secure-store](features/secure-store.md) | **fixed** | Corrected `encruptedSharedPreferences` typo (→ `encryptedSharedPreferences`, ×2). |
 | [crash-reporting](features/crash-reporting.md) | pass | Noop + test-server `/v1/crashes` + existing `_installErrorHandlers` seam; honest. |
 | [connectivity](features/connectivity.md) | pass | Owns the shared `ConnectivityService`; banner mounted in `app.dart` builder; motion guarded incl. banner enter/exit (offline↔online). |
-| [onboarding-gate](features/onboarding-gate.md) | pass | Reuses `SettingsStore`; candidate to establish the D5 redirect; no new port. |
+| [onboarding-gate](features/onboarding-gate.md) | pass | Reuses `SettingsStore`; composes into the existing `_redirectSettingsDeepLinks` redirect (reads live state — no captured-bool loop); no new port. *(deep audit: redirect-loop/polarity/scope fixed)* |
 | [native-splash](features/native-splash.md) | pass | Pure codegen, correctly bypasses `lib/`; brand assets tracked as release blocker. |
 | [state-views](features/state-views.md) | **warn** | Shared `lib/shared/widgets/states/` with only 1 concrete consumer today (D1 vs checklist #3). |
-| [busy-indicators](features/busy-indicators.md) | pass | ≥3 real consumers (auth `isSubmitting` ×5 + profile); ForUI primitive adoption. |
-| [form-scaffolding](features/form-scaffolding.md) | pass | 5 existing auth consumers; byte-for-byte move behind a re-export facade. |
+| [busy-indicators](features/busy-indicators.md) | pass | ≥3 real consumers (auth `*_PresentationStatus.submitting` ×5 + profile `_isSaving`); ForUI primitive adoption. *(deep audit: pricing was a false consumer; `isSubmitting` symbol corrected)* |
+| [form-scaffolding](features/form-scaffolding.md) | pass | 5 existing auth consumers; rename behind an **aliasing facade** (typedef + aliases, not a `export`). *(deep audit: re-export→aliasing)* |
 | [biometric](features/biometric.md) | pass | Port + Noop-unavailable default; entitlements flagged; third D5 redirect reader. |
 | [session](features/session.md) | **fixed** | Corrected "establishes the first redirect" → reuses D5 helper (per sequencing + D5). |
 | [log-redaction](features/log-redaction.md) | pass | Deepens the existing single choke point; conservative PAN pattern + negative test. |
@@ -37,21 +46,21 @@ that the docs already flag honestly — they are left to the implementer, not au
 | [feature-flags](features/feature-flags.md) | **fixed** | Reconciled Audit/Files inconsistency on the remote-config port location. |
 | [announcements](features/announcements.md) | pass | Backend-free fixtures; banner feature-local (correctly declined `shared/`). |
 | [in-app-splash](features/in-app-splash.md) | pass | Motion guard + no-nav-on-animation are load-bearing; reuses `createApplication` init. |
-| [update-blocker](features/update-blocker.md) | pass | Full D2 contract; candidate D5 redirect owner; shares remote-config backend. |
+| [update-blocker](features/update-blocker.md) | pass | Full D2 contract; composes into the existing `_redirectSettingsDeepLinks` redirect; shares remote-config backend. *(deep audit: redirect framing fixed)* |
 | [skeleton](features/skeleton.md) | **warn** | Shared skeleton primitives with no concrete consumer today (D1 vs checklist #3). |
 | [pull-refresh](features/pull-refresh.md) | **warn** | Shared refresh/list primitives with only `home` as concrete consumer today. |
-| [mfa-otp](features/mfa-otp.md) | pass | Deepens existing OTP screen; port + InMemory + `/otp/*` contract; `FakeAsync` determinism. |
+| [mfa-otp](features/mfa-otp.md) | pass | Deepens existing OTP screen; port + InMemory + `/v1/otp/*` contract; `FakeAsync` determinism. |
 | [auth-ratelimit](features/auth-ratelimit.md) | pass | 3 consumers (login/OTP/PIN); honestly documented as UX-only, not a security control. |
-| [push-notifications](features/push-notifications.md) | pass | Noop denies honestly; entitlement-heavy (flagged); test-server covers token path only (D3). |
+| [push-notifications](features/push-notifications.md) | pass | Noop denies honestly; desktop/web gated on `platform` (iOS/Android), not `isWeb`; entitlement-heavy (flagged); test-server covers token path only (D3). |
 | [system-ui](features/system-ui.md) | pass | `SystemChrome` config; API-35 `values-v35` flagged; exhaustive `AppAccent` switch. |
 | [haptics](features/haptics.md) | pass | Port + disableMotion parity; `hapticsEnabled` correctly on `SettingsState`/`SettingsStore`. |
 | [a11y-presets](features/a11y-presets.md) | pass | Extends `SettingsState` correctly; `labeled_control.dart` self-gated behind ≥3 consumers. |
-| [deep-linking](features/deep-linking.md) | pass | Host allowlist from compile-time config; associated-domains/autoVerify flagged. |
-| [permissions-media](features/permissions-media.md) | pass | Two ports, Noop defaults surface denied/unavailable honestly; rationale sheet ≥4 kinds. |
+| [deep-linking](features/deep-linking.md) | pass | Host allowlist from compile-time config; `AppLinks` reached via a `DeepLinkService` port (not from a widget); associated-domains/autoVerify flagged. *(deep audit: plugin-in-widget fixed)* |
+| [permissions-media](features/permissions-media.md) | **warn** | Two ports, Noop defaults surface denied/unavailable honestly; rationale sheet demoted feature-local (no ≥3 consumers yet); notifications owned by push. *(deep audit: kinds-count + native-Risks fixed)* |
 | [license-share-update](features/license-share-update.md) | pass | Bundle of 3; Noops honest; single update-gate reused (not duplicated). |
 | [state-restoration](features/state-restoration.md) | pass | Framework mechanism; last-route defers to redirect chain precedence. |
 | [search-pagination](features/search-pagination.md) | **warn** | Shared search/paged primitives with one concrete consumer today; rejects `infinite_scroll_pagination`. |
-| [toast-dialogs](features/toast-dialogs.md) | pass | ≥3 consumers (`_showInformationDialog` ×10+); wraps, does not fork, `FToaster`/`FDialog`. |
+| [toast-dialogs](features/toast-dialogs.md) | pass | ≥3 concrete consumers (register/profile discard→destroy, system_overlay toast); wraps, does not fork, `FToaster`/`FDialog`. *(deep audit: consumer evidence re-justified)* |
 | [pin-autolock](features/pin-autolock.md) | pass | Salted hash via SecureStore; reuses `AttemptTracker`; 4th D5 redirect reader. |
 | [feedback](features/feedback.md) | pass | Noop returns `unavailable`; shake detector correctly kept feature-local. |
 | [ab-experiments](features/ab-experiments.md) | pass | Shares remote-config family; deterministic default is honest local assignment (not faked remote). |
@@ -217,14 +226,14 @@ duplicate proposed (`connectivityStatusProvider` in offline-cache) was removed d
 | Shared surface | Owner (builds it) | Readers (consume it) | Notes |
 |---|---|---|---|
 | `ConnectivityService` | [connectivity](features/connectivity.md) → `lib/infrastructure/connectivity/` | connectivity banner; [offline-cache](features/offline-cache.md) (`cachedFutureProvider`); ab-experiments remote-source offline-degrade | `connectivityStatusProvider` lives with connectivity; offline-cache was re-pointed at it (see Fixed #5). |
-| Remote-config backend family | [feature-flags](features/feature-flags.md) → `lib/infrastructure/feature_flags/` (optional real impl) | [feature-flags](features/feature-flags.md) (`FeatureFlagsSource`); [update-blocker](features/update-blocker.md) (`VersionGateStore`); [ab-experiments](features/ab-experiments.md) (`ExperimentSource`) | Three typed ports + three InMemory defaults over **one** optional backend (D4). Test-server endpoint shape still inconsistent — see Open question #2. |
+| Remote-config backend family | [feature-flags](features/feature-flags.md) → `lib/infrastructure/remote_config/` (optional real impl) | [feature-flags](features/feature-flags.md) (`FeatureFlagsSource`); [update-blocker](features/update-blocker.md) (`VersionGateStore`); [ab-experiments](features/ab-experiments.md) (`ExperimentSource`) | Three typed ports + three InMemory defaults over **one** optional backend (D4). Test-server endpoint shape still inconsistent — see Open question #2. |
 | `SecureStore` | [secure-store](features/secure-store.md) → `lib/infrastructure/secure_storage/` | [session](features/session.md) (refresh token); [pin-autolock](features/pin-autolock.md) (PIN salt+hash); [biometric](features/biometric.md) (enable flag if tamper-resistant); [analytics](features/analytics.md) (opt-in); [mfa-otp](features/mfa-otp.md) (recovery codes, optional TOTP) | Single secrets port; no per-feature secure stores. `analyticsOptIn` moved here off `SettingsState` (see Fixed #3). |
 | `CrashReporter` | [crash-reporting](features/crash-reporting.md) → `lib/infrastructure/error_reporting/` | [`_installErrorHandlers`](../../lib/bootstrap.dart) (alongside `AppLogger.error`) | Plugs into the existing bootstrap seam; Noop default. |
 | `AnalyticsClient` | [analytics](features/analytics.md) → `lib/infrastructure/analytics/` | `GoRouter` `observers:` (screen views) + a handful of CTA call sites | Plugs into the existing router-observer seam; Noop default. |
 | `go_router` redirect helper ([D5](decisions.md#d5--one-go_router-redirect-pattern-reused)) | [update-blocker](features/update-blocker.md) or [onboarding-gate](features/onboarding-gate.md) establishes it | update-blocker → onboarding-gate → [session](features/session.md) → [biometric](features/biometric.md) → [pin-autolock](features/pin-autolock.md) (documented precedence) | One helper, composed predicates. session's "establishes" claim corrected (see Fixed #2). |
 | `AttemptTracker` | [auth-ratelimit](features/auth-ratelimit.md) → `lib/features/auth/` | login; [mfa-otp](features/mfa-otp.md) OTP; [pin-autolock](features/pin-autolock.md) | 3 consumers; pure-Dart, feature-local (no `shared/` bucket needed). |
 | `AppLinkHandler` | [deep-linking](features/deep-linking.md) → `lib/app/routing/` | future referral; mfa-otp magic-link (conditional — only if a magic-link flow is added; mfa-otp does not document one today); push-notifications tap (resolves via `context.pushNamed` + `AppRoutes` helpers today, not `AppLinkHandler`) | Inbound-routing primitive; host allowlist from compile-time config. Readers conditional/future — re-audit when magic-link or tap indirection lands. |
-| `SettingsStore` (existing) | settings → `lib/features/settings/` | onboarding-gate, announcements, haptics, a11y-presets, pin-autolock (config only), push-notifications (token/perm), state-restoration (last-route), feedback (draft), ab-experiments (stable id) | Pre-existing port; new features extend `SettingsState` + `persistedKeys` correctly. ([auth-ratelimit](features/auth-ratelimit.md) deliberately uses `SecureStore`, not `SettingsStore`, so a user cannot clear a lockout by clearing prefs.) |
+| `SettingsStore` (existing) | settings → `lib/features/settings/` | onboarding-gate, announcements, haptics, a11y-presets, pin-autolock (config only), push-notifications (token/perm), state-restoration (last-route), update-blocker (soft snooze), feedback (draft), ab-experiments (stable id) | Pre-existing port; new features extend `SettingsState` + `persistedKeys` correctly. ([auth-ratelimit](features/auth-ratelimit.md) deliberately uses `SecureStore`, not `SettingsStore`, so a user cannot clear a lockout by clearing prefs.) |
 
 ### Re-verification of the twelve guardrails (whole-set view)
 
@@ -284,7 +293,9 @@ An independent re-audit of this file against the feature docs, `decisions.md`, a
 6. **Route-prefix drift** — [mfa-otp](features/mfa-otp.md), [feedback](features/feedback.md), and
    [offline-cache](features/offline-cache.md) documented un-prefixed `/otp/*`, `/feedback`,
    `/cache/*` test-server routes, contradicting [D9](decisions.md#d9--test-server-route-conventions)'s
-   uniform `/v1/` prefix (which lists these groups WITH the prefix). Added `/v1/` to all six routes.
+   uniform `/v1/` prefix (which lists these groups WITH the prefix). Added `/v1/` to all six routes;
+   the deep audit also prefixed push's `/notifications/*` and reconciled the D9 route table
+   (`resend`, dropped `PUT`, push enumeration, D3 `logout`).
 
 Plus one minor consistency fix: [features/session.md](features/session.md) Files line still said
 session adds the "first `redirect:` helper" — a leftover from Fixed #2; rewritten to "reuse the D5

@@ -36,10 +36,11 @@ local source.
   - `lib/features/experiments/experiments_controller.dart`
   - `lib/features/experiments/deterministic_experiment_source.dart` (production default)
   - `test/features/experiments/experiments_controller_test.dart`
-  - **shared port touchpoint (flagged):** coordinates with
-    `lib/features/feature_flags/feature_flags_source.dart` (the remote-config port family owner;
-    see [`feature-flags`](feature-flags.md)). If that port does not yet exist, introduce the
-    shared source here and have feature-flags adopt it — build **one** family, not two.
+  - **shared backend adapter (flagged):** experiments owns its own `ExperimentSource` typed port
+    (above); the only shared piece is the optional real-impl adapter under
+    `lib/infrastructure/remote_config/` per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)
+    (one backend, three peer typed ports — `FeatureFlagsSource` / `VersionGateStore` /
+    `ExperimentSource`; no feature "owns" the family and no shared interface is introduced).
   - **root-composition edits (flagged):** [`lib/app/dependencies.dart`](../../../lib/app/dependencies.dart)
     (`AppDependencies.production` wires `DeterministicExperimentSource`),
     [`lib/app/app.dart`](../../../lib/app/app.dart) (`ProviderScope` override).

@@ -86,8 +86,10 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 - **Integration:** start `tools/test_server/`, override `analyticsClientProvider` with the
   real impl pointed at it, navigate via `context.goNamed`, assert the server recorded a
   `screen_view` per navigation. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
-- **Golden impact:** none.
-- **Dev-gallery fixture:** n/a (no UI). Add a row on
+- **Golden impact:** `settings_800x1000_zh_light_language` shifts — re-baseline on the pinned
+  macOS runner (the SettingsPage opt-in toggle alters a matrix case).
+- **Dev-gallery fixture:** extend the existing `settings.language` case (or add
+  `settings.analytics`). Add a row on
   [`DiagnosticsPage`](../../../lib/app/diagnostics/diagnostics_page.dart) showing
   client-backend status (`noop` vs configured endpoint) read-only, gated by
   `developmentToolsEnabled`.
@@ -117,7 +119,8 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   `state.name` / `state.uri.path`).
 - [x] **Native entitlements flagged in PR + CI platform jobs** — n/a: no plugin beyond the
   optional analytics SDK whose own native config the consumer wires.
-- [x] **Golden re-baseline noted on pinned macOS runner** — n/a: no visual change.
+- [ ] **Golden re-baseline noted on pinned macOS runner** — warn: `settings_800x1000_zh_light_language`
+  shifts from the SettingsPage opt-in toggle; re-baseline on the pinned macOS runner.
 
 ## Risks / notes
 
@@ -125,7 +128,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   screen views come from a single `GoRouter` `observers:` entry — no per-page edits. Adding a
   `track(...)` call inside a widget is the exception (funnel steps on a CTA), not the rule.
 - **PII discipline.** Every event flows through `AppLogger` so
-  [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.md) scrubs tokens/emails
+  [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart) scrubs tokens/emails
   before they reach the network — **never** pre-redact (the redactor is the single choke point)
   and never include `userId` as raw email/phone. Treat the analytics SDK's own payload with
   the same suspicion as a log line.
@@ -138,4 +141,5 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   state. The client is read by the route observer and a handful of call sites, not by widgets.
 - **Sequencing:** depends on [`secure-store`](secure-store.md) for the opt-in key. Ship in the
   P1 "one port per pattern" bundle alongside [`session`](session.md) and
-  [`feature-flags`](feature-flags.md). No UI, no golden impact.
+  [`feature-flags`](feature-flags.md). Only UI is the SettingsPage opt-in toggle; flag the
+  settings matrix case.

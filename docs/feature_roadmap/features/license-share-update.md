@@ -13,14 +13,16 @@ diagnostics-page dev triggers and the `AppBuildInfo`/settings touchpoints.
 - **Ports / value objects:**
   - **License:** no port — `showLicensePage` reads Flutter's local license registry directly. Fed by
     [`AppBuildInfo`](../../lib/infrastructure/platform/app_build_info.dart) (version/buildNumber,
-    already a dep) for `applicationVersion`/`applicationIcon`.
+    already a dep) for `applicationVersion`; `applicationIcon` is omitted or supplied from a bundled
+    asset (`AppBuildInfo` has no icon field).
   - **Share:** `ShareService` abstract interface — `shareText(String)`,
-    `shareFiles(List<PickedMedia>)` → `ShareResult`. Typed `ShareResult` (`success`, `unavailable`,
+    `shareFiles(List<XFile>)` → `ShareResult`. Typed `ShareResult` (`success`, `unavailable`,
     `cancelled`). Mirrors the [`SettingsStore`](../../lib/features/settings/settings_store.dart) port
-    discipline.
+    discipline. `List<XFile>` matches `share_plus`'s native `shareXFiles` API, keeping the feature
+    self-contained (no dependency on the unlanded `permissions-media` `PickedMedia` type).
   - **Updates:** `AppUpdateService` abstract interface — `checkForUpdate()` → `UpdateAvailability`
     (`noUpdate`, `available`, `required`), `performUpdate({bool immediate})`. Built from
-    `AppBuildInfo` for the iOS App Store URL.
+    `AppBuildInfo` (version) + compile-time `AppConfig` (iOS Apple ID) for the iOS App Store URL.
 - **Providers:** `shareServiceProvider` and `appUpdateServiceProvider` — handwritten
   `Provider<...>` overridden at the App `ProviderScope`.
 - **Routes:** add `aboutLicense` / `/settings/about/license` (paired name+path; in-shell under the
@@ -37,7 +39,11 @@ diagnostics-page dev triggers and the `AppBuildInfo`/settings touchpoints.
   - `lib/infrastructure/updates/android_app_update_service.dart` — **add**; prod (`in_app_update`,
     Play).
   - `lib/infrastructure/updates/ios_app_update_service.dart` — **add**; prod (`url_launcher` → App
-    Store URL from `AppBuildInfo`).
+    Store URL from `AppBuildInfo` version + `AppConfig` iOS Apple ID).
+  - `lib/app/config/app_config.dart` — **edit**; add `iosAppleId` field (read from `IOS_APPLE_ID`
+    define).
+  - `config/development.json` / `config/staging.json` / `config/production.json` — **edit**; add
+    `IOS_APPLE_ID` (compile-time, not a secret).
   - `lib/infrastructure/updates/noop_app_update_service.dart` — **add**; hermetic — returns
     `noUpdate` (never fakes an available update).
   - `lib/app/routing/app_routes.dart` — **edit**; `aboutLicense`/`Path` constants.
@@ -45,8 +51,9 @@ diagnostics-page dev triggers and the `AppBuildInfo`/settings touchpoints.
   - `lib/features/settings/settings_page.dart` — **edit**; "About" tile → license page.
   - `lib/app/diagnostics/diagnostics_page.dart` — **edit**; dev triggers for share + update.
   - `lib/app/dependencies.dart` + `lib/app/app.dart` — **edit (root composition)**; overrides.
-- **Dependencies:** `in_app_update`, `url_launcher` (new); `share_plus` and `package_info_plus` are
-  already transitive in `pubspec.lock` — verify version compatibility, do not re-add.
+- **Dependencies:** `in_app_update`, `url_launcher` (new); `share_plus` is already transitive in
+  `pubspec.lock` and `package_info_plus` is already a direct main dependency — verify version
+  compatibility, do not re-add either.
 
 ## Backend & test surface
 Backend-free. License = local Flutter registry. Share = OS sheet. Updates = OS store API (Android

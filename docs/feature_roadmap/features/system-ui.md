@@ -27,7 +27,8 @@ devices. Pure presentation/config — no backend, no new dependency (built-in `S
     are already computed) call `SystemUiController.applyOverlayStyle(...)` so the style tracks theme
     + accent changes. Gate desktop/web to no-ops via `PlatformCapabilities`.
   - `lib/shared/theme/forui_theme_factory.dart` — **edit**; expose the overlay style alongside the
-    existing `build(brightness, accent, touch)` (accent color is already resolved here).
+    existing `build({brightness, accent, fontScale, interactionPolicy, responsiveFontScale})`
+    (accent color is already resolved here; `touch` is derived internally from `interactionPolicy`).
   - `android/app/src/main/res/values-v35/styles.xml` — **add (native, outside `lib/`)**; opt into
     edge-to-edge window posturings for API 35+.
 - **Dependencies:** none (Flutter SDK `SystemChrome`).

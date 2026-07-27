@@ -34,7 +34,7 @@ the visible-a11y story. Backend-free — persists via the existing `SettingsStor
   - `lib/shared/theme/forui_theme_factory.dart` — **edit**; apply the dyslexia `fontFamily` through
     `_buildTypography` (fontScale already flows here).
   - `lib/shared/widgets/labeled_control.dart` — **add only when >=3 screens use it** (see Audit).
-  - `test/hardening/semantics_focus_order_test.dart` — **extend**; assert preset UI focus order.
+  - `test/hardening/semantics_focus_order_test.dart` — **add**; assert preset UI focus order.
 - **Dependencies:** none (Noto Sans / Noto Sans Arabic / Noto Sans SC already bundled in
   `assets/fonts/`). A dyslexia font is optional — if added, bundle it as an asset and regenerates
   goldens (see Risks).
@@ -84,8 +84,8 @@ no Mocktail.
 - **`fontScale` clamp is load-bearing.** The `large` preset must resolve to a value within
   `[0.85, 1.6]`; never bypass `_parseFontScale`'s clamp.
 - **Font asset changes force a golden re-baseline** and a `pubspec.yaml` asset entry — flag in the PR.
-- **Sequencing:** extend `SettingsState` in the same pass as [system-ui](./system-ui.md) and
-  [haptics](./haptics.md). Builds on the existing reduce-motion guards in
+- **Sequencing:** extend `SettingsState` in the same pass as [haptics](./haptics.md). Builds on the
+  existing reduce-motion guards in
   [`settings_page.dart`](../../lib/features/settings/settings_page.dart) and
   [`onboarding_page.dart`](../../lib/features/onboarding/onboarding_page.dart) — do not duplicate
   them.

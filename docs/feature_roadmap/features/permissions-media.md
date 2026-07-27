@@ -13,15 +13,18 @@ port so goldens/integration stay hermetic.
 - **Ports / value objects:**
   - `PermissionService` abstract interface — `requestStatus(AppPermission)`,
     `checkStatus(AppPermission)`, `openSystemSettings()`. `AppPermission` enum (`camera`, `photos`,
-    `notifications`, `location`); `PermissionStatus` value (`granted`, `denied`,
-    `permanentlyDenied`, `restricted`). Exhaustive switches, no raw ints.
+    `location`); `PermissionStatus` value (`granted`, `denied`,
+    `permanentlyDenied`, `restricted`). Exhaustive switches, no raw ints. The OS notification-permission
+    request is owned by [push-notifications](./push-notifications.md)
+    (`NotificationsRepository.requestPermission` + `NotificationPermissionStatus`); this feature does
+    not declare a `notifications` kind.
   - `MediaPicker` abstract interface — `pickImage({bool fromCamera})` → `PickedMedia?` (typed:
     path + mimeType) or `null` when cancelled. Mirrors the [`SettingsStore`](../../lib/features/settings/settings_store.dart)
     discipline: interface + prod impl under `lib/infrastructure/` + a hermetic noop impl.
 - **Providers:** `permissionServiceProvider` and `mediaPickerProvider` — handwritten
   `Provider<...>` overridden at the App `ProviderScope` (peer of `settingsRepositoryProvider`).
 - **Routes:** none new. The rationale + denied UI is a reusable sheet. The avatar path at
-  [`app_router.dart:217`](../../lib/app/routing/app_router.dart) (`onAvatarFeedback` →
+  [`app_router.dart:231`](../../lib/app/routing/app_router.dart) (`onAvatarFeedback` →
   `_showInformationDialog(...avatarUnavailable)`) is rewired to invoke the picker flow; the callback
   signature on `UpdateProfilePage`/`_AvatarEditor` changes from `VoidCallback` to a typed
   `onAvatarPicked(PickedMedia?)`.
@@ -35,7 +38,7 @@ port so goldens/integration stay hermetic.
   - `lib/infrastructure/media/image_picker_media_picker.dart` — **add**; prod (`image_picker`).
   - `lib/infrastructure/media/noop_media_picker.dart` — **add**; hermetic — returns `null`
     (cancelled/unavailable), surfacing `profile.update.avatarUnavailable`.
-  - `lib/shared/widgets/permission_rationale_sheet.dart` — **add**; ForUI `FSheet` wrapped in
+  - `lib/features/profile/widgets/permission_rationale_sheet.dart` — **add**; ForUI `FSheet` wrapped in
     [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart).
   - `lib/features/profile/update_profile_page.dart` — **edit**; consume `PickedMedia?`.
   - `lib/app/routing/app_router.dart` — **edit**; rewire `onAvatarFeedback` → picker.
@@ -64,7 +67,7 @@ the noop impls ARE the fakes.
   `developmentToolsEnabled`.
 
 ## i18n
-- **Keys:** `permission.<camera|photos|notifications|location>.title` + `.rationale`,
+- **Keys:** `permission.<camera|photos|location>.title` + `.rationale`,
   `permission.openSettings`, `permission.denied`, `permission.permanentlyDenied`. Sync `en` + `ar` +
   `zh-Hans`, run `just gen`.
 - **RTL note:** direction-sensitive — the rationale sheet's leading icon and action buttons mirror
@@ -75,8 +78,9 @@ the noop impls ARE the fakes.
   denied/unavailable honestly and never fake a grant or picked image.
 - [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: ports under
   `lib/infrastructure/{permissions,media}/`; profile feature consumes; shared sheet qualifies (below).
-- [x] shared/widgets extraction only if >=3 consumers — **pass**: `permission_rationale_sheet` serves
-  ≥4 permission kinds (camera/photos/notifications/location) — meets the threshold.
+- [ ] shared/widgets extraction only if >=3 consumers — **warn**: `permission_rationale_sheet` is
+  feature-local under `lib/features/profile/widgets/` until ≥3 concrete consumer features land — only
+  profile/avatar is a consumer today; promote to `lib/shared/widgets/` when the third consumer arrives.
 - [x] Motion guarded — **warn**: `FSheet` slide is ForUI-built-in; if any custom entrance is added,
   guard with `MediaQuery.disableAnimationsOf` + a non-animated fallback that still opens the sheet.
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
@@ -92,15 +96,23 @@ the noop impls ARE the fakes.
 - **Permanently-denied is a one-way door.** Once the user picks "Don't ask again", re-prompting is a
   no-op — the rationale sheet must route to `openSystemSettings()` (`app_settings`), not back to
   `requestStatus`. This is the single most common implementation bug.
+- **Native entitlements ship per-platform.** Camera/photos/location require iOS
+  `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription` /
+  `NSLocationWhenInUseUsageDescription` strings in `Info.plist` and Android `<uses-permission>` entries
+  (e.g. `CAMERA`, `READ_MEDIA_IMAGES`, `ACCESS_COARSE_LOCATION`) in `AndroidManifest.xml`, plus the
+  API-33+ `POST_NOTIFICATIONS` runtime prompt on Android (owned by push-notifications). Flag these in
+  the PR and cover them in the iOS / Android / macOS release-build CI jobs (checklist §9); a missing
+  usage string crashes the runtime prompt on first request.
 - **Rationale before prompt, always.** Never request a permission cold (e.g. on screen open) — show
   the rationale sheet first; stores reject apps that request without context.
 - **Callback signature change is breaking.** `onAvatarFeedback: VoidCallback` →
   `onAvatarPicked(PickedMedia?)` on `UpdateProfilePage`/`_AvatarEditor`; update
   [`app_router.dart`](../../lib/app/routing/app_router.dart) and the feature-contract doc together
   (see [`plans/feature_contracts.md`](../../plans/feature_contracts.md)).
-- **Notification permission couples with [push-notifications](./push-notifications.md)** — sequence
-  after it, or gate the `notifications` kind behind that feature landing. Do not request notification
-  permission from this feature in isolation.
+- **Notification permission is owned by [push-notifications](./push-notifications.md)** — it is the
+  canonical owner of the OS notification-permission request (`NotificationsRepository.requestPermission`
+  + `NotificationPermissionStatus`); this feature does not request notification permission or declare a
+  `notifications` kind. See push-notifications.md for the bidirectional reference.
 - **`MediaPicker` generalizes** beyond the avatar: future share-result and feedback-screenshot flows
   reuse it — that is why it is a port, not an inline `image_picker` call.
 - No `clearAll` analog; permission state is not persisted in `SettingsStore` (the OS owns it). Do not

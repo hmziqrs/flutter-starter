@@ -27,7 +27,9 @@ extraction, not new behavior.
   - add `lib/shared/widgets/forms/form_scaffold.dart` — `FScaffold` + `FButton` submit +
     `FCard` grouping
   - edit [`lib/features/auth/auth_form_support.dart`](../../lib/features/auth/auth_form_support.dart)
-    — becomes a thin re-export facade so the five existing call sites compile unchanged
+    — becomes an aliasing facade (typedef + top-level aliases such as
+    `final validateAuthRequired = validateRequired;`) so the five existing Auth-prefixed
+    call sites resolve unchanged
   - add `test/shared/forms/form_validators_test.dart` + `test/shared/forms/form_field_reveal_test.dart`
 - **Dependencies:** none (Flutter SDK + ForUI `FTextField` / `FButton` / `FScaffold`)
 
@@ -43,11 +45,12 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
   no-trim for password); `revealFirstInvalid` scrolls and focuses in explicit visual order;
   `FormScaffold` disables submit until valid and mounts the busy indicator on submit.
 - **Integration:** the existing auth flows still pass via `createApplication` + `pumpAppFrames`
-  after the re-export facade swap (behavior-preserving).
-- **Golden impact:** none expected — a byte-for-byte move. Re-run the auth matrix to confirm no
-  pixel drift.
-- **Dev-gallery fixture:** n/a (already covered by the production auth gallery cases); optionally
-  a standalone `FormScaffold` `PreviewFrame`.
+  after the aliasing facade swap (behavior-preserving).
+- **Golden impact:** split — validator/helper extraction is behavior-preserving (re-run the auth
+  matrix to confirm no pixel drift); `FormScaffold` is net-new and needs its own baseline.
+- **Dev-gallery fixture:** split — validator/helper extraction stays covered by re-running the
+  production auth gallery cases; `FormScaffold` is net-new and **requires** a standalone
+  `PreviewFrame` baseline (committed, re-audited on the pinned macOS runner).
 
 ## i18n
 
@@ -60,19 +63,24 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
 
 - [x] No-backend honored as a port — **n/a** (backend-free; submit is feature-supplied and surfaces `notConnected`)
 - [x] Feature-first ownership — **pass** (`lib/shared/forms/` + `lib/shared/widgets/forms/`; cross-feature helpers, no `core/`/`utils/`)
-- [x] shared/widgets extraction ≥3 consumers — **pass** (login/register/forgot/reset/otp = five current consumers; billing/settings/feedback forthcoming)
+- [x] shared/widgets extraction ≥3 consumers — **split**: `lib/shared/forms/` helpers have 5
+  current consumers (login/register/forgot/reset/otp — **pass**); `FormScaffold` is net-new
+  with **0** concrete consumers and meets the bar via 3 designated consumers under D1
+  (billing/settings/feedback), re-audited when those land.
 - [x] Motion guarded — **pass** (`revealFirstInvalid` uses `Scrollable.ensureVisible`, not an animation; no motion to guard)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
 - [x] Strict-analysis clean — **pass** (typed record, nullable `FormFieldState<Object?>`, no `dynamic`)
 - [x] Native entitlements flagged — **n/a**
-- [x] Golden re-baseline noted on pinned macOS runner — **n/a** (behavior-preserving move; re-run auth matrix to confirm)
+- [x] Golden re-baseline noted on pinned macOS runner — **warn** (validator/helper extraction stays covered by re-running the auth matrix; `FormScaffold` is net-new and needs its own `PreviewFrame` baseline)
 
 ## Risks / notes
 
-- **Keep the facade.** Leave `auth_form_support.dart` as a thin re-export so the five existing
-  call sites compile unchanged — do not rewrite every auth page in this change. The extraction
-  must be rename-only (byte-for-byte equivalent); any behavior change is a separate PR.
+- **Keep the facade.** Leave `auth_form_support.dart` as an aliasing facade (typedef + top-level
+  aliases such as `final validateAuthRequired = validateRequired;`,
+  `final validateAuthEmail = validateEmail;`, etc.) so the five existing Auth-prefixed call
+  sites resolve unchanged — do not rewrite every auth page in this change. The extraction is
+  rename-only; a pure Dart `export` cannot rename, so any behavior change is a separate PR.
 - **Pair the submit with busy-indicators.** `FormScaffold` mounts the indicator from
   [busy-indicators.md](busy-indicators.md) so submit affordance is consistent — sequence after
   or alongside it.

@@ -12,7 +12,9 @@ wrapper, not a new dependency.
 ## Contract
 
 - **Ports / value objects:** No port — backend-free. A `BusySeverity` enum
-  (`none` / `active` / `saving`) or the existing per-feature `isSubmitting` flag drives display.
+  (`none` / `active` / `saving`) or the existing per-feature async state drives display —
+  auth pages' `*_PresentationStatus.submitting` (read via each page's `_submitting` getter)
+  and profile's `_isSaving`.
   The overlay takes an optional semantics label and an optional determinate `value`
   (`0.0`–`1.0`; `null` = indeterminate).
 - **Providers:** none — widgets read the feature's `*_presentation_state`.
@@ -23,7 +25,7 @@ wrapper, not a new dependency.
   - add `lib/shared/widgets/busy_overlay.dart` — modal `Overlay` / `Dialog` entry; reduce-motion
     falls back to a static localized label
   - edit [`lib/features/profile/update_profile_page.dart`](../../lib/features/profile/update_profile_page.dart)
-    — already uses `FCircularProgress` at line 504; adopt the wrapper there
+    — already uses `FCircularProgress` at line 509; adopt the wrapper there
   - edit `lib/features/auth/*_presentation_state.dart` + pages — replace the silent
     submit-button-disable with a visible indicator
   - add `test/shared/widgets/busy_indicator_test.dart`
@@ -32,9 +34,11 @@ wrapper, not a new dependency.
 
 ## Backend & test surface
 
-Backend-free. The default impl is real and local — indicators reflect the `isSubmitting` /
-`saving` flags already in each feature's presentation-state machine (e.g.
-`update_profile_page`'s saving/saved). No faked success: the indicator only mirrors in-flight
+Backend-free. The default impl is real and local — indicators reflect the async state
+already in each feature's presentation-state machine: auth pages'
+`*_PresentationStatus.submitting` (read via each page's `_submitting` getter) and profile's
+`_isSaving` / `ProfilePresentationPhase.saving` (e.g. `update_profile_page`'s saving/saved).
+No faked success: the indicator only mirrors in-flight
 state; the action's outcome still surfaces `common.notConnected` when there is no backend.
 
 ## Tests
@@ -61,7 +65,7 @@ state; the action's outcome still surfaces `common.notConnected` when there is n
 
 - [x] No-backend honored as a port — **n/a** (backend-free; reflects presentation-state flags; outcome still surfaces `notConnected`)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/`; peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [x] shared/widgets extraction ≥3 consumers — **pass** (login/register/forgot/reset/otp + profile + pricing = well over three async actions)
+- [x] shared/widgets extraction ≥3 consumers — **pass** (login/register/forgot/reset/otp + profile = well over three async actions)
 - [x] Motion guarded — **pass** (native indeterminate spinner; any custom pulse uses `AppMotion` + `disableAnimationsOf` + a non-animated fallback that completes the action)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`common.saving` added to three locales)
@@ -75,7 +79,7 @@ state; the action's outcome still surfaces `common.notConnected` when there is n
   must still call its `onResult` / `goNamed` — never wait on animation completion
   ([audit checklist #5](../audit_checklist.md#5--motion-guarded)). Tests use `pumpAppFrames`.
 - **Do not fork a progress primitive.** `FCircularProgress` / `FDeterminateProgress` are the
-  ForUI primitives — [`update_profile_page.dart:504`](../../lib/features/profile/update_profile_page.dart)
+  ForUI primitives — [`update_profile_page.dart:509`](../../lib/features/profile/update_profile_page.dart)
   already proves the API. (Research noted "zero usages"; there is exactly one.) Do not introduce
   `ScaffoldMessenger` or a second progress dependency.
 - **Pair with form-scaffolding.** The `FormScaffold` submit

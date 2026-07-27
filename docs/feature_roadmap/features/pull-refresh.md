@@ -66,7 +66,7 @@ synthesized.
 - [x] No-backend honored as a port — **n/a** (backend-free; `onRefresh` surfaces `notConnected`, never fakes success)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/refresh/` + `lib/shared/widgets/lists/`)
 - [ ] shared/widgets extraction ≥3 consumers — **warn** (`home` is the only concrete consumer today; clear the bar by adopting on pricing/search lists, or document deferred consumers)
-- [x] Motion guarded — **pass** (native indicator spinner; any custom spin uses `disableAnimationsOf` + a fallback that completes the refresh `Future`)
+- [x] Motion guarded — **pass** (native indicator spinner; any custom spin sources durations/curves from `AppMotion` + uses `disableAnimationsOf` + a non-animated fallback that completes the refresh `Future`)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
 - [x] Strict-analysis clean — **pass** (generic `DataListView<T>`, typed item builder, no raw types)

@@ -19,17 +19,25 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   Implementations wrap their SDK in `try/on Object` and **never rethrow** — crash reporting
   must not break the error path it is observing.
 - **Providers:** `crashReporterProvider` handwritten Riverpod `Provider<CrashReporter`,
-  overridden at the `ProviderScope` in [`lib/app/app.dart`](../../../lib/app/app.dart). Default
-  value is `NoopCrashReporter` (honors the no-backend boundary); a real impl is constructed in
+  overridden at the `ProviderScope` in [`lib/app/app.dart`](../../../lib/app/app.dart) — used by
+  widget-side readers (the `DiagnosticsPage` status row). Default value is `NoopCrashReporter`
+  (honors the no-backend boundary); a real impl is constructed in
   [`AppDependencies.production`](../../../lib/app/dependencies.dart) only when a consumer
-  supplies a DSN, then injected via `createApplication`.
+  supplies a DSN. **The bootstrap error path does not read this provider** — `_installErrorHandlers`
+  receives the reporter as a direct parameter (see Files), because it runs before the
+  `ProviderScope` exists.
 - **Routes:** none.
 - **Files:**
   - `lib/infrastructure/error_reporting/crash_reporter.dart` (port + `CrashReport` value object)
   - `lib/infrastructure/error_reporting/noop_crash_reporter.dart` (production default)
   - `lib/infrastructure/error_reporting/sentry_crash_reporter.dart` (optional real impl)
-  - **EDIT** `lib/bootstrap.dart` — `_installErrorHandlers` calls BOTH `AppLogger.error` AND
-    `ref.read(crashReporterProvider).recordError(...)` (lines 79-96 today)
+  - **EDIT** `lib/bootstrap.dart` — thread the reporter as a parameter mirroring `AppLogger`:
+    change the signature to `_installErrorHandlers(AppLogger logger, CrashReporter reporter)`
+    (constructed in `bootstrap()` before the call — `NoopCrashReporter` by default, or the real
+    impl when a DSN is configured). The body calls BOTH `logger.error(...)` AND
+    `reporter.recordError(...)`. Do **not** `ref.read(crashReporterProvider)` here —
+    `_installErrorHandlers` runs before `createApplication`/the `ProviderScope` exists
+    (bootstrap.dart:20 vs :26), so there is no `ref` at the install site.
   - **EDIT** `lib/app/dependencies.dart` — wire default noop; optional real when DSN present
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - `test/infrastructure/error_reporting/crash_reporter_test.dart`
@@ -60,9 +68,10 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 ## Tests
 
 - **Unit/widget:** `crash_reporter_test.dart` exercises `NoopCrashReporter` (no-op, never
-  throws) and `RecordingCrashReporter` capture; verifies `_installErrorHandlers` calls BOTH
-  `AppLogger.error` and the reporter (the gap note flags this is currently untested — this is
-  the one feature whose test directly closes a flagged hole).
+  throws) and `RecordingCrashReporter` capture; verifies `_installErrorHandlers(logger, reporter)`
+  calls BOTH `logger.error` and `reporter.recordError`. Invoke `_installErrorHandlers` directly
+  with fakes (`createApplication` does not install error handlers today), then drive a synthetic
+  `FlutterError`/platform error.
 - **Integration:** start `tools/test_server/`, override `crashReporterProvider` with
   `SentryCrashReporter` pointed at it, drive a synthetic throw via `createApplication`, assert
   the server recorded it. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
@@ -99,7 +108,7 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 - **Plugs into an existing seam ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):**
   call the reporter **alongside** `AppLogger.error` inside `_installErrorHandlers`, do not
   replace it. `AppLogger` stays the local verbose-gated log; the reporter is the remote sink.
-- **PII / double-redaction.** Reuse [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.md)
+- **PII / double-redaction.** Reuse [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart)
   before forwarding context to the reporter; gate stack-trace forwarding behind
   `config.verboseLoggingEnabled` so a non-verbose build ships only the redacted message (the
   SDK's own native-bit redaction is not trusted to know the app's token formats). Never
@@ -107,7 +116,8 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 - **Never rethrow.** A reporter that throws inside `PlatformDispatcher.onError` can loop; wrap
   every SDK call in `try/on Object` and drop the report on failure.
 - **Do not introduce `crash_reporter_controller.dart`** unless something needs to react to
-  reporter state. The reporter is read by `_installErrorHandlers`, not by widgets.
+  reporter state. The reporter is threaded as a parameter to `_installErrorHandlers` (bootstrap
+  path) and read via `crashReporterProvider` only by the `DiagnosticsPage` (widget path).
 - **Sequencing:** ship in the P0 foundation bundle alongside
   [`secure-store`](secure-store.md) and the lifecycle observer — no UI, no golden impact, and
   it is the natural place to stand up [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)

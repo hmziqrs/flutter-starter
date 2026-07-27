@@ -31,8 +31,8 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
   - `lib/features/feature_flags/feature_flags_controller.dart`
   - `lib/features/feature_flags/in_memory_feature_flags_source.dart` (default — returns
     `FeatureFlags.defaults()`)
-  - `lib/infrastructure/feature_flags/remote_config_feature_flags_source.dart` (optional real
-    impl — wraps Firebase Remote Config / GrowthBook / LaunchDarkly)
+  - `lib/infrastructure/remote_config/remote_config_feature_flags_source.dart` (optional real
+    impl — reads the `flags` slice from the shared remote-config backend per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends))
   - **EDIT** `lib/app/dependencies.dart` — wire in-memory default + optional real
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - **EDIT** `lib/app/diagnostics/diagnostics_page.dart` — surface current flag state
@@ -91,7 +91,7 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
 - [x] **Feature-first ownership; no core/ utils/ buckets** — pass: value object + port + controller
   + in-memory default under `lib/features/feature_flags/` (port lives with the feature, mirroring the
   [`SettingsStore`](../../../lib/features/settings/settings_store.dart) exemplar); the **optional real
-  impl** (the shared remote-config backend adapter) under `lib/infrastructure/feature_flags/`, shared
+  impl** (the shared remote-config backend adapter) under `lib/infrastructure/remote_config/`, shared
   in spirit with [`update-blocker`](update-blocker.md) + [`ab-experiments`](ab-experiments.md).
 - [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget.
 - [x] **Motion guarded** — n/a: no animation.
@@ -107,11 +107,12 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
 
 ## Risks / notes
 
-- **This is the remote-config port-family owner ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).**
-  [`update-blocker`](update-blocker.md)'s `VersionGateStore` and
-  [`ab-experiments`](ab-experiments.md)'s `ExperimentSource` read from this same surface —
-  three readers, one optional backend, three in-memory defaults. Do not spin up a second
-  remote-config client per feature.
+- **Not the "port-family owner" — one of three peer readers ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).**
+  feature-flags owns the `FeatureFlagsSource` typed port; [`update-blocker`](update-blocker.md)
+  (`VersionGateStore`) and [`ab-experiments`](ab-experiments.md) (`ExperimentSource`) own their
+  **own** peer typed ports — three distinct types, three in-memory defaults, one optional shared
+  real-impl adapter under `lib/infrastructure/remote_config/`. No feature "owns" the family and no
+  shared interface is introduced; do not spin up a second remote-config client per feature.
 - **Cache + fetch policy.** A flag read on the UI thread must never block on a network call.
   `FeatureFlagsController.build()` hydrates from the local cache synchronously (or
   `FeatureFlags.defaults()` if no cache), then refreshes asynchronously and emits. The

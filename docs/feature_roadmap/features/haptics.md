@@ -86,7 +86,7 @@ to fake).
   success/error notification). Resist ad-hoc sprinkling; a starter's value is the *consistent*
   contract, not blanket buzzing.
 - **Sequencing:** independent; extend `SettingsState` in the same pass as
-  [system-ui](./system-ui.md) and [a11y-presets](./a11y-presets.md) to avoid repeated churn to
+  [a11y-presets](./a11y-presets.md) to avoid repeated churn to
   `persistedKeys`/`settings_repository.dart`.
 - Pairs with the future [pull-refresh](./pull-refresh.md) and [toast-dialogs](./toast-dialogs.md)
   features as canonical haptic triggers.

@@ -1,6 +1,6 @@
 # Session / token management
 
-> **Tier:** P1 · **Domain:** security · **Backend:** test-server · **Status:** planned · **Depends on:** secure-store
+> **Tier:** P1 · **Domain:** security · **Backend:** test-server · **Status:** planned · **Depends on:** secure-store, lifecycle-observer
 
 ## Summary
 
@@ -20,7 +20,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   - `AuthRepository` abstract port — `login(...)`, `refresh(...)`, `logout()`, all
     `Future<AuthSession>`-returning and throwing `AuthException`. **No production impl**
     (the no-backend rule).
-  - `SessionRepository` thin wrapper over [`SecureStore`](secure_store.md) for the refresh
+  - `SessionRepository` thin wrapper over [`SecureStore`](secure-store.md) for the refresh
     token only (per-key `read`/`write`/`delete`, no `clearAll`).
 - **Providers:**
   - `sessionControllerProvider` — handwritten Riverpod `Notifier<AuthSession>` (no codegen),
@@ -64,10 +64,13 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   [`CrashReporter`](crash-reporting.md).
 - **Test server contract ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server))**
   — `tools/test_server/` exposes the auth route group:
-  - `POST /v1/auth/issue` — `{ email, password }` -> `{ accessToken, refreshToken, expiresAt }`
-    or `401`.
-  - `POST /v1/auth/refresh` — `{ refreshToken }` -> new `{ accessToken, expiresAt }` or `401`
-    (rotates the refresh token).
+  - `POST /v1/auth/issue` — `{ email, password }` -> `{ accessToken, refreshToken, expiresAt, userId }`
+    or `401` (`userId` seeds `AuthSession.userId`; `/refresh` inherits the same identity from the
+    rotated token).
+  - `POST /v1/auth/refresh` — `{ refreshToken }` -> new `{ accessToken, refreshToken, expiresAt }`
+    or `401` (rotates the refresh token; the client must persist the returned `refreshToken` —
+    returning only `accessToken`/`expiresAt` would lose the rotated token and break the
+    issue → refresh → logout cycle).
   - `POST /v1/auth/logout` — invalidates the refresh token, `204`.
   The integration test starts the server on a random port, points the real `AuthRepository`
   impl at it, and drives the full issue -> refresh -> logout cycle.
@@ -77,7 +80,8 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 ## Tests
 
 - **Unit/widget:** `session_controller_test.dart` — optimistic update + rollback on
-  `AuthException`; refresh-token persisted to a `RecordingSecureStore`; access token never
+  `AuthException`; refresh-token persisted to an `InMemorySecureStore` (assert persistence by
+  reading the refresh-token key back via the fake's per-key `readString`); access token never
   persisted. `in_memory_auth_repository_test.dart` — surfaces `AuthException.notConnected`
   when unseeded.
 - **Integration:** start `tools/test_server/`, override `authRepositoryProvider` with the real
@@ -111,7 +115,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   all three locales together; `just gen-check` will fail CI if drifted.
 - [ ] **Strict-analysis clean** — warn: `AuthSession` must be a sealed/+copyWith value object
   with exhaustive state switches; watch for `dynamic` in the token fields (use `String` +
-  redaction via [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.md)).
+  redaction via [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart)).
 - [x] **Native entitlements flagged in PR + CI platform jobs** — n/a: no plugin (SecureStore
   entitlements are already covered by [`secure-store`](secure-store.md)).
 - [x] **Golden re-baseline noted on pinned macOS runner** — n/a: no visual change in this
@@ -129,6 +133,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   [`lib/app/app.dart`](../../../lib/app/app.dart) `_AppView` keyed by config tuple), so the
   redirect reads session state synchronously from `initialSettings`-style bootstrap data, not
   from a reactive provider on the router.
+- **Foreground refresh via [`lifecycle-observer`](lifecycle-observer.md).** On `resumed`, re-validate the session (the access token may have expired while backgrounded) by `ref.watch`ing `appLifecyclePhaseProvider` and calling `refresh` when needed.
 - **Hard block on [`secure-store`](secure-store.md).** The refresh token must never touch
   `SharedPreferences` (plaintext). Sequence this **after** `secure-store` lands.
 - **Access token in memory only.** Persist only the refresh token. On cold start, hydrate the
@@ -138,7 +143,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   `AuthSession` to authenticated immediately, roll back on `AuthException`, never leave the
   UI in a half-state.
 - **Tokens are secrets.** Every log line that touches a token flows through `AppLogger` so
-  [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.md) scrubs it; do not log
+  [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart) scrubs it; do not log
   tokens directly.
 - **Logout must rotate, not just clear.** Call `AuthRepository.logout` (server-side
   invalidation) before clearing local state; if the network call fails, still clear local

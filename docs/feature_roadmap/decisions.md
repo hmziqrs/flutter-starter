@@ -53,9 +53,9 @@ production targets.
   it via override; the `development` config may point at a fixed local URL.
 - **Contracts implemented** (one route group per backend feature): version policy
   (min/latest + store URL) → [update-blocker](features/update-blocker.md); crash ingest →
-  [crash-reporting](features/crash-reporting.md); auth issue/refresh/verify →
+  [crash-reporting](features/crash-reporting.md); auth issue/refresh/logout →
   [session](features/session.md); flags JSON → [feature-flags](features/feature-flags.md);
-  events ingest → [analytics](features/analytics.md); OTP issue/verify →
+  events ingest → [analytics](features/analytics.md); OTP issue/verify/resend →
   [mfa-otp](features/mfa-otp.md); feedback submit → [feedback](features/feedback.md);
   experiment assignments → [ab-experiments](features/ab-experiments.md); cache data source →
   [offline-cache](features/offline-cache.md).
@@ -94,13 +94,15 @@ Two more plug into **existing** seams rather than adding wiring:
 
 ## D5 — One `go_router` redirect pattern, reused
 
-The router currently has **no redirect**. The first feature that needs one
-([update-blocker](features/update-blocker.md) hard block, or
-[onboarding-gate](features/onboarding-gate.md)) establishes the redirect helper in
-[`buildAppRouter`](../../lib/app/routing/app_router.dart). Subsequent gates —
+The router already wires **one** top-level redirect — `_redirectSettingsDeepLinks` in
+[`buildAppRouter`](../../lib/app/routing/app_router.dart) (settings deep-link normalization).
+`go_router` accepts exactly one redirect callback, so every gating feature **composes its
+predicate into that single helper** rather than adding a new one. The first feature that needs a
+gate ([update-blocker](features/update-blocker.md) hard block, or
+[onboarding-gate](features/onboarding-gate.md)) extends the existing helper; subsequent gates —
 [session](features/session.md), [biometric](features/biometric.md),
-[pin-autolock](features/pin-autolock.md) — reuse it. Do not invent per-feature redirect
-mechanisms.
+[pin-autolock](features/pin-autolock.md) — chain into it. Do not invent per-feature redirect
+mechanisms, and never overwrite the existing settings-deep-link redirect.
 
 ## D6 — No runtime environment switcher
 
@@ -145,10 +147,12 @@ and integration tests are deterministic.
   `?rev=` → `304` when unchanged.
 - **Other routes:** `POST /v1/crashes` ([crash-reporting](features/crash-reporting.md));
   `POST /v1/auth/{issue,refresh,logout}` ([session](features/session.md));
-  `POST /v1/events` ([analytics](features/analytics.md)); `POST /v1/otp/{issue,verify}`
+  `POST /v1/events` ([analytics](features/analytics.md)); `POST /v1/otp/{issue,verify,resend}`
   ([mfa-otp](features/mfa-otp.md)); `POST /v1/feedback` ([feedback](features/feedback.md));
-  `GET/PUT /v1/cache/{key}` ([offline-cache](features/offline-cache.md)).
-- **Push** ([push-notifications](features/push-notifications.md)) has no plain-HTTP route —
-  token registration/permission only; message delivery is tested via
+  `GET /v1/cache/{key}` ([offline-cache](features/offline-cache.md)).
+- **Push** ([push-notifications](features/push-notifications.md)) has no message-delivery route
+  (FCM/APNs cannot be mocked by a plain HTTP server) — only the token-registration/permission
+  path: `POST /v1/notifications/register-token`, `DELETE /v1/notifications/register-token/{token}`,
+  `POST /v1/notifications/permission-revoked`. Message delivery is tested via
   `flutter_local_notifications` + a fake messaging repo ([D3](#d3--minimal-in-repo-test-server-tools-test_server) limitation).
 - **Never** compiled into release builds; integration runs bind a random port.

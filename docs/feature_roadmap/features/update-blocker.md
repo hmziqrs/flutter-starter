@@ -1,6 +1,6 @@
 # Update blocker (hard block + soft deprecation)
 
-> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** planned · **Depends on:** none (establishes the first `go_router` redirect — [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused))
+> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** planned · **Depends on:** none (composes the update-block predicate into the existing top-level `_redirectSettingsDeepLinks` redirect — [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused))
 
 ## Summary
 
@@ -17,7 +17,7 @@ Compares the installed version against a server-published minimum/latest and eit
 - **Files:**
   - `lib/features/force_update/version_gate_store.dart`, `force_update_state.dart`, `force_update_page.dart`, `soft_update_dialog.dart`, `in_memory_version_gate_store.dart` — **new**.
   - [`lib/app/routing/app_routes.dart`](../../lib/app/routing/app_routes.dart) — **edit**: add `forceUpdate` name + `forceUpdatePath`.
-  - [`lib/app/routing/app_router.dart`](../../lib/app/routing/app_router.dart) — **edit**: top-level `GoRoute` + the `go_router` **redirect** helper (any route → `forceUpdatePath` when `hard`; `soft` shows the dialog post-frame, no redirect). This is the [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) redirect pattern — build the shared helper here.
+  - [`lib/app/routing/app_router.dart`](../../lib/app/routing/app_router.dart) — **edit**: top-level `GoRoute` + compose the update-block predicate into the **existing** top-level `_redirectSettingsDeepLinks` redirect (any route → `forceUpdatePath` when `hard`; `soft` shows the dialog post-frame, no redirect). Per [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) go_router allows one redirect — extend the existing callback, do not add a second.
   - [`lib/bootstrap.dart`](../../lib/bootstrap.dart) — **edit**: run the check once in `createApplication` and feed `versionCheckProvider`.
 - **Dependencies:** `pub_semver` (**add as a direct** dependency — transitive today, not app-direct); `url_launcher` (for the "Update now" store deep-link — confirm direct dep; `share_plus`/`url_launcher` are referenced by [license-share-update](license-share-update.md)).
 
@@ -61,6 +61,6 @@ Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optio
 - **Hard block is a true trap.** `ForceUpdatePage` uses `PopScope(canPop: false)`, no Escape pop (do **not** wrap in `EscapeDismissibleOverlay`), and offers only "Update now" (`url_launcher` → `storeUrl`). Soft is dismissible and must include a snooze path.
 - **Soft-deprecation must not nag.** Persist a snooze timestamp (a `SettingsStore` key, e.g. `update.snoozed_until`) so a dismissed soft prompt does not re-appear every launch — otherwise it becomes a UX nuisance.
 - **`pub_semver` must be a direct dependency** — it is transitively present today but not app-direct; add it explicitly.
-- **Redirect helper ownership ([D5](../decisions.md#d5--one-go_router-redirect-pattern-reused)).** Coordinate with [onboarding-gate](onboarding-gate.md) so only **one** feature introduces the shared redirect helper in `buildAppRouter`. Chain redirects so a `hard` block wins over the onboarding redirect (evaluate update-blocker first).
+- **Redirect helper ownership ([D5](../decisions.md#d5--one-go_router-redirect-pattern-reused)).** The router already has one top-level redirect (`_redirectSettingsDeepLinks`); compose the update-block predicate into it. Coordinate predicate order with [onboarding-gate](onboarding-gate.md) so a `hard` block wins (evaluate update-blocker first).
 - **Port-reuse ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):** `VersionGateStore` is update-blocker's reader on the shared remote-config family; the optional real impl shares its backend with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — do not stand up a second remote-config source.
 - Client-side version is already available via [`AppBuildInfo`](../../lib/infrastructure/platform/app_build_info.dart) (`package_info_plus`); no new client capability is needed.

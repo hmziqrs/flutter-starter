@@ -9,7 +9,7 @@ A user-set local numeric/alphanumeric passcode that gates app entry as a fallbac
 ## Contract
 
 - **Ports / value objects:** reuses [`SecureStore`](../../../lib/infrastructure/secure_storage/) for storing only a **salted hash** of the PIN (never the raw value). New typed values under `lib/features/security/`:
-  - `PasscodeState` (`enabled`, `attemptsRemaining`, `lockedUntil`, `isSet`).
+  - `PasscodeState` (`enabled`, `attemptsRemaining`, `lockedUntil`, `isSet`) with a derived `bool get requiresChallenge => isSet && enabled && lockedUntil == null` (the predicate the redirect reads below).
   - `AutoLockState` (`locked`, `lockedReason` ∈ {`idleTimeout`, `backgroundReturn`, `manual`}).
   - `PasscodeHasher` pure-Dart interface (`saltAndHash(String pin, String salt)`) — sole prod impl wraps `package:crypto`; never store or log the cleartext.
   - Reuses the [auth-ratelimit](auth-ratelimit.md) `AttemptTracker` for the max-attempt lockout counter.
@@ -20,20 +20,20 @@ A user-set local numeric/alphanumeric passcode that gates app entry as a fallbac
   - add `lib/features/security/passcode_page.dart` (entry + setup surfaces, on `AuthPageScaffold` + `EscapeDismissibleOverlay`)
   - add `lib/features/security/passcode_hasher.dart`
   - add `lib/features/security/auto_lock_controller.dart`
-  - add `lib/app/auto_lock_observer.dart` (`WidgetsBindingObserver` + idle `Timer`) — **root composition adjacent**
+  - (no separate `WidgetsBindingObserver` — the idle `Timer` lives in `auto_lock_controller.dart` above; the background→foreground re-lock event comes from ref.watch `appLifecyclePhaseProvider`, owned by [lifecycle-observer](lifecycle-observer.md), avoiding a second binding observer)
   - **edit** `lib/features/settings/settings_state.dart` (`passcodeEnabled`, `autoLockDelaySeconds`, `lockOnBackground` fields)
   - **edit** `lib/features/settings/settings_repository.dart` (`persistedKeys` + load/save)
   - **edit** `lib/features/settings/settings_controller.dart` (setters)
   - **edit** `lib/features/settings/settings_page.dart` (security section: auto-lock delay picker, background-lock toggle)
   - **edit** `lib/app/routing/app_routes.dart` + `lib/app/routing/app_router.dart` (routes + redirect) — **root composition**
-  - **edit** `lib/bootstrap.dart` (register `AutoLockObserver` in `createApplication`) — **root composition**
+  - (no bootstrap observer registration — lifecycle events arrive via `appLifecyclePhaseProvider`; only the controller providers are wired in `dependencies.dart`/`app.dart` below)
   - **edit** `lib/app/dependencies.dart` + `lib/app/app.dart` (wire overrides) — **root composition**
   - add `test/features/security/passcode_controller_test.dart`, `test/features/security/auto_lock_controller_test.dart`, `test/features/security/passcode_hasher_test.dart`
 - **Dependencies:** `crypto` (pub). No biometric dep (that's the sibling feature).
 
 ## Backend & test surface
 
-**Backend-free.** All hashing, verification, idle timing, and lifecycle observation are local. The default impl is real (`CryptoPasscodeHasher` + `SecureStore`-backed repository), not a stub. `AutoLockController` reads `WidgetsBindingObserver.didChangeAppLifecycleState` directly — no backend, no plugin. No test-server contract; **never** surface `common.notConnected` for an unlock attempt (that would be a fake-success smell — a local gate either accepts or rejects).
+**Backend-free.** All hashing, verification, and idle timing are local. The default impl is real (`CryptoPasscodeHasher` + `SecureStore`-backed repository), not a stub. `AutoLockController` owns the wall-clock idle `Timer` and `ref.watch`es `appLifecyclePhaseProvider` (owned by [lifecycle-observer](lifecycle-observer.md)) for the background→foreground re-lock — it does **not** register its own `WidgetsBindingObserver` (single-observer model). No backend, no plugin. No test-server contract; **never** surface `common.notConnected` for an unlock attempt (that would be a fake-success smell — a local gate either accepts or rejects).
 
 ## Tests
 
@@ -63,6 +63,6 @@ A user-set local numeric/alphanumeric passcode that gates app entry as a fallbac
 
 - **Hash, never encrypt-and-store.** `passcode_hasher.dart` stores only `salt + sha256(salt||pin)`; if a future "forgot PIN" path is added it must **wipe** the salt/hash (forcing re-setup), not recover the cleartext. Cross-check against [log-redaction](log-redaction.md) so no `pin=` assignment leaks via logs (the existing `_sensitiveAssignment` regex already covers `passcode=`, but verify the new context keys).
 - **Redirect composition:** this is the **fourth** reader of the [D5 redirect helper](../decisions.md#d5--one-go_router-redirect-pattern-reused). Lock precedence must be defined exactly once — recommended order: `update-blocker` (hard block) → `onboarding-gate` → `session` (auth) → `auto-lock` (re-challenge) → `biometric` (prompt) → `passcode` (fallback). Document the order in `app_router.dart`.
-- **`AutoLockObserver` is a `WidgetsBindingObserver`** — there must be exactly one registered; coordinate with any future lifecycle-observer feature to avoid double-registration (see [lifecycle-observer](lifecycle-observer.md), the P0 host that this feature plugs into rather than replacing).
+- **Reuses the single observer owned by [lifecycle-observer](lifecycle-observer.md).** Do **not** register a second `WidgetsBindingObserver`; `AutoLockController` `ref.watch`es `appLifecyclePhaseProvider` for background→foreground events and runs its own wall-clock idle `Timer`. (The earlier standalone `AutoLockObserver` design was dropped to avoid double-registration.)
 - **Idle timer + reduce-motion:** the timer is wall-clock, not animation-driven, so `disableAnimationsOf` does not pause it — but any countdown UI must still respect the motion guard.
 - **Brute-force lockout reuses `AttemptTracker`** from [auth-ratelimit](auth-ratelimit.md); do not re-implement. Persist `attemptsRemaining` + `lockedUntil` via `SecureStore` (not `SettingsStore`) so it is tamper-resistant.

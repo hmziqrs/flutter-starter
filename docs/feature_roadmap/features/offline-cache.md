@@ -40,11 +40,13 @@ remote data source a feature uses to populate it, exercised against the test ser
   - `lib/infrastructure/cache/cache_store_exception.dart`
   - `lib/infrastructure/cache/in_memory_cache_store.dart` (test/hermetic default)
   - `lib/infrastructure/cache/file_cache_store.dart` (production default, file-backed)
-  - `lib/shared/state/cached_future_provider.dart` (the offline-aware read primitive; watches the
-    existing `connectivityStatusProvider` from [`connectivity`](connectivity.md), never defines its
-    own)
+  - `lib/infrastructure/cache/cached_future_provider.dart` (the offline-aware read primitive;
+    watches the existing `connectivityStatusProvider` from [`connectivity`](connectivity.md),
+    never defines its own — kept here with the port until a consumer lands; no designated
+    consumer today)
   - `test/infrastructure/cache/in_memory_cache_store_test.dart`
   - `test/infrastructure/cache/file_cache_store_test.dart`
+  - `test/infrastructure/cache/cached_future_provider_test.dart`
   - **shared port touchpoint (flagged):** `lib/infrastructure/connectivity/connectivity_service.dart`
     + `connectivity_plus_service.dart` are owned by [`connectivity`](connectivity.md). If that
     feature has not landed, introduce the port there as part of this work — build **one**
@@ -114,12 +116,13 @@ and "no backend" means no remote data source is wired — features that try to r
 
 - [x] **pass** — No-backend honored: `FileCacheStore` is a real local store; features without a
   remote source surface `notConnected`, never fake a populated cache.
-- [x] **pass** — Ownership: the **port** lives in `lib/infrastructure/cache/` (cross-cutting
-  adapter, peer of `SharedPreferencesSettingsStore`); feature read primitives in
-  `lib/shared/state/`. No `core/`/`utils/` bucket.
-- [x] **n/a-pass** — Shared extraction: `lib/shared/state/` primitives are state (not widgets);
-  confirm ≥3 cache consumers before graduating `cachedFutureProvider` out of a single feature,
-  else keep it feature-local until then.
+- [x] **pass** — Ownership: the **port** and the offline-aware read primitive both live in
+  `lib/infrastructure/cache/` (cross-cutting adapter, peer of
+  `SharedPreferencesSettingsStore`); no `lib/shared/state/` primitive is committed until a
+  consumer lands. No `core/`/`utils/` bucket.
+- [ ] **warn** — Shared extraction: `lib/shared/state/` primitives need ≥1 consumer + reuse
+  intent per checklist #3; no designated consumer today (the primitive is held under
+  `lib/infrastructure/cache/` until one lands).
 - [x] **n/a-pass** — Motion guarded: no animations.
 - [x] **pass** — Tests use `pumpAppFrames`, never `pumpAndSettle`.
 - [x] **n/a-pass** — i18n: no keys of its own; `gen-check` unaffected.
@@ -155,5 +158,6 @@ and "no backend" means no remote data source is wired — features that try to r
 - **No `clearAll`.** Per-key `remove` only, mirroring `SettingsStore`; a "clear cache" affordance
   (if ever added) iterates known keys, not a bulk wipe — do not widen the port interface.
 - **Sequencing.** P3 — the last infra piece; depends on [`connectivity`](connectivity.md)
-  (shared port) and is most useful once a real data-source feature (e.g.
-  [`search-pagination`](search-pagination.md)) consumes it. No UI/golden impact of its own.
+  (shared port) and is most useful once a real data-source feature consumes it — no consumer is
+  designated today ([`search-pagination`](search-pagination.md) defines its own `PageFetcher<T>` +
+  `PagedState<T>` and does not consume `cachedFutureProvider`). No UI/golden impact of its own.

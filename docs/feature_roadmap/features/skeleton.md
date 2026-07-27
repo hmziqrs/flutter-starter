@@ -24,7 +24,7 @@ states bucket.
     first consumer (skeleton for `_RecentActivity` during load)
   - add `test/shared/widgets/states/skeleton_view_test.dart`
   - add a skeleton `PreviewFrame` case to the dev gallery
-- **Dependencies:** `skeletonizer ^5.0.0` (optional — wraps an existing laid-out tree and
+- **Dependencies:** `skeletonizer: ^2.1.3` (optional — wraps an existing laid-out tree and
   auto-shimmers it, ideal for mirroring `FCard`/`FTile` grids). A hand-rolled `FSkeleton` painted
   from `context.theme` colors needs no dependency; prefer `skeletonizer` for the mirror property.
 
@@ -59,7 +59,7 @@ empty/error state-view ([state-views.md](state-views.md)).
 - [x] No-backend honored as a port — **n/a** (backend-free; driven by the `isLoading` flag)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`, peer of state-views)
 - [ ] shared/widgets extraction ≥3 consumers — **warn** (no concrete consumer today; reach the threshold by adopting on home + pricing + profile load states together, else defer)
-- [x] Motion guarded — **pass** (shimmer guarded by `disableAnimationsOf` + a static fallback that still lays out; critical — [checklist #5](../audit_checklist.md#5--motion-guarded) names skeleton shimmer explicitly)
+- [x] Motion guarded — **pass** (shimmer guarded by `disableAnimationsOf` + a static fallback that still lays out; the hand-rolled FSkeleton path sources its shimmer duration/curve from `AppMotion` tokens — skeletonizer's timing is package-owned and exempt; critical — [checklist #5](../audit_checklist.md#5--motion-guarded) names skeleton shimmer explicitly)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
 - [x] Strict-analysis clean — **pass** (typed style, no `dynamic`)

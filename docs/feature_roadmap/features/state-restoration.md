@@ -1,6 +1,6 @@
 # State restoration + last-screen persistence
 
-> **Tier:** P3 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** [lifecycle-observer](lifecycle-observer.md) (pairs naturally)
+> **Tier:** P3 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** none (pairs with [lifecycle-observer](lifecycle-observer.md))
 
 ## Summary
 
@@ -53,5 +53,5 @@ Backend-free; restoration is Flutter framework state. The optional last-route pe
 - **`restorationScopeId` must be a constant** (`'app'`) and stable across releases; changing it invalidates every user's restorable state on upgrade.
 - **Last-route vs. redirect precedence.** A saved last-route `initialLocation` must **not** override [onboarding-gate](onboarding-gate.md) (first launch still goes to onboarding) or [update-blocker](update-blocker.md) (a hard block still wins). Let the `go_router` redirect chain evaluate after `initialLocation` is set — do not fight it.
 - **Golden re-baseline** is likely needed because `RestorationMixin` wraps the subtree; verify each restored page in the matrix on the pinned macOS runner.
-- **Pairs with [lifecycle-observer](lifecycle-observer.md):** the observer tells you *when* the app was backgrounded; restoration tells you *what* to bring back. They are independent but sequenced together in the [P3 batch](../README.md#sequencing).
+- **Pairs with [lifecycle-observer](lifecycle-observer.md):** lifecycle-observer lands in the P0 foundation batch, state-restoration in P3 — the observer tells you when the app was backgrounded, restoration tells you what to bring back.
 - Scope deliberately: restore the few stateful pages listed above — do not retrofit `RestorationMixin` onto every screen; the payoff does not justify the golden churn across the whole matrix.

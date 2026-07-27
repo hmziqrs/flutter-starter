@@ -14,7 +14,7 @@ instead of per-feature copy-paste divergence.
 - **Ports / value objects:** No port — backend-free. A small `StateViewAction` record
   (`{String label, VoidCallback onTap}`) carries the optional action; views take typed
   title/body `String`s plus that optional action. The loading view exposes no action.
-- **Providers:** none — pure widgets reading `context.t` + `context.theme`.
+- **Providers:** none — pure widgets taking typed Strings + reading `context.theme`.
 - **Routes:** none — a widget family, not a routed screen.
 - **Files:**
   - add `lib/shared/widgets/states/empty_state_view.dart`
@@ -61,7 +61,7 @@ faking success. The no-backend boundary is honored at the call site, not inside 
 
 - [x] No-backend honored as a port — **n/a** (backend-free; retry callback is feature-supplied and surfaces `notConnected` honestly)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`; the repo's designated cross-feature bucket, peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (only `home_page._RecentActivity` is concrete today; clear the bar by migrating pricing/profile empty states in the same change, or accept as the designated states bucket under [D1](../decisions.md#d1--scope-is-comprehensive))
+- [ ] shared/widgets extraction ≥3 consumers — **warn** (only `home_page._RecentActivity` is concrete today; designated ≥3 consumers under [D1](../decisions.md#d1--scope-is-comprehensive): home activity error/loading, search-results ([search-pagination.md](search-pagination.md)), and cached list ([offline-cache.md](offline-cache.md)) — the latter two land deferred with their features)
 - [x] Motion guarded — **pass** (loading view is static or uses `AppMotion` tokens with a `disableAnimationsOf` fallback; no navigation gating)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`states.*` added to all three locales)
@@ -73,11 +73,15 @@ faking success. The no-backend boundary is honored at the call site, not inside 
 
 - **Extraction threshold (checklist #3).** `lib/shared/widgets/` requires ≥3 real consumers
   ([baseline report](../../docs/baseline_architecture_report.md)). Today only
-  [`home_page.dart`](../../lib/features/home/home_page.dart) is concrete. Prefer migrating the
-  pricing and profile empty states in the same change; otherwise document the deferred consumers
-  rather than leaving a one-consumer shared widget.
+  [`home_page.dart`](../../lib/features/home/home_page.dart) is concrete. Pricing cannot be empty
+  (`pricing_page.dart` asserts `plans.isNotEmpty` and already has its own unavailable banner) and
+  profile is a dirty/saving/saved form, not an async list — so neither counts. The three
+  designated consumers under [D1](../decisions.md#d1--scope-is-comprehensive) are: home activity
+  error/loading (this change), search-results ([search-pagination.md](search-pagination.md)), and
+  cached list ([offline-cache.md](offline-cache.md)) — the latter two are deferred async-list
+  consumers that land with their features.
 - **Loading treatment.** The loading view should reuse the busy-indicators wrapper
   ([busy-indicators.md](busy-indicators.md)) rather than forking a spinner — sequence after it,
   or co-design so the two share one progress primitive.
-- **No silent retry.** The error view's `onRetry` must never default to an empty lambda; a
+- **No silent retry.** The error view's `onTap` must never default to an empty lambda; a
   feature with no backend wires it to surface `common.notConnected`.

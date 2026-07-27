@@ -9,7 +9,7 @@ A `WidgetsBindingObserver` that publishes `AppLifecycleState` transitions (pause
 ## Contract
 
 - **Ports / value objects:** No port — Flutter SDK only. A typed `AppLifecyclePhase` value (wrapping `AppLifecycleState` plus a `transitionedAt` instant) so consumers switch on a stable enum, not a raw framework type.
-- **Providers:** `appLifecycleStateProvider` — handwritten Riverpod (Notifier shape mirroring [`interactionPolicyProvider`](../../lib/app/interaction_policy_controller.dart)), overridden at the App `ProviderScope` only when tests need to inject a phase. Other features `ref.watch` it; nobody mutates it directly.
+- **Providers:** `appLifecyclePhaseProvider` — handwritten Riverpod `NotifierProvider` mirroring [`settingsControllerProvider`](../../lib/features/settings/settings_controller.dart) (a real `Notifier`; **not** `interactionPolicyProvider`, which is a plain derived `Provider`), overridden at the App `ProviderScope` only when tests need to inject a phase. Other features `ref.watch` it; nobody mutates it directly.
 - **Routes:** none.
 - **Files:**
   - `lib/app/app_lifecycle_controller.dart` — **new**, mirrors [`lib/app/interaction_policy_controller.dart`](../../lib/app/interaction_policy_controller.dart) (app-level composition, not a feature).
