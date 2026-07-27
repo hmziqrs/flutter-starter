@@ -4,7 +4,7 @@
 
 ## Decision records
 
-The architecture decisions live in [`plans/initial.md`](plans/initial.md), the static UI contract in [`plans/initial_ui.md`](plans/initial_ui.md), and the execution sequence in [`plans/implementation_workflow.md`](plans/implementation_workflow.md). The frozen feature API boundaries — public typed values and per-page callback signatures such as `LoginPage.onSubmit(LoginFormValue)` — are in [`plans/feature_contracts.md`](plans/feature_contracts.md); consult it before extending or renaming any feature's public surface. Post-implementation abstraction rationale (kept/rejected decisions) is in [`docs/baseline_architecture_report.md`](docs/baseline_architecture_report.md); deferred release blockers are tracked in [`docs/release_readiness.md`](docs/release_readiness.md).
+The architecture decisions live in [`plans/initial.md`](plans/initial.md), the static UI contract in [`plans/initial_ui.md`](plans/initial_ui.md), and the execution sequence in [`plans/implementation_workflow.md`](plans/implementation_workflow.md). The frozen feature API boundaries — public typed values and per-page callback signatures such as `LoginPage.onSubmit(LoginFormValue)` — are in [`plans/feature_contracts.md`](plans/feature_contracts.md); consult it before extending or renaming any feature's public surface. Proposed ten-foot UI, remote focus, Android TV, and tvOS support is specified in [`plans/tv_platform_support.md`](plans/tv_platform_support.md). Post-implementation abstraction rationale (kept/rejected decisions) is in [`docs/baseline_architecture_report.md`](docs/baseline_architecture_report.md); deferred release blockers are tracked in [`docs/release_readiness.md`](docs/release_readiness.md).
 
 ## How to read this
 
