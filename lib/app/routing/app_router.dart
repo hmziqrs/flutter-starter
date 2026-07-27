@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/config/app_config.dart';
@@ -9,6 +10,7 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/app/routing/route_error_page.dart';
 import 'package:starter/app/shell/app_shell.dart';
+import 'package:starter/app/shell/cross_fading_branch_container.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
@@ -28,6 +30,8 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/shared/adaptive/app_layout_class.dart';
+import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
@@ -38,60 +42,70 @@ GoRouter buildAppRouter({
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      ShellRoute(
-        builder: (context, state, child) => AppShell(
-          location: state.uri.path,
-          child: child,
-        ),
-        routes: [
-          GoRoute(
-            name: AppRoutes.home,
-            path: AppRoutes.homePath,
-            builder: (context, state) => HomePage(
-              viewData: HomeViewData.defaults(),
-              onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
-              onOpenPricing: () => context.goNamed(AppRoutes.pricing),
-              onOpenSettings: () => context.goNamed(AppRoutes.settings),
-              onOpenLogin: () => context.pushNamed(AppRoutes.login),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.pricing,
-            path: AppRoutes.pricingPath,
-            builder: (context, state) => PricingPage(
-              plans: PricingFixtures.standard(context.t),
-              onSelectPlan: (plan, _) => _showInformationDialog(
-                context,
-                title: context.t.pricing.choosePlan(plan: plan.name),
-                body: context.t.pricing.staticPurchaseNotice,
+      StatefulShellRoute(
+        builder: (context, state, shell) => AppShell(navigationShell: shell),
+        navigatorContainerBuilder: crossFadingBranchContainer,
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.home,
+                path: AppRoutes.homePath,
+                builder: (context, state) => HomePage(
+                  viewData: HomeViewData.defaults(),
+                  onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
+                  onOpenPricing: () => _goTab(context, 1),
+                  onOpenSettings: () => _goTab(context, 2),
+                  onOpenLogin: () => context.pushNamed(AppRoutes.login),
+                ),
               ),
-              onOpenTerms: () => _showInformationDialog(
-                context,
-                title: context.t.pricing.terms,
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.pricing,
+                path: AppRoutes.pricingPath,
+                builder: (context, state) => PricingPage(
+                  plans: PricingFixtures.standard(context.t),
+                  onSelectPlan: (plan, _) => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.choosePlan(plan: plan.name),
+                    body: context.t.pricing.staticPurchaseNotice,
+                  ),
+                  onOpenTerms: () => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.terms,
+                  ),
+                  onOpenPrivacy: () => _showInformationDialog(
+                    context,
+                    title: context.t.pricing.privacy,
+                  ),
+                ),
               ),
-              onOpenPrivacy: () => _showInformationDialog(
-                context,
-                title: context.t.pricing.privacy,
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.settings,
+                path: AppRoutes.settingsPath,
+                builder: (context, state) => _settingsPage(
+                  context,
+                  SettingsSection.tryParse(state.uri.queryParameters['section']),
+                ),
               ),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.settings,
-            path: AppRoutes.settingsPath,
-            builder: (context, state) => _settingsPage(
-              context,
-              SettingsSection.tryParse(state.uri.queryParameters['section']),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.appearanceSettings,
-            path: AppRoutes.appearanceSettingsPath,
-            builder: (context, state) => _settingsPage(context, SettingsSection.appearance),
-          ),
-          GoRoute(
-            name: AppRoutes.languageSettings,
-            path: AppRoutes.languageSettingsPath,
-            builder: (context, state) => _settingsPage(context, SettingsSection.language),
+              GoRoute(
+                name: AppRoutes.appearanceSettings,
+                path: AppRoutes.appearanceSettingsPath,
+                builder: (context, state) => _settingsPage(context, SettingsSection.appearance),
+              ),
+              GoRoute(
+                name: AppRoutes.languageSettings,
+                path: AppRoutes.languageSettingsPath,
+                builder: (context, state) => _settingsPage(context, SettingsSection.language),
+              ),
+            ],
           ),
         ],
       ),
@@ -128,15 +142,8 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.login,
         path: AppRoutes.loginPath,
-        builder: (context, state) => LoginPage(
-          presentation: state.uri.queryParameters['status'] == _passwordResetComplete
-              ? LoginPresentationState.success(
-                  successMessage: context.t.auth.resetPassword.success,
-                )
-              : const LoginPresentationState(),
-          onSubmit: (_) => context.goNamed(AppRoutes.home),
-          onForgotPassword: () => context.pushNamed(AppRoutes.forgotPassword),
-          onRegister: () => context.pushNamed(AppRoutes.register),
+        builder: (context, state) => _LoginRoutePage(
+          passwordResetComplete: state.uri.queryParameters['status'] == _passwordResetComplete,
         ),
       ),
       GoRoute(
@@ -146,7 +153,7 @@ GoRouter buildAppRouter({
           onSubmit: (_) => context.go(
             AppRoutes.otpLocation(OtpPurpose.registration),
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
+          onLogin: () => _returnToLogin(context),
           onOpenTerms: () => _showInformationDialog(
             context,
             title: context.t.auth.register.terms,
@@ -161,10 +168,11 @@ GoRouter buildAppRouter({
         name: AppRoutes.forgotPassword,
         path: AppRoutes.forgotPasswordPath,
         builder: (context, state) => ForgotPasswordPage(
-          onSubmit: (_) => context.go(
-            AppRoutes.otpLocation(OtpPurpose.passwordReset),
+          onSubmit: (_) => unawaited(_openPasswordResetOtp(context)),
+          onLogin: () => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.returnToLogin,
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
         ),
       ),
       GoRoute(
@@ -183,7 +191,7 @@ GoRouter buildAppRouter({
             purpose: purpose,
             onSubmit: (_) => switch (purpose) {
               OtpPurpose.registration => context.goNamed(AppRoutes.home),
-              OtpPurpose.passwordReset => context.goNamed(AppRoutes.resetPassword),
+              OtpPurpose.passwordReset => unawaited(_openResetPassword(context)),
             },
             onResend: () => _showInformationDialog(
               context,
@@ -197,11 +205,14 @@ GoRouter buildAppRouter({
         name: AppRoutes.resetPassword,
         path: AppRoutes.resetPasswordPath,
         builder: (context, state) => ResetPasswordPage(
-          onSubmit: (_) => context.goNamed(
-            AppRoutes.login,
-            queryParameters: {'status': _passwordResetComplete},
+          onSubmit: (_) => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.completed,
           ),
-          onLogin: () => context.goNamed(AppRoutes.login),
+          onLogin: () => _finishPasswordResetFlow(
+            context,
+            _PasswordResetFlowResult.returnToLogin,
+          ),
         ),
       ),
       GoRoute(
@@ -237,22 +248,149 @@ GoRouter buildAppRouter({
       ],
     ],
     errorBuilder: _routeErrorPage,
+    redirect: _redirectSettingsDeepLinks,
   );
+}
+
+// Normalizes dedicated settings detail deep links (/settings/appearance,
+// /settings/language) to the /settings?section=… query form. A cold-start
+// deep-link to a dedicated path would otherwise leave the settings branch
+// holding a page keyed ValueKey("/settings/appearance"); a subsequent wide
+// section switch (replaceNamed to /settings?section=…) changes the matched
+// path/key and fires the platform page transition the migration exists to
+// remove. Normalizing on entry keeps the page key ValueKey("/settings") for
+// all settings pages on medium/expanded, so wide section switches run no
+// transition. Content is unchanged: SettingsPage reads ?section=, so the
+// appearance/language content still renders.
+String? _redirectSettingsDeepLinks(BuildContext context, GoRouterState state) {
+  final path = state.uri.path;
+  if (path == AppRoutes.appearanceSettingsPath) {
+    return state.uri
+        .replace(
+          path: AppRoutes.settingsPath,
+          queryParameters: {'section': SettingsSection.appearance.parameter},
+        )
+        .toString();
+  }
+  if (path == AppRoutes.languageSettingsPath) {
+    return state.uri
+        .replace(
+          path: AppRoutes.settingsPath,
+          queryParameters: {'section': SettingsSection.language.parameter},
+        )
+        .toString();
+  }
+  return null;
 }
 
 const _passwordResetComplete = 'password-reset-complete';
 
+enum _PasswordResetFlowResult {
+  completed,
+  returnToLogin,
+}
+
+class _LoginRoutePage extends StatefulWidget {
+  const _LoginRoutePage({required this.passwordResetComplete});
+
+  final bool passwordResetComplete;
+
+  @override
+  State<_LoginRoutePage> createState() => _LoginRoutePageState();
+}
+
+class _LoginRoutePageState extends State<_LoginRoutePage> {
+  late bool _passwordResetComplete = widget.passwordResetComplete;
+
+  @override
+  void didUpdateWidget(covariant _LoginRoutePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.passwordResetComplete != oldWidget.passwordResetComplete) {
+      _passwordResetComplete = widget.passwordResetComplete;
+    }
+  }
+
+  Future<void> _openForgotPassword() async {
+    final result = await context.pushNamed<_PasswordResetFlowResult>(
+      AppRoutes.forgotPassword,
+    );
+    if (!mounted || result != _PasswordResetFlowResult.completed) {
+      return;
+    }
+    setState(() => _passwordResetComplete = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LoginPage(
+      presentation: _passwordResetComplete
+          ? LoginPresentationState.success(
+              successMessage: context.t.auth.resetPassword.success,
+            )
+          : const LoginPresentationState(),
+      onSubmit: (_) => context.goNamed(AppRoutes.home),
+      onForgotPassword: () => unawaited(_openForgotPassword()),
+      onRegister: () => context.pushNamed(AppRoutes.register),
+    );
+  }
+}
+
+Future<void> _openPasswordResetOtp(BuildContext context) async {
+  final result = await context.push<_PasswordResetFlowResult>(
+    AppRoutes.otpLocation(OtpPurpose.passwordReset),
+  );
+  if (result != null && context.mounted) {
+    _finishPasswordResetFlow(context, result);
+  }
+}
+
+Future<void> _openResetPassword(BuildContext context) async {
+  final result = await context.pushNamed<_PasswordResetFlowResult>(
+    AppRoutes.resetPassword,
+  );
+  if (result != null && context.mounted) {
+    _finishPasswordResetFlow(context, result);
+  }
+}
+
+void _finishPasswordResetFlow(
+  BuildContext context,
+  _PasswordResetFlowResult result,
+) {
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop(result);
+    return;
+  }
+
+  context.goNamed(
+    AppRoutes.login,
+    queryParameters: result == _PasswordResetFlowResult.completed
+        ? {'status': _passwordResetComplete}
+        : const {},
+  );
+}
+
+void _returnToLogin(BuildContext context) {
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop();
+    return;
+  }
+  context.goNamed(AppRoutes.login);
+}
+
 SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
   return SettingsPage(
     section: section,
-    onOpenAppearance: () => context.pushNamed(AppRoutes.appearanceSettings),
-    onOpenLanguage: () => context.pushNamed(AppRoutes.languageSettings),
+    onOpenAppearance: () => _openSettingsSection(context, SettingsSection.appearance),
+    onOpenLanguage: () => _openSettingsSection(context, SettingsSection.language),
     onOpenAccount: () => _openSettingsSection(context, SettingsSection.account),
     onOpenSubscription: () => _openSettingsSection(context, SettingsSection.subscription),
     onOpenPrivacyAbout: () => _openSettingsSection(context, SettingsSection.privacyAbout),
     onOpenProfile: () => context.pushNamed(AppRoutes.updateProfile),
     onOpenLogin: () => context.pushNamed(AppRoutes.login),
-    onOpenPricing: () => context.pushNamed(AppRoutes.pricing),
+    onOpenPricing: () => _goTab(context, 1),
     onOpenTerms: () => _showInformationDialog(
       context,
       title: context.t.settings.terms,
@@ -265,12 +403,46 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
   );
 }
 
+void _goTab(BuildContext context, int index) {
+  // Returns StatefulNavigationShellState (route.dart:1329), which owns both
+  // goBranch and currentIndex.
+  final shell = StatefulNavigationShell.of(context);
+  shell.goBranch(index, initialLocation: index == shell.currentIndex);
+}
+
 void _openSettingsSection(BuildContext context, SettingsSection section) {
-  unawaited(
-    context.pushNamed<void>(
+  // Compact drills into a dedicated path where one exists; wide always selects
+  // the pane in place via ?section=, keeping the /settings page key.
+  final (String name, Map<String, dynamic> queryParameters) = switch (section) {
+    SettingsSection.appearance => (AppRoutes.appearanceSettings, const {}),
+    SettingsSection.language => (AppRoutes.languageSettings, const {}),
+    _ => (AppRoutes.settings, {'section': section.parameter}),
+  };
+
+  final layoutClass = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(appLayoutClassProvider);
+
+  if (layoutClass == AppLayoutClass.compact) {
+    final target = Uri.parse(
+      context.namedLocation(name, queryParameters: queryParameters),
+    );
+    if (GoRouterState.of(context).uri == target) return;
+    unawaited(context.pushNamed<void>(name, queryParameters: queryParameters));
+    return;
+  }
+
+  final wideTarget = Uri.parse(
+    context.namedLocation(
       AppRoutes.settings,
       queryParameters: {'section': section.parameter},
     ),
+  );
+  if (GoRouterState.of(context).uri == wideTarget) return;
+  context.replaceNamed(
+    AppRoutes.settings,
+    queryParameters: {'section': section.parameter},
   );
 }
 
@@ -282,6 +454,7 @@ void _showInformationDialog(
   unawaited(
     showFDialog<void>(
       context: context,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context, style, animation) => EscapeDismissibleOverlay(
         child: FDialog(

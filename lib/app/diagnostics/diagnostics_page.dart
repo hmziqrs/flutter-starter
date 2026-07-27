@@ -29,58 +29,60 @@ class DiagnosticsPage extends ConsumerWidget {
     final locale = TranslationProvider.of(context).locale;
 
     return FScaffold(
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    translations.diagnostics.title,
-                    style: context.theme.typography.display.xl2,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  FCard(
-                    child: Column(
-                      children: [
-                        _DiagnosticTile(
-                          label: translations.diagnostics.environment,
-                          value: config.environment.name,
-                        ),
-                        _DiagnosticTile(
-                          label: translations.diagnostics.build,
-                          value: '',
-                          valueBuilder: _BuildValue.new,
-                        ),
-                        _DiagnosticTile(
-                          label: translations.diagnostics.layout,
-                          value: layoutClass.name,
-                        ),
-                        _DiagnosticTile(
-                          label: translations.diagnostics.interaction,
-                          value: interactionPolicy.name,
-                        ),
-                        _DiagnosticTile(
-                          label: translations.diagnostics.locale,
-                          value: locale.languageTag,
-                        ),
-                        _DiagnosticTile(
-                          label: translations.diagnostics.capabilities,
-                          value: capabilities.redactedSummary,
-                        ),
-                      ],
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      translations.diagnostics.title,
+                      style: context.theme.typography.display.xl2,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(translations.diagnostics.redactedNotice),
-                ],
+                    const SizedBox(height: AppSpacing.xl),
+                    FCard(
+                      child: Column(
+                        children: [
+                          _DiagnosticTile(
+                            label: translations.diagnostics.environment,
+                            value: config.environment.name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.build,
+                            value: '',
+                            valueBuilder: _BuildValue.new,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.layout,
+                            value: layoutClass.name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.interaction,
+                            value: interactionPolicy.name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.locale,
+                            value: locale.languageTag,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.capabilities,
+                            value: capabilities.redactedSummary,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(translations.diagnostics.redactedNotice),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

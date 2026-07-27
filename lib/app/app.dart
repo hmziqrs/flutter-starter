@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
+import 'package:starter/shared/motion/app_page_transitions.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 class App extends StatelessWidget {
@@ -89,29 +93,63 @@ class _AppViewState extends ConsumerState<_AppView> {
       locale: localeData.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: FLocalizations.localizationsDelegates,
-      theme: lightTheme.toApproximateMaterialTheme(),
-      darkTheme: darkTheme.toApproximateMaterialTheme(),
+      theme: lightTheme.toApproximateMaterialTheme().copyWith(
+        pageTransitionsTheme: nativePageTransitionsTheme,
+      ),
+      darkTheme: darkTheme.toApproximateMaterialTheme().copyWith(
+        pageTransitionsTheme: nativePageTransitionsTheme,
+      ),
       themeMode: _materialThemeMode(settings.themeMode),
       builder: (context, child) {
-        final activeTheme = Theme.of(context).brightness == Brightness.dark
-            ? darkTheme
-            : lightTheme;
-        return AppInputObserver(
-          child: FTheme(
-            data: activeTheme,
-            motion: const FThemeMotion(
-              duration: AppMotion.standard,
-              curve: AppMotion.standardCurve,
-            ),
-            child: FToaster(
-              child: FTooltipGroup(
-                child: child ?? const SizedBox.shrink(),
+        final activeTheme = ForuiThemeFactory.build(
+          brightness: Theme.of(context).brightness,
+          accent: settings.accent,
+          fontScale: settings.fontScale,
+          interactionPolicy: interactionPolicy,
+          responsiveFontScale: context.appUnit.typographyScale,
+        );
+
+        return Theme(
+          data: activeTheme.toApproximateMaterialTheme().copyWith(
+            pageTransitionsTheme: nativePageTransitionsTheme,
+          ),
+          child: AppInputObserver(
+            child: FTheme(
+              data: activeTheme,
+              motion: const FThemeMotion(
+                duration: AppMotion.standard,
+                curve: AppMotion.standardCurve,
+              ),
+              child: AppKeyboardHost(
+                bindings: [
+                  AppKeyboardBinding(
+                    activator: const SingleActivator(
+                      LogicalKeyboardKey.backspace,
+                      meta: true,
+                      includeRepeats: false,
+                    ),
+                    onInvoke: _navigateBack,
+                  ),
+                ],
+                child: FToaster(
+                  child: FTooltipGroup(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
           ),
         );
       },
     );
+  }
+
+  bool _navigateBack() {
+    if (!_router.canPop()) {
+      return false;
+    }
+    _router.pop();
+    return true;
   }
 }
 

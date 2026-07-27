@@ -45,9 +45,41 @@ gen-check:
     git diff --exit-code
 
 # --- run the app (development config) -----------------------------------------
-# Run on a device (default macos): just run [chrome|macos|...]
+# Run on a device (default macos): just run [chrome|macos|ios|<device-id>]
 run dev='macos':
-    {{flutter}} run -d {{dev}} --dart-define-from-file={{dev_config}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    device='{{dev}}'
+    if [[ "$device" == 'ios' ]]; then
+        if ! command -v xcrun >/dev/null 2>&1; then
+            echo 'The ios shortcut requires Xcode command-line tools.' >&2
+            exit 1
+        fi
+
+        device="$(
+            xcrun simctl list devices available |
+                sed -nE '/(iPhone|iPad)/s/.*\(([0-9A-Fa-f-]{36})\) \(Booted\).*/\1/p' |
+                head -n 1
+        )"
+
+        if [[ -z "$device" ]]; then
+            device="$(
+                xcrun simctl list devices available |
+                    sed -nE '/iPhone/s/.*\(([0-9A-Fa-f-]{36})\) \(Shutdown\).*/\1/p' |
+                    head -n 1
+            )"
+            if [[ -z "$device" ]]; then
+                echo 'No available iPhone simulator was found. Install one in Xcode.' >&2
+                exit 1
+            fi
+
+            xcrun simctl boot "$device"
+            open -a Simulator
+        fi
+    fi
+
+    exec {{flutter}} run -d "$device" --dart-define-from-file={{dev_config}}
 
 # --- tests --------------------------------------------------------------------
 # All non-golden unit + widget tests (the CI quality job).

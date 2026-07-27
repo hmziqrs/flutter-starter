@@ -13,6 +13,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
@@ -67,6 +68,10 @@ void main() {
       accent: AppAccent.blue,
       fontScale: 1.6,
       interactionPolicy: AppInteractionPolicy.hybrid,
+      responsiveFontScale: AppUnit.fromSize(
+        environment.viewport.size,
+        devicePixelRatio: 1,
+      ).typographyScale,
     );
     final provider = ProviderScope.containerOf(context);
     final fTheme = tester.widget<FTheme>(

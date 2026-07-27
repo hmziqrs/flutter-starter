@@ -1,24 +1,26 @@
 import 'package:flutter/widgets.dart';
-import 'package:starter/app/routing/app_routes.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter/app/shell/compact_app_shell.dart';
 import 'package:starter/app/shell/expanded_app_shell.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 
 class AppShell extends StatelessWidget {
-  const AppShell({required this.location, required this.child, super.key});
+  const AppShell({required StatefulNavigationShell navigationShell, super.key})
+    : navigationShell = navigationShell,
+      child = navigationShell;
 
-  final String location;
+  const AppShell.preview({required this.child, super.key}) : navigationShell = null;
+
+  final StatefulNavigationShell? navigationShell;
   final Widget child;
 
-  int get _selectedIndex {
-    if (location.startsWith(AppRoutes.pricingPath)) {
-      return 1;
-    }
-    if (location.startsWith(AppRoutes.settingsPath)) {
-      return 2;
-    }
-    return 0;
+  int get _selectedIndex => navigationShell?.currentIndex ?? 0;
+
+  void _onSelectTab(int index) {
+    final shell = navigationShell;
+    if (shell == null) return;
+    shell.goBranch(index, initialLocation: index == shell.currentIndex);
   }
 
   @override
@@ -27,16 +29,19 @@ class AppShell extends StatelessWidget {
       builder: (context, layoutClass) => switch (layoutClass) {
         AppLayoutClass.compact => CompactAppShell(
           selectedIndex: _selectedIndex,
+          onSelectTab: _onSelectTab,
           child: child,
         ),
         AppLayoutClass.medium => ExpandedAppShell(
           selectedIndex: _selectedIndex,
           compactSidebar: true,
+          onSelectTab: _onSelectTab,
           child: child,
         ),
         AppLayoutClass.expanded => ExpandedAppShell(
           selectedIndex: _selectedIndex,
           compactSidebar: false,
+          onSelectTab: _onSelectTab,
           child: child,
         ),
       },

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
@@ -154,11 +155,17 @@ void main() {
     );
     await _tapVisible(tester, 'auth-reset-password-submit');
 
-    expect(find.byKey(const ValueKey('auth-login-page')), findsOneWidget);
+    final login = find.byKey(const ValueKey('auth-login-page'));
+    expect(login, findsOneWidget);
     expect(find.byKey(const ValueKey('auth-login-success')), findsOneWidget);
     expect(
       find.text('Password update preview complete. Return to login.'),
       findsOneWidget,
+    );
+    expect(
+      GoRouter.of(tester.element(login)).canPop(),
+      isFalse,
+      reason: 'a directly opened reset flow must finish on a root Login',
     );
   });
 }

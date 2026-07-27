@@ -74,7 +74,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('home-layout-expanded')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-grid-3')), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('home-status-ready'))).height,
+      lessThan(200),
+    );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps page content below the device safe area', (tester) async {
+    const safePadding = EdgeInsets.only(top: 59, bottom: 34);
+    await _pumpHome(
+      tester,
+      size: const Size(390, 844),
+      safePadding: safePadding,
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('home-greeting'))).dy,
+      greaterThan(safePadding.top),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('home-layout-compact'))).dy,
+      safePadding.top,
+    );
+    expect(
+      tester.getBottomRight(find.byKey(const ValueKey('home-layout-compact'))).dy,
+      844,
+    );
   });
 
   testWidgets('renders an honest empty activity variant', (tester) async {
@@ -95,6 +128,29 @@ void main() {
     expect(empty, findsOneWidget);
     expect(find.text('Nothing here yet'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
+  });
+
+  testWidgets('uses one repeated-item gap across status and activity sections', (tester) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    final statusGap =
+        tester.getTopLeft(find.byKey(const ValueKey('home-status-adaptive'))).dy -
+        tester.getBottomLeft(find.byKey(const ValueKey('home-status-ready'))).dy;
+    final activityGap =
+        tester.getTopLeft(find.byKey(const ValueKey('home-activity-adaptive-connected'))).dy -
+        tester.getBottomLeft(find.byKey(const ValueKey('home-activity-foundation-ready'))).dy;
+
+    expect(statusGap, activityGap);
   });
 
   testWidgets('medium content remains usable after shell width is allocated', (tester) async {
@@ -121,6 +177,7 @@ Future<void> _pumpHome(
   WidgetTester tester, {
   required Size size,
   required HomePage page,
+  EdgeInsets safePadding = EdgeInsets.zero,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -152,9 +209,16 @@ Future<void> _pumpHome(
                   compactMax: context.theme.breakpoints.sm,
                   expandedMin: context.theme.breakpoints.lg,
                 );
-                return ProviderScope(
+                final content = ProviderScope(
                   overrides: [appLayoutClassProvider.overrideWithValue(layoutClass)],
                   child: child ?? const SizedBox.shrink(),
+                );
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    padding: safePadding,
+                    viewPadding: safePadding,
+                  ),
+                  child: content,
                 );
               },
             ),

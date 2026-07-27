@@ -77,173 +77,176 @@ class _PaywallPageState extends State<PaywallPage> {
       AppLayoutClass.expanded => 3,
     };
 
-    return SafeArea(
-      child: Column(
-        key: const ValueKey('paywall-page'),
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xl,
-              AppSpacing.sm,
-              AppSpacing.xl,
-              0,
-            ),
-            child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: FButton(
-                key: const ValueKey('paywall-skip'),
-                variant: .ghost,
-                mainAxisSize: .min,
-                onPress: widget.onSkip,
-                child: Text(translations.common.skip),
+    return FScaffold(
+      childPad: false,
+      child: SafeArea(
+        child: Column(
+          key: const ValueKey('paywall-page'),
+          children: [
+            Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(
+                context.spacing.xl,
+                context.spacing.sm,
+                context.spacing.xl,
+                0,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: FButton(
+                  key: const ValueKey('paywall-skip'),
+                  variant: .ghost,
+                  mainAxisSize: .min,
+                  onPress: widget.onSkip,
+                  child: Text(translations.common.skip),
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.xl,
-                AppSpacing.sm,
-                AppSpacing.xl,
-                AppSpacing.xl3,
-              ),
-              children: [
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          translations.pricing.paywallTitle,
-                          style: context.theme.typography.display.xl3,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          translations.pricing.paywallBody,
-                          style: context.theme.typography.body.lg,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        _BenefitList(
-                          benefits: [
-                            translations.pricing.benefitAdaptive,
-                            translations.pricing.benefitLocalized,
-                            translations.pricing.benefitAccessible,
+            Expanded(
+              child: ListView(
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  context.spacing.xl,
+                  context.spacing.sm,
+                  context.spacing.xl,
+                  context.spacing.xl3,
+                ),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            translations.pricing.paywallTitle,
+                            style: context.theme.typography.display.xl3,
+                          ),
+                          SizedBox(height: context.spacing.md),
+                          Text(
+                            translations.pricing.paywallBody,
+                            style: context.theme.typography.body.lg,
+                          ),
+                          SizedBox(height: context.spacing.lg),
+                          _BenefitList(
+                            benefits: [
+                              translations.pricing.benefitAdaptive,
+                              translations.pricing.benefitLocalized,
+                              translations.pricing.benefitAccessible,
+                            ],
+                          ),
+                          SizedBox(height: context.spacing.xl),
+                          BillingSelector(
+                            value: _billingPeriod,
+                            monthlyLabel: translations.pricing.monthly,
+                            annualLabel: translations.pricing.annual,
+                            enabled: _hasAvailablePlan,
+                            onChanged: (period) => setState(() => _billingPeriod = period),
+                          ),
+                          if (!_hasAvailablePlan) ...[
+                            const SizedBox(height: AppSpacing.lg),
+                            FAlert(
+                              key: const ValueKey('paywall-unavailable'),
+                              variant: .destructive,
+                              title: Text(translations.pricing.unavailableReason),
+                            ),
                           ],
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        BillingSelector(
-                          value: _billingPeriod,
-                          monthlyLabel: translations.pricing.monthly,
-                          annualLabel: translations.pricing.annual,
-                          enabled: _hasAvailablePlan,
-                          onChanged: (period) => setState(() => _billingPeriod = period),
-                        ),
-                        if (!_hasAvailablePlan) ...[
-                          const SizedBox(height: AppSpacing.lg),
-                          FAlert(
-                            key: const ValueKey('paywall-unavailable'),
-                            variant: .destructive,
-                            title: Text(translations.pricing.unavailableReason),
+                          const SizedBox(height: AppSpacing.xl),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final gaps = AppSpacing.lg * (columns - 1);
+                              final width = (constraints.maxWidth - gaps) / columns;
+                              return Wrap(
+                                key: ValueKey('paywall-layout-${layoutClass.name}'),
+                                spacing: AppSpacing.lg,
+                                runSpacing: AppSpacing.lg,
+                                children: [
+                                  for (final plan in widget.plans)
+                                    SizedBox(
+                                      width: width,
+                                      child: PlanCard(
+                                        plan: plan,
+                                        formattedPrice: plan.formattedPrice(
+                                          _billingPeriod,
+                                          locale: locale,
+                                        ),
+                                        periodLabel: _billingPeriod == BillingPeriod.monthly
+                                            ? translations.pricing.periodMonth
+                                            : translations.pricing.periodYear,
+                                        actionLabel: translations.pricing.choosePlan(
+                                          plan: plan.name,
+                                        ),
+                                        recommendedLabel: translations.pricing.recommended,
+                                        currentLabel: translations.pricing.current,
+                                        unavailableLabel: _isAvailable(plan)
+                                            ? null
+                                            : translations.pricing.unavailable,
+                                        selected: plan.id == _selectedPlanId,
+                                        onSelect: _isAvailable(plan)
+                                            ? () => setState(() => _selectedPlanId = plan.id)
+                                            : null,
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          FButton(
+                            key: const ValueKey('paywall-continue'),
+                            onPress: _canContinue
+                                ? () => widget.onContinue(_selectedPlan, _billingPeriod)
+                                : null,
+                            builder: (_, _, _, _, _, child) => Flexible(child: child!),
+                            child: Text(
+                              translations.pricing.paywallContinue,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            translations.pricing.staticPurchaseNotice,
+                            textAlign: TextAlign.center,
+                            style: context.theme.typography.body.sm,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.sm,
+                            children: [
+                              FButton(
+                                key: const ValueKey('paywall-restore'),
+                                variant: .ghost,
+                                mainAxisSize: .min,
+                                onPress: widget.onRestore,
+                                child: Text(translations.pricing.restore),
+                              ),
+                              FButton(
+                                key: const ValueKey('paywall-terms'),
+                                variant: .ghost,
+                                mainAxisSize: .min,
+                                onPress: widget.onOpenTerms,
+                                child: Text(translations.pricing.terms),
+                              ),
+                              FButton(
+                                key: const ValueKey('paywall-privacy'),
+                                variant: .ghost,
+                                mainAxisSize: .min,
+                                onPress: widget.onOpenPrivacy,
+                                child: Text(translations.pricing.privacy),
+                              ),
+                            ],
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.xl),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final gaps = AppSpacing.lg * (columns - 1);
-                            final width = (constraints.maxWidth - gaps) / columns;
-                            return Wrap(
-                              key: ValueKey('paywall-layout-${layoutClass.name}'),
-                              spacing: AppSpacing.lg,
-                              runSpacing: AppSpacing.lg,
-                              children: [
-                                for (final plan in widget.plans)
-                                  SizedBox(
-                                    width: width,
-                                    child: PlanCard(
-                                      plan: plan,
-                                      formattedPrice: plan.formattedPrice(
-                                        _billingPeriod,
-                                        locale: locale,
-                                      ),
-                                      periodLabel: _billingPeriod == BillingPeriod.monthly
-                                          ? translations.pricing.periodMonth
-                                          : translations.pricing.periodYear,
-                                      actionLabel: translations.pricing.choosePlan(
-                                        plan: plan.name,
-                                      ),
-                                      recommendedLabel: translations.pricing.recommended,
-                                      currentLabel: translations.pricing.current,
-                                      unavailableLabel: _isAvailable(plan)
-                                          ? null
-                                          : translations.pricing.unavailable,
-                                      selected: plan.id == _selectedPlanId,
-                                      onSelect: _isAvailable(plan)
-                                          ? () => setState(() => _selectedPlanId = plan.id)
-                                          : null,
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        FButton(
-                          key: const ValueKey('paywall-continue'),
-                          onPress: _canContinue
-                              ? () => widget.onContinue(_selectedPlan, _billingPeriod)
-                              : null,
-                          builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                          child: Text(
-                            translations.pricing.paywallContinue,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          translations.pricing.staticPurchaseNotice,
-                          textAlign: TextAlign.center,
-                          style: context.theme.typography.body.sm,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: AppSpacing.sm,
-                          runSpacing: AppSpacing.sm,
-                          children: [
-                            FButton(
-                              key: const ValueKey('paywall-restore'),
-                              variant: .ghost,
-                              mainAxisSize: .min,
-                              onPress: widget.onRestore,
-                              child: Text(translations.pricing.restore),
-                            ),
-                            FButton(
-                              key: const ValueKey('paywall-terms'),
-                              variant: .ghost,
-                              mainAxisSize: .min,
-                              onPress: widget.onOpenTerms,
-                              child: Text(translations.pricing.terms),
-                            ),
-                            FButton(
-                              key: const ValueKey('paywall-privacy'),
-                              variant: .ghost,
-                              mainAxisSize: .min,
-                              onPress: widget.onOpenPrivacy,
-                              child: Text(translations.pricing.privacy),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

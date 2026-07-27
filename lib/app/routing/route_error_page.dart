@@ -22,52 +22,54 @@ class RouteErrorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final translations = context.t;
     return FScaffold(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  FLucideIcons.circleAlert,
-                  size: 40,
-                  color: context.theme.colors.error,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  translations.routeError.title,
-                  style: context.theme.typography.display.xl,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  message ?? translations.routeError.body,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                SelectableText(
-                  translations.routeError.path(path: location),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                FButton(
-                  key: const ValueKey('route-error-home'),
-                  onPress: onHome,
-                  child: Text(translations.common.home),
-                ),
-                if (onBack case final onBack? when Navigator.canPop(context)) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  FButton(
-                    key: const ValueKey('route-error-back'),
-                    variant: .outline,
-                    onPress: onBack,
-                    child: Text(translations.common.back),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(
+                    FLucideIcons.circleAlert,
+                    size: 40,
+                    color: context.theme.colors.error,
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    translations.routeError.title,
+                    style: context.theme.typography.display.xl,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    message ?? translations.routeError.body,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SelectableText(
+                    translations.routeError.path(path: location),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  FButton(
+                    key: const ValueKey('route-error-home'),
+                    onPress: onHome,
+                    child: Text(translations.common.home),
+                  ),
+                  if (onBack case final onBack? when Navigator.canPop(context)) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    FButton(
+                      key: const ValueKey('route-error-back'),
+                      variant: .outline,
+                      onPress: onBack,
+                      child: Text(translations.common.back),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

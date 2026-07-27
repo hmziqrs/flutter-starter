@@ -12,6 +12,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
 
 enum SettingsSection {
   appearance('appearance'),
@@ -71,46 +72,46 @@ class SettingsPage extends ConsumerWidget {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final effectiveSection = section ?? SettingsSection.appearance;
 
-    if (layoutClass == AppLayoutClass.compact) {
-      return switch (section) {
-        SettingsSection.appearance => const _AppearanceSettingsContent(),
-        SettingsSection.language => const _LanguageSettingsContent(),
-        SettingsSection.account => _AccountSettingsContent(
-          onOpenProfile: onOpenProfile,
-          onOpenLogin: onOpenLogin,
-        ),
-        SettingsSection.subscription => _SubscriptionSettingsContent(
-          onOpenPricing: onOpenPricing,
-        ),
-        SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
-          onOpenTerms: onOpenTerms,
-          onOpenPrivacy: onOpenPrivacy,
-          loadBuildLabel: loadBuildLabel,
-        ),
-        null => _SettingsOverview(
-          onOpenAppearance: onOpenAppearance,
-          onOpenLanguage: onOpenLanguage,
-          onOpenAccount: onOpenAccount,
-          onOpenSubscription: onOpenSubscription,
-          onOpenPrivacyAbout: onOpenPrivacyAbout,
-        ),
-      };
-    }
+    final content = layoutClass == AppLayoutClass.compact
+        ? switch (section) {
+            SettingsSection.appearance => const _AppearanceSettingsContent(),
+            SettingsSection.language => const _LanguageSettingsContent(),
+            SettingsSection.account => _AccountSettingsContent(
+              onOpenProfile: onOpenProfile,
+              onOpenLogin: onOpenLogin,
+            ),
+            SettingsSection.subscription => _SubscriptionSettingsContent(
+              onOpenPricing: onOpenPricing,
+            ),
+            SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
+              onOpenTerms: onOpenTerms,
+              onOpenPrivacy: onOpenPrivacy,
+              loadBuildLabel: loadBuildLabel,
+            ),
+            null => _SettingsOverview(
+              onOpenAppearance: onOpenAppearance,
+              onOpenLanguage: onOpenLanguage,
+              onOpenAccount: onOpenAccount,
+              onOpenSubscription: onOpenSubscription,
+              onOpenPrivacyAbout: onOpenPrivacyAbout,
+            ),
+          }
+        : _SettingsWideLayout(
+            section: effectiveSection,
+            onOpenAppearance: onOpenAppearance,
+            onOpenLanguage: onOpenLanguage,
+            onOpenAccount: onOpenAccount,
+            onOpenSubscription: onOpenSubscription,
+            onOpenPrivacyAbout: onOpenPrivacyAbout,
+            onOpenProfile: onOpenProfile,
+            onOpenLogin: onOpenLogin,
+            onOpenPricing: onOpenPricing,
+            onOpenTerms: onOpenTerms,
+            onOpenPrivacy: onOpenPrivacy,
+            loadBuildLabel: loadBuildLabel,
+          );
 
-    return _SettingsWideLayout(
-      section: effectiveSection,
-      onOpenAppearance: onOpenAppearance,
-      onOpenLanguage: onOpenLanguage,
-      onOpenAccount: onOpenAccount,
-      onOpenSubscription: onOpenSubscription,
-      onOpenPrivacyAbout: onOpenPrivacyAbout,
-      onOpenProfile: onOpenProfile,
-      onOpenLogin: onOpenLogin,
-      onOpenPricing: onOpenPricing,
-      onOpenTerms: onOpenTerms,
-      onOpenPrivacy: onOpenPrivacy,
-      loadBuildLabel: loadBuildLabel,
-    );
+    return SafeArea(bottom: false, child: content);
   }
 }
 
@@ -134,46 +135,44 @@ class _SettingsOverview extends StatelessWidget {
     final translations = context.t;
     return _SettingsScrollFrame(
       title: translations.settings.title,
-      child: FCard(
-        child: Column(
-          children: [
-            FTile(
-              key: const ValueKey('settings-open-appearance'),
-              prefix: const Icon(FLucideIcons.palette),
-              title: Text(translations.settings.appearance),
-              suffix: const _DirectionalChevron(),
-              onPress: onOpenAppearance,
-            ),
-            FTile(
-              key: const ValueKey('settings-open-language'),
-              prefix: const Icon(FLucideIcons.languages),
-              title: Text(translations.settings.language),
-              suffix: const _DirectionalChevron(),
-              onPress: onOpenLanguage,
-            ),
-            FTile(
-              key: const ValueKey('settings-open-account'),
-              prefix: const Icon(FLucideIcons.userRound),
-              title: Text(translations.settings.account),
-              suffix: const _DirectionalChevron(),
-              onPress: onOpenAccount,
-            ),
-            FTile(
-              key: const ValueKey('settings-open-subscription'),
-              prefix: const Icon(FLucideIcons.creditCard),
-              title: Text(translations.settings.subscription),
-              suffix: const _DirectionalChevron(),
-              onPress: onOpenSubscription,
-            ),
-            FTile(
-              key: const ValueKey('settings-open-privacy-about'),
-              prefix: const Icon(FLucideIcons.shieldCheck),
-              title: Text(translations.settings.privacyAbout),
-              suffix: const _DirectionalChevron(),
-              onPress: onOpenPrivacyAbout,
-            ),
-          ],
-        ),
+      child: _SpacedSettingsTiles(
+        children: [
+          FTile(
+            key: const ValueKey('settings-open-appearance'),
+            prefix: const Icon(FLucideIcons.palette),
+            title: Text(translations.settings.appearance),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenAppearance,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-language'),
+            prefix: const Icon(FLucideIcons.languages),
+            title: Text(translations.settings.language),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenLanguage,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-account'),
+            prefix: const Icon(FLucideIcons.userRound),
+            title: Text(translations.settings.account),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenAccount,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-subscription'),
+            prefix: const Icon(FLucideIcons.creditCard),
+            title: Text(translations.settings.subscription),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenSubscription,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-privacy-about'),
+            prefix: const Icon(FLucideIcons.shieldCheck),
+            title: Text(translations.settings.privacyAbout),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenPrivacyAbout,
+          ),
+        ],
       ),
     );
   }
@@ -225,35 +224,45 @@ class _SettingsWideLayout extends StatelessWidget {
                   style: context.theme.typography.display.xl,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                FSidebarItem(
-                  selected: section == SettingsSection.appearance,
-                  icon: const Icon(FLucideIcons.palette),
-                  label: Text(translations.settings.appearance),
-                  onPress: onOpenAppearance,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.language,
-                  icon: const Icon(FLucideIcons.languages),
-                  label: Text(translations.settings.language),
-                  onPress: onOpenLanguage,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.account,
-                  icon: const Icon(FLucideIcons.userRound),
-                  label: Text(translations.settings.account),
-                  onPress: onOpenAccount,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.subscription,
-                  icon: const Icon(FLucideIcons.creditCard),
-                  label: Text(translations.settings.subscription),
-                  onPress: onOpenSubscription,
-                ),
-                FSidebarItem(
-                  selected: section == SettingsSection.privacyAbout,
-                  icon: const Icon(FLucideIcons.shieldCheck),
-                  label: Text(translations.settings.privacyAbout),
-                  onPress: onOpenPrivacyAbout,
+                AppSidebarItemGroup(
+                  key: const ValueKey('settings-wide-navigation'),
+                  children: [
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-appearance'),
+                      selected: section == SettingsSection.appearance,
+                      icon: const Icon(FLucideIcons.palette),
+                      label: Text(translations.settings.appearance),
+                      onPress: onOpenAppearance,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-language'),
+                      selected: section == SettingsSection.language,
+                      icon: const Icon(FLucideIcons.languages),
+                      label: Text(translations.settings.language),
+                      onPress: onOpenLanguage,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-account'),
+                      selected: section == SettingsSection.account,
+                      icon: const Icon(FLucideIcons.userRound),
+                      label: Text(translations.settings.account),
+                      onPress: onOpenAccount,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-subscription'),
+                      selected: section == SettingsSection.subscription,
+                      icon: const Icon(FLucideIcons.creditCard),
+                      label: Text(translations.settings.subscription),
+                      onPress: onOpenSubscription,
+                    ),
+                    FSidebarItem(
+                      key: const ValueKey('settings-wide-privacy-about'),
+                      selected: section == SettingsSection.privacyAbout,
+                      icon: const Icon(FLucideIcons.shieldCheck),
+                      label: Text(translations.settings.privacyAbout),
+                      onPress: onOpenPrivacyAbout,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -301,25 +310,23 @@ class _AccountSettingsContent extends StatelessWidget {
         children: [
           Text(translations.settings.accountBody),
           const SizedBox(height: AppSpacing.lg),
-          FCard(
-            child: Column(
-              children: [
-                FTile(
-                  key: const ValueKey('settings-open-profile'),
-                  prefix: const Icon(FLucideIcons.userRoundPen),
-                  title: Text(translations.settings.openProfile),
-                  suffix: const _DirectionalChevron(),
-                  onPress: onOpenProfile,
-                ),
-                FTile(
-                  key: const ValueKey('settings-open-login'),
-                  prefix: const Icon(FLucideIcons.logIn),
-                  title: Text(translations.settings.openLogin),
-                  suffix: const _DirectionalChevron(),
-                  onPress: onOpenLogin,
-                ),
-              ],
-            ),
+          _SpacedSettingsTiles(
+            children: [
+              FTile(
+                key: const ValueKey('settings-open-profile'),
+                prefix: const Icon(FLucideIcons.userRoundPen),
+                title: Text(translations.settings.openProfile),
+                suffix: const _DirectionalChevron(),
+                onPress: onOpenProfile,
+              ),
+              FTile(
+                key: const ValueKey('settings-open-login'),
+                prefix: const Icon(FLucideIcons.logIn),
+                title: Text(translations.settings.openLogin),
+                suffix: const _DirectionalChevron(),
+                onPress: onOpenLogin,
+              ),
+            ],
           ),
         ],
       ),
@@ -384,37 +391,35 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
         children: [
           Text(translations.settings.privacyBody),
           const SizedBox(height: AppSpacing.lg),
-          FCard(
-            child: Column(
-              children: [
-                FTile(
-                  title: Text(translations.settings.aboutBuild),
-                  details: FutureBuilder<String>(
-                    future: _buildLabel,
-                    builder: (context, snapshot) {
-                      return Text(
-                        snapshot.data ??
-                            (snapshot.hasError
-                                ? translations.common.notConnected
-                                : translations.common.loading),
-                      );
-                    },
-                  ),
+          _SpacedSettingsTiles(
+            children: [
+              FTile(
+                title: Text(translations.settings.aboutBuild),
+                details: FutureBuilder<String>(
+                  future: _buildLabel,
+                  builder: (context, snapshot) {
+                    return Text(
+                      snapshot.data ??
+                          (snapshot.hasError
+                              ? translations.common.notConnected
+                              : translations.common.loading),
+                    );
+                  },
                 ),
-                FTile(
-                  key: const ValueKey('settings-open-terms'),
-                  title: Text(translations.settings.terms),
-                  suffix: const _DirectionalChevron(),
-                  onPress: widget.onOpenTerms,
-                ),
-                FTile(
-                  key: const ValueKey('settings-open-privacy'),
-                  title: Text(translations.settings.privacy),
-                  suffix: const _DirectionalChevron(),
-                  onPress: widget.onOpenPrivacy,
-                ),
-              ],
-            ),
+              ),
+              FTile(
+                key: const ValueKey('settings-open-terms'),
+                title: Text(translations.settings.terms),
+                suffix: const _DirectionalChevron(),
+                onPress: widget.onOpenTerms,
+              ),
+              FTile(
+                key: const ValueKey('settings-open-privacy'),
+                title: Text(translations.settings.privacy),
+                suffix: const _DirectionalChevron(),
+                onPress: widget.onOpenPrivacy,
+              ),
+            ],
           ),
         ],
       ),
@@ -572,46 +577,44 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
 
     return _SettingsScrollFrame(
       title: translations.settings.language,
-      child: FCard(
-        child: Column(
-          children: [
-            _LocaleTile(
-              key: const ValueKey('locale-system'),
-              selected: settings.localeOverride == null,
-              label: translations.settings.languageSystem,
-              onPress: () => _setLocale(controller, null),
-            ),
-            _LocaleTile(
-              key: const ValueKey('locale-en'),
-              selected: settings.localeOverride == AppLocale.en,
-              label: translations.settings.languageEnglish,
-              onPress: () => _setLocale(controller, AppLocale.en),
-            ),
-            _LocaleTile(
-              key: const ValueKey('locale-ar'),
-              selected: settings.localeOverride == AppLocale.ar,
-              label: translations.settings.languageArabic,
-              onPress: () => _setLocale(controller, AppLocale.ar),
-            ),
-            _LocaleTile(
-              key: const ValueKey('locale-zh-Hans'),
-              selected: settings.localeOverride == AppLocale.zhHans,
-              label: translations.settings.languageChinese,
-              onPress: () => _setLocale(controller, AppLocale.zhHans),
-            ),
-            if (_saveFailed)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Text(
-                  translations.common.notConnected,
-                  key: const ValueKey('locale-save-error'),
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: context.theme.colors.error,
-                  ),
+      child: _SpacedSettingsTiles(
+        children: [
+          _LocaleTile(
+            key: const ValueKey('locale-system'),
+            selected: settings.localeOverride == null,
+            label: translations.settings.languageSystem,
+            onPress: () => _setLocale(controller, null),
+          ),
+          _LocaleTile(
+            key: const ValueKey('locale-en'),
+            selected: settings.localeOverride == AppLocale.en,
+            label: translations.settings.languageEnglish,
+            onPress: () => _setLocale(controller, AppLocale.en),
+          ),
+          _LocaleTile(
+            key: const ValueKey('locale-ar'),
+            selected: settings.localeOverride == AppLocale.ar,
+            label: translations.settings.languageArabic,
+            onPress: () => _setLocale(controller, AppLocale.ar),
+          ),
+          _LocaleTile(
+            key: const ValueKey('locale-zh-Hans'),
+            selected: settings.localeOverride == AppLocale.zhHans,
+            label: translations.settings.languageChinese,
+            onPress: () => _setLocale(controller, AppLocale.zhHans),
+          ),
+          if (_saveFailed)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Text(
+                translations.common.notConnected,
+                key: const ValueKey('locale-save-error'),
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.error,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -662,11 +665,11 @@ class _SettingsScrollFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.xl,
-        AppSpacing.xl2,
-        AppSpacing.xl,
-        AppSpacing.xl3,
+      padding: EdgeInsetsDirectional.fromSTEB(
+        context.spacing.xl,
+        context.spacing.xl,
+        context.spacing.xl,
+        context.spacing.xl2,
       ),
       children: [
         Center(
@@ -676,12 +679,30 @@ class _SettingsScrollFrame extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(title, style: context.theme.typography.display.xl2),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 child,
               ],
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _SpacedSettingsTiles extends StatelessWidget {
+  const _SpacedSettingsTiles({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var index = 0; index < children.length; index++) ...[
+          if (index > 0) const SizedBox(height: AppSpacing.sm),
+          children[index],
+        ],
       ],
     );
   }

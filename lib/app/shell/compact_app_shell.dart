@@ -1,17 +1,17 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
-import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 class CompactAppShell extends StatelessWidget {
   const CompactAppShell({
     required this.selectedIndex,
+    required this.onSelectTab,
     required this.child,
     super.key,
   });
 
   final int selectedIndex;
+  final void Function(int) onSelectTab;
   final Widget child;
 
   @override
@@ -22,11 +22,7 @@ class CompactAppShell extends StatelessWidget {
       footer: FBottomNavigationBar(
         key: const ValueKey('compact-navigation'),
         index: selectedIndex,
-        onChange: (index) => switch (index) {
-          0 => context.goNamed(AppRoutes.home),
-          1 => context.goNamed(AppRoutes.pricing),
-          _ => context.goNamed(AppRoutes.settings),
-        },
+        onChange: onSelectTab,
         children: [
           FBottomNavigationBarItem(
             icon: const Icon(FLucideIcons.house),

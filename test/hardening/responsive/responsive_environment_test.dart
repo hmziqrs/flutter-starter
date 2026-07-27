@@ -385,7 +385,7 @@ class _GalleryCaseSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final page = galleryCase.build(context);
-    return insideShell ? AppShell(location: '/home', child: page) : page;
+    return insideShell ? AppShell.preview(child: page) : page;
   }
 }
 
