@@ -18,7 +18,7 @@ A `WidgetsBindingObserver` that publishes `AppLifecycleState` transitions (pause
 
 ## Backend & test surface
 
-Backend-free; the default impl **is** the real Flutter SDK binding — there is no port and no network. Tests inject transitions through the binding (`tester.binding` / a fake observer) rather than a plugin. This is a P0 foundation port in the [sequencing](../README.md#sequencing) sense (unblocks downstream features), not a D2 backend port.
+Backend-free; the default impl **is** the real Flutter SDK binding — there is no port and no network. Tests inject transitions through the binding (`tester.binding` / a fake observer) rather than a plugin. This is a P0 foundation port in the [sequencing](../README.md#sequencing) sense (unblocks downstream features), not a C2 backend port.
 
 ## Tests
 

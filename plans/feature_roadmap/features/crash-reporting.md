@@ -50,12 +50,12 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 
 - **Production default = `NoopCrashReporter`** — runs green with zero backend, swallows errors
   silently after `AppLogger.error` has already logged them locally. It does **not** fake
-  upload success (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
+  upload success (the [honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)
   is satisfied trivially because crash ingest has no user-facing success state).
 - **Optional real impl** — `SentryCrashReporter` (or `FirebaseCrashReporter`) constructed in
   `AppDependencies.production` **only** when `AppConfig` exposes a DSN. The consumer flips one
   override; the default path never depends on a backend.
-- **Test server contract ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server))**
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
   — `tools/test_server/` exposes `POST /v1/crashes` accepting
   `{ "message": string, "stack": string?, "context": object, "platform": string,
   "appVersion": string }`, returning `204 No Content`. It stores the last N crashes in memory
@@ -105,7 +105,7 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 
 ## Risks / notes
 
-- **Plugs into an existing seam ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):**
+- **Plugs into an existing seam ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)):**
   call the reporter **alongside** `AppLogger.error` inside `_installErrorHandlers`, do not
   replace it. `AppLogger` stays the local verbose-gated log; the reporter is the remote sink.
 - **PII / double-redaction.** Reuse [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart)
@@ -120,5 +120,5 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   path) and read via `crashReporterProvider` only by the `DiagnosticsPage` (widget path).
 - **Sequencing:** ship in the P0 foundation bundle alongside
   [`secure-store`](secure-store.md) and the lifecycle observer — no UI, no golden impact, and
-  it is the natural place to stand up [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+  it is the natural place to stand up [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
   so every later `server` feature has a target.

@@ -1,23 +1,19 @@
-# Roadmap decisions
+# Feature contracts
 
-Locked decisions governing the feature roadmap. Every feature doc under
-[`features/`](features/) assumes these. Change a decision here first, then update the
-affected feature docs and the [README](README.md) status table.
+The binding contracts every feature must satisfy. An implementer (or agent) reads this
+alongside the feature spec in [`features/`](features/); every feature assumes these. To change a
+contract, amend it here first, then update the affected feature docs and the [README](README.md)
+status table.
 
-## D1 — Scope is comprehensive
+## C1 — Scope is comprehensive
 
-The starter targets a **full, maximalist feature set** (~35 capabilities across startup,
-foundation ports, core UX, security, engagement, and platform polish). Second-instances of a
-pattern are kept (e.g. PIN *and* biometric *and* auto-lock) rather than collapsed into one
-example, because the goal is a fork-and-ship product, not a single demonstration per pattern.
+A **full feature set** (~35 capabilities across startup, foundation ports, core UX, security,
+engagement, platform polish). Second-instances of a pattern are kept (e.g. PIN *and* biometric
+*and* auto-lock) rather than collapsed into one example — the goal is a fork-and-ship product.
+Capabilities with no caller yet are gated by the checklist below (port + Noop default + test
+surface), not by premature usage.
 
-This overrides the lean/architecture-first instinct recorded in
-[`docs/baseline_architecture_report.md`](../../docs/baseline_architecture_report.md), which bounded
-abstractions to those with current callers. The roadmap introduces capabilities that have no
-caller yet; each is gated by the audit checklist below so it still earns its place
-structurally (port + Noop default + test surface), not by premature usage.
-
-## D2 — Backend stance: port + Noop production default + optional real impl + test server
+## C2 — Backend stance: port + Noop production default + optional real impl + test server
 
 The starter stays **zero-backend in production by default**, but every backend-dependent
 feature is built **for real** behind a four-part contract:
@@ -33,15 +29,11 @@ feature is built **for real** behind a four-part contract:
 3. **Optional real impl** — the production adapter (Sentry, Firebase, a real HTTP client) is an
    **override** a consumer constructs only when they wire credentials. It is never constructed
    by default.
-4. **Minimal test/dev server** at [`tools/test_server/`](#d3--minimal-in-repo-test-server-tools-test_server) — a Dart server that implements the
+4. **Minimal test/dev server** at [`tools/test_server/`](#c3--minimal-in-repo-test-server-tools-test_server) — a Dart server that implements the
    real contract so integration tests and the `development` config exercise actual network
    paths against a live (local) endpoint.
 
-Rationale: this is the only stance that keeps the "runs green with zero setup" promise *and*
-lets a forker flip features on by replacing one override. It resolves the long-open "how real
-are backend features in a backend-free starter?" question.
-
-## D3 — Minimal in-repo test server (`tools/test_server/`)
+## C3 — Minimal in-repo test server (`tools/test_server/`)
 
 A small Dart server (shelf or dart_frog) lives under `tools/test_server/` and implements the
 real backend contracts for dev runs and integration tests. It is **never compiled into release
@@ -64,7 +56,7 @@ production targets.
   + a fake messaging repository; the test server covers the token-registration/permission path
   only.
 
-## D4 — Port reuse (do not multiply backends)
+## C4 — Port reuse (do not multiply backends)
 
 Three port families are shared across features. Build each **once**; multiple features read it.
 
@@ -81,7 +73,7 @@ Three port families are shared across features. Build each **once**; multiple fe
   adapter under `lib/infrastructure/remote_config/` wraps the remote-config backend
   (firebase_remote_config / GrowthBook) and exposes `flags` / `versionPolicy` / `experiments`
   slices that the three ports' real impls read from — one backend, three typed surfaces, three
-  `InMemory` defaults. (Test-server shape in [D9](#d9--test-server-route-conventions).)
+  `InMemory` defaults. (Test-server shape in [C9](#c9--test-server-route-conventions).)
 - **`SecureStore`** — one port under `lib/infrastructure/secure_storage/` for every secret:
   refresh tokens, PIN/biometric hashes, analytics opt-in, any future key.
 
@@ -92,7 +84,7 @@ Two more plug into **existing** seams rather than adding wiring:
 - **Analytics** screen-views come from a `GoRouter` `observers:` entry in
   [`buildAppRouter`](../../lib/app/routing/app_router.dart) — zero per-page edits.
 
-## D5 — One `go_router` redirect pattern, reused
+## C5 — One `go_router` redirect pattern, reused
 
 The router already wires **one** top-level redirect — `_redirectSettingsDeepLinks` in
 [`buildAppRouter`](../../lib/app/routing/app_router.dart) (settings deep-link normalization).
@@ -104,7 +96,7 @@ gate ([update-blocker](features/update-blocker.md) hard block, or
 [pin-autolock](features/pin-autolock.md) — chain into it. Do not invent per-feature redirect
 mechanisms, and never overwrite the existing settings-deep-link redirect.
 
-## D6 — No runtime environment switcher
+## C6 — No runtime environment switcher
 
 Config is compile-time only via `--dart-define-from-file=config/<env>.json`
 ([`AppConfig`](../../lib/app/config/app_config.dart) hard-rejects `enable*` under production;
@@ -113,28 +105,28 @@ no runtime env fallback). A runtime env switcher is **rejected** — it violates
 active environment read-only; switching environments means relaunching with a different define
 file.
 
-## D7 — Status lifecycle
+## C7 — Status lifecycle
 
 Every feature doc carries a `Status:` field in its header, one of: `planned` →
 `in-progress` → `done` (or `blocked`). The [README](README.md) status table mirrors it. Update
 the feature doc header **and** the README row together when status changes; keep both in sync
 so the table is the single live view of progress.
 
-## D8 — Relationship to existing docs
+## C8 — Relationship to existing docs
 
 - [`plans/feature_contracts.md`](../../plans/feature_contracts.md) freezes **current** feature
   public APIs. New features get a contract entry there before their public surface is finalized;
   this roadmap is the *intake* list, feature_contracts is the *freeze*.
 - [`docs/baseline_architecture_report.md`](../../docs/baseline_architecture_report.md) records kept/
-  rejected abstractions for the **existing** baseline; D1 amends its "deferred" stance for new
+  rejected abstractions for the **existing** baseline; C1 amends its "deferred" stance for new
   roadmap work.
 - [`docs/release_readiness.md`](../../docs/release_readiness.md) tracks release blockers (signing,
   brand assets, real credentials, device sign-off) — orthogonal to this roadmap but referenced
   by backend features' "optional real impl" step.
 
-## D9 — Test-server route conventions
+## C9 — Test-server route conventions
 
-The `tools/test_server/` ([D3](#d3--minimal-in-repo-test-server-tools-test_server)) exposes a
+The `tools/test_server/` ([C3](#c3--minimal-in-repo-test-server-tools-test_server)) exposes a
 stable, documented route table so every `server` feature's real impl points at a known endpoint
 and integration tests are deterministic.
 
@@ -154,7 +146,7 @@ and integration tests are deterministic.
   (FCM/APNs cannot be mocked by a plain HTTP server) — only the token-registration/permission
   path: `POST /v1/notifications/register-token`, `DELETE /v1/notifications/register-token/{token}`,
   `POST /v1/notifications/permission-revoked`. Message delivery is tested via
-  `flutter_local_notifications` + a fake messaging repo ([D3](#d3--minimal-in-repo-test-server-tools-test_server) limitation).
+  `flutter_local_notifications` + a fake messaging repo ([C3](#c3--minimal-in-repo-test-server-tools-test_server) limitation).
 - **Never** compiled into release builds; integration runs bind a random port.
 
 
@@ -166,7 +158,7 @@ Every feature doc and implementation must satisfy these guardrails. Re-run the l
 
 ### 1. No-backend honored as a port
 
-Backend-dependent features ship **all four** parts of [D2](#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Backend-dependent features ship **all four** parts of [C2](#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 port, Noop/InMemory production default (runs green, surfaces `common.notConnected`, never fakes
 success), optional real override, and a `tools/test_server/` contract. Verify no widget calls a
 plugin directly — every side effect goes through a port. Verify the Noop default does **not**
@@ -181,7 +173,7 @@ layers. Cross-feature primitives go under `lib/shared/` only when a concern genu
 ### 3. Shared extraction threshold
 
 Anything under `lib/shared/widgets/` or `lib/shared/forms/` needs **≥3 consumers** — concrete
-today, or **designated** under [D1](#d1--scope-is-comprehensive): the feature doc
+today, or **designated** under [C1](#c1--scope-is-comprehensive): the feature doc
 lists the ≥3 intended consumer features as deferred consumers and re-audits when they land
 (demote to feature-local if they never materialize). This relaxes the baseline's strict
 "current callers only" rule ([baseline report](../../docs/baseline_architecture_report.md)) for the

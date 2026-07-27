@@ -49,7 +49,7 @@ Firebase wiring is an opt-in override a consumer constructs only after adding cr
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 the starter runs green with **zero backend**, surfaces `common.notConnected` honestly, and never
 fakes success.
 
@@ -61,8 +61,8 @@ fakes success.
   `flutter_local_notifications`; a consumer constructs it (with platform credentials) and
   overrides `notificationsRepositoryProvider`. It is never constructed by default.
 - **Test-server contract** — FCM/APNs cannot be meaningfully mocked by a plain HTTP server (see
-  [D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server) known limitation). The
-  [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+  [C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server) known limitation). The
+  [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
   Dart server therefore implements **only the token-registration/permission path**:
   - `POST /v1/notifications/register-token` `{token, platform, deviceId}` -> `204` (idempotent store)
   - `DELETE /v1/notifications/register-token/{token}` -> `204`

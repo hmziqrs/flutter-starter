@@ -106,7 +106,7 @@ Mocktail — the noop impls are the fakes.
 - **Do not duplicate the update gate.** [update-blocker](./update-blocker.md) (P2, server) is the
   server-min-version path; this feature is the OS-store path. Feed **one** gate (one redirect /
   full-screen route) from either source — never let both block independently, or users hit two
-  walls. See [../decisions.md](../decisions.md) D5 (single redirect reused).
+  walls. See [../contracts.md](../contracts.md) C5 (single redirect reused).
 - **iOS App Store URL needs the Apple ID** — pass it via compile-time `AppConfig`
   (`--dart-define-from-file`), never hardcode and never treat as a secret.
 - **`share_plus` is already transitive** — confirm the resolved version exposes the `shareXFiles`

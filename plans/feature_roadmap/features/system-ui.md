@@ -78,5 +78,5 @@ PlatformCapabilities gating; they do not touch real chrome (hermetic).
   never scatter `Platform.is*` checks — matches the existing guardrail.
 - **Sequencing:** foundational platform config; lands before [haptics](./haptics.md) and
   [a11y-presets](./a11y-presets.md) since both also touch bootstrap/settings. No upstream dependency.
-- See [../decisions.md](../decisions.md) D2 (backend stance — this feature is explicitly exempt: no
-  port needed) and [../decisions.md](../decisions.md) §9 (native entitlements).
+- See [../contracts.md](../contracts.md) C2 (backend stance — this feature is explicitly exempt: no
+  port needed) and [../contracts.md](../contracts.md) §9 (native entitlements).

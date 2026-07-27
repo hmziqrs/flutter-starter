@@ -20,7 +20,7 @@ remote data source a feature uses to populate it, exercised against the test ser
   per-key small-string only and **unsuitable** for payload blobs — the production store is
   file-backed. This feature also depends on the **shared**
   [`ConnectivityService`](connectivity.md) port per
-  [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends) (built once under
+  [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends) (built once under
   `lib/infrastructure/connectivity/` by [`connectivity`](connectivity.md); offline-cache is a
   reader, not a second port).
 - **Providers:** handwritten Riverpod — `cacheStoreProvider` (overridden at the
@@ -28,7 +28,7 @@ remote data source a feature uses to populate it, exercised against the test ser
   family that serves fresh→stale→fetch with connectivity gating. **Reuse the
   `connectivityStatusProvider` already owned by [`connectivity`](connectivity.md)** — do **not**
   redeclare it here or introduce a second connectivity sensor (port-reuse,
-  [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)). Follow the
+  [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)). Follow the
   [`SettingsController`](../../../lib/features/settings/settings_controller.dart) shape; **no**
   codegen.
 - **Routes:** none — this is an infra primitive, not a surface.
@@ -61,7 +61,7 @@ remote data source a feature uses to populate it, exercised against the test ser
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 the starter runs green with **zero backend**. Here the local store *is* real (it is not a Noop),
 and "no backend" means no remote data source is wired — features that try to refresh see
 `common.notConnected`.
@@ -75,7 +75,7 @@ and "no backend" means no remote data source is wired — features that try to r
   typed `fetch: Future<T> Function()`; without a real network source that fetch surfaces
   `common.notConnected` and the cache serves stale (or `absent`). Never fake a populated cache
   for a source that does not exist.
-- **Test-server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
   implements a generic cacheable data-source route group so the offline-aware read primitive is
   exercised against real network paths:
   - `GET /v1/cache/{key}` -> `200 {data, etag, ttlSeconds}` or `304` (when `If-None-Match` matches)
@@ -143,7 +143,7 @@ and "no backend" means no remote data source is wired — features that try to r
   adapters. If declined, fall back to a `SharedPreferences`-backed JSON store with a documented
   payload-size cap.
 - **Port reuse is mandatory.** The connectivity sensor is **shared** with
-  [`connectivity`](connectivity.md) ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).
+  [`connectivity`](connectivity.md) ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)).
   Never instantiate `connectivity_plus` directly in the cache or in a widget — read
   `connectivityStatusProvider`, which reads the one `ConnectivityService` port. If
   [`connectivity`](connectivity.md) has not shipped, land the port here and have the banner adopt

@@ -26,7 +26,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
     wires credentials + the user has opted in.
   - `analyticsOptInControllerProvider` — a handwritten `Notifier<bool>` (see Files) backed by a
     thin `SecureStore` wrapper over the single `analytics_opt_in` key (per
-    [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends), SecureStore owns every
+    [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends), SecureStore owns every
     secret/sensitive preference); the real client consults this before emitting. **Not** a field on
     [`SettingsState`](../../../lib/features/settings/settings_state.dart) (SettingsState is
     `SettingsStore`-backed 1:1 via `SettingsRepository` — see the settings boundary in
@@ -50,7 +50,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
     `analytics_opt_in` key). **Do not** add `analyticsOptIn` to
     [`SettingsState`](../../../lib/features/settings/settings_state.dart) — `SettingsState` fields are
     1:1 with `SettingsStore` keys via `SettingsRepository`; a `SecureStore`-persisted value must stay
-    off it (see [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends) + the settings boundary
+    off it (see [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends) + the settings boundary
     in [`architecture.md`](../../../docs/architecture.md)). The settings page renders the toggle by watching
     this controller, not `settingsControllerProvider`.
   - `test/infrastructure/analytics/analytics_route_observer_test.dart`
@@ -63,12 +63,12 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 
 - **Production default = `NoopAnalyticsClient`** — runs green with zero backend, drops events
   silently after routing them through `AppLogger` for verbose dev inspection. Never fakes
-  upload success (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
+  upload success (the [honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)
   is satisfied because analytics has no user-facing success state).
 - **Optional real impl** — `PosthogAnalyticsClient` (or Amplitude/Firebase/Mixpanel) constructed
   in `AppDependencies.production` only when (a) the consumer wires credentials AND (b) the user
   has opted in via `analyticsOptIn`. The override is the single seam.
-- **Test server contract ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server))**
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
   — `tools/test_server/` exposes `POST /v1/events` accepting a batch
   `{ "events": [ { "type": "screen_view"|"tap"|"funnel_step", "name": string,
   "props": object, "ts": iso8601 } ], "userId": string? }` and returning `204`. The
@@ -124,7 +124,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 
 ## Risks / notes
 
-- **Plugs into an existing seam ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):**
+- **Plugs into an existing seam ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)):**
   screen views come from a single `GoRouter` `observers:` entry — no per-page edits. Adding a
   `track(...)` call inside a widget is the exception (funnel steps on a CTA), not the rule.
 - **PII discipline.** Every event flows through `AppLogger` so
@@ -133,7 +133,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   and never include `userId` as raw email/phone. Treat the analytics SDK's own payload with
   the same suspicion as a log line.
 - **Opt-in is a [`SecureStore`](secure-store.md) key**, not a `SettingsStore` plaintext key —
-  this is the designated secrets/sensitive-preference port per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends).
+  this is the designated secrets/sensitive-preference port per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends).
   The real client consults it on every emit; the Noop default ignores it.
 - **Never block the UX.** `track` is fire-and-forget on the main isolate; the real impl queues
   to its SDK's own background uploader. Wrap every SDK call in `try/on Object` and swallow.

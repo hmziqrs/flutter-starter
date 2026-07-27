@@ -61,7 +61,7 @@ faking success. The no-backend boundary is honored at the call site, not inside 
 
 - [x] No-backend honored as a port — **n/a** (backend-free; retry callback is feature-supplied and surfaces `notConnected` honestly)
 - [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`; the repo's designated cross-feature bucket, peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (only `home_page._RecentActivity` is concrete today; designated ≥3 consumers under [D1](../decisions.md#d1--scope-is-comprehensive): home activity error/loading, search-results ([search-pagination.md](search-pagination.md)), and cached list ([offline-cache.md](offline-cache.md)) — the latter two land deferred with their features)
+- [ ] shared/widgets extraction ≥3 consumers — **warn** (only `home_page._RecentActivity` is concrete today; designated ≥3 consumers under [C1](../contracts.md#c1--scope-is-comprehensive): home activity error/loading, search-results ([search-pagination.md](search-pagination.md)), and cached list ([offline-cache.md](offline-cache.md)) — the latter two land deferred with their features)
 - [x] Motion guarded — **pass** (loading view is static or uses `AppMotion` tokens with a `disableAnimationsOf` fallback; no navigation gating)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`states.*` added to all three locales)
@@ -76,7 +76,7 @@ faking success. The no-backend boundary is honored at the call site, not inside 
   [`home_page.dart`](../../lib/features/home/home_page.dart) is concrete. Pricing cannot be empty
   (`pricing_page.dart` asserts `plans.isNotEmpty` and already has its own unavailable banner) and
   profile is a dirty/saving/saved form, not an async list — so neither counts. The three
-  designated consumers under [D1](../decisions.md#d1--scope-is-comprehensive) are: home activity
+  designated consumers under [C1](../contracts.md#c1--scope-is-comprehensive) are: home activity
   error/loading (this change), search-results ([search-pagination.md](search-pagination.md)), and
   cached list ([offline-cache.md](offline-cache.md)) — the latter two are deferred async-list
   consumers that land with their features.

@@ -1,6 +1,6 @@
 # Update blocker (hard block + soft deprecation)
 
-> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** planned · **Depends on:** none (composes the update-block predicate into the existing top-level `_redirectSettingsDeepLinks` redirect — [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused))
+> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** planned · **Depends on:** none (composes the update-block predicate into the existing top-level `_redirectSettingsDeepLinks` redirect — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
 
 ## Summary
 
@@ -17,18 +17,18 @@ Compares the installed version against a server-published minimum/latest and eit
 - **Files:**
   - `lib/features/force_update/version_gate_store.dart`, `force_update_state.dart`, `force_update_page.dart`, `soft_update_dialog.dart`, `in_memory_version_gate_store.dart` — **new**.
   - [`lib/app/routing/app_routes.dart`](../../lib/app/routing/app_routes.dart) — **edit**: add `forceUpdate` name + `forceUpdatePath`.
-  - [`lib/app/routing/app_router.dart`](../../lib/app/routing/app_router.dart) — **edit**: top-level `GoRoute` + compose the update-block predicate into the **existing** top-level `_redirectSettingsDeepLinks` redirect (any route → `forceUpdatePath` when `hard`; `soft` shows the dialog post-frame, no redirect). Per [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) go_router allows one redirect — extend the existing callback, do not add a second.
+  - [`lib/app/routing/app_router.dart`](../../lib/app/routing/app_router.dart) — **edit**: top-level `GoRoute` + compose the update-block predicate into the **existing** top-level `_redirectSettingsDeepLinks` redirect (any route → `forceUpdatePath` when `hard`; `soft` shows the dialog post-frame, no redirect). Per [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused) go_router allows one redirect — extend the existing callback, do not add a second.
   - [`lib/bootstrap.dart`](../../lib/bootstrap.dart) — **edit**: run the check once in `createApplication` and feed `versionCheckProvider`.
 - **Dependencies:** `pub_semver` (**add as a direct** dependency — transitive today, not app-direct); `url_launcher` (for the "Update now" store deep-link — confirm direct dep; `share_plus`/`url_launcher` are referenced by [license-share-update](license-share-update.md)).
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server), the four-part contract:
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server), the four-part contract:
 
 - **Port** — `VersionGateStore` as above.
 - **Noop/InMemory production default** — `InMemoryVersionGateStore` returns `UpdateRequirement.none`, constructed in [`AppDependencies.production`](../../lib/app/dependencies.dart). The app runs green with **zero backend**; it never fakes a hard/soft block (that would be faking success — a real `none` is honest when there is no policy source).
-- **Optional real impl** — a remote-config-backed `RemoteConfigVersionGateStore` is an **override** a consumer constructs only when they wire the backend. It shares the remote-config source family ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)) with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — three readers, one optional backend.
-- **Test server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server) exposes the shared `GET /v1/remote-config?deviceId=&platform=&version=` endpoint ([D9](../decisions.md#d9--test-server-route-conventions)) whose `versionPolicy` slice is `{minVersion, latestVersion, hardBlockBelow, softBlockBelow, storeUrl, message}` (the same response serves flags + experiments). The real impl maps that slice to `UpdateRequirement` via `pub_semver` compare against [`AppBuildInfo.version`](../../lib/infrastructure/platform/app_build_info.dart) (+`buildNumber`).
+- **Optional real impl** — a remote-config-backed `RemoteConfigVersionGateStore` is an **override** a consumer constructs only when they wire the backend. It shares the remote-config source family ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)) with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — three readers, one optional backend.
+- **Test server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server) exposes the shared `GET /v1/remote-config?deviceId=&platform=&version=` endpoint ([C9](../contracts.md#c9--test-server-route-conventions)) whose `versionPolicy` slice is `{minVersion, latestVersion, hardBlockBelow, softBlockBelow, storeUrl, message}` (the same response serves flags + experiments). The real impl maps that slice to `UpdateRequirement` via `pub_semver` compare against [`AppBuildInfo.version`](../../lib/infrastructure/platform/app_build_info.dart) (+`buildNumber`).
 - **Fakes** — `InMemoryVersionGateStore` for unit tests/dev-gallery (returns `none`/`soft`/`hard` per fixture). **No Mocktail.**
 
 ## Tests
@@ -45,7 +45,7 @@ Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: port + `InMemory` `none` default + optional real override + `tools/test_server` shared `/v1/remote-config` contract (versionPolicy slice, [D9](../decisions.md#d9--test-server-route-conventions)).
+- [x] No-backend honored as a port — **pass**: port + `InMemory` `none` default + optional real override + `tools/test_server` shared `/v1/remote-config` contract (versionPolicy slice, [C9](../contracts.md#c9--test-server-route-conventions)).
 - [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state + pages + in-memory default.
 - [x] shared/widgets extraction only if >=3 consumers — **pass**: soft dialog **reuses** the existing [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) + the [`_showInformationDialog`](../../lib/app/routing/app_router.dart) `FDialog` pattern rather than extracting anything new.
 - [x] Motion guarded — **n/a**: pages are static.
@@ -61,6 +61,6 @@ Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optio
 - **Hard block is a true trap.** `ForceUpdatePage` uses `PopScope(canPop: false)`, no Escape pop (do **not** wrap in `EscapeDismissibleOverlay`), and offers only "Update now" (`url_launcher` → `storeUrl`). Soft is dismissible and must include a snooze path.
 - **Soft-deprecation must not nag.** Persist a snooze timestamp (a `SettingsStore` key, e.g. `update.snoozed_until`) so a dismissed soft prompt does not re-appear every launch — otherwise it becomes a UX nuisance.
 - **`pub_semver` must be a direct dependency** — it is transitively present today but not app-direct; add it explicitly.
-- **Redirect helper ownership ([D5](../decisions.md#d5--one-go_router-redirect-pattern-reused)).** The router already has one top-level redirect (`_redirectSettingsDeepLinks`); compose the update-block predicate into it. Coordinate predicate order with [onboarding-gate](onboarding-gate.md) so a `hard` block wins (evaluate update-blocker first).
-- **Port-reuse ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):** `VersionGateStore` is update-blocker's reader on the shared remote-config family; the optional real impl shares its backend with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — do not stand up a second remote-config source.
+- **Redirect helper ownership ([C5](../contracts.md#c5--one-go_router-redirect-pattern-reused)).** The router already has one top-level redirect (`_redirectSettingsDeepLinks`); compose the update-block predicate into it. Coordinate predicate order with [onboarding-gate](onboarding-gate.md) so a `hard` block wins (evaluate update-blocker first).
+- **Port-reuse ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)):** `VersionGateStore` is update-blocker's reader on the shared remote-config family; the optional real impl shares its backend with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — do not stand up a second remote-config source.
 - Client-side version is already available via [`AppBuildInfo`](../../lib/infrastructure/platform/app_build_info.dart) (`package_info_plus`); no new client capability is needed.

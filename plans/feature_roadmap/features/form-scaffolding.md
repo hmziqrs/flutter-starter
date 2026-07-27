@@ -65,7 +65,7 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
 - [x] Feature-first ownership — **pass** (`lib/shared/forms/` + `lib/shared/widgets/forms/`; cross-feature helpers, no `core/`/`utils/`)
 - [x] shared/widgets extraction ≥3 consumers — **split**: `lib/shared/forms/` helpers have 5
   current consumers (login/register/forgot/reset/otp — **pass**); `FormScaffold` is net-new
-  with **0** concrete consumers and meets the bar via 3 designated consumers under D1
+  with **0** concrete consumers and meets the bar via 3 designated consumers under C1
   (billing/settings/feedback), re-audited when those land.
 - [x] Motion guarded — **pass** (`revealFirstInvalid` uses `Scrollable.ensureVisible`, not an animation; no motion to guard)
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**

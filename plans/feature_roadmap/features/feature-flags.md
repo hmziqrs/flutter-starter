@@ -8,7 +8,7 @@ Runtime toggles and injected config values that decouple app release from featur
 kill-switches, staged rollouts, dark launch. Ships a typed `FeatureFlags` value object and one
 remote-config port family that [`update-blocker`](update-blocker.md) (`VersionGateStore`) and
 [`ab-experiments`](ab-experiments.md) both reuse, so the roadmap does **not** end up with three
-parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).
+parallel remote sources ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)).
 
 ## Contract
 
@@ -32,7 +32,7 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
   - `lib/features/feature_flags/in_memory_feature_flags_source.dart` (default — returns
     `FeatureFlags.defaults()`)
   - `lib/infrastructure/remote_config/remote_config_feature_flags_source.dart` (optional real
-    impl — reads the `flags` slice from the shared remote-config backend per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends))
+    impl — reads the `flags` slice from the shared remote-config backend per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends))
   - **EDIT** `lib/app/dependencies.dart` — wire in-memory default + optional real
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - **EDIT** `lib/app/diagnostics/diagnostics_page.dart` — surface current flag state
@@ -47,14 +47,14 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
 
 - **Production default = `InMemoryFeatureFlagsSource`** — returns `FeatureFlags.defaults()`,
   runs green with zero backend, emits no changes. The default never claims a flag is enabled
-  when the baseline says disabled (the [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)
+  when the baseline says disabled (the [honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)
   is satisfied because flags have no user-facing success state).
 - **Optional real impl** — `RemoteConfigFeatureFlagsSource` wraps Firebase Remote Config /
   GrowthBook / LaunchDarkly, constructed in `AppDependencies.production` only when the
   consumer wires credentials. Refresh under `config.verboseLoggingEnabled` or
   `developmentToolsEnabled` only; production builds fetch once and cache.
-- **Test server contract ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server),
-  [D9](../decisions.md#d9--test-server-route-conventions))** — the shared
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server),
+  [C9](../contracts.md#c9--test-server-route-conventions))** — the shared
   `GET /v1/remote-config?deviceId=&platform=&version=` endpoint returns one combined
   `{ "flags": {...}, "versionPolicy": {...}, "experiments": {...}, "revision": int }` response;
   this feature reads the `flags` slice. `If-None-Match` / `?rev=` → `304` when unchanged. The
@@ -107,7 +107,7 @@ parallel remote sources ([D4](../decisions.md#d4--port-reuse-do-not-multiply-bac
 
 ## Risks / notes
 
-- **Not the "port-family owner" — one of three peer readers ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).**
+- **Not the "port-family owner" — one of three peer readers ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)).**
   feature-flags owns the `FeatureFlagsSource` typed port; [`update-blocker`](update-blocker.md)
   (`VersionGateStore`) and [`ab-experiments`](ab-experiments.md) (`ExperimentSource`) own their
   **own** peer typed ports — three distinct types, three in-memory defaults, one optional shared

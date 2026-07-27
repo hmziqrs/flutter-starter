@@ -8,7 +8,7 @@ One authoritative `AuthSession` (access token in memory, refresh token in
 [`SecureStore`](secure-store.md)) that route guards, network clients, and the UI all read.
 Installs an auth-required `go_router` redirect that **reuses** the pattern established by
 [`update-blocker`](update-blocker.md) / [`onboarding-gate`](onboarding-gate.md) per
-[D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) — the same shared helper is later
+[C5](../contracts.md#c5--one-go_router-redirect-pattern-reused) — the same shared helper is later
 consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 
 ## Contract
@@ -32,7 +32,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   [`AppRoutes.login`](../../../lib/app/routing/app_routes.dart). Adds a `go_router` `redirect`
   in [`buildAppRouter`](../../../lib/app/routing/app_router.dart) sending authenticated-only
   destinations to `AppRoutes.loginPath` when `AuthSession` is anonymous. **Reuse the
-  [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) redirect helper** — the first
+  [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused) redirect helper** — the first
   redirect is established by [`update-blocker`](update-blocker.md) or
   [`onboarding-gate`](onboarding-gate.md) per the [sequencing](../README.md#sequencing); session
   consumes the shared helper here and does **not** introduce a new one.
@@ -44,7 +44,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   - `lib/features/session/in_memory_auth_repository.dart` (default fake, surfaces
     `common.notConnected`)
   - `lib/features/session/session_view_data.dart` (typed state for any session UI)
-  - **EDIT** `lib/app/routing/app_router.dart` — reuse the [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) redirect helper; install session's auth-required predicate; reads session state
+  - **EDIT** `lib/app/routing/app_router.dart` — reuse the [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused) redirect helper; install session's auth-required predicate; reads session state
   - **EDIT** `lib/app/dependencies.dart` — wire in-memory default + optional real override
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - `test/features/session/session_controller_test.dart`
@@ -57,12 +57,12 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 - **Production default = `InMemoryAuthRepository`** — runs green with zero backend. `login`
   succeeds with a synthetic session **only** when seeded; otherwise it surfaces
   `common.notConnected` and never fakes success (the
-  [honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)).
+  [honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)).
   `logout` clears the in-memory and persisted refresh token.
 - **Optional real impl** — constructed in `AppDependencies.production` only when the consumer
   provides an endpoint; never by default. Same override shape as the optional real
   [`CrashReporter`](crash-reporting.md).
-- **Test server contract ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server))**
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
   — `tools/test_server/` exposes the auth route group:
   - `POST /v1/auth/issue` — `{ email, password }` -> `{ accessToken, refreshToken, expiresAt, userId }`
     or `401` (`userId` seeds `AuthSession.userId`; `/refresh` inherits the same identity from the
@@ -123,7 +123,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 
 ## Risks / notes
 
-- **Reuses the [D5](../decisions.md#d5--one-go_router-redirect-pattern-reused) redirect
+- **Reuses the [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused) redirect
   pattern.** The shared helper is established by [`update-blocker`](update-blocker.md) or
   [`onboarding-gate`](onboarding-gate.md) (see [sequencing](../README.md#sequencing)); session
   installs its auth-required predicate into that helper. Do not invent a per-feature redirect

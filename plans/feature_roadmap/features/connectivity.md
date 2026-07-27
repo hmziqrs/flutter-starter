@@ -10,7 +10,7 @@ A live banner plus transition toasts that surface online/offline/limited state, 
 
 - **Ports / value objects:**
   - `ConnectivityState` enum (`online` / `offline` / `limited`) with an exhaustive `fromResult` factory over `connectivity_plus`'s `ConnectivityResult`.
-  - `ConnectivityService` abstract port — `Stream<ConnectivityState> get states` + `ConnectivityState current`. Lives under `lib/infrastructure/connectivity/` because it is a **cross-feature** port (the banner and the future [offline-cache](offline-cache.md) both read it — [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)).
+  - `ConnectivityService` abstract port — `Stream<ConnectivityState> get states` + `ConnectivityState current`. Lives under `lib/infrastructure/connectivity/` because it is a **cross-feature** port (the banner and the future [offline-cache](offline-cache.md) both read it — [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)).
 - **Providers:** `connectivityServiceProvider` (handwritten, overridden at the App `ProviderScope`), `connectivityStatusProvider` (`StreamProvider` over the port, seeded with `current`). No codegen.
 - **Routes:** none.
 - **Files:**
@@ -23,7 +23,7 @@ A live banner plus transition toasts that surface online/offline/limited state, 
 
 ## Backend & test surface
 
-Backend-free — the default impl **is** the real `connectivity_plus` sensor (local platform API, no network round-trip). Tests use a `StreamController`-backed fake implementing `ConnectivityService` (mirrors [`InMemorySettingsStore`](../../lib/features/settings/in_memory_settings_store.dart); **no Mocktail**). [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends): one `ConnectivityService` port, shared with [offline-cache](offline-cache.md) later — build it once here.
+Backend-free — the default impl **is** the real `connectivity_plus` sensor (local platform API, no network round-trip). Tests use a `StreamController`-backed fake implementing `ConnectivityService` (mirrors [`InMemorySettingsStore`](../../lib/features/settings/in_memory_settings_store.dart); **no Mocktail**). [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends): one `ConnectivityService` port, shared with [offline-cache](offline-cache.md) later — build it once here.
 
 ## Tests
 
@@ -40,7 +40,7 @@ Backend-free — the default impl **is** the real `connectivity_plus` sensor (lo
 ## Audit
 
 - [x] No-backend honored as a port — **pass**: backend-free; default is the real local sensor, never fakes a result.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: port under `lib/infrastructure/connectivity/` (cross-feature per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)), UI under `lib/features/connectivity/`.
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: port under `lib/infrastructure/connectivity/` (cross-feature per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)), UI under `lib/features/connectivity/`.
 - [x] shared/widgets extraction only if >=3 consumers — **n/a**: banner stays feature-local; the port (not the widget) is the shared surface.
 - [x] Motion guarded — **pass**: any sonar/pulse on the banner **and** the `ConnectivityBanner` enter/exit (appear on offline, dismiss on online) source durations/curves from [`AppMotion`](../../lib/shared/motion/app_motion.dart) and guard with `MediaQuery.disableAnimationsOf(context)` + a non-animated fallback that still toggles visibility.
 - [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
@@ -55,4 +55,4 @@ Backend-free — the default impl **is** the real `connectivity_plus` sensor (lo
 - **Hybrid surface** — a transient `FToaster` toast on the `online`↔`offline` **transition** (non-blocking, auto-dismiss) **plus** a persistent `ConnectivityBanner` for sustained offline. Do not double up: toast on every rebuild is noise.
 - **No direct `connectivity_plus` calls in widgets.** Every read goes through the `ConnectivityService` port — that is what keeps `PreviewFrame` and integration tests hermetic (fake stream, no platform plugin).
 - **Resume-refresh needs [lifecycle-observer](lifecycle-observer.md):** on `resumed`, re-read `current` and re-seed the stream — platform state may have changed while backgrounded.
-- **Port-reuse ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):** [offline-cache](offline-cache.md) will read this same `ConnectivityService` — do not build a second connectivity sensor there.
+- **Port-reuse ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)):** [offline-cache](offline-cache.md) will read this same `ConnectivityService` — do not build a second connectivity sensor there.

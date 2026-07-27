@@ -51,6 +51,6 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
 ## Risks / notes
 
 - **Not a security control.** Client-side throttling is trivially bypassed (delete the prefs key, swap the device). Document this in the tracker's dartdoc and on the settings/diagnostics page; the real enforcement is server-side (e.g. the [mfa-otp](mfa-otp.md) test server returns `429 locked`). The two must agree on the cooldown schedule so the UI does not under-count.
-- **Persistence choice is injected.** Default to in-memory (resets on relaunch — fine for UX). If persisted, use [`SecureStore`](../decisions.md#d4--port-reuse-do-not-multiply-backends) so a user cannot clear their lockout by clearing prefs; never `SettingsStore` (plaintext).
+- **Persistence choice is injected.** Default to in-memory (resets on relaunch — fine for UX). If persisted, use [`SecureStore`](../contracts.md#c4--port-reuse-do-not-multiply-backends) so a user cannot clear their lockout by clearing prefs; never `SettingsStore` (plaintext).
 - **Identifier hygiene.** Keying by email/phone means a PII value sits in the tracker's memory/prefs — ensure the key itself is hashed (not the raw email) and that no `attempts` context reaches logs unredacted (verify against [log-redaction](log-redaction.md)).
 - **Sequencing:** build before or alongside [mfa-otp](mfa-otp.md) and [pin-autolock](pin-autolock.md) — both consume `AttemptState` and would otherwise stub it and risk a circular dep.

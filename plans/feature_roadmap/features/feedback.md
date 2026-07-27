@@ -48,7 +48,7 @@ backend; the optional real impl is an override.
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 the starter runs green with **zero backend**, surfaces `common.notConnected` honestly, never
 fakes success.
 
@@ -58,7 +58,7 @@ fakes success.
 - **Optional real override** — `HttpFeedbackTransport` posts to the backend; a consumer
   constructs it (with endpoint + auth headers) and overrides `feedbackTransportProvider`. Never
   constructed by default.
-- **Test-server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
   implements the feedback ingest route group:
   - `POST /v1/feedback` `{message, email?, screenshotMime?, screenshotBase64?, appMetadata:{version,platform,locale}}`
     -> `201 {id}` or `422` (validation) or `413` (payload too large)

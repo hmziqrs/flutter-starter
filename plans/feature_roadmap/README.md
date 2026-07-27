@@ -5,9 +5,9 @@ fully-featured cross-platform product. This directory is the **intake + tracking
 [`plans/feature_contracts.md`](../../plans/feature_contracts.md) remains the freeze layer for
 public APIs once a feature is implemented.
 
-- **Decisions & checklist:** [decisions.md](decisions.md) — the locked decisions (scope, backend
-  stance, test server, port reuse, redirect pattern) **and** the guardrail checklist every feature
-  must pass before `done`. This is the single rules document; read it alongside the feature spec.
+- **Contracts:** [contracts.md](contracts.md) — the binding contracts (scope, backend stance,
+  test server, port reuse, redirect pattern) **and** the guardrail checklist every feature must
+  pass before `done`. Read it alongside the feature spec.
 - **Feature specs:** [features/](features/) — one doc per feature, each self-contained with its own
   inline `## Audit` block.
 
@@ -15,22 +15,22 @@ public APIs once a feature is implemented.
 
 - **Track:** each feature doc has a `Status:` header (`planned` → `in-progress` → `done` /
   `blocked`). The status table below mirrors it; update both together.
-- **Audit:** before marking a feature `done`, re-run the checklist in [decisions.md](decisions.md)
+- **Audit:** before marking a feature `done`, re-run the checklist in [contracts.md](contracts.md)
   and resolve every non-`n/a` `warn`; record the verdict in the feature spec's own inline `## Audit`
   block.
-- **Scope a change:** amend [decisions.md](decisions.md) first, then the affected feature docs,
+- **Scope a change:** amend [contracts.md](contracts.md) first, then the affected feature docs,
   then this table.
 
 ## Scope
 
-Comprehensive (~35 features) per [D1](decisions.md#d1--scope-is-comprehensive). Backend-dependent
-features are real but optional — port + Noop production default + a [`tools/test_server/`](decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+Comprehensive (~35 features) per [C1](contracts.md#c1--scope-is-comprehensive). Backend-dependent
+features are real but optional — port + Noop production default + a [`tools/test_server/`](contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
 contract — so the starter runs green with zero backend.
 
 ## Status table
 
 Legend — Tier: P0 foundation · P1 expected · P2 polish · P3 opt-in. Backend: `none` (backend-free)
-or `server` (port + Noop default + test server per [D2](decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server)).
+or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server)).
 
 | Feature | Tier | Domain | Backend | Status | Doc |
 |---|---|---|---|---|---|
@@ -77,11 +77,11 @@ test-server contract together, with the real impl as the final optional step.
 
 1. **P0 foundation** — [`lifecycle-observer`](features/lifecycle-observer.md),
    [`secure-store`](features/secure-store.md), [`crash-reporting`](features/crash-reporting.md).
-   No UI, no golden impact. Stand up [`tools/test_server/`](decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
+   No UI, no golden impact. Stand up [`tools/test_server/`](contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
    here so every later `server` feature has a target.
 2. **The headline three + their ports** — [`connectivity`](features/connectivity.md)
    (`ConnectivityService`), [`update-blocker`](features/update-blocker.md) (`VersionGateStore`
-   + the first [`go_router` redirect](decisions.md#d5--one-go_router-redirect-pattern-reused)),
+   + the first [`go_router` redirect](contracts.md#c5--one-go_router-redirect-pattern-reused)),
    [`native-splash`](features/native-splash.md) + [`in-app-splash`](features/in-app-splash.md)
    (`AppStartupResult` from `createApplication`).
 3. **Pure-UI P1** — [`onboarding-gate`](features/onboarding-gate.md),

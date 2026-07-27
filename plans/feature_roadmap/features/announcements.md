@@ -13,7 +13,7 @@ controller later without touching call sites.
 ## Contract
 
 - **Ports / value objects:** no transport port is required for the default — this is a
-  backend-free feature (see [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server);
+  backend-free feature (see [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server);
   the "Noop is the real default" case). Typed value objects:
   `Announcement` (`id`, `severity` enum `info|warning|critical|success`, `titleKey`/`messageKey`
   i18n keys or inline `LocalizedString`, `actionRoute`?, `dismissible`, `activeFrom`/`activeUntil`
@@ -44,7 +44,7 @@ controller later without touching call sites.
 
 ## Backend & test surface
 
-**Backend-free** ([D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server),
+**Backend-free** ([C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server),
 backend=none case): `AnnouncementFixtures` is a static, compile-time list — the default impl is
 real and local, not a Noop. There is no backend to surface `notConnected` against.
 

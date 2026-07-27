@@ -98,4 +98,4 @@ driven by a `StreamController<Uri>` — no Mocktail.
   (sibling to [mfa-otp](./mfa-otp.md), which reuses OTP code entry and documents no magic-link
   route — see Contract) and a future referral feature. [push-notifications](./push-notifications.md)
   resolves taps via `context.pushNamed` + `AppRoutes` helpers today, **not** via `AppLinkHandler`.
-  See [../decisions.md](../decisions.md) D5 (redirect/handler reuse).
+  See [../contracts.md](../contracts.md) C5 (redirect/handler reuse).

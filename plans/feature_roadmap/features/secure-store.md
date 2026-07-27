@@ -44,7 +44,7 @@ it writes to the OS keychain/keystore, not a server. There is no Noop default an
 success: every operation either returns the stored value (or `null`) or throws
 `SecureStoreException`. The `InMemorySecureStore` is a **test fake only**, never constructed in
 production code paths (the
-[honest-feedback guardrail](../decisions.md#13--honest-feedback-no-faked-success)).
+[honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)).
 
 Configure platform options once in the prod impl: `AndroidOptions(encryptedSharedPreferences:
 true)`, `IOSOptions(accessibility: KeychainAccessibility.first_unlock)`, and the macOS
@@ -91,7 +91,7 @@ throw `SecureStoreException` on unsupported platforms (do not silently fall thro
 
 ## Risks / notes
 
-- **Port-reuse owner ([D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)):** this is
+- **Port-reuse owner ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)):** this is
   the **single** secrets adapter for the whole roadmap. Refresh tokens, PIN/biometric hashes,
   analytics opt-in, and any future secret all flow through `secureStoreProvider` — do not spin
   up a parallel secure store per feature.

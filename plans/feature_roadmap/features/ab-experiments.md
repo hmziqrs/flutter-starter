@@ -14,7 +14,7 @@ local source.
 
 - **Ports / value objects:** shares the **remote-config port family** with
   [`feature-flags`](feature-flags.md) and [`update-blocker`](update-blocker.md) per
-  [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends) — one optional remote backend,
+  [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends) — one optional remote backend,
   three readers. Typed value objects under `lib/features/experiments/`: `ExperimentKey` (typed
   enum of known experiments), `ExperimentVariant` (`control`/`treatmentA`/… + payload `Map`,
   value-equality), `ExperimentAssignment` (`key` + `variant` + `sticky:bool` + `source` enum
@@ -38,7 +38,7 @@ local source.
   - `test/features/experiments/experiments_controller_test.dart`
   - **shared backend adapter (flagged):** experiments owns its own `ExperimentSource` typed port
     (above); the only shared piece is the optional real-impl adapter under
-    `lib/infrastructure/remote_config/` per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends)
+    `lib/infrastructure/remote_config/` per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)
     (one backend, three peer typed ports — `FeatureFlagsSource` / `VersionGateStore` /
     `ExperimentSource`; no feature "owns" the family and no shared interface is introduced).
   - **root-composition edits (flagged):** [`lib/app/dependencies.dart`](../../../lib/app/dependencies.dart)
@@ -51,7 +51,7 @@ local source.
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 the starter runs green with **zero backend** and surfaces honest state — here that means sticky
 local assignment, not faked remote data.
 
@@ -66,8 +66,8 @@ local assignment, not faked remote data.
   `experimentSourceProvider`. Never constructed by default; the remote source must degrade to the
   deterministic table when offline (read [`ConnectivityService`](connectivity.md)) rather than
   throwing.
-- **Test-server contract** — [`tools/test_server/`](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)
-  implements the shared remote-config endpoint ([D9](../decisions.md#d9--test-server-route-conventions)):
+- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+  implements the shared remote-config endpoint ([C9](../contracts.md#c9--test-server-route-conventions)):
   - `GET /v1/remote-config?deviceId=<stableId>&platform=<>&version=<>`
     -> `200 {experiments: {<key>: {variant, payload, sticky}}, flags: {...}, versionPolicy: {...}, revision: int}`
   - The single response serves experiments **and** feature flags **and** the update-blocker
@@ -123,7 +123,7 @@ local assignment, not faked remote data.
 
 ## Risks / notes
 
-- **Port reuse is mandatory, not optional.** Per [D4](../decisions.md#d4--port-reuse-do-not-multiply-backends),
+- **Port reuse is mandatory, not optional.** Per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends),
   experiments, [`feature-flags`](feature-flags.md), and [`update-blocker`](update-blocker.md)
   share **one** remote-config port family. Do not introduce a second remote source. If
   feature-flags lands first, adopt its source; if experiments lands first, expose the source so

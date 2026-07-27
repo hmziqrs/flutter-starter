@@ -30,11 +30,11 @@ Promotes the existing fixture OTP screen into a real multi-factor flow: a live e
 
 ## Backend & test surface
 
-Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
+Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 
 - **Noop/InMemory production default:** `InMemoryOtpRepository` is constructed in [`AppDependencies.production`](../../../lib/app/dependencies.dart) and overridden at the `ProviderScope`. It runs green with **zero backend**; `issue`/`verify`/`resend` all surface `common.notConnected` via `OtpRepositoryException` and **never fake success** — the OTP screen stays a faithful static demo until a consumer wires a real impl.
 - **Optional real impl:** `HttpOtpRepository` (a consumer-owned adapter in `lib/infrastructure/auth/`) is an **override** constructed only when a consumer wires credentials. It is never constructed by default; the starter ships without it.
-- **`tools/test_server/` contract** ([D3](../decisions.md#d3--minimal-in-repo-test-server-tools-test_server)): the minimal Dart server implements the OTP route group:
+- **`tools/test_server/` contract** ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)): the minimal Dart server implements the OTP route group:
   - `POST /v1/otp/issue` — body `{purpose: "mfa"|"registration"|"password-reset", identifier}` → `{attempt_token, expires_at, channel}` (channel is `"sms"`/`"email"`/`"authenticator"`; for tests the server also returns the code in a `dev_code` field **only** when the request carries the development API key).
   - `POST /v1/otp/verify` — body `{attempt_token, code}` → `{valid: bool}` or `409 {error: "expired"}` or `429 {error: "locked", retry_after_seconds}`.
   - `POST /v1/otp/resend` — body `{identifier, purpose}` → `{attempt_token, expires_at}` (rate-limited server-side).
@@ -69,6 +69,6 @@ Per [D2](../decisions.md#d2--backend-stance-port--noop-production-default--optio
 
 - **Partly present.** [`otp_page.dart`](../../../lib/features/auth/otp_page.dart) + `OtpFormValue` + `OtpPresentationState` (incl. `invalid`/`expired`/`resending`/`submitting`, 6-digit validation, resend cooldown, `context.t` copy) already exist. This feature is a **deepening** (real expiry Timer + `.mfa` purpose + port), not a greenfield build — keep the existing fixture path working so the dev-gallery stays deterministic.
 - **Rate-limit handoff.** `OtpPresentationStatus.locked` is set by the [auth-ratelimit](auth-ratelimit.md) `AttemptTracker`; the OTP controller reads it, the controller does **not** own retry policy. Build `auth-ratelimit` first or stub the tracker to avoid a circular dep.
-- **TOTP enrollment is optional and gated.** `package:otp` is only pulled if a consumer opts into authenticator-app enrollment; recovery codes must be stored via [`SecureStore`](../decisions.md#d4--port-reuse-do-not-multiply-backends), never `SettingsStore`.
+- **TOTP enrollment is optional and gated.** `package:otp` is only pulled if a consumer opts into authenticator-app enrollment; recovery codes must be stored via [`SecureStore`](../contracts.md#c4--port-reuse-do-not-multiply-backends), never `SettingsStore`.
 - **`dev_code` in the test server is a deliberate test affordance** — guard it behind the development API key so it can never leak into a staging/prod run, and never log it (verify against [log-redaction](log-redaction.md)).
 - **Countdown determinism.** The expiry Timer must be injectable (`FakeAsync` / a `Clock` port) so unit + golden tests are not wall-clock flaky.

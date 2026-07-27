@@ -61,7 +61,7 @@ to fake).
 
 ## Audit
 - [x] No-backend honored as a port — **pass**: port + real device default; noop is for hermeticity
-  only (backend=none, so the real impl is local — this is the correct shape, not the D2 four-part
+  only (backend=none, so the real impl is local — this is the correct shape, not the C2 four-part
   contract which applies to `server` features).
 - [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: port under
   `lib/infrastructure/haptics/`; the `SettingsState` edit is expected cross-cutting via the settings
