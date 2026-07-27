@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -118,9 +120,21 @@ class _AppViewState extends ConsumerState<_AppView> {
                 duration: AppMotion.standard,
                 curve: AppMotion.standardCurve,
               ),
-              child: FToaster(
-                child: FTooltipGroup(
-                  child: child ?? const SizedBox.shrink(),
+              child: AppKeyboardHost(
+                bindings: [
+                  AppKeyboardBinding(
+                    activator: const SingleActivator(
+                      LogicalKeyboardKey.backspace,
+                      meta: true,
+                      includeRepeats: false,
+                    ),
+                    onInvoke: _navigateBack,
+                  ),
+                ],
+                child: FToaster(
+                  child: FTooltipGroup(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),
@@ -128,6 +142,14 @@ class _AppViewState extends ConsumerState<_AppView> {
         );
       },
     );
+  }
+
+  bool _navigateBack() {
+    if (!_router.canPop()) {
+      return false;
+    }
+    _router.pop();
+    return true;
   }
 }
 

@@ -24,6 +24,7 @@ The architecture decisions live in [`plans/initial.md`](plans/initial.md), the s
 | state-settings | Handwritten Riverpod accent/fontScale/themeMode/locale | `lib/features/settings/settings_controller.dart` |
 | internationalization | slang v4 codegen: en + ar + zh-Hans via context.t | `lib/i18n/en.i18n.json` |
 | shell-adaptive-layout | AppShell picks compact/expanded nav by width | `lib/app/shell/app_shell.dart` |
+| keyboard-shortcuts | One root hardware listener, shortcut registry, and chord preview | `lib/app/keyboard/app_keyboard_host.dart` |
 | theme-system | ForuiThemeFactory composes FThemeData from tokens | `lib/shared/theme/forui_theme_factory.dart` |
 | motion-and-page-transitions | Duration/curve tokens + per-platform transitions | `lib/shared/motion/app_motion.dart` |
 | features-product-screens | Callback-driven backend-free product screens | `lib/features/auth/login_page.dart` |
@@ -144,6 +145,22 @@ Notes:
 - `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
 - `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells, a new ordered `StatefulShellBranch` in `app_router.dart` (branches are indexed home=0/pricing=1/settings=2), and an `onSelectTab` entry in each shell. `selectedIndex` is derived from `navigationShell.currentIndex`, not a location prefix.
 - Interaction policy is input-only and monotonic; `interactionPolicyOverrideProvider` is the deterministic test/dev hook; reading `appLayoutClassProvider` outside AppLayoutScope throws.
+
+#### keyboard-shortcuts
+
+**One focus-independent keyboard host owns app-wide shortcuts and the bottom-center chord preview.**
+
+Files:
+- `lib/app/keyboard/app_keyboard_host.dart` — root hardware handler, typed bindings, modifier-aware preview
+- `lib/app/app.dart` — sole host mount and root-owned shortcut registry
+
+Notes:
+- Mount `AppKeyboardHost` once below `FTheme`; feature screens must not add global hardware handlers.
+- Ordinary keys never surface by themselves. Meta, Control, Alt/Option, Shift, and Fn start the
+  preview; ordinary keys held with them join the displayed chord.
+- A binding consumes the event only when its callback reports that it performed an action. The
+  initial `Meta+Backspace` binding pops the root router only when it can pop, preserving normal
+  control behavior otherwise.
 
 #### theme-system
 
