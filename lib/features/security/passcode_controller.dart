@@ -76,19 +76,29 @@ final class PasscodeState {
     required this.isSet,
     required this.attemptsRemaining,
     required this.lockedUntil,
-  });
+    this.totalFailures = 0,
+  }) : assert(totalFailures >= 0, 'totalFailures must not be negative.');
 
   /// State for a device with no passcode configured.
   const PasscodeState.absent()
     : enabled = false,
       isSet = false,
       attemptsRemaining = freeAttemptsBeforeLockout,
-      lockedUntil = null;
+      lockedUntil = null,
+      totalFailures = 0;
 
   final bool enabled;
   final bool isSet;
   final int attemptsRemaining;
   final DateTime? lockedUntil;
+
+  /// Monotonic count of consecutive failed verifies since the last successful
+  /// verify (the schedule index). Unlike [attemptsRemaining] (which clamps at
+  /// 0), this counter only ever resets on a successful verify, so the
+  /// auth-ratelimit cooldown table escalates 30s -> 60s -> 5m -> 15m across
+  /// repeated failures even after a lockout expires. Mirrors the shared
+  /// `AttemptTracker`'s monotonic `attempts` field.
+  final int totalFailures;
 
   /// The redirect predicate (passcode, last in the C5 precedence chain).
   bool get requiresChallenge => isSet && enabled && lockedUntil == null;
@@ -114,6 +124,7 @@ final class PasscodeState {
     bool? isSet,
     int? attemptsRemaining,
     DateTime? lockedUntil,
+    int? totalFailures,
     bool clearLockedUntil = false,
   }) {
     return PasscodeState(
@@ -121,6 +132,7 @@ final class PasscodeState {
       isSet: isSet ?? this.isSet,
       attemptsRemaining: attemptsRemaining ?? this.attemptsRemaining,
       lockedUntil: clearLockedUntil ? null : (lockedUntil ?? this.lockedUntil),
+      totalFailures: totalFailures ?? this.totalFailures,
     );
   }
 
@@ -131,11 +143,12 @@ final class PasscodeState {
             enabled == other.enabled &&
             isSet == other.isSet &&
             attemptsRemaining == other.attemptsRemaining &&
-            lockedUntil == other.lockedUntil;
+            lockedUntil == other.lockedUntil &&
+            totalFailures == other.totalFailures;
   }
 
   @override
-  int get hashCode => Object.hash(enabled, isSet, attemptsRemaining, lockedUntil);
+  int get hashCode => Object.hash(enabled, isSet, attemptsRemaining, lockedUntil, totalFailures);
 }
 
 /// Handwritten Riverpod seed for the cold-start [PasscodeState]. Overridden at
@@ -166,6 +179,7 @@ class PasscodeController extends Notifier<PasscodeState> {
   static const hashKey = 'security.passcode.hash';
   static const attemptsKey = 'security.passcode.attempts_remaining';
   static const lockedUntilKey = 'security.passcode.locked_until';
+  static const totalFailuresKey = 'security.passcode.total_failures';
 
   SecureStore get _store => ref.read(secureStoreProvider);
   PasscodeHasher get _hasher => ref.read(passcodeHasherProvider);
@@ -196,6 +210,11 @@ class PasscodeController extends Notifier<PasscodeState> {
       }
       final attemptsRemaining = _parseAttempts(await _store.read(attemptsKey));
       final lockedUntil = _parseTimestamp(await _store.read(lockedUntilKey));
+      final totalFailures = _parseTotalFailures(
+        await _store.read(totalFailuresKey),
+        attemptsRemaining: attemptsRemaining,
+        lockedUntil: lockedUntil,
+      );
       // Cold-start re-challenge: a configured passcode arms the gate on every
       // fresh ProviderContainer (every app launch). Within a session, a freshly
       // set passcode stays disarmed (build() ran before setPasscode), so the
@@ -205,6 +224,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         isSet: true,
         attemptsRemaining: attemptsRemaining,
         lockedUntil: lockedUntil,
+        totalFailures: totalFailures,
       );
     } on SecureStoreException {
       // A keychain read failure degrades to the absent default (no gate) rather
@@ -297,22 +317,38 @@ class PasscodeController extends Notifier<PasscodeState> {
   }
 
   Future<void> _recordFailure() async {
-    // Reuse the auth-ratelimit schedule (single canonical escalation table).
-    // attempts = the count of this failure (1-indexed); cooldown from the table.
-    final attemptsUsed = freeAttemptsBeforeLockout - state.attemptsRemaining + 1;
-    final attempts = max(1, attemptsUsed);
+    // Reuse the auth-ratelimit schedule (single canonical escalation table) via
+    // the MONOTONIC running failure count. The count is 1-indexed (this failure
+    // is the Nth); cooldownSecondsFor maps it to 0/0/30/60/300/900. Crucially,
+    // the index is NOT re-derived from attemptsRemaining — that field clamps at
+    // 0 once the free budget is spent, so deriving from it would cap the index
+    // at freeAttemptsBeforeLockout+1 forever and freeze the cooldown at the
+    // first lockout tier (30s) for every subsequent failure. The monotonic
+    // counter only resets on a successful verify (mirrors the shared
+    // AttemptTracker), so a brute-forcer who never succeeds faces the full
+    // 30s -> 60s -> 5m -> 15m escalation across repeated lockout cycles.
+    final attempts = state.totalFailures + 1;
     final cooldown = cooldownSecondsFor(attempts);
     final now = DateTime.now();
     final lockedUntil = cooldown == 0 ? null : now.add(Duration(seconds: cooldown));
     final attemptsRemaining = max(0, freeAttemptsBeforeLockout - attempts);
-    state = state.copyWith(attemptsRemaining: attemptsRemaining, lockedUntil: lockedUntil);
-    await _writeAttempts(attemptsRemaining: attemptsRemaining, lockedUntil: lockedUntil);
+    state = state.copyWith(
+      totalFailures: attempts,
+      attemptsRemaining: attemptsRemaining,
+      lockedUntil: lockedUntil,
+    );
+    await _writeAttempts(
+      attemptsRemaining: attemptsRemaining,
+      lockedUntil: lockedUntil,
+      totalFailures: attempts,
+    );
   }
 
   Future<void> _resetAttempts() async {
     try {
       await _store.write(attemptsKey, freeAttemptsBeforeLockout.toString());
       await _store.delete(lockedUntilKey);
+      await _store.delete(totalFailuresKey);
     } on SecureStoreException {
       // Persistence failure does not roll back an unlock — the hash matched and
       // the gate is disarmed in-memory; a stale persisted counter only means the
@@ -338,8 +374,10 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.write(saltKey, salt),
         _store.write(hashKey, hash),
         _store.write(attemptsKey, attemptsRemaining.toString()),
-        // A fresh passcode has no active lockout; clear any stale value.
+        // A fresh passcode has no active lockout and no failure history; clear
+        // any stale values.
         _store.delete(lockedUntilKey),
+        _store.delete(totalFailuresKey),
       ]);
     } on SecureStoreException {
       // Re-throw as a typed failure so the page surfaces an honest error rather
@@ -352,10 +390,12 @@ class PasscodeController extends Notifier<PasscodeState> {
   Future<void> _writeAttempts({
     required int attemptsRemaining,
     required DateTime? lockedUntil,
+    required int totalFailures,
   }) async {
     try {
       await Future.wait<void>([
         _store.write(attemptsKey, attemptsRemaining.toString()),
+        _store.write(totalFailuresKey, totalFailures.toString()),
         switch (lockedUntil) {
           final DateTime expiry => _store.write(lockedUntilKey, expiry.toIso8601String()),
           null => _store.delete(lockedUntilKey),
@@ -374,6 +414,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.delete(hashKey),
         _store.delete(attemptsKey),
         _store.delete(lockedUntilKey),
+        _store.delete(totalFailuresKey),
       ]);
     } on SecureStoreException {
       // Best-effort: a failed delete still disarms in-memory so the user is not
@@ -387,6 +428,28 @@ class PasscodeController extends Notifier<PasscodeState> {
       return freeAttemptsBeforeLockout;
     }
     return parsed;
+  }
+
+  /// Parses the monotonic failure count. For legacy data written before the
+  /// counter existed (or a fresh install), reconcile from [attemptsRemaining]
+  /// so a cold start that lands mid-lockout still escalates on the next failure
+  /// rather than resetting the schedule to the first tier.
+  static int _parseTotalFailures(
+    String? saved, {
+    required int attemptsRemaining,
+    DateTime? lockedUntil,
+  }) {
+    final parsed = int.tryParse(saved ?? '');
+    if (parsed != null && parsed >= 0) {
+      return parsed;
+    }
+    final implied = freeAttemptsBeforeLockout - attemptsRemaining;
+    if (implied > 0) {
+      return implied;
+    }
+    // A persisted lockout with no recorded count implies the free budget was
+    // spent; seed with at least the first lockout index so escalation resumes.
+    return lockedUntil != null ? freeAttemptsBeforeLockout + 1 : 0;
   }
 
   static DateTime? _parseTimestamp(String? saved) {

@@ -61,7 +61,7 @@ class _OtpView extends ConsumerStatefulWidget {
   ConsumerState<_OtpView> createState() => _OtpViewState();
 }
 
-class _OtpViewState extends ConsumerState<_OtpView> {
+class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _otpFieldKey = GlobalKey<FormFieldState<String>>();
   final _otpFocus = FocusNode(debugLabel: 'otp.code');
@@ -76,6 +76,12 @@ class _OtpViewState extends ConsumerState<_OtpView> {
   bool _callbackResending = false;
   bool _callbackSubmitting = false;
   String _savedCode = '';
+
+  // state-restoration: the typed OTP code draft survives a simulated process
+  // death. The code is a transient auth token (not a long-lived secret), so
+  // restoring it is the data-loss-prevention this feature exists for; a fresh
+  // restoration build (empty draft) keeps the fixture code below.
+  final RestorableString _codeDraft = RestorableString('');
 
   // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
   // decremented by a 1s Timer.periodic; submit and resend are OR-ed with _locked.
@@ -94,8 +100,32 @@ class _OtpViewState extends ConsumerState<_OtpView> {
   bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0 || _locked;
 
   @override
+  String get restorationId => 'otp-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_codeDraft, 'code_draft');
+    // Only override the fixture when a real user draft exists, so a fresh
+    // restoration build keeps the dev-gallery/fixture code.
+    if (_codeDraft.value.isNotEmpty) {
+      _otpController.value = TextEditingValue(
+        text: _codeDraft.value,
+        selection: TextSelection.collapsed(offset: _codeDraft.value.length),
+      );
+      _savedCode = _codeDraft.value;
+    }
+  }
+
+  void _syncCodeDraft() {
+    if (_otpController.text != _codeDraft.value) {
+      _codeDraft.value = _otpController.text;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    _otpController.addListener(_syncCodeDraft);
     _liveLockedSeconds = widget.presentation.lockedSeconds;
     _startLockoutCountdownIfNeeded();
   }
@@ -129,7 +159,10 @@ class _OtpViewState extends ConsumerState<_OtpView> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    _otpController.dispose();
+    _otpController
+      ..removeListener(_syncCodeDraft)
+      ..dispose();
+    _codeDraft.dispose();
     _otpFocus.dispose();
     super.dispose();
   }

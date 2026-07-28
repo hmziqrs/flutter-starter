@@ -62,7 +62,6 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$diagnostics$ar diagnostics = _Translations$diagnostics$ar._(_root);
 	@override late final _Translations$devGallery$ar devGallery = _Translations$devGallery$ar._(_root);
 	@override late final _Translations$notifications$ar notifications = _Translations$notifications$ar._(_root);
-	@override late final _Translations$deepLink$ar deepLink = _Translations$deepLink$ar._(_root);
 	@override late final _Translations$permission$ar permission = _Translations$permission$ar._(_root);
 	@override late final _Translations$share$ar share = _Translations$share$ar._(_root);
 	@override late final _Translations$update$ar update = _Translations$update$ar._(_root);
@@ -655,16 +654,6 @@ class _Translations$notifications$ar extends Translations$notifications$en {
 	@override String get disabled => 'الإشعارات غير متصلة في هذا القالب.';
 }
 
-// Path: deepLink
-class _Translations$deepLink$ar extends Translations$deepLink$en {
-	_Translations$deepLink$ar._(TranslationsAr root) : this._root = root, super.internal(root);
-
-	final TranslationsAr _root; // ignore: unused_field
-
-	// Translations
-	@override String get unsupported => 'تعذر فتح هذا الرابط داخل التطبيق.';
-}
-
 // Path: permission
 class _Translations$permission$ar extends Translations$permission$en {
 	_Translations$permission$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -1029,12 +1018,19 @@ class _Translations$security$passcode$ar extends Translations$security$passcode$
 	@override String get reenter => 'أعد إدخال رمز المرور';
 	@override String get mismatch => 'رمزا المرور غير متطابقين. حاول مرة أخرى.';
 	@override String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'رمز مرور غير صحيح. لا محاولات متبقية.',
 		one: 'رمز مرور غير صحيح. يتبقى محاولة واحدة.',
+		two: 'رمز مرور غير صحيح. يتبقى محاولتان.',
+		few: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.',
+		many: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولة.',
 		other: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.',
 	);
 	@override String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
 		zero: 'محاولات كثيرة. أعد المحاولة الآن.',
 		one: 'محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.',
+		two: 'محاولات كثيرة. أعد المحاولة خلال ثانيتين.',
+		few: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثانية.',
 		other: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.',
 	);
 	@override String get disable => 'تعطيل رمز المرور';
@@ -1422,8 +1418,8 @@ extension on TranslationsAr {
 			'security.passcode.confirmTitle' => 'تأكيد رمز المرور',
 			'security.passcode.reenter' => 'أعد إدخال رمز المرور',
 			'security.passcode.mismatch' => 'رمزا المرور غير متطابقين. حاول مرة أخرى.',
-			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, one: 'رمز مرور غير صحيح. يتبقى محاولة واحدة.', other: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.', ), 
-			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'محاولات كثيرة. أعد المحاولة الآن.', one: 'محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.', other: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.', ), 
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'رمز مرور غير صحيح. لا محاولات متبقية.', one: 'رمز مرور غير صحيح. يتبقى محاولة واحدة.', two: 'رمز مرور غير صحيح. يتبقى محاولتان.', few: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.', many: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولة.', other: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'محاولات كثيرة. أعد المحاولة الآن.', one: 'محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.', two: 'محاولات كثيرة. أعد المحاولة خلال ثانيتين.', few: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثانية.', other: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.', ), 
 			'security.passcode.disable' => 'تعطيل رمز المرور',
 			'forceUpdate.title' => 'يلزم تحديث التطبيق',
 			'forceUpdate.body' => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.',
@@ -1672,13 +1668,12 @@ extension on TranslationsAr {
 			'notifications.enableBlockedTitle' => 'الإشعارات محظورة',
 			'notifications.enableBlockedBody' => 'افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.',
 			'notifications.disabled' => 'الإشعارات غير متصلة في هذا القالب.',
-			'deepLink.unsupported' => 'تعذر فتح هذا الرابط داخل التطبيق.',
 			'permission.camera.title' => 'الوصول إلى الكاميرا',
 			'permission.camera.rationale' => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.',
 			'permission.photos.title' => 'الوصول إلى مكتبة الصور',
+			'permission.photos.rationale' => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.',
 			_ => null,
 		} ?? switch (path) {
-			'permission.photos.rationale' => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.',
 			'permission.location.title' => 'الوصول إلى الموقع',
 			'permission.location.rationale' => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.',
 			'permission.continueRequest' => 'متابعة',

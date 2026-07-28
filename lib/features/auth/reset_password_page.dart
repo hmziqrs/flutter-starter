@@ -57,7 +57,7 @@ class _ResetPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
+class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -70,6 +70,18 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ResetPasswordPresentationStatus.submitting;
+
+  @override
+  String get restorationId => 'reset-password-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    // This page participates in the restoration tree (state-restoration
+    // contract) but registers NO restorable properties: both fields are new
+    // passwords, and secrets never participate in restoration (mirrors the
+    // login_page rule). The user re-types a new password after a process death
+    // rather than having a credential draft persisted.
+  }
 
   @override
   void initState() {

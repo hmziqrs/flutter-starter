@@ -226,7 +226,14 @@ class _SearchHeader extends StatelessWidget {
             variant: .ghost,
             semanticsLabel: context.t.common.back,
             onPress: onBack,
-            child: const Icon(FLucideIcons.arrowLeft),
+            // RTL: 'back' points toward the start edge, which is right in RTL.
+            // Mirrors the _DirectionalChevron pattern in settings_page.dart so
+            // the Arabic layout does not show a left-pointing back arrow.
+            child: Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? FLucideIcons.arrowRight
+                  : FLucideIcons.arrowLeft,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(

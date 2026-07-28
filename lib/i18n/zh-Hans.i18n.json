@@ -614,9 +614,6 @@
     "enableBlockedBody": "打开系统设置以允许此应用接收通知。",
     "disabled": "此模板中通知未连接。"
   },
-  "deepLink": {
-    "unsupported": "无法在应用中打开此链接。"
-  },
   "permission": {
     "camera": {
       "title": "相机访问",

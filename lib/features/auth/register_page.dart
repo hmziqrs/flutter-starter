@@ -65,7 +65,7 @@ class _RegisterView extends ConsumerStatefulWidget {
   ConsumerState<_RegisterView> createState() => _RegisterViewState();
 }
 
-class _RegisterViewState extends ConsumerState<_RegisterView> {
+class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _displayNameFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
@@ -86,8 +86,41 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
   bool _callbackSubmitting = false;
   bool _dirty = false;
 
+  // state-restoration: the display name + email drafts survive a simulated
+  // process death. Passwords deliberately have NO restorable counterpart —
+  // secrets never participate in restoration (mirrors login_page).
+  final RestorableString _displayNameDraft = RestorableString('');
+  final RestorableString _emailDraft = RestorableString('');
+
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == RegisterPresentationStatus.submitting;
+
+  @override
+  String get restorationId => 'register-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_displayNameDraft, 'display_name_draft');
+    registerForRestoration(_emailDraft, 'email_draft');
+    if (_displayNameController.text != _displayNameDraft.value) {
+      _displayNameController.text = _displayNameDraft.value;
+    }
+    if (_emailController.text != _emailDraft.value) {
+      _emailController.text = _emailDraft.value;
+    }
+  }
+
+  void _syncDisplayNameDraft() {
+    if (_displayNameController.text != _displayNameDraft.value) {
+      _displayNameDraft.value = _displayNameController.text;
+    }
+  }
+
+  void _syncEmailDraft() {
+    if (_emailController.text != _emailDraft.value) {
+      _emailDraft.value = _emailController.text;
+    }
+  }
 
   @override
   void initState() {
@@ -96,6 +129,8 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
     _emailController.addListener(_markDirty);
     _passwordController.addListener(_markDirty);
     _confirmPasswordController.addListener(_markDirty);
+    _displayNameController.addListener(_syncDisplayNameDraft);
+    _emailController.addListener(_syncEmailDraft);
     _requestFixtureFocus();
   }
 
@@ -119,9 +154,11 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
   void dispose() {
     _displayNameController
       ..removeListener(_markDirty)
+      ..removeListener(_syncDisplayNameDraft)
       ..dispose();
     _emailController
       ..removeListener(_markDirty)
+      ..removeListener(_syncEmailDraft)
       ..dispose();
     _passwordController
       ..removeListener(_markDirty)
@@ -129,6 +166,8 @@ class _RegisterViewState extends ConsumerState<_RegisterView> {
     _confirmPasswordController
       ..removeListener(_markDirty)
       ..dispose();
+    _displayNameDraft.dispose();
+    _emailDraft.dispose();
     _displayNameFocus.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();

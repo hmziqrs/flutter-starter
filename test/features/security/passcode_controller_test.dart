@@ -6,6 +6,21 @@ import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
+/// Writes a past lockout expiry into the store, then invalidates the passcode
+/// controller so its hydrate step re-reads it. The monotonic totalFailures
+/// counter is persisted across this cycle, so the next failure escalates per
+/// the schedule.
+Future<void> _expireLockout(InMemorySecureStore store, ProviderContainer container) async {
+  await store.write(
+    PasscodeController.lockedUntilKey,
+    DateTime.now().subtract(const Duration(seconds: 1)).toIso8601String(),
+  );
+  container
+    ..invalidate(passcodeControllerProvider)
+    ..listen(passcodeControllerProvider, (_, _) {}, fireImmediately: true);
+  await Future<void>.delayed(const Duration(milliseconds: 5));
+}
+
 void main() {
   group('PasscodeController', () {
     late ProviderContainer container;
@@ -91,6 +106,48 @@ void main() {
 
       // A further attempt while locked is refused before hashing.
       expect(await notifier.verify('0000'), PasscodeVerifyResult.lockedOut);
+    });
+
+    test('lockout escalates across expiry per the auth-ratelimit schedule', () async {
+      // The monotonic failure counter must persist across lockout expiry so the
+      // schedule escalates 30s -> 60s -> 300s -> 900s. A brute-forcer who never
+      // succeeds must NOT face only the first tier forever.
+      var notifier = container.read(passcodeControllerProvider.notifier);
+      await notifier.setPasscode('1234');
+      notifier.arm();
+
+      // Burn the free budget and trigger the first lockout (30s, 3rd failure).
+      await notifier.verify('0000');
+      await notifier.verify('0000');
+      expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
+      final firstLock = container.read(passcodeControllerProvider).lockedUntil!;
+      // cooldownSecondsFor(3) == 30.
+      expect(
+        firstLock.difference(DateTime.now()).inSeconds,
+        inInclusiveRange(29, 30),
+      );
+
+      // Expire the lockout, then fail again -> the 4th failure escalates to 60s.
+      await _expireLockout(store, container);
+      notifier = container.read(passcodeControllerProvider.notifier);
+      expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
+      final secondLock = container.read(passcodeControllerProvider).lockedUntil!;
+      // cooldownSecondsFor(4) == 60.
+      expect(
+        secondLock.difference(DateTime.now()).inSeconds,
+        inInclusiveRange(58, 60),
+      );
+
+      // Expire and fail again -> the 5th failure escalates to 300s (5m).
+      await _expireLockout(store, container);
+      notifier = container.read(passcodeControllerProvider.notifier);
+      expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
+      final thirdLock = container.read(passcodeControllerProvider).lockedUntil!;
+      // cooldownSecondsFor(5) == 300.
+      expect(
+        thirdLock.difference(DateTime.now()).inSeconds,
+        inInclusiveRange(298, 300),
+      );
     });
 
     test('a correct verify after the lockout expires is accepted', () async {

@@ -2,6 +2,7 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'routes/auth.dart' as auth;
+import 'routes/cache.dart' as cache;
 import 'routes/crashes.dart' as crashes;
 import 'routes/events.dart' as events;
 import 'routes/feedback.dart' as feedback;
@@ -23,6 +24,7 @@ typedef RouteRegistrar = void Function(Router router);
 /// surface for a new endpoint group.
 final List<RouteRegistrar> _registrars = <RouteRegistrar>[
   auth.registerRoutes,
+  cache.registerRoutes,
   crashes.registerRoutes,
   events.registerRoutes,
   feedback.registerRoutes,

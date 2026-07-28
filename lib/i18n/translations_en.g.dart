@@ -63,7 +63,6 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$diagnostics$en diagnostics = Translations$diagnostics$en.internal(_root);
 	late final Translations$devGallery$en devGallery = Translations$devGallery$en.internal(_root);
 	late final Translations$notifications$en notifications = Translations$notifications$en.internal(_root);
-	late final Translations$deepLink$en deepLink = Translations$deepLink$en.internal(_root);
 	late final Translations$permission$en permission = Translations$permission$en.internal(_root);
 	late final Translations$share$en share = Translations$share$en.internal(_root);
 	late final Translations$update$en update = Translations$update$en.internal(_root);
@@ -1382,18 +1381,6 @@ class Translations$notifications$en {
 
 	/// en: 'Notifications are not connected in this starter.'
 	String get disabled => 'Notifications are not connected in this starter.';
-}
-
-// Path: deepLink
-class Translations$deepLink$en {
-	Translations$deepLink$en.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'This link could not be opened in the app.'
-	String get unsupported => 'This link could not be opened in the app.';
 }
 
 // Path: permission
@@ -2746,13 +2733,12 @@ extension on Translations {
 			'notifications.enableBlockedTitle' => 'Notifications are blocked',
 			'notifications.enableBlockedBody' => 'Open system settings to allow notifications for this app.',
 			'notifications.disabled' => 'Notifications are not connected in this starter.',
-			'deepLink.unsupported' => 'This link could not be opened in the app.',
 			'permission.camera.title' => 'Camera access',
 			'permission.camera.rationale' => 'We use the camera to take a new profile photo. You can decline any time.',
 			'permission.photos.title' => 'Photo library access',
+			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
 			_ => null,
 		} ?? switch (path) {
-			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
 			'permission.location.title' => 'Location access',
 			'permission.location.rationale' => 'We use your location to personalize your experience. You can decline any time.',
 			'permission.continueRequest' => 'Continue',

@@ -62,7 +62,6 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$diagnostics$zh_Hans diagnostics = _Translations$diagnostics$zh_Hans._(_root);
 	@override late final _Translations$devGallery$zh_Hans devGallery = _Translations$devGallery$zh_Hans._(_root);
 	@override late final _Translations$notifications$zh_Hans notifications = _Translations$notifications$zh_Hans._(_root);
-	@override late final _Translations$deepLink$zh_Hans deepLink = _Translations$deepLink$zh_Hans._(_root);
 	@override late final _Translations$permission$zh_Hans permission = _Translations$permission$zh_Hans._(_root);
 	@override late final _Translations$share$zh_Hans share = _Translations$share$zh_Hans._(_root);
 	@override late final _Translations$update$zh_Hans update = _Translations$update$zh_Hans._(_root);
@@ -653,16 +652,6 @@ class _Translations$notifications$zh_Hans extends Translations$notifications$en 
 	@override String get enableBlockedTitle => '通知已被阻止';
 	@override String get enableBlockedBody => '打开系统设置以允许此应用接收通知。';
 	@override String get disabled => '此模板中通知未连接。';
-}
-
-// Path: deepLink
-class _Translations$deepLink$zh_Hans extends Translations$deepLink$en {
-	_Translations$deepLink$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
-
-	final TranslationsZhHans _root; // ignore: unused_field
-
-	// Translations
-	@override String get unsupported => '无法在应用中打开此链接。';
 }
 
 // Path: permission
@@ -1649,13 +1638,12 @@ extension on TranslationsZhHans {
 			'notifications.enableBlockedTitle' => '通知已被阻止',
 			'notifications.enableBlockedBody' => '打开系统设置以允许此应用接收通知。',
 			'notifications.disabled' => '此模板中通知未连接。',
-			'deepLink.unsupported' => '无法在应用中打开此链接。',
 			'permission.camera.title' => '相机访问',
 			'permission.camera.rationale' => '我们使用相机拍摄新的个人头像照片。您可以随时拒绝。',
 			'permission.photos.title' => '照片库访问',
+			'permission.photos.rationale' => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。',
 			_ => null,
 		} ?? switch (path) {
-			'permission.photos.rationale' => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。',
 			'permission.location.title' => '位置访问',
 			'permission.location.rationale' => '我们使用您的位置来个性化您的体验。您可以随时拒绝。',
 			'permission.continueRequest' => '继续',

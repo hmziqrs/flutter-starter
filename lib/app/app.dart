@@ -433,7 +433,21 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                                 !PlatformCapabilities.current().isWeb,
                             onShake: ({required magnitude}) =>
                                 unawaited(showFeedbackSheet(context: sheetContext)),
-                            child: child ?? const SizedBox.shrink(),
+                            // Idle auto-lock (pin-autolock) is inactivity-based.
+                            // Any pointer activity (tap / drag / scroll) on the
+                            // router's page content postpones the lockout by
+                            // restarting the idle timer via extend(). Gated on a
+                            // positive delay so the no-op default (idle locking
+                            // disabled) never builds a timer; extend() is itself
+                            // a no-op for delay <= 0, this guard keeps the read
+                            // inert when the feature is off.
+                            child: Listener(
+                              behavior: HitTestBehavior.translucent,
+                              onPointerDown: (_) => _maybeExtendAutoLock(),
+                              onPointerMove: (_) => _maybeExtendAutoLock(),
+                              onPointerSignal: (_) => _maybeExtendAutoLock(),
+                              child: child ?? const SizedBox.shrink(),
+                            ),
                           ),
                         ),
                       ),
@@ -454,6 +468,14 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     }
     _router.pop();
     return true;
+  }
+
+  /// Postpones the idle auto-lock on any pointer activity. No-op when idle
+  /// locking is disabled (delay <= 0), so the default install is inert.
+  void _maybeExtendAutoLock() {
+    if (ref.read(autoLockDelaySecondsProvider) > 0) {
+      ref.read(autoLockControllerProvider.notifier).extend();
+    }
   }
 }
 

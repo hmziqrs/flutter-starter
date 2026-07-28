@@ -481,37 +481,11 @@ String? _redirectSettingsDeepLinks(
         .toString();
   }
 
-  // (3a) Session auth-required gate. Composed into the single C5 redirect
-  // (no new callback). Reuses AppRoutes.login — NO new route. Behavioral
-  // precedence is update -> onboarding -> SESSION -> biometric; the session
-  // gate is placed before the onboarding gate but guarded by
-  // `hasCompletedOnboarding` so onboarding still wins for fresh installs. An
-  // auth-only destination (today: /profile/edit) reached by an anonymous user
-  // is sent to /auth/login. Detail routes like /profile/edit are only reachable
-  // from the settings shell tab, which onboarding already gates for fresh
-  // installs, so the hasCompletedOnboarding guard makes the fresh-install edge
-  // unreachable; for returning users the session gate fires correctly.
-  if (!_isOnboardingOrAuthRoute(path) && _isAuthRequiredDestination(path)) {
-    final hasCompletedOnboarding =
-        _readLiveHasCompletedOnboarding(context) ?? hasCompletedOnboardingSeed;
-    if (hasCompletedOnboarding) {
-      final session = _readLiveSession(context) ?? const AuthAnonymous();
-      if (session is! AuthAuthenticated) {
-        return AppRoutes.loginPath;
-      }
-    }
-  }
-
-  // (3b) Onboarding gate. Skip when already on an onboarding or auth route —
-  // deep links and auth flows must not be hijacked into an onboarding loop.
+  // (3a) Onboarding gate. FIRST in this block so the evaluated order matches
+  // the documented C5 precedence (update -> ONBOARDING -> session -> biometric
+  // -> passcode). Deep links and auth flows must not be hijacked into an
+  // onboarding loop, so skip when already on an onboarding or auth route.
   if (_isOnboardingOrAuthRoute(path)) {
-    return null;
-  }
-  // Only the shell-tab destinations gate through onboarding. Detail routes
-  // (/profile/edit, /dev/*) are reachable from the shell and only render after
-  // the shell itself has cleared onboarding, so they do not need to redirect
-  // independently.
-  if (!_isShellTabDestination(path)) {
     return null;
   }
   // Read LIVE controller state so the in-session Skip -> markOnboardingComplete
@@ -520,8 +494,35 @@ String? _redirectSettingsDeepLinks(
   // onboarding until relaunch. The seed is a fallback for test harnesses that
   // build the router without a ProviderScope above MaterialApp.router.
   final hasCompleted = _readLiveHasCompletedOnboarding(context) ?? hasCompletedOnboardingSeed;
-  if (!hasCompleted) {
+  // Only the shell-tab destinations gate through onboarding. Detail routes
+  // (/profile/edit, /dev/*) are reachable from the shell and only render after
+  // the shell itself has cleared onboarding, so they do not redirect here;
+  // /profile/edit falls through to the session gate (3b) below.
+  if (_isShellTabDestination(path) && !hasCompleted) {
     return AppRoutes.onboardingPath;
+  }
+
+  // (3b) Session auth-required gate. Composed into the single C5 redirect
+  // (no new callback). Reuses AppRoutes.login — NO new route. Evaluated AFTER
+  // the onboarding gate so onboarding wins for fresh installs (the precedence
+  // chain is update -> onboarding -> SESSION). An auth-only destination (today:
+  // /profile/edit, reached from the settings shell tab) accessed by an
+  // anonymous user is sent to /auth/login. The hasCompletedOnboarding guard is
+  // defense-in-depth: a not-onboarded user reaching an auth-required detail
+  // route (only possible in a test harness without a ProviderScope) is not
+  // bounced to login before completing onboarding.
+  if (_isAuthRequiredDestination(path) && hasCompleted) {
+    final session = _readLiveSession(context) ?? const AuthAnonymous();
+    if (session is! AuthAuthenticated) {
+      return AppRoutes.loginPath;
+    }
+  }
+
+  // Non-shell-tab, non-auth-required detail routes (/dev/*) stop here — they
+  // are reachable only from the shell (which has cleared onboarding) and do not
+  // re-gate through biometric/passcode independently.
+  if (!_isShellTabDestination(path)) {
+    return null;
   }
   // (4) BIOMETRIC gate. A returning user (onboarding complete) on a shell-tab
   // destination whose biometric unlock is enabled AND whose lock subsystem is
@@ -630,6 +631,15 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
     unawaited(
       store.readString(SoftUpdateSnooze.key).then((stored) {
         if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
+          return;
+        }
+        // Re-check the once-per-session flag HERE, not only synchronously above:
+        // go_router can re-evaluate the single redirect twice in the same frame
+        // (initial location + the refresh when versionCheck resolves), so two
+        // evaluations each pass the synchronous guard and each schedule a
+        // post-frame callback. The first callback to run flips this flag; the
+        // sibling callback short-circuits here so the dialog never stacks.
+        if (container.read(softUpdatePromptShownProvider)) {
           return;
         }
         // Mark the flag only when the dialog is actually presented, not before

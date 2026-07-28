@@ -619,9 +619,6 @@
     "enableBlockedBody": "Open system settings to allow notifications for this app.",
     "disabled": "Notifications are not connected in this starter."
   },
-  "deepLink": {
-    "unsupported": "This link could not be opened in the app."
-  },
   "permission": {
     "camera": {
       "title": "Camera access",

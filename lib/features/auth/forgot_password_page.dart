@@ -57,20 +57,43 @@ class _ForgotPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
+class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'forgotPassword.email');
   bool _callbackSubmitting = false;
 
+  // state-restoration: the email draft survives a simulated process death
+  // (state-restoration). No secret is entered on this page, so the single draft
+  // is the whole restorable surface.
+  final RestorableString _emailDraft = RestorableString('');
+
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ForgotPasswordPresentationStatus.submitting;
 
   @override
+  String get restorationId => 'forgot-password-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_emailDraft, 'email_draft');
+    if (_emailController.text != _emailDraft.value) {
+      _emailController.text = _emailDraft.value;
+    }
+  }
+
+  void _syncEmailDraft() {
+    if (_emailController.text != _emailDraft.value) {
+      _emailDraft.value = _emailController.text;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    _emailController.addListener(_syncEmailDraft);
     _requestFixtureFocus();
   }
 
@@ -92,7 +115,10 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _emailController
+      ..removeListener(_syncEmailDraft)
+      ..dispose();
+    _emailDraft.dispose();
     _emailFocus.dispose();
     super.dispose();
   }

@@ -26,11 +26,20 @@ The server binds to loopback (`127.0.0.1`), defaults to port `8080`, and prints
 
 ## Route table
 
-| Method | Path                | Contract (C9)        | Notes |
-| ------ | ------------------- | -------------------- | ----- |
-| GET    | `/healthz`          | —                    | Liveness probe. `200 ok`. |
-| POST   | `/v1/crashes`       | crash-reporting      | Body `{message, stack?, context, platform, appVersion}` -> `204`. In-memory ring of the last 50 (not exposed over HTTP). |
-| GET    | `/v1/remote-config` | remote-config family | `?deviceId=&platform=&version=` -> `{flags, versionPolicy, experiments, revision}`. `If-None-Match` / `?rev=` -> `304`. |
+| Method | Path                                  | Contract (C9)        | Notes |
+| ------ | ------------------------------------- | -------------------- | ----- |
+| GET    | `/healthz`                            | —                    | Liveness probe. `200 ok`. |
+| POST   | `/v1/crashes`                         | crash-reporting      | Body `{message, stack?, context, platform, appVersion}` -> `204`. In-memory ring of the last 50 (not exposed over HTTP). |
+| GET    | `/v1/remote-config`                   | remote-config family | `?deviceId=&platform=&version=` -> `{flags, versionPolicy, experiments, revision}`. `If-None-Match` / `?rev=` -> `304`. |
+| POST   | `/v1/auth/{issue,refresh,logout}`     | session              | Issue/refresh/logout a session. In-memory token table; the optional real adapter points here. |
+| POST   | `/v1/events`                          | analytics            | Batched analytics events -> `204`. |
+| POST   | `/v1/feedback`                        | feedback             | `{message, email?, screenshotMime?, screenshotBase64?, appMetadata?}` -> `201 {id}`; `422` invalid; `413` screenshot too large. |
+| GET    | `/v1/feedback/{id}/status`            | feedback             | `200 {state}` for a known id; `404` unknown. |
+| POST   | `/v1/notifications/register-token`    | push-notifications   | Token registration only (FCM/APNs delivery is not mocked by a plain HTTP server). |
+| DELETE | `/v1/notifications/register-token/{token}` | push-notifications | Unregister a token. |
+| POST   | `/v1/notifications/permission-revoked`| push-notifications   | Signal the user revoked notification permission. |
+| POST   | `/v1/otp/{issue,verify,resend}`       | mfa-otp              | Issue/verify/resend a one-time code. `429 locked` agrees with the client cooldown. |
+| GET    | `/v1/cache/{key}`                     | offline-cache        | `200 {data, etag, ttlSeconds, epoch}` for a known key; `304` on matching `If-None-Match` (or `*`) and when `?minEpoch=` is not strictly older; `404` unknown. Prime via `routes.cache.primeCacheEntry`. |
 
 `/v1/` is the uniform versioning prefix for every app-facing route (C9).
 
@@ -73,8 +82,10 @@ exposing a top-level `void registerRoutes(Router router)`. To add a group:
 
 One import + one line — that is the whole wiring surface for a new group.
 
-Planned groups (per C9): `auth`, `events`, `otp`, `feedback`, `cache`,
-`notifications` (token registration only).
+All C9 backend contract groups are shipped: `auth`, `cache`, `crashes`,
+`events`, `feedback`, `notifications` (token registration only), `otp`, and
+`remote-config`. Add a new group only when a new feature's optional real impl
+needs a live endpoint.
 
 ## Develop
 

@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/feedback/feedback_sheet.dart';
 import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
@@ -466,6 +467,16 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 title: Text(translations.settings.about.license),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenLicense,
+              ),
+              // feedback: the primary 'menu entry' open path (feedback.md
+              // Contract: the sheet opens from a menu entry + the shake
+              // listener). Always present — the sheet degrades honestly to
+              // notConnected via NoopFeedbackTransport, so no capability gate.
+              FTile(
+                key: const ValueKey('settings-send-feedback'),
+                title: Text(translations.feedback.title),
+                suffix: const _DirectionalChevron(),
+                onPress: () => unawaited(showFeedbackSheet(context: context)),
               ),
             ],
           ),
