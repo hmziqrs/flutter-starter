@@ -15,7 +15,7 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>
         <item name="android:windowSplashScreenIconBackgroundColor">#E5E5E5</item>
     </style>
-    <style name="NormalTheme" parent="android:style:Theme.Black.NoTitleBar">
+    <style name="NormalTheme" parent="android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:enforceStatusBarContrast">false</item>
