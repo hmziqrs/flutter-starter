@@ -11,9 +11,12 @@ name: Release builds
 #              Flutter release builds are universal by default, so a single job
 #              covers both arches (passing `--target-platform` for macOS is a
 #              no-op — it cannot select the arch).
-#   - Windows → x64 and arm64, each built natively on a matching runner
-#              (`windows-2022` / `windows-11-arm`). Windows cross-compiles are
-#              not supported; the tool keys the arch off the host.
+#   - Windows → x64 only (built natively on `windows-2022`). Native Windows
+#              arm64 is blocked: the prebuilt firebase_cpp_sdk libraries are
+#              x64-only (firebase/firebase-cpp-sdk#1470), and Flutter keys the
+#              build arch off the host runner (no cross-compile), so an arm64
+#              host can never link firebase_core. Re-add arm64 once the C++ SDK
+#              ships arm64 libraries.
 #   - Linux   → x64 and arm64, each built natively on a matching runner
 #              (`ubuntu-24.04` / `ubuntu-24.04-arm`). x64→arm64 cross-build is
 #              hard-blocked (flutter/flutter#74929).
@@ -137,8 +140,6 @@ jobs:
         include:
           - arch: x64
             runner: windows-2022
-          - arch: arm64
-            runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
@@ -152,28 +153,6 @@ jobs:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      - name: Cache Flutter SDK (arm64)
-        if: matrix.arch == 'arm64'
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.tool_cache }}/flutter-arm64
-          key: flutter-${{ env.FLUTTER_VERSION }}-arm64-${{ matrix.runner }}
-
-      - name: Set up Flutter (arm64)
-        # Flutter ships arm64 host artifacts but no arm64 SDK tarball, so install
-        # from a pinned git checkout. Forward-slash PATH entries work on Windows.
-        if: matrix.arch == 'arm64'
-        shell: bash
-        run: |
-          FLUTTER_DIR='${{ runner.tool_cache }}/flutter-arm64'
-          if [ ! -x "$FLUTTER_DIR/bin/flutter" ]; then
-            git clone --depth 1 --branch '${{ env.FLUTTER_VERSION }}' \
-              https://github.com/flutter/flutter.git "$FLUTTER_DIR"
-          fi
-          echo "$FLUTTER_DIR/bin" >> "$GITHUB_PATH"
-          # Prime the arm64 dart-sdk + engine download (no-op on cache hit).
-          "$FLUTTER_DIR/bin/flutter" --version
 
       - name: Resolve dependencies
         run: flutter pub get
@@ -217,7 +196,7 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
-            clang cmake libgtk-3-dev libstdc++-12-dev ninja-build pkg-config
+            clang cmake libgtk-3-dev libsecret-1-dev libstdc++-12-dev ninja-build pkg-config
 
       - name: Set up Flutter (x64)
         if: matrix.arch == 'x64'
@@ -235,7 +214,9 @@ jobs:
           key: flutter-${{ env.FLUTTER_VERSION }}-arm64-${{ matrix.runner }}
 
       - name: Set up Flutter (arm64)
-        # See the windows/arm64 step: Flutter has no arm64 SDK tarball.
+        # Flutter has no arm64 SDK tarball, so install from a pinned git
+        # checkout. (Kept for Linux arm64; Windows arm64 was dropped — see the
+        # header.)
         if: matrix.arch == 'arm64'
         run: |
           FLUTTER_DIR='${{ runner.tool_cache }}/flutter-arm64'
@@ -349,6 +330,6 @@ jobs:
             - `macos-universal.zip` — macOS app (arm64 + x64, runs on any Mac)
             - `macos-arm64.zip` / `macos-x64.zip` — single-arch macOS builds
             - `ios-arm64.zip` — unsigned iOS arm64 app
-            - `windows-x64.zip` / `windows-arm64.zip` — Windows builds
+            - `windows-x64.zip` — Windows x64 build (arm64 unavailable; firebase_cpp_sdk ships x64-only libs)
             - `linux-x64.tar.gz` / `linux-arm64.tar.gz` — Linux bundles
             - `android/*` — per-ABI APKs (armeabi-v7a, arm64-v8a, x86_64) + AAB
