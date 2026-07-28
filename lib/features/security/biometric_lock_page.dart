@@ -136,14 +136,15 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
             onPress: _unlocking ? null : () => unawaited(_unlock()),
             child: Text(_unlocking ? translations.unlocking : translations.unlock),
           ),
-        const SizedBox(height: AppSpacing.md),
-        if (!isUnavailable)
-          FButton(
-            key: const ValueKey('biometric-lock-use-fallback'),
-            variant: .ghost,
-            onPress: _unlocking ? null : widget.onUseFallback,
-            child: Text(translations.useFallback),
-          ),
+        // NOTE: a "Use fallback" affordance is intentionally rendered ONLY when
+        // biometric is unavailable (the primary button above). In the locked+
+        // available case a ghost fallback button was a C5 no-trap/no-loop
+        // violation: tapping it routed to /passcode-entry, but
+        // PasscodeController.verify never clears the biometric lock state (only
+        // BiometricUnlockController.authenticate does), so the C5 redirect's
+        // block 4 bounced /home straight back to /lock. The passcode seam is the
+        // documented 'unavailable -> passcode' handoff (app_router.dart
+        // onUseFallback), not a locked-state escape.
       ],
     );
   }

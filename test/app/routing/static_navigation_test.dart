@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
@@ -111,6 +112,55 @@ void main() {
     // AuthException.notConnected — the page surfaces globalFailure honestly
     // rather than navigating to Home as if authentication succeeded (C13).
     expect(find.byKey(const ValueKey('auth-login-global-failure')), findsOneWidget);
+  });
+
+  testWidgets('Login engages the auth-ratelimit lockout after repeated failures (C1)', (
+    tester,
+  ) async {
+    await _pumpApp(tester, AppRoutes.loginPath);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-email')),
+      'person@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-password')),
+      'Password1',
+    );
+
+    // The no-backend InMemoryAuthRepository throws AuthException on every call.
+    // The default schedule [0, 0, 30, ...] grants two free attempts, then locks
+    // for 30s on the third failure. The shared AttemptTracker is the same one
+    // the OTP surface consumes, so this is the login-named-consumer wiring the
+    // auth-ratelimit spec requires (login, OTP, pin-autolock = 3 consumers).
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      await _tapVisible(tester, 'auth-login-submit');
+      expect(
+        find.byKey(const ValueKey('auth-login-global-failure')),
+        findsOneWidget,
+        reason: 'attempt $attempt is still within the free allowance',
+      );
+    }
+
+    // Third failure escalates to a 30s lockout. Tap + bounded pumps (NOT
+    // pumpAndSettle) because the lockout Timer.periodic fires every 1s and
+    // would otherwise keep pumpAndSettle alive past its timeout.
+    final submit = find.byKey(const ValueKey('auth-login-submit'));
+    await tester.ensureVisible(submit);
+    await tester.pump();
+    await tester.tap(submit);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const ValueKey('auth-login-locked')), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+      isNull,
+      reason: 'submit is disabled while the lockout countdown is active',
+    );
+
+    // Expire the 30s lockout so the countdown Timer.periodic self-cancels and
+    // the test binding's no-pending-timers invariant holds at teardown.
+    await tester.pump(const Duration(seconds: 31));
   });
 
   testWidgets('Register surfaces honest notConnected with no backend (C13)', (tester) async {

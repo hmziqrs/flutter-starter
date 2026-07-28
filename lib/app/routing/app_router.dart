@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -11,6 +13,7 @@ import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/app/routing/route_error_page.dart';
 import 'package:starter/app/shell/app_shell.dart';
 import 'package:starter/app/shell/cross_fading_branch_container.dart';
+import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
@@ -782,6 +785,12 @@ class _LoginRoutePage extends ConsumerStatefulWidget {
 class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
   late bool _passwordResetComplete = widget.passwordResetComplete;
   LoginPresentationStatus _status = LoginPresentationStatus.idle;
+  // Auth-ratelimit (C1). The shared AttemptTracker drives the live lockout
+  // seconds + attempts-remaining surfaced by the page. Mirrors the OTP
+  // controller's recordFailure/recordSuccess wiring so login, OTP, and pin-
+  // autolock share one schedule (the named-consumer list in auth-ratelimit.md).
+  int _lockedSeconds = 0;
+  int _attemptsRemaining = 0;
 
   @override
   void didUpdateWidget(covariant _LoginRoutePage oldWidget) {
@@ -789,6 +798,27 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
     if (widget.passwordResetComplete != oldWidget.passwordResetComplete) {
       _passwordResetComplete = widget.passwordResetComplete;
     }
+  }
+
+  /// Builds the presentation, threading the tracker-derived lockout fields so
+  /// the page's existing countdown + attempts-remaining UI lights up the moment
+  /// a failure escalates to a lock.
+  LoginPresentationState _presentation() {
+    if (_passwordResetComplete) {
+      return LoginPresentationState.success(
+        successMessage: context.t.auth.resetPassword.success,
+      );
+    }
+    return switch (_status) {
+      LoginPresentationStatus.locked => LoginPresentationState.locked(
+        lockedSeconds: _lockedSeconds,
+        attemptsRemaining: _attemptsRemaining,
+      ),
+      _ => LoginPresentationState(
+        status: _status,
+        attemptsRemaining: _attemptsRemaining,
+      ),
+    };
   }
 
   Future<void> _openForgotPassword() async {
@@ -804,17 +834,30 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
   @override
   Widget build(BuildContext context) {
     return LoginPage(
-      presentation: _passwordResetComplete
-          ? LoginPresentationState.success(
-              successMessage: context.t.auth.resetPassword.success,
-            )
-          : LoginPresentationState(status: _status),
+      presentation: _presentation(),
       onSubmit: (value) async {
         // Wire authentication through the SessionController (C13 — never fake
         // success). The no-backend default (InMemoryAuthRepository.login)
         // throws AuthException.notConnected, which surfaces as globalFailure.
         // Navigation to home fires only on a real AuthAuthenticated result.
         final router = GoRouter.of(context);
+        // Auth-ratelimit (C1): gate the submit on a live lock check, mirroring
+        // otp_controller's `state.isLocked`. If the identifier is mid-lockout
+        // (e.g. a prior failure on this or the OTP surface), re-surface the
+        // locked presentation and refuse the call rather than burning a request
+        // the server would 429 anyway.
+        final tracker = ref.read(attemptTrackerProvider);
+        final existing = tracker.read(value.email);
+        final now = clock.now();
+        if (existing != null && existing.isLockedAt(now)) {
+          if (!mounted) return;
+          setState(() {
+            _status = LoginPresentationStatus.locked;
+            _lockedSeconds = existing.lockedSecondsAt(now);
+            _attemptsRemaining = existing.attemptsRemaining;
+          });
+          return;
+        }
         setState(() => _status = LoginPresentationStatus.submitting);
         try {
           await ref
@@ -825,6 +868,9 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
           if (!mounted) return;
           final session = ref.read(sessionControllerProvider);
           if (session is AuthAuthenticated) {
+            // A success clears the shared tracker so an eventual typo is not
+            // one failure away from a lockout (mirrors otp_controller.verify).
+            tracker.recordSuccess(value.email);
             router.goNamed(AppRoutes.home);
           } else {
             // The repository returned without error but did not authenticate
@@ -833,7 +879,21 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
           }
         } on AuthException {
           if (!mounted) return;
-          setState(() => _status = LoginPresentationStatus.globalFailure);
+          // Record the failure against the shared schedule. If the schedule
+          // locks the identifier, surface the `locked` presentation (the page's
+          // countdown + attempts-remaining UI already exists); otherwise stay
+          // on globalFailure with the remaining free attempts surfaced.
+          final attempt = tracker.recordFailure(value.email);
+          final lockedNow = clock.now();
+          setState(() {
+            _attemptsRemaining = math.max(0, attempt.attemptsRemaining);
+            _status = attempt.isLockedAt(lockedNow)
+                ? LoginPresentationStatus.locked
+                : LoginPresentationStatus.globalFailure;
+            if (attempt.isLockedAt(lockedNow)) {
+              _lockedSeconds = attempt.lockedSecondsAt(lockedNow);
+            }
+          });
         }
       },
       onForgotPassword: () => unawaited(_openForgotPassword()),

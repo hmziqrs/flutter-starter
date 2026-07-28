@@ -83,8 +83,12 @@ void main() {
     expect(find.text(translations.lockTitle), findsOneWidget);
     expect(find.text(translations.lockBody), findsOneWidget);
     expect(find.text(translations.unlock), findsOneWidget);
-    // The PIN / device-credential handoff seam is reachable as a ghost action.
-    expect(find.text(translations.useFallback), findsOneWidget);
+    // The PIN / device-credential handoff seam is reachable ONLY when biometric
+    // is unavailable. In the locked+available case a ghost fallback was a C5
+    // no-trap/no-loop violation (it routed to /passcode but never cleared the
+    // biometric lock, so /home bounced straight back to /lock), so it is now
+    // suppressed here.
+    expect(find.text(translations.useFallback), findsNothing);
   });
 
   testWidgets('renders the unavailable surface with the fallback action', (tester) async {
