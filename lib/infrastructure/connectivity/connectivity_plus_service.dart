@@ -18,11 +18,27 @@ import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 final class ConnectivityPlusService implements ConnectivityService {
   ConnectivityPlusService({Connectivity? connectivity})
     : _connectivity = connectivity ?? Connectivity() {
+    // The platform connectivity layer (connectivity_plus -> `nm` -> D-Bus) can
+    // fail asynchronously during initialization — e.g. a headless Linux
+    // desktop with no NetworkManager throws DBusServiceUnknownException from an
+    // internal unawaited `connect()`, which the stream's onError cannot
+    // capture. Guard the whole init in a zone so any such failure degrades
+    // honestly to offline instead of escaping as an uncaught error and crashing
+    // the host. (Mirrors the existing checkConnectivity/stream degradation: a
+    // sensor failure never fakes online.)
+    runZonedGuarded(_init, _degradeToOffline);
+  }
+
+  void _init() {
     unawaited(_seed());
     _changes = _connectivity.onConnectivityChanged.listen(
       _apply,
       onError: (_) => _publish(ConnectivityState.offline),
     );
+  }
+
+  void _degradeToOffline(Object _, StackTrace _) {
+    _publish(ConnectivityState.offline);
   }
 
   final Connectivity _connectivity;
