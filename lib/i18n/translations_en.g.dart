@@ -792,6 +792,9 @@ class Translations$diagnostics$en {
 	/// en: 'App lifecycle'
 	String get lifecycle => 'App lifecycle';
 
+	/// en: 'Viewing environment'
+	String get viewingEnvironment => 'Viewing environment';
+
 	/// en: 'Locale'
 	String get locale => 'Locale';
 
@@ -866,6 +869,12 @@ class Translations$devGallery$en {
 	/// en: 'Interaction policy'
 	String get interaction => 'Interaction policy';
 
+	/// en: 'Viewing environment'
+	String get viewingEnvironment => 'Viewing environment';
+
+	/// en: 'TV platform'
+	String get tvPlatform => 'TV platform';
+
 	/// en: 'Motion'
 	String get motion => 'Motion';
 
@@ -911,6 +920,24 @@ class Translations$devGallery$en {
 	/// en: 'Hybrid input'
 	String get hybrid => 'Hybrid input';
 
+	/// en: 'Remote'
+	String get remote => 'Remote';
+
+	/// en: 'Remote and pointer'
+	String get hybridRemote => 'Remote and pointer';
+
+	/// en: 'Near field'
+	String get nearField => 'Near field';
+
+	/// en: 'Ten foot'
+	String get tenFoot => 'Ten foot';
+
+	/// en: 'Android TV'
+	String get androidTv => 'Android TV';
+
+	/// en: 'tvOS'
+	String get tvOS => 'tvOS';
+
 	/// en: 'None'
 	String get none => 'None';
 
@@ -946,6 +973,15 @@ class Translations$devGallery$en {
 
 	/// en: 'Narrow resized desktop'
 	String get viewportNarrowDesktop => 'Narrow resized desktop';
+
+	/// en: 'TV 720p'
+	String get viewportTv720p => 'TV 720p';
+
+	/// en: 'TV 1080p'
+	String get viewportTv1080p => 'TV 1080p';
+
+	/// en: 'TV 4K equivalent'
+	String get viewportTv4k => 'TV 4K equivalent';
 
 	/// en: 'Onboarding'
 	String get screenOnboarding => 'Onboarding';
@@ -2541,6 +2577,7 @@ extension on Translations {
 			'diagnostics.layout' => 'Layout class',
 			'diagnostics.interaction' => 'Interaction policy',
 			'diagnostics.lifecycle' => 'App lifecycle',
+			'diagnostics.viewingEnvironment' => 'Viewing environment',
 			'diagnostics.locale' => 'Locale',
 			'diagnostics.capabilities' => 'Platform capabilities',
 			'diagnostics.secureStorage' => 'Secure storage',
@@ -2564,6 +2601,8 @@ extension on Translations {
 			'devGallery.textScale' => 'Text scaling',
 			'devGallery.systemTextScale' => 'System text scaling',
 			'devGallery.interaction' => 'Interaction policy',
+			'devGallery.viewingEnvironment' => 'Viewing environment',
+			'devGallery.tvPlatform' => 'TV platform',
 			'devGallery.motion' => 'Motion',
 			'devGallery.highContrast' => 'High contrast',
 			'devGallery.boldText' => 'Bold text',
@@ -2579,6 +2618,12 @@ extension on Translations {
 			'devGallery.touch' => 'Touch',
 			'devGallery.precision' => 'Precision pointer',
 			'devGallery.hybrid' => 'Hybrid input',
+			'devGallery.remote' => 'Remote',
+			'devGallery.hybridRemote' => 'Remote and pointer',
+			'devGallery.nearField' => 'Near field',
+			'devGallery.tenFoot' => 'Ten foot',
+			'devGallery.androidTv' => 'Android TV',
+			'devGallery.tvOS' => 'tvOS',
 			'devGallery.none' => 'None',
 			'devGallery.fold' => 'Vertical fold',
 			'devGallery.resetControls' => 'Reset preview controls',
@@ -2591,6 +2636,9 @@ extension on Translations {
 			'devGallery.viewportAtExpanded' => 'At expanded boundary',
 			'devGallery.viewportDesktop' => 'Desktop',
 			'devGallery.viewportNarrowDesktop' => 'Narrow resized desktop',
+			'devGallery.viewportTv720p' => 'TV 720p',
+			'devGallery.viewportTv1080p' => 'TV 1080p',
+			'devGallery.viewportTv4k' => 'TV 4K equivalent',
 			'devGallery.screenOnboarding' => 'Onboarding',
 			'devGallery.screenPaywall' => 'Onboarding paywall',
 			'devGallery.screenHome' => 'Home',
@@ -2725,6 +2773,8 @@ extension on Translations {
 			'devGallery.caseFeedbackDrafting' => 'Drafting',
 			'devGallery.caseFeedbackSubmitting' => 'Submitting',
 			'devGallery.caseFeedbackFailed' => 'Failed',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => 'Success',
 			'notifications.enableTitle' => 'Turn on notifications',
 			'notifications.enableBody' => 'Get timely updates about your account and activity. You can change this anytime.',
@@ -2737,8 +2787,6 @@ extension on Translations {
 			'permission.camera.rationale' => 'We use the camera to take a new profile photo. You can decline any time.',
 			'permission.photos.title' => 'Photo library access',
 			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
-			_ => null,
-		} ?? switch (path) {
 			'permission.location.title' => 'Location access',
 			'permission.location.rationale' => 'We use your location to personalize your experience. You can decline any time.',
 			'permission.continueRequest' => 'Continue',

@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/auth/login_form_value.dart';
 import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
 import 'auth_test_harness.dart';
 
@@ -100,7 +103,7 @@ void main() {
     await tester.pump();
 
     final button = tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit')));
-    expect(button.onPress, isNull);
+    expect(button.onPress, isNotNull);
     expect(find.text('Signing in'), findsOneWidget);
 
     completer.complete();
@@ -109,6 +112,51 @@ void main() {
       tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
       isNotNull,
     );
+  });
+
+  testWidgets('TV submission retains a visible focus target while in flight', (
+    tester,
+  ) async {
+    final completer = Completer<void>();
+    setAuthTestViewport(tester, const Size(1920, 1080));
+    await tester.pumpWidget(
+      authTestApp(
+        presentationPolicy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.tenFoot,
+          interactionPolicy: AppInteractionPolicy.remote,
+        ),
+        home: _login(onSubmit: (_) => completer.future),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-email')),
+      'person@example.com',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-password')),
+      'Password1',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tapAuthControl(tester, 'auth-login-submit');
+    await tester.pump();
+
+    expect(
+      _focusIsWithin(tester, 'auth-login-submit'),
+      isTrue,
+      reason: FocusManager.instance.primaryFocus?.toStringDeep(),
+    );
+
+    completer.complete();
+    await tester.pump();
   });
 
   testWidgets('renders every deterministic presentation fixture', (tester) async {
@@ -230,4 +278,24 @@ EditableText _editable(WidgetTester tester, String fieldKey) {
       matching: find.byType(EditableText),
     ),
   );
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }

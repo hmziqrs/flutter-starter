@@ -16,7 +16,7 @@ import 'package:starter/infrastructure/biometric/biometric_authenticator_provide
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
 
@@ -237,71 +237,80 @@ class _SettingsWideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return Row(
-      children: [
-        SizedBox(
-          width: AppSizes.mediumSidebarWidth,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  translations.settings.title,
-                  style: context.theme.typography.display.xl,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppSidebarItemGroup(
-                  key: const ValueKey('settings-wide-navigation'),
-                  children: [
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-appearance'),
-                      selected: section == SettingsSection.appearance,
-                      icon: const Icon(FLucideIcons.palette),
-                      label: Text(translations.settings.appearance),
-                      onPress: onOpenAppearance,
-                    ),
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-language'),
-                      selected: section == SettingsSection.language,
-                      icon: const Icon(FLucideIcons.languages),
-                      label: Text(translations.settings.language),
-                      onPress: onOpenLanguage,
-                    ),
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-accessibility'),
-                      icon: const Icon(FLucideIcons.accessibility),
-                      label: Text(translations.settings.accessibility.title),
-                      onPress: onOpenAccessibility,
-                    ),
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-account'),
-                      selected: section == SettingsSection.account,
-                      icon: const Icon(FLucideIcons.userRound),
-                      label: Text(translations.settings.account),
-                      onPress: onOpenAccount,
-                    ),
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-subscription'),
-                      selected: section == SettingsSection.subscription,
-                      icon: const Icon(FLucideIcons.creditCard),
-                      label: Text(translations.settings.subscription),
-                      onPress: onOpenSubscription,
-                    ),
-                    FSidebarItem(
-                      key: const ValueKey('settings-wide-privacy-about'),
-                      selected: section == SettingsSection.privacyAbout,
-                      icon: const Icon(FLucideIcons.shieldCheck),
-                      label: Text(translations.settings.privacyAbout),
-                      onPress: onOpenPrivacyAbout,
-                    ),
-                  ],
-                ),
-              ],
+    return _SettingsDirectionalFocusBridge(
+      navigation: FocusTraversalGroup(
+        policy: WidgetOrderTraversalPolicy(),
+        child: FocusScope(
+          debugLabel: 'settings-section-navigation',
+          child: SizedBox(
+            width: context.presentationTokens.navigationWidth,
+            child: Padding(
+              padding: EdgeInsets.all(context.spacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    translations.settings.title,
+                    style: context.theme.typography.display.xl,
+                  ),
+                  SizedBox(height: context.spacing.xl),
+                  AppSidebarItemGroup(
+                    key: const ValueKey('settings-wide-navigation'),
+                    children: [
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-appearance'),
+                        selected: section == SettingsSection.appearance,
+                        icon: const Icon(FLucideIcons.palette),
+                        label: Text(translations.settings.appearance),
+                        onPress: onOpenAppearance,
+                      ),
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-language'),
+                        selected: section == SettingsSection.language,
+                        icon: const Icon(FLucideIcons.languages),
+                        label: Text(translations.settings.language),
+                        onPress: onOpenLanguage,
+                      ),
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-accessibility'),
+                        icon: const Icon(FLucideIcons.accessibility),
+                        label: Text(translations.settings.accessibility.title),
+                        onPress: onOpenAccessibility,
+                      ),
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-account'),
+                        selected: section == SettingsSection.account,
+                        icon: const Icon(FLucideIcons.userRound),
+                        label: Text(translations.settings.account),
+                        onPress: onOpenAccount,
+                      ),
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-subscription'),
+                        selected: section == SettingsSection.subscription,
+                        icon: const Icon(FLucideIcons.creditCard),
+                        label: Text(translations.settings.subscription),
+                        onPress: onOpenSubscription,
+                      ),
+                      FSidebarItem(
+                        key: const ValueKey('settings-wide-privacy-about'),
+                        selected: section == SettingsSection.privacyAbout,
+                        icon: const Icon(FLucideIcons.shieldCheck),
+                        label: Text(translations.settings.privacyAbout),
+                        onPress: onOpenPrivacyAbout,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        Expanded(
+      ),
+      content: FocusTraversalGroup(
+        policy: ReadingOrderTraversalPolicy(),
+        child: FocusScope(
+          key: const ValueKey('settings-wide-content'),
+          debugLabel: 'settings-section-content',
           child: switch (section) {
             SettingsSection.appearance => const _AppearanceSettingsContent(),
             SettingsSection.language => const _LanguageSettingsContent(),
@@ -320,8 +329,137 @@ class _SettingsWideLayout extends StatelessWidget {
             ),
           },
         ),
-      ],
+      ),
     );
+  }
+}
+
+class _SettingsDirectionalFocusBridge extends StatefulWidget {
+  const _SettingsDirectionalFocusBridge({
+    required this.navigation,
+    required this.content,
+  });
+
+  final Widget navigation;
+  final Widget content;
+
+  @override
+  State<_SettingsDirectionalFocusBridge> createState() => _SettingsDirectionalFocusBridgeState();
+}
+
+class _SettingsDirectionalFocusBridgeState extends State<_SettingsDirectionalFocusBridge> {
+  late final FocusScopeNode _navigationScope = FocusScopeNode(
+    debugLabel: 'settings.navigation.region',
+  );
+  late final FocusScopeNode _contentScope = FocusScopeNode(
+    debugLabel: 'settings.content.region',
+  );
+  late final ReadingOrderTraversalPolicy _contentPolicy = ReadingOrderTraversalPolicy();
+  late final WidgetOrderTraversalPolicy _navigationPolicy = WidgetOrderTraversalPolicy();
+
+  @override
+  void dispose() {
+    _navigationScope.dispose();
+    _contentScope.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Actions(
+      actions: <Type, Action<Intent>>{
+        DirectionalFocusIntent: CallbackAction<DirectionalFocusIntent>(
+          onInvoke: _handleDirectionalFocus,
+        ),
+      },
+      child: Row(
+        children: [
+          FocusScope.withExternalFocusNode(
+            focusScopeNode: _navigationScope,
+            child: widget.navigation,
+          ),
+          Expanded(
+            child: FocusScope.withExternalFocusNode(
+              focusScopeNode: _contentScope,
+              child: widget.content,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Object? _handleDirectionalFocus(DirectionalFocusIntent intent) {
+    final focused = FocusManager.instance.primaryFocus;
+    if (focused == null) {
+      return null;
+    }
+
+    final direction = Directionality.of(context);
+    final towardContent = direction == TextDirection.ltr
+        ? TraversalDirection.right
+        : TraversalDirection.left;
+    final towardNavigation = direction == TextDirection.ltr
+        ? TraversalDirection.left
+        : TraversalDirection.right;
+
+    if (_navigationScope.hasFocus && intent.direction == towardContent) {
+      _focusContent();
+      return null;
+    }
+    if (_navigationScope.hasFocus && intent.direction == towardNavigation) {
+      Actions.maybeInvoke(context, intent);
+      return null;
+    }
+    if (_navigationScope.hasFocus) {
+      _navigationPolicy.inDirection(focused, intent.direction);
+      return null;
+    }
+    if (_contentScope.hasFocus && intent.direction == towardNavigation) {
+      _focusNavigation();
+      return null;
+    }
+    if (_contentScope.hasFocus && _contentPolicy.inDirection(focused, intent.direction)) {
+      return null;
+    }
+    return null;
+  }
+
+  void _focusContent() {
+    final remembered = _rememberedTarget(_contentScope);
+    if (remembered != null) {
+      remembered.requestFocus();
+      return;
+    }
+    final descendants = _focusableDescendants(_contentScope);
+    _contentPolicy.sortDescendants(descendants, _contentScope).firstOrNull?.requestFocus();
+  }
+
+  void _focusNavigation() {
+    final remembered = _rememberedTarget(_navigationScope);
+    if (remembered != null) {
+      remembered.requestFocus();
+      return;
+    }
+    final descendants = _focusableDescendants(_navigationScope);
+    _navigationPolicy.sortDescendants(descendants, _navigationScope).firstOrNull?.requestFocus();
+  }
+
+  Iterable<FocusNode> _focusableDescendants(FocusScopeNode scope) {
+    return scope.traversalDescendants.where(
+      (node) => node is! FocusScopeNode && node.canRequestFocus && !node.skipTraversal,
+    );
+  }
+
+  FocusNode? _rememberedTarget(FocusScopeNode scope) {
+    var target = scope.focusedChild;
+    while (target is FocusScopeNode) {
+      target = target.focusedChild;
+    }
+    if (target == null || !target.canRequestFocus || target.skipTraversal) {
+      return null;
+    }
+    return target;
   }
 }
 
@@ -1080,7 +1218,9 @@ class _SettingsScrollFrame extends StatelessWidget {
       children: [
         Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
+            constraints: BoxConstraints(
+              maxWidth: context.presentationTokens.readingContentMaxWidth,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

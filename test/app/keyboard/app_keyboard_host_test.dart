@@ -7,8 +7,9 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
-import 'package:starter/app/routing/app_link_handler.dart';
+import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 
 void main() {
@@ -65,6 +66,109 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  for (final backKey in [
+    (
+      logical: LogicalKeyboardKey.goBack,
+      physical: PhysicalKeyboardKey.escape,
+    ),
+    (
+      logical: LogicalKeyboardKey.gameButtonB,
+      physical: PhysicalKeyboardKey.gameButtonB,
+    ),
+  ]) {
+    testWidgets('${backKey.logical} dispatches through the platform Back route', (tester) async {
+      await _pumpApp(
+        tester,
+        capabilities: const PlatformCapabilities(
+          platform: 'android',
+          isWeb: false,
+          tvPlatform: AppTvPlatform.androidTv,
+        ),
+      );
+      await _tapVisible(tester, 'home-open-login');
+      expect(find.text('Welcome back'), findsWidgets);
+
+      if (backKey.logical == LogicalKeyboardKey.goBack) {
+        await tester.sendKeyDownEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+        await tester.sendKeyUpEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+      } else {
+        await tester.sendKeyDownEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Welcome, Alex'), findsOneWidget);
+      if (backKey.logical != LogicalKeyboardKey.goBack) {
+        await tester.sendKeyUpEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+      }
+    });
+  }
+
+  for (final backKey in [
+    (
+      logical: LogicalKeyboardKey.goBack,
+      physical: PhysicalKeyboardKey.escape,
+    ),
+    (
+      logical: LogicalKeyboardKey.gameButtonB,
+      physical: PhysicalKeyboardKey.gameButtonB,
+    ),
+  ]) {
+    testWidgets('${backKey.logical} cancels a root TV editor before route Back', (
+      tester,
+    ) async {
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.loginPath,
+        capabilities: const PlatformCapabilities(
+          platform: 'android',
+          isWeb: false,
+          tvPlatform: AppTvPlatform.androidTv,
+        ),
+      );
+
+      expect(
+        find.byKey(const ValueKey('auth-login-email-activation')),
+        findsOneWidget,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('auth-login-email')), findsOneWidget);
+
+      if (backKey.logical == LogicalKeyboardKey.goBack) {
+        await tester.binding.handlePopRoute();
+      } else {
+        await tester.sendKeyDownEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+        await tester.pump();
+        await tester.sendKeyUpEvent(
+          backKey.logical,
+          physicalKey: backKey.physical,
+        );
+      }
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('auth-login-page')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('auth-login-email-activation')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('auth-login-email')), findsNothing);
+    });
+  }
+
   testWidgets('password reset returns to the original login and preserves its Home back edge', (
     tester,
   ) async {
@@ -109,7 +213,11 @@ void main() {
   });
 }
 
-Future<void> _pumpApp(WidgetTester tester) async {
+Future<void> _pumpApp(
+  WidgetTester tester, {
+  PlatformCapabilities capabilities = const PlatformCapabilities.nonTelevision(),
+  String? initialLocation,
+}) async {
   tester.view
     ..devicePixelRatio = 1
     ..physicalSize = const Size(1024, 844);
@@ -119,7 +227,10 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(
     App(
       config: _developmentConfig,
-      dependencies: AppDependencies.inMemory(),
+      initialLocation: initialLocation,
+      dependencies: AppDependencies.inMemory(
+        platformCapabilities: capabilities,
+      ),
     ),
   );
   await tester.pumpAndSettle();

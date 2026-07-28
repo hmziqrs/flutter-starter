@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 /// The repeated adaptive shell shared by the starter's authentication forms.
@@ -46,8 +46,8 @@ class AuthPageScaffold extends StatelessWidget {
                 child: SingleChildScrollView(
                   padding: _scrollPadding(context),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSizes.readingContentMaxWidth,
+                    constraints: BoxConstraints(
+                      maxWidth: context.presentationTokens.readingContentMaxWidth,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,17 +88,25 @@ class AuthPageScaffold extends StatelessWidget {
         if (card)
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
+              constraints: BoxConstraints(
+                maxWidth: context.presentationTokens.formContentMaxWidth,
+              ),
               child: FCard(
                 child: Padding(
                   padding: EdgeInsets.all(context.spacing.xl),
-                  child: form,
+                  child: FocusTraversalGroup(
+                    policy: ReadingOrderTraversalPolicy(),
+                    child: form,
+                  ),
                 ),
               ),
             ),
           )
         else
-          form,
+          FocusTraversalGroup(
+            policy: ReadingOrderTraversalPolicy(),
+            child: form,
+          ),
       ],
     );
   }

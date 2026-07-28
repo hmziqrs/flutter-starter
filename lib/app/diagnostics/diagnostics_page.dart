@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
+import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/features/experiments/experiments_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_controller.dart';
@@ -35,7 +37,8 @@ class DiagnosticsPage extends ConsumerWidget {
     );
     final interactionPolicy = ref.watch(interactionPolicyProvider);
     final lifecyclePhase = ref.watch(appLifecyclePhaseProvider);
-    final capabilities = PlatformCapabilities.current();
+    final presentationPolicy = ref.watch(presentationPolicyProvider);
+    final capabilities = ref.watch(platformCapabilitiesProvider);
     final locale = TranslationProvider.of(context).locale;
     final analyticsBackend = ref.watch(analyticsClientBackendProvider);
     final flags = ref.watch(featureFlagsControllerProvider);
@@ -79,6 +82,10 @@ class DiagnosticsPage extends ConsumerWidget {
                           _DiagnosticTile(
                             label: translations.diagnostics.lifecycle,
                             value: lifecyclePhase.kind.name,
+                          ),
+                          _DiagnosticTile(
+                            label: translations.diagnostics.viewingEnvironment,
+                            value: presentationPolicy.viewingEnvironment.name,
                           ),
                           _DiagnosticTile(
                             label: translations.diagnostics.locale,

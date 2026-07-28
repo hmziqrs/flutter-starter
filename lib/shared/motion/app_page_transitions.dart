@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 /// Gives every routed page an opaque, theme-aware surface before applying its
@@ -82,6 +83,34 @@ const nativePageTransitionsTheme = PageTransitionsTheme(
     ),
     TargetPlatform.fuchsia: OpaquePageTransitionsBuilder(
       delegate: ZoomPageTransitionsBuilder(),
+    ),
+    TargetPlatform.macOS: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    ),
+    TargetPlatform.windows: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    ),
+    TargetPlatform.linux: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    ),
+  },
+);
+
+/// Restrained, non-directional transitions for remote-first ten-foot UIs.
+///
+/// tvOS reports iOS through [defaultTargetPlatform], so selecting this theme
+/// from application presentation policy prevents a television from inheriting
+/// Cupertino edge-swipe transitions.
+const televisionPageTransitionsTheme = PageTransitionsTheme(
+  builders: <TargetPlatform, PageTransitionsBuilder>{
+    TargetPlatform.iOS: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    ),
+    TargetPlatform.android: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
+    ),
+    TargetPlatform.fuchsia: OpaquePageTransitionsBuilder(
+      delegate: CrossFadePageTransitionsBuilder(),
     ),
     TargetPlatform.macOS: OpaquePageTransitionsBuilder(
       delegate: CrossFadePageTransitionsBuilder(),

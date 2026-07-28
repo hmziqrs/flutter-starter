@@ -10,7 +10,9 @@ import 'package:starter/features/auth/register_form_value.dart';
 import 'package:starter/features/auth/register_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
@@ -81,6 +83,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
   final _passwordFocus = FocusNode(debugLabel: 'register.password');
   final _confirmPasswordFocus = FocusNode(debugLabel: 'register.confirmPassword');
   final _termsFocus = FocusNode(debugLabel: 'register.acceptTerms');
+  final _submitFocus = FocusNode(debugLabel: 'register.submit');
   bool _acceptTerms = false;
   bool _allowPop = false;
   bool _callbackSubmitting = false;
@@ -173,6 +176,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
     _termsFocus.dispose();
+    _submitFocus.dispose();
     super.dispose();
   }
 
@@ -203,6 +207,8 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
     final status = widget.presentation.status;
+    final retainBusySubmitFocus =
+        _submitting && (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false);
     final invalidFixture = status == RegisterPresentationStatus.invalid;
     final fieldFailureFixture = status == RegisterPresentationStatus.fieldFailure;
 
@@ -228,122 +234,170 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
               alert,
             ],
             const SizedBox(height: AppSpacing.xl),
-            FTextFormField(
-              key: const ValueKey('auth-register-display-name'),
-              formFieldKey: _displayNameFieldKey,
-              control: .managed(controller: _displayNameController),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-register-display-name-activation'),
+              label: translations.auth.common.displayName,
+              controller: _displayNameController,
               focusNode: _displayNameFocus,
-              label: Text(translations.auth.common.displayName),
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.name],
               enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture
-                  ? translations.validation.required(
+              autofocus: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField(
+                  key: const ValueKey('auth-register-display-name'),
+                  formFieldKey: _displayNameFieldKey,
+                  control: .managed(controller: _displayNameController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.displayName),
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture
+                      ? translations.validation.required(
+                          field: translations.auth.common.displayName,
+                        )
+                      : null,
+                  validator: (value) => validateAuthRequired(
+                    value,
+                    translations.validation.required(
                       field: translations.auth.common.displayName,
-                    )
-                  : null,
-              validator: (value) => validateAuthRequired(
-                value,
-                translations.validation.required(
-                  field: translations.auth.common.displayName,
-                ),
-              ),
-              onEditingComplete: _emailFocus.requestFocus,
-              onReset: () {
-                _displayNameController.clear();
-                _displayNameFocus.unfocus();
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FTextFormField.email(
-              key: const ValueKey('auth-register-email'),
-              formFieldKey: _emailFieldKey,
-              control: .managed(controller: _emailController),
-              focusNode: _emailFocus,
-              label: Text(translations.auth.common.email),
-              textDirection: TextDirection.ltr,
-              enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture || fieldFailureFixture
-                  ? translations.validation.email
-                  : null,
-              validator: (value) => validateAuthEmail(
-                value,
-                requiredMessage: translations.validation.required(
-                  field: translations.auth.common.email,
-                ),
-                invalidMessage: translations.validation.email,
-              ),
-              onEditingComplete: _passwordFocus.requestFocus,
-              onReset: () {
-                _emailController.clear();
-                _emailFocus.unfocus();
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FTextFormField.password(
-              key: const ValueKey('auth-register-password'),
-              formFieldKey: _passwordFieldKey,
-              control: .managed(controller: _passwordController),
-              focusNode: _passwordFocus,
-              label: Text(translations.auth.common.password),
-              description: _PasswordRequirements(
-                text: translations.auth.common.passwordRequirements,
-              ),
-              autofillHints: const [AutofillHints.newPassword],
-              enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-              validator: (value) => validateAuthPassword(
-                value,
-                requiredMessage: translations.validation.required(
-                  field: translations.auth.common.password,
-                ),
-                weakMessage: translations.validation.passwordWeak,
-              ),
-              suffixBuilder: buildAuthPasswordToggle(
-                key: const ValueKey('auth-register-password-toggle'),
-              ),
-              onEditingComplete: _confirmPasswordFocus.requestFocus,
-              onReset: () {
-                _passwordController.clear();
-                _passwordFocus.unfocus();
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FTextFormField.password(
-              key: const ValueKey('auth-register-confirm-password'),
-              formFieldKey: _confirmPasswordFieldKey,
-              control: .managed(controller: _confirmPasswordController),
-              focusNode: _confirmPasswordFocus,
-              label: Text(translations.auth.common.confirmPassword),
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.newPassword],
-              enabled: !_submitting,
-              autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-              forceErrorText: invalidFixture ? translations.validation.passwordMismatch : null,
-              validator: (value) {
-                final requiredError = validateAuthRequired(
-                  value,
-                  translations.validation.required(
-                    field: translations.auth.common.confirmPassword,
+                    ),
                   ),
+                  onEditingComplete: () {
+                    completeEditing(nextFocusNode: _emailFocus);
+                  },
+                  onReset: () {
+                    _displayNameController.clear();
+                    _displayNameFocus.unfocus();
+                  },
                 );
-                if (requiredError != null) return requiredError;
-                if (value != _passwordController.text) {
-                  return translations.validation.passwordMismatch;
-                }
-                return null;
               },
-              suffixBuilder: buildAuthPasswordToggle(
-                key: const ValueKey('auth-register-confirm-password-toggle'),
-              ),
-              onSubmit: (_) => unawaited(_submit()),
-              onReset: () {
-                _confirmPasswordController.clear();
-                _confirmPasswordFocus.unfocus();
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-register-email-activation'),
+              label: translations.auth.common.email,
+              controller: _emailController,
+              focusNode: _emailFocus,
+              enabled: !_submitting,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.email(
+                  key: const ValueKey('auth-register-email'),
+                  formFieldKey: _emailFieldKey,
+                  control: .managed(controller: _emailController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.email),
+                  textDirection: TextDirection.ltr,
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture || fieldFailureFixture
+                      ? translations.validation.email
+                      : null,
+                  validator: (value) => validateAuthEmail(
+                    value,
+                    requiredMessage: translations.validation.required(
+                      field: translations.auth.common.email,
+                    ),
+                    invalidMessage: translations.validation.email,
+                  ),
+                  onEditingComplete: () {
+                    completeEditing(nextFocusNode: _passwordFocus);
+                  },
+                  onReset: () {
+                    _emailController.clear();
+                    _emailFocus.unfocus();
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-register-password-activation'),
+              label: translations.auth.common.password,
+              controller: _passwordController,
+              focusNode: _passwordFocus,
+              enabled: !_submitting,
+              secure: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.password(
+                  key: const ValueKey('auth-register-password'),
+                  formFieldKey: _passwordFieldKey,
+                  control: .managed(controller: _passwordController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.password),
+                  description: _PasswordRequirements(
+                    text: translations.auth.common.passwordRequirements,
+                  ),
+                  autofillHints: const [AutofillHints.newPassword],
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
+                  validator: (value) => validateAuthPassword(
+                    value,
+                    requiredMessage: translations.validation.required(
+                      field: translations.auth.common.password,
+                    ),
+                    weakMessage: translations.validation.passwordWeak,
+                  ),
+                  suffixBuilder: buildAuthPasswordToggle(
+                    key: const ValueKey('auth-register-password-toggle'),
+                  ),
+                  onEditingComplete: () {
+                    completeEditing(nextFocusNode: _confirmPasswordFocus);
+                  },
+                  onReset: () {
+                    _passwordController.clear();
+                    _passwordFocus.unfocus();
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTvEditableField(
+              activationKey: const ValueKey('auth-register-confirm-password-activation'),
+              label: translations.auth.common.confirmPassword,
+              controller: _confirmPasswordController,
+              focusNode: _confirmPasswordFocus,
+              enabled: !_submitting,
+              secure: true,
+              builder: (context, editorFocusNode, completeEditing) {
+                return FTextFormField.password(
+                  key: const ValueKey('auth-register-confirm-password'),
+                  formFieldKey: _confirmPasswordFieldKey,
+                  control: .managed(controller: _confirmPasswordController),
+                  focusNode: editorFocusNode,
+                  label: Text(translations.auth.common.confirmPassword),
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.newPassword],
+                  enabled: !_submitting,
+                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                  forceErrorText: invalidFixture ? translations.validation.passwordMismatch : null,
+                  validator: (value) {
+                    final requiredError = validateAuthRequired(
+                      value,
+                      translations.validation.required(
+                        field: translations.auth.common.confirmPassword,
+                      ),
+                    );
+                    if (requiredError != null) return requiredError;
+                    if (value != _passwordController.text) {
+                      return translations.validation.passwordMismatch;
+                    }
+                    return null;
+                  },
+                  suffixBuilder: buildAuthPasswordToggle(
+                    key: const ValueKey('auth-register-confirm-password-toggle'),
+                  ),
+                  onSubmit: (_) {
+                    completeEditing();
+                    unawaited(_submit());
+                  },
+                  onReset: () {
+                    _confirmPasswordController.clear();
+                    _confirmPasswordFocus.unfocus();
+                  },
+                );
               },
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -391,8 +445,17 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-register-submit'),
-              onPress: _submitting ? null : () => unawaited(_submit()),
-              child: Text(translations.auth.register.submit),
+              focusNode: _submitFocus,
+              onPress: _submitting
+                  ? retainBusySubmitFocus
+                        ? () {}
+                        : null
+                  : () => unawaited(_submit()),
+              child: Text(
+                _submitting
+                    ? translations.auth.register.submitting
+                    : translations.auth.register.submit,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             FButton(
@@ -458,6 +521,9 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
       acceptTerms: _acceptTerms,
     );
 
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _submitFocus.requestFocus();
+    }
     setState(() => _callbackSubmitting = true);
     TextInput.finishAutofillContext(shouldSave: false);
     try {
@@ -515,7 +581,9 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
   }
 
   Future<void> _handlePop(bool didPop, Object? result) async {
-    if (didPop || _allowPop || !_dirty) return;
+    if (didPop || _allowPop || !_dirty || AppTvEditableField.editorHasPrimaryFocus) {
+      return;
+    }
     final discard = await _confirmDiscard();
     if (!discard || !mounted) return;
     setState(() => _allowPop = true);
@@ -555,6 +623,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                         FButton(
                           key: const ValueKey('auth-register-discard-stay'),
                           variant: .outline,
+                          autofocus: true,
                           mainAxisSize: .min,
                           onPress: () => Navigator.of(context).pop(false),
                           child: Text(translations.auth.register.stay),

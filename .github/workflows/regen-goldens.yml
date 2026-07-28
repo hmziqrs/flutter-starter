@@ -1,0 +1,42 @@
+name: Regenerate goldens
+
+# Manual: rewrites the canonical golden baselines on the current macos-26
+# runner image and uploads them for review + commit. Use after a runner-image
+# bump changes sub-pixel rendering. See test/goldens/README.md.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.44.7
+
+jobs:
+  regen:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Regenerate canonical goldens
+        run: flutter test test/goldens/canonical_matrix_golden_test.dart --update-goldens
+
+      - name: Upload regenerated baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: goldens-baselines
+          path: test/goldens/baselines/
+          if-no-files-found: error

@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/auth/reset_password_form_value.dart';
 import 'package:starter/features/auth/reset_password_page.dart';
 import 'package:starter/features/auth/reset_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
 import 'auth_test_harness.dart';
 
@@ -71,6 +74,63 @@ void main() {
     await tester.pump();
     await tapAuthControl(tester, 'auth-reset-password-login');
     expect(loginCount, 1);
+  });
+
+  testWidgets('TV submit retains focus and rejects duplicates while in flight', (tester) async {
+    final completer = Completer<void>();
+    var submitCount = 0;
+    setAuthTestViewport(tester, const Size(1920, 1080));
+    await tester.pumpWidget(
+      authTestApp(
+        presentationPolicy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.tenFoot,
+          interactionPolicy: AppInteractionPolicy.remote,
+        ),
+        home: _page(
+          onSubmit: (_) {
+            submitCount += 1;
+            return completer.future;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-new')),
+      'Password1',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-reset-password-confirm')),
+      'Password1',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tapAuthControl(tester, 'auth-reset-password-submit');
+    await tester.pump();
+
+    expect(submitCount, 1);
+    expect(_focusIsWithin(tester, 'auth-reset-password-submit'), isTrue);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-reset-password-submit'))).onPress,
+      isNotNull,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(submitCount, 1);
+    expect(_focusIsWithin(tester, 'auth-reset-password-submit'), isTrue);
+
+    completer.complete();
+    await tester.pump();
   });
 
   testWidgets('renders all deterministic reset states', (tester) async {
@@ -148,4 +208,24 @@ EditableText _editable(WidgetTester tester, String valueKey) {
       matching: find.byType(EditableText),
     ),
   );
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }

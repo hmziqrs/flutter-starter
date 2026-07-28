@@ -443,6 +443,7 @@ class _Translations$diagnostics$ar extends Translations$diagnostics$en {
 	@override String get layout => 'فئة التخطيط';
 	@override String get interaction => 'سياسة التفاعل';
 	@override String get lifecycle => 'دورة حياة التطبيق';
+	@override String get viewingEnvironment => 'بيئة المشاهدة';
 	@override String get locale => 'اللغة';
 	@override String get capabilities => 'إمكانات المنصة';
 	@override String get secureStorage => 'التخزين الآمن';
@@ -474,6 +475,8 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get textScale => 'تحجيم النص';
 	@override String get systemTextScale => 'تحجيم نص النظام';
 	@override String get interaction => 'سياسة التفاعل';
+	@override String get viewingEnvironment => 'بيئة المشاهدة';
+	@override String get tvPlatform => 'منصة التلفاز';
 	@override String get motion => 'الحركة';
 	@override String get highContrast => 'تباين عالٍ';
 	@override String get boldText => 'نص عريض';
@@ -489,6 +492,12 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get touch => 'لمس';
 	@override String get precision => 'مؤشر دقيق';
 	@override String get hybrid => 'إدخال هجين';
+	@override String get remote => 'جهاز تحكم';
+	@override String get hybridRemote => 'جهاز تحكم ومؤشر';
+	@override String get nearField => 'مشاهدة قريبة';
+	@override String get tenFoot => 'مشاهدة من مسافة بعيدة';
+	@override String get androidTv => 'Android TV';
+	@override String get tvOS => 'tvOS';
 	@override String get none => 'بلا';
 	@override String get fold => 'طي رأسي';
 	@override String get resetControls => 'إعادة ضبط عناصر المعاينة';
@@ -501,6 +510,9 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get viewportAtExpanded => 'عند حد التخطيط الموسع';
 	@override String get viewportDesktop => 'سطح المكتب';
 	@override String get viewportNarrowDesktop => 'سطح مكتب ضيق بعد تغيير الحجم';
+	@override String get viewportTv720p => 'تلفاز 720p';
+	@override String get viewportTv1080p => 'تلفاز 1080p';
+	@override String get viewportTv4k => 'تلفاز مكافئ لدقة 4K';
 	@override String get screenOnboarding => 'التعريف';
 	@override String get screenPaywall => 'عرض خطط التعريف';
 	@override String get screenHome => 'الرئيسية';
@@ -1476,6 +1488,7 @@ extension on TranslationsAr {
 			'diagnostics.layout' => 'فئة التخطيط',
 			'diagnostics.interaction' => 'سياسة التفاعل',
 			'diagnostics.lifecycle' => 'دورة حياة التطبيق',
+			'diagnostics.viewingEnvironment' => 'بيئة المشاهدة',
 			'diagnostics.locale' => 'اللغة',
 			'diagnostics.capabilities' => 'إمكانات المنصة',
 			'diagnostics.secureStorage' => 'التخزين الآمن',
@@ -1499,6 +1512,8 @@ extension on TranslationsAr {
 			'devGallery.textScale' => 'تحجيم النص',
 			'devGallery.systemTextScale' => 'تحجيم نص النظام',
 			'devGallery.interaction' => 'سياسة التفاعل',
+			'devGallery.viewingEnvironment' => 'بيئة المشاهدة',
+			'devGallery.tvPlatform' => 'منصة التلفاز',
 			'devGallery.motion' => 'الحركة',
 			'devGallery.highContrast' => 'تباين عالٍ',
 			'devGallery.boldText' => 'نص عريض',
@@ -1514,6 +1529,12 @@ extension on TranslationsAr {
 			'devGallery.touch' => 'لمس',
 			'devGallery.precision' => 'مؤشر دقيق',
 			'devGallery.hybrid' => 'إدخال هجين',
+			'devGallery.remote' => 'جهاز تحكم',
+			'devGallery.hybridRemote' => 'جهاز تحكم ومؤشر',
+			'devGallery.nearField' => 'مشاهدة قريبة',
+			'devGallery.tenFoot' => 'مشاهدة من مسافة بعيدة',
+			'devGallery.androidTv' => 'Android TV',
+			'devGallery.tvOS' => 'tvOS',
 			'devGallery.none' => 'بلا',
 			'devGallery.fold' => 'طي رأسي',
 			'devGallery.resetControls' => 'إعادة ضبط عناصر المعاينة',
@@ -1526,6 +1547,9 @@ extension on TranslationsAr {
 			'devGallery.viewportAtExpanded' => 'عند حد التخطيط الموسع',
 			'devGallery.viewportDesktop' => 'سطح المكتب',
 			'devGallery.viewportNarrowDesktop' => 'سطح مكتب ضيق بعد تغيير الحجم',
+			'devGallery.viewportTv720p' => 'تلفاز 720p',
+			'devGallery.viewportTv1080p' => 'تلفاز 1080p',
+			'devGallery.viewportTv4k' => 'تلفاز مكافئ لدقة 4K',
 			'devGallery.screenOnboarding' => 'التعريف',
 			'devGallery.screenPaywall' => 'عرض خطط التعريف',
 			'devGallery.screenHome' => 'الرئيسية',
@@ -1660,6 +1684,8 @@ extension on TranslationsAr {
 			'devGallery.caseFeedbackDrafting' => 'كتابة',
 			'devGallery.caseFeedbackSubmitting' => 'إرسال',
 			'devGallery.caseFeedbackFailed' => 'فشل',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => 'نجاح',
 			'notifications.enableTitle' => 'تفعيل الإشعارات',
 			'notifications.enableBody' => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.',
@@ -1672,8 +1698,6 @@ extension on TranslationsAr {
 			'permission.camera.rationale' => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.',
 			'permission.photos.title' => 'الوصول إلى مكتبة الصور',
 			'permission.photos.rationale' => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.',
-			_ => null,
-		} ?? switch (path) {
 			'permission.location.title' => 'الوصول إلى الموقع',
 			'permission.location.rationale' => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.',
 			'permission.continueRequest' => 'متابعة',

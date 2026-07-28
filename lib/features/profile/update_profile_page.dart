@@ -11,8 +11,10 @@ import 'package:starter/infrastructure/media/media_picker.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
@@ -54,6 +56,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
   final _displayNameFocusNode = FocusNode();
   final _usernameFocusNode = FocusNode();
   final _bioFocusNode = FocusNode();
+  final _saveFocusNode = FocusNode(debugLabel: 'profile.save');
   final _scrollController = ScrollController();
 
   late final TextEditingController _displayNameController;
@@ -194,6 +197,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     _displayNameFocusNode.dispose();
     _usernameFocusNode.dispose();
     _bioFocusNode.dispose();
+    _saveFocusNode.dispose();
     _scrollController.dispose();
     _displayNameDraft.dispose();
     _usernameDraft.dispose();
@@ -217,6 +221,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
           displayNameFocusNode: _displayNameFocusNode,
           usernameFocusNode: _usernameFocusNode,
           bioFocusNode: _bioFocusNode,
+          saveFocusNode: _saveFocusNode,
           phase: _phase,
           onAvatarPicked: widget.onAvatarPicked,
           onDisplayNameSaved: (value) => _savedDisplayName = value ?? '',
@@ -230,7 +235,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
           child: PopScope<void>(
             canPop: !_isDirty || _discarding,
             onPopInvokedWithResult: (didPop, _) {
-              if (!didPop && _isDirty) {
+              if (!didPop && _isDirty && !AppTvEditableField.editorHasPrimaryFocus) {
                 unawaited(_showDiscardDialog());
               }
             },
@@ -321,6 +326,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
       bio: _savedBio.trim(),
     );
 
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _saveFocusNode.requestFocus();
+    }
     setState(() => _phase = ProfilePresentationPhase.saving);
     try {
       await Future<void>.sync(() => widget.onSave(draft));
@@ -394,6 +402,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
                       FButton(
                         key: const ValueKey('profile-keep-editing'),
                         variant: .outline,
+                        autofocus: true,
                         mainAxisSize: .min,
                         builder: (_, _, _, _, _, child) => Flexible(child: child!),
                         onPress: () => Navigator.of(dialogContext).pop(false),
@@ -451,6 +460,7 @@ class _ProfileForm extends StatelessWidget {
     required this.displayNameFocusNode,
     required this.usernameFocusNode,
     required this.bioFocusNode,
+    required this.saveFocusNode,
     required this.phase,
     required this.onAvatarPicked,
     required this.onDisplayNameSaved,
@@ -470,6 +480,7 @@ class _ProfileForm extends StatelessWidget {
   final FocusNode displayNameFocusNode;
   final FocusNode usernameFocusNode;
   final FocusNode bioFocusNode;
+  final FocusNode saveFocusNode;
   final ProfilePresentationPhase phase;
   final AvatarPickedCallback onAvatarPicked;
   final ValueChanged<String?> onDisplayNameSaved;
@@ -494,40 +505,63 @@ class _ProfileForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl2),
           _AvatarEditor(onAvatarPicked: onAvatarPicked, enabled: _enabled),
           const SizedBox(height: AppSpacing.xl2),
-          FTextFormField(
-            key: const ValueKey('profile-display-name'),
-            formFieldKey: displayNameFieldKey,
-            control: .managed(controller: displayNameController),
+          AppTvEditableField(
+            activationKey: const ValueKey('profile-display-name-activation'),
+            label: profile.displayName,
+            controller: displayNameController,
             focusNode: displayNameFocusNode,
-            label: Text(profile.displayName),
             enabled: _enabled,
-            textCapitalization: .words,
-            textInputAction: .next,
-            autofillHints: const [AutofillHints.name],
-            maxLength: _UpdateProfilePageState.displayNameMaximum,
-            maxLengthEnforcement: MaxLengthEnforcement.enforced,
-            autovalidateMode: .onUserInteractionIfError,
-            validator: (value) => _required(value, profile.displayName, translations),
-            onSaved: onDisplayNameSaved,
-            onSubmit: (_) => usernameFocusNode.requestFocus(),
+            autofocus: true,
+            builder: (context, editorFocusNode, completeEditing) {
+              return FTextFormField(
+                key: const ValueKey('profile-display-name'),
+                formFieldKey: displayNameFieldKey,
+                control: .managed(controller: displayNameController),
+                focusNode: editorFocusNode,
+                label: Text(profile.displayName),
+                enabled: _enabled,
+                textCapitalization: .words,
+                textInputAction: .next,
+                autofillHints: const [AutofillHints.name],
+                maxLength: _UpdateProfilePageState.displayNameMaximum,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                autovalidateMode: .onUserInteractionIfError,
+                validator: (value) => _required(value, profile.displayName, translations),
+                onSaved: onDisplayNameSaved,
+                onSubmit: (_) {
+                  completeEditing(nextFocusNode: usernameFocusNode);
+                },
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.lg),
-          FTextFormField(
-            key: const ValueKey('profile-username'),
-            formFieldKey: usernameFieldKey,
-            control: .managed(controller: usernameController),
+          AppTvEditableField(
+            activationKey: const ValueKey('profile-username-activation'),
+            label: profile.username,
+            controller: usernameController,
             focusNode: usernameFocusNode,
-            label: Text(profile.username),
             enabled: _enabled,
-            autocorrect: false,
-            enableSuggestions: false,
-            textInputAction: .next,
-            maxLength: 24,
-            maxLengthEnforcement: MaxLengthEnforcement.none,
-            autovalidateMode: .onUserInteractionIfError,
-            validator: (value) => _username(value, translations),
-            onSaved: onUsernameSaved,
-            onSubmit: (_) => bioFocusNode.requestFocus(),
+            builder: (context, editorFocusNode, completeEditing) {
+              return FTextFormField(
+                key: const ValueKey('profile-username'),
+                formFieldKey: usernameFieldKey,
+                control: .managed(controller: usernameController),
+                focusNode: editorFocusNode,
+                label: Text(profile.username),
+                enabled: _enabled,
+                autocorrect: false,
+                enableSuggestions: false,
+                textInputAction: .next,
+                maxLength: 24,
+                maxLengthEnforcement: MaxLengthEnforcement.none,
+                autovalidateMode: .onUserInteractionIfError,
+                validator: (value) => _username(value, translations),
+                onSaved: onUsernameSaved,
+                onSubmit: (_) {
+                  completeEditing(nextFocusNode: bioFocusNode);
+                },
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.lg),
           FTextFormField.email(
@@ -539,31 +573,40 @@ class _ProfileForm extends StatelessWidget {
             canRequestFocus: false,
           ),
           const SizedBox(height: AppSpacing.lg),
-          FTextFormField(
-            key: const ValueKey('profile-bio'),
-            formFieldKey: bioFieldKey,
-            control: .managed(controller: bioController),
+          AppTvEditableField(
+            activationKey: const ValueKey('profile-bio-activation'),
+            label: profile.bio,
+            controller: bioController,
             focusNode: bioFocusNode,
-            label: Text(profile.bio),
             enabled: _enabled,
-            keyboardType: TextInputType.multiline,
-            textCapitalization: .sentences,
-            textInputAction: .newline,
-            minLines: 4,
-            maxLines: 6,
-            maxLength: _UpdateProfilePageState.bioMaximum,
-            maxLengthEnforcement: MaxLengthEnforcement.none,
-            counterBuilder: (context, currentLength, maximum, _) {
-              return Text(
-                profile.bioCounter(
-                  count: currentLength,
-                  maximum: maximum ?? _UpdateProfilePageState.bioMaximum,
-                ),
+            builder: (context, editorFocusNode, completeEditing) {
+              return FTextFormField(
+                key: const ValueKey('profile-bio'),
+                formFieldKey: bioFieldKey,
+                control: .managed(controller: bioController),
+                focusNode: editorFocusNode,
+                label: Text(profile.bio),
+                enabled: _enabled,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: .sentences,
+                textInputAction: .newline,
+                minLines: 4,
+                maxLines: 6,
+                maxLength: _UpdateProfilePageState.bioMaximum,
+                maxLengthEnforcement: MaxLengthEnforcement.none,
+                counterBuilder: (context, currentLength, maximum, _) {
+                  return Text(
+                    profile.bioCounter(
+                      count: currentLength,
+                      maximum: maximum ?? _UpdateProfilePageState.bioMaximum,
+                    ),
+                  );
+                },
+                autovalidateMode: .onUserInteractionIfError,
+                validator: (value) => _bio(value, translations),
+                onSaved: onBioSaved,
               );
             },
-            autovalidateMode: .onUserInteractionIfError,
-            validator: (value) => _bio(value, translations),
-            onSaved: onBioSaved,
           ),
           const SizedBox(height: AppSpacing.xl),
           if (phase == ProfilePresentationPhase.saved) ...[
@@ -576,7 +619,8 @@ class _ProfileForm extends StatelessWidget {
           ],
           FButton(
             key: const ValueKey('profile-save'),
-            onPress: _enabled ? onSave : null,
+            focusNode: saveFocusNode,
+            onPress: _enabled ? onSave : () {},
             prefix: phase == ProfilePresentationPhase.saving
                 ? BusyIndicator(severity: BusySeverity.saving, semanticsLabel: profile.saving)
                 : const Icon(FLucideIcons.save),

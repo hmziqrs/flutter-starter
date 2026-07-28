@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
@@ -52,6 +53,7 @@ import 'package:starter/infrastructure/permissions/noop_permission_service.dart'
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities_resolver.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
 import 'package:starter/infrastructure/secure_storage/flutter_secure_storage_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
@@ -103,12 +105,14 @@ final class AppDependencies {
     required this.initialFeedbackDraft,
     required this.initialFeedbackShakeEnabled,
     required this.feedbackAppMetadata,
+    required this.platformCapabilities,
   });
 
   factory AppDependencies.inMemory({
     SettingsState? initialSettings,
     SecureStore? secureStore,
     AuthSession? initialSession,
+    PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
   }) {
     final settingsStore = InMemorySettingsStore();
     // No-backend default: the in-memory version gate always returns none, so
@@ -199,12 +203,14 @@ final class AppDependencies {
         platform: 'test',
         locale: 'en',
       ),
+      platformCapabilities: platformCapabilities,
     );
   }
 
   final SettingsRepository settingsRepository;
   final SettingsStore settingsStore;
   final SettingsState initialSettings;
+  final PlatformCapabilities platformCapabilities;
   final SecureStore secureStore;
   final CrashReporter crashReporter;
   final CrashReporterBackend crashReporterBackend;
@@ -386,6 +392,7 @@ final class AppDependencies {
       initialFeedbackDraft: initialFeedbackDraft,
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
+      platformCapabilities: platformCapabilities,
     );
   }
 
@@ -394,7 +401,23 @@ final class AppDependencies {
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     AppBuildInfo? buildInfo,
+    PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
   }) async {
+    PlatformCapabilities capabilities;
+    try {
+      capabilities = await capabilitiesResolver.resolve();
+    } on Object catch (error) {
+      logger.warning(
+        'Unable to resolve optional platform capabilities; using non-TV defaults',
+        context: <String, Object?>{'errorType': error.runtimeType.toString()},
+      );
+      capabilities = PlatformCapabilities(
+        platform: defaultTargetPlatform.name,
+        isWeb: kIsWeb,
+        tvPlatform: AppTvPlatform.none,
+      );
+    }
+
     final settingsStore = SharedPreferencesSettingsStore();
     final repository = SettingsRepository(settingsStore);
     SettingsState settings;
@@ -440,7 +463,6 @@ final class AppDependencies {
     // Select the biometric authenticator from the current platform: real
     // local_auth on supported native platforms, honest Noop for web/unsupported
     // (the Noop reports canCheck:false and never fakes a success).
-    final capabilities = PlatformCapabilities.current();
     final biometricAuthenticator = capabilities.isWeb
         ? const NoopBiometricAuthenticator()
         : LocalAuthAuthenticator();
@@ -577,6 +599,7 @@ final class AppDependencies {
       initialFeedbackDraft: initialFeedbackDraft,
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
+      platformCapabilities: capabilities,
     );
   }
 

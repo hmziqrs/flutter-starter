@@ -443,6 +443,7 @@ class _Translations$diagnostics$zh_Hans extends Translations$diagnostics$en {
 	@override String get layout => '布局类别';
 	@override String get interaction => '交互策略';
 	@override String get lifecycle => '应用生命周期';
+	@override String get viewingEnvironment => '观看环境';
 	@override String get locale => '语言区域';
 	@override String get capabilities => '平台能力';
 	@override String get secureStorage => '安全存储';
@@ -474,6 +475,8 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get textScale => '文字缩放';
 	@override String get systemTextScale => '系统文字缩放';
 	@override String get interaction => '交互策略';
+	@override String get viewingEnvironment => '观看环境';
+	@override String get tvPlatform => '电视平台';
 	@override String get motion => '动画';
 	@override String get highContrast => '高对比度';
 	@override String get boldText => '粗体文字';
@@ -489,6 +492,12 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get touch => '触控';
 	@override String get precision => '精确指针';
 	@override String get hybrid => '混合输入';
+	@override String get remote => '遥控器';
+	@override String get hybridRemote => '遥控器和指针';
+	@override String get nearField => '近距离';
+	@override String get tenFoot => '十英尺界面';
+	@override String get androidTv => 'Android TV';
+	@override String get tvOS => 'tvOS';
 	@override String get none => '无';
 	@override String get fold => '垂直折叠';
 	@override String get resetControls => '重置预览控制项';
@@ -501,6 +510,9 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get viewportAtExpanded => '扩展断点';
 	@override String get viewportDesktop => '桌面';
 	@override String get viewportNarrowDesktop => '窄幅桌面窗口';
+	@override String get viewportTv720p => '电视 720p';
+	@override String get viewportTv1080p => '电视 1080p';
+	@override String get viewportTv4k => '电视 4K 等效';
 	@override String get screenOnboarding => '新手引导';
 	@override String get screenPaywall => '引导方案页';
 	@override String get screenHome => '首页';
@@ -1446,6 +1458,7 @@ extension on TranslationsZhHans {
 			'diagnostics.layout' => '布局类别',
 			'diagnostics.interaction' => '交互策略',
 			'diagnostics.lifecycle' => '应用生命周期',
+			'diagnostics.viewingEnvironment' => '观看环境',
 			'diagnostics.locale' => '语言区域',
 			'diagnostics.capabilities' => '平台能力',
 			'diagnostics.secureStorage' => '安全存储',
@@ -1469,6 +1482,8 @@ extension on TranslationsZhHans {
 			'devGallery.textScale' => '文字缩放',
 			'devGallery.systemTextScale' => '系统文字缩放',
 			'devGallery.interaction' => '交互策略',
+			'devGallery.viewingEnvironment' => '观看环境',
+			'devGallery.tvPlatform' => '电视平台',
 			'devGallery.motion' => '动画',
 			'devGallery.highContrast' => '高对比度',
 			'devGallery.boldText' => '粗体文字',
@@ -1484,6 +1499,12 @@ extension on TranslationsZhHans {
 			'devGallery.touch' => '触控',
 			'devGallery.precision' => '精确指针',
 			'devGallery.hybrid' => '混合输入',
+			'devGallery.remote' => '遥控器',
+			'devGallery.hybridRemote' => '遥控器和指针',
+			'devGallery.nearField' => '近距离',
+			'devGallery.tenFoot' => '十英尺界面',
+			'devGallery.androidTv' => 'Android TV',
+			'devGallery.tvOS' => 'tvOS',
 			'devGallery.none' => '无',
 			'devGallery.fold' => '垂直折叠',
 			'devGallery.resetControls' => '重置预览控制项',
@@ -1496,6 +1517,9 @@ extension on TranslationsZhHans {
 			'devGallery.viewportAtExpanded' => '扩展断点',
 			'devGallery.viewportDesktop' => '桌面',
 			'devGallery.viewportNarrowDesktop' => '窄幅桌面窗口',
+			'devGallery.viewportTv720p' => '电视 720p',
+			'devGallery.viewportTv1080p' => '电视 1080p',
+			'devGallery.viewportTv4k' => '电视 4K 等效',
 			'devGallery.screenOnboarding' => '新手引导',
 			'devGallery.screenPaywall' => '引导方案页',
 			'devGallery.screenHome' => '首页',
@@ -1630,6 +1654,8 @@ extension on TranslationsZhHans {
 			'devGallery.caseFeedbackDrafting' => '编写中',
 			'devGallery.caseFeedbackSubmitting' => '提交中',
 			'devGallery.caseFeedbackFailed' => '失败',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => '成功',
 			'notifications.enableTitle' => '开启通知',
 			'notifications.enableBody' => '及时获取账户和活动的更新。你可以随时更改此设置。',
@@ -1642,8 +1668,6 @@ extension on TranslationsZhHans {
 			'permission.camera.rationale' => '我们使用相机拍摄新的个人头像照片。您可以随时拒绝。',
 			'permission.photos.title' => '照片库访问',
 			'permission.photos.rationale' => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。',
-			_ => null,
-		} ?? switch (path) {
 			'permission.location.title' => '位置访问',
 			'permission.location.rationale' => '我们使用您的位置来个性化您的体验。您可以随时拒绝。',
 			'permission.continueRequest' => '继续',

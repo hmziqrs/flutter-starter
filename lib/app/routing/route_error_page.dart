@@ -56,6 +56,7 @@ class RouteErrorPage extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xl),
                   FButton(
                     key: const ValueKey('route-error-home'),
+                    autofocus: true,
                     onPress: onHome,
                     child: Text(translations.common.home),
                   ),

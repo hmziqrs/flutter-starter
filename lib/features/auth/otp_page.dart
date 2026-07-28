@@ -11,7 +11,9 @@ import 'package:starter/features/auth/otp_form_value.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef OtpSubmitCallback = FutureOr<void> Function(OtpFormValue value);
@@ -65,6 +67,8 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _otpFieldKey = GlobalKey<FormFieldState<String>>();
   final _otpFocus = FocusNode(debugLabel: 'otp.code');
+  final _submitFocus = FocusNode(debugLabel: 'otp.submit');
+  final _resendFocus = FocusNode(debugLabel: 'otp.resend');
   late final FOtpController _otpController = FOtpController(
     value: TextEditingValue(
       text: _fixtureCode(widget.presentation.status),
@@ -164,6 +168,8 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
       ..dispose();
     _codeDraft.dispose();
     _otpFocus.dispose();
+    _submitFocus.dispose();
+    _resendFocus.dispose();
     super.dispose();
   }
 
@@ -190,6 +196,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     final translations = context.t;
     final (title, body) = _copy(context);
     final screenDirection = Directionality.of(context);
+    final isTenFoot = AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false;
     final forcedError = switch (widget.presentation.status) {
       OtpPresentationStatus.invalid => translations.auth.otp.invalid,
       OtpPresentationStatus.expired => translations.auth.otp.expired,
@@ -224,46 +231,62 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
               alignment: AlignmentDirectional.centerStart,
               child: Directionality(
                 textDirection: TextDirection.ltr,
-                child: FOtpField(
-                  key: const ValueKey('auth-otp-code'),
-                  formFieldKey: _otpFieldKey,
-                  control: .managed(controller: _otpController),
+                child: AppTvEditableField(
+                  activationKey: const ValueKey(
+                    'auth-otp-code-activation',
+                  ),
+                  label: translations.auth.otp.code,
+                  controller: _otpController,
                   focusNode: _otpFocus,
-                  label: Directionality(
-                    textDirection: screenDirection,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        translations.auth.otp.code,
-                        textAlign: TextAlign.start,
-                      ),
-                    ),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textDirection: TextDirection.ltr,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp('[0-9]')),
-                    LengthLimitingTextInputFormatter(6),
-                  ],
                   enabled: !(_submitting || _locked),
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: forcedError,
-                  validator: (value) {
-                    if (value == null || !RegExp(r'^[0-9]{6}$').hasMatch(value)) {
-                      return translations.validation.otpDigits;
-                    }
-                    return null;
-                  },
-                  errorBuilder: (context, message) => Directionality(
-                    textDirection: screenDirection,
-                    child: Text(message),
-                  ),
-                  onSaved: (value) => _savedCode = value ?? '',
-                  onSubmit: (_) => unawaited(_submit()),
-                  onReset: () {
-                    _savedCode = '';
-                    _otpController.clear();
-                    _otpFocus.unfocus();
+                  secure: true,
+                  autofocus: true,
+                  builder: (context, editorFocusNode, completeEditing) {
+                    return FOtpField(
+                      key: const ValueKey('auth-otp-code'),
+                      formFieldKey: _otpFieldKey,
+                      control: .managed(controller: _otpController),
+                      focusNode: editorFocusNode,
+                      label: Directionality(
+                        textDirection: screenDirection,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            translations.auth.otp.code,
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      textDirection: TextDirection.ltr,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp('[0-9]')),
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      enabled: !(_submitting || _locked),
+                      autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                      forceErrorText: forcedError,
+                      validator: (value) {
+                        if (value == null || !RegExp(r'^[0-9]{6}$').hasMatch(value)) {
+                          return translations.validation.otpDigits;
+                        }
+                        return null;
+                      },
+                      errorBuilder: (context, message) => Directionality(
+                        textDirection: screenDirection,
+                        child: Text(message),
+                      ),
+                      onSaved: (value) => _savedCode = value ?? '',
+                      onSubmit: (_) {
+                        completeEditing();
+                        unawaited(_submit());
+                      },
+                      onReset: () {
+                        _savedCode = '';
+                        _otpController.clear();
+                        _otpFocus.unfocus();
+                      },
+                    );
                   },
                 ),
               ),
@@ -271,7 +294,12 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
             const SizedBox(height: AppSpacing.xl),
             FButton(
               key: const ValueKey('auth-otp-submit'),
-              onPress: (_submitting || _locked) ? null : () => unawaited(_submit()),
+              focusNode: _submitFocus,
+              onPress: _locked
+                  ? null
+                  : _submitting
+                  ? (isTenFoot ? () {} : null)
+                  : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 translations.auth.otp.submit,
@@ -284,7 +312,12 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
             FButton(
               key: const ValueKey('auth-otp-resend'),
               variant: .ghost,
-              onPress: _resendBlocked ? null : () => unawaited(_resend()),
+              focusNode: _resendFocus,
+              onPress: _resendBlocked
+                  ? _resending && isTenFoot
+                        ? () {}
+                        : null
+                  : () => unawaited(_resend()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 _resendLabel(context),
@@ -431,6 +464,9 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
 
     form.save();
     final value = OtpFormValue(code: _savedCode);
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _submitFocus.requestFocus();
+    }
     setState(() => _callbackSubmitting = true);
     TextInput.finishAutofillContext(shouldSave: false);
     try {
@@ -442,6 +478,9 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
 
   Future<void> _resend() async {
     if (_resendBlocked) return;
+    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+      _resendFocus.requestFocus();
+    }
     setState(() => _callbackResending = true);
     try {
       await widget.onResend();

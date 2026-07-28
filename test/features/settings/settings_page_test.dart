@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -9,6 +10,7 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
 void main() {
   testWidgets('compact overview exposes every settings section and account flow', (tester) async {
@@ -150,14 +152,87 @@ void main() {
       );
     }
   });
+
+  testWidgets('TV directional focus bridges settings navigation and content', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(1920, 1080));
+    await LocaleSettings.setLocale(AppLocale.en);
+    await tester.pumpWidget(
+      _app(
+        initialLocation: '/settings/appearance',
+        capabilities: const PlatformCapabilities(
+          platform: 'android',
+          isWeb: false,
+          tvPlatform: AppTvPlatform.androidTv,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(
+      _focusIsWithin(tester, 'settings-wide-appearance'),
+      isTrue,
+      reason: FocusManager.instance.primaryFocus?.toStringDeep(),
+    );
+
+    final navigationFocus = FocusManager.instance.primaryFocus;
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, isNot(same(navigationFocus)));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(
+      _focusIsWithin(tester, 'settings-wide-appearance'),
+      isTrue,
+      reason: FocusManager.instance.primaryFocus?.toStringDeep(),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'television.navigation.settings',
+    );
+  });
 }
 
-Widget _app({required String initialLocation, AuthSession? initialSession}) {
+Widget _app({
+  required String initialLocation,
+  AuthSession? initialSession,
+  PlatformCapabilities? capabilities,
+}) {
   return App(
     config: _developmentConfig,
-    dependencies: AppDependencies.inMemory(initialSession: initialSession),
+    dependencies: AppDependencies.inMemory(
+      initialSession: initialSession,
+      platformCapabilities: capabilities ?? const PlatformCapabilities.nonTelevision(),
+    ),
     initialLocation: initialLocation,
   );
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }
 
 final _developmentConfig = AppConfig(

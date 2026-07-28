@@ -13,6 +13,7 @@ import 'package:starter/infrastructure/media/noop_media_picker.dart';
 import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
@@ -140,6 +141,34 @@ void main() {
     expect(_fieldText(tester, 'profile-bio'), 'A short bio.');
   });
 
+  testWidgets('TV save retains a visible focus target while in flight', (
+    tester,
+  ) async {
+    final completion = Completer<void>();
+    await _pumpProfile(
+      tester,
+      presentationPolicy: const AppPresentationPolicy(
+        viewingEnvironment: AppViewingEnvironment.tenFoot,
+        interactionPolicy: AppInteractionPolicy.remote,
+      ),
+      page: UpdateProfilePage(
+        initialDraft: const ProfileDraft.defaults(),
+        onSave: (_) => completion.future,
+        onAvatarFeedback: _noop,
+      ),
+    );
+
+    await _tapSave(tester, settle: false);
+    expect(
+      _focusIsWithin(tester, 'profile-save'),
+      isTrue,
+      reason: FocusManager.instance.primaryFocus?.toStringDeep(),
+    );
+
+    completion.complete();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('resize preserves draft values and adds an expanded preview', (tester) async {
     await _pumpProfile(
       tester,
@@ -238,6 +267,10 @@ Future<void> _pumpProfile(
   Size size = const Size(390, 900),
   bool settle = true,
   EdgeInsets safePadding = EdgeInsets.zero,
+  AppPresentationPolicy presentationPolicy = const AppPresentationPolicy(
+    viewingEnvironment: AppViewingEnvironment.nearField,
+    interactionPolicy: AppInteractionPolicy.touch,
+  ),
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -250,7 +283,8 @@ Future<void> _pumpProfile(
     brightness: Brightness.light,
     accent: AppAccent.neutral,
     fontScale: 1,
-    interactionPolicy: AppInteractionPolicy.touch,
+    interactionPolicy: presentationPolicy.interactionPolicy,
+    presentationPolicy: presentationPolicy,
   );
   await tester.pumpWidget(
     ProviderScope(
@@ -280,9 +314,12 @@ Future<void> _pumpProfile(
                 padding: safePadding,
                 viewPadding: safePadding,
               ),
-              child: FTheme(
-                data: theme,
-                child: child ?? const SizedBox.shrink(),
+              child: AppPresentationScope(
+                policy: presentationPolicy,
+                child: FTheme(
+                  data: theme,
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
             );
           },
@@ -317,6 +354,26 @@ String _fieldText(WidgetTester tester, String key) {
     matching: find.byType(EditableText),
   );
   return tester.widget<EditableText>(editable).controller.text;
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }
 
 Future<void> _noopSave(ProfileDraft _) async {}

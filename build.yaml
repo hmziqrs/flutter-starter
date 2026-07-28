@@ -12,3 +12,6 @@ targets:
           lazy: false
           locale_handling: true
           flutter_integration: true
+          # Deterministic output: no "Built on <date>" header so
+          # generated files don't drift each regeneration.
+          timestamp: false

@@ -103,6 +103,7 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                 child: FButton(
                   key: const ValueKey('onboarding-skip'),
                   variant: .ghost,
+                  autofocus: true,
                   mainAxisSize: .min,
                   onPress: widget.onSkip,
                   child: Text(translations.common.skip),

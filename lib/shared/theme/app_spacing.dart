@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
 abstract final class AppSpacing {
   static const xs = 4.0;
@@ -11,23 +12,32 @@ abstract final class AppSpacing {
   static const xl3 = 48.0;
 
   static AppSpacingValues of(BuildContext context) {
-    return AppSpacingValues(context.appUnit);
+    return AppSpacingValues(
+      context.appUnit,
+      presentationScale: context.presentationTokens.spacingScale,
+    );
   }
 }
 
 @immutable
 final class AppSpacingValues {
-  const AppSpacingValues(this._unit);
+  const AppSpacingValues(
+    this._unit, {
+    required this._presentationScale,
+  });
 
   final AppUnit _unit;
+  final double _presentationScale;
 
-  double get xs => _unit.un(AppSpacing.xs);
-  double get sm => _unit.un(AppSpacing.sm);
-  double get md => _unit.un(AppSpacing.md);
-  double get lg => _unit.un(AppSpacing.lg);
-  double get xl => _unit.un(AppSpacing.xl);
-  double get xl2 => _unit.un(AppSpacing.xl2);
-  double get xl3 => _unit.un(AppSpacing.xl3);
+  double get xs => _scaled(AppSpacing.xs);
+  double get sm => _scaled(AppSpacing.sm);
+  double get md => _scaled(AppSpacing.md);
+  double get lg => _scaled(AppSpacing.lg);
+  double get xl => _scaled(AppSpacing.xl);
+  double get xl2 => _scaled(AppSpacing.xl2);
+  double get xl3 => _scaled(AppSpacing.xl3);
+
+  double _scaled(double value) => _unit.un(value) * _presentationScale;
 }
 
 extension AppSpacingBuildContext on BuildContext {

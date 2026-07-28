@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -45,7 +45,13 @@ jobs:
       - name: Check generated-code drift
         shell: bash
         run: |
-          dart run build_runner build --delete-conflicting-outputs
+          # build_runner 2.15+ removed --delete-conflicting-outputs; running
+          # `build` over the committed generated files throws
+          # InvalidOutputException ("Asset already exists"). Delete them first
+          # so the builder regenerates cleanly, then fail on any real drift.
+          # slang output is deterministic (build.yaml: timestamp: false).
+          rm -f lib/i18n/*.g.dart
+          dart run build_runner build
           git diff --exit-code
           if [[ -n "$(git status --porcelain)" ]]; then
             git status --short
@@ -109,6 +115,13 @@ jobs:
           -d linux
           --dart-define-from-file=config/production.json
 
+      - name: Run injected TV remote smoke test under Xvfb
+        run: >-
+          xvfb-run -a
+          flutter test integration_test/tv_remote_smoke_test.dart
+          -d linux
+          --dart-define-from-file=config/development.json
+
   ubuntu-release-builds:
     name: Ubuntu / Android and Linux release builds
     runs-on: ubuntu-24.04
@@ -144,9 +157,43 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Validate Android TV source manifest and resources
+        run: python3 tool/android_tv/validate_android_tv.py
+
       - name: Build Android APK with production configuration
         run: >-
           flutter build apk --release
+          --dart-define-from-file=config/production.json
+
+      - name: Validate merged Android TV manifest
+        shell: bash
+        run: |
+          merged_manifest="$(
+            find build/app/intermediates/merged_manifest/release \
+              -name AndroidManifest.xml -print -quit
+          )"
+          if [[ -z "$merged_manifest" ]]; then
+            echo 'Release merged manifest was not found.' >&2
+            exit 1
+          fi
+          python3 tool/android_tv/validate_android_tv.py \
+            --merged-manifest "$merged_manifest"
+
+      - name: Validate Android release ABIs and 16 KB zip alignment
+        shell: bash
+        run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          unzip -Z1 "$apk" | grep -q '^lib/armeabi-v7a/libflutter\.so$'
+          unzip -Z1 "$apk" | grep -q '^lib/arm64-v8a/libflutter\.so$'
+          build_tools="$(
+            find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 \
+              -type d -print | sort -V | tail -n 1
+          )"
+          "$build_tools/zipalign" -c -P 16 -v 4 "$apk"
+
+      - name: Build Android App Bundle with production configuration
+        run: >-
+          flutter build appbundle --release
           --dart-define-from-file=config/production.json
 
       - name: Build Linux bundle with production configuration
@@ -173,6 +220,9 @@ jobs:
         run: flutter pub get
 
       - name: Compare canonical macOS golden baselines
+        # Baselines are generated on this macos-26 runner image (see
+        # test/goldens/README.md). After a runner-image bump, re-run the
+        # "Regenerate goldens" workflow and commit the reviewed baselines.
         run: flutter test test/goldens/canonical_matrix_golden_test.dart
 
       - name: Build unsigned iOS release with production configuration
@@ -184,6 +234,29 @@ jobs:
         run: >-
           flutter build macos --release
           --dart-define-from-file=config/production.json
+
+  macos-tvos-compile:
+    name: macOS / pinned tvOS simulator compile
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Cache pinned flutter-tvos toolchain
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/flutter-tvos/v3.44.7-tvos.1.4.2
+          key: ${{ runner.os }}-flutter-tvos-${{ hashFiles('tool/tvos/versions.env') }}
+
+      - name: Bootstrap and verify pinned flutter-tvos
+        run: tool/tvos/bootstrap.sh
+
+      - name: Resolve tvOS dependencies
+        run: tool/tvos/flutter-tvos.sh pub get
+
+      - name: Compile unsigned tvOS simulator application
+        run: tool/tvos/build_simulator.sh production
 
   windows-release-build:
     name: Windows / release build

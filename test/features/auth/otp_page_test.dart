@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
@@ -6,6 +9,8 @@ import 'package:starter/features/auth/otp_form_value.dart';
 import 'package:starter/features/auth/otp_page.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
 import 'auth_test_harness.dart';
 
@@ -148,6 +153,89 @@ void main() {
     expect(resendCount, 1);
   });
 
+  testWidgets('TV submit retains focus and rejects duplicates while in flight', (tester) async {
+    final completer = Completer<void>();
+    var submitCount = 0;
+    setAuthTestViewport(tester, const Size(1920, 1080));
+    await tester.pumpWidget(
+      authTestApp(
+        presentationPolicy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.tenFoot,
+          interactionPolicy: AppInteractionPolicy.remote,
+        ),
+        home: _page(
+          onSubmit: (_) {
+            submitCount += 1;
+            return completer.future;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('auth-otp-code')), '654321');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tapAuthControl(tester, 'auth-otp-submit');
+    await tester.pump();
+
+    expect(submitCount, 1);
+    expect(_focusIsWithin(tester, 'auth-otp-submit'), isTrue);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-otp-submit'))).onPress,
+      isNotNull,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(submitCount, 1);
+    expect(_focusIsWithin(tester, 'auth-otp-submit'), isTrue);
+
+    completer.complete();
+    await tester.pump();
+  });
+
+  testWidgets('TV resend retains focus and rejects duplicates while in flight', (tester) async {
+    final completer = Completer<void>();
+    var resendCount = 0;
+    setAuthTestViewport(tester, const Size(1920, 1080));
+    await tester.pumpWidget(
+      authTestApp(
+        presentationPolicy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.tenFoot,
+          interactionPolicy: AppInteractionPolicy.remote,
+        ),
+        home: _page(
+          onResend: () {
+            resendCount += 1;
+            return completer.future;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tapAuthControl(tester, 'auth-otp-resend');
+    await tester.pump();
+
+    expect(resendCount, 1);
+    expect(_focusIsWithin(tester, 'auth-otp-resend'), isTrue);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-otp-resend'))).onPress,
+      isNotNull,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(resendCount, 1);
+    expect(_focusIsWithin(tester, 'auth-otp-resend'), isTrue);
+
+    completer.complete();
+    await tester.pump();
+  });
+
   testWidgets('retains entered code across compact to expanded resize', (tester) async {
     setAuthTestViewport(tester, const Size(390, 844));
     await tester.pumpWidget(
@@ -186,4 +274,24 @@ EditableText _otpEditable(WidgetTester tester) {
       matching: find.byType(EditableText),
     ),
   );
+}
+
+bool _focusIsWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) {
+    return false;
+  }
+  final target = tester.element(find.byKey(ValueKey(key)));
+  if (identical(focusContext, target)) {
+    return true;
+  }
+  var found = false;
+  focusContext.visitAncestorElements((ancestor) {
+    if (identical(ancestor, target)) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }

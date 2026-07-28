@@ -8,7 +8,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
 import 'package:starter/shared/widgets/states/empty_state_view.dart';
@@ -51,7 +51,9 @@ class HomePage extends ConsumerWidget {
         children: [
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
+              constraints: BoxConstraints(
+                maxWidth: context.presentationTokens.wideContentMaxWidth,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -94,7 +96,7 @@ class _HomeHeader extends StatelessWidget {
           key: const ValueKey('home-greeting'),
           style: context.theme.typography.display.xl3,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        SizedBox(height: context.spacing.sm),
         Text(translations.summary, style: context.theme.typography.body.lg),
       ],
     );
@@ -125,44 +127,56 @@ class _QuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(translations.quickActions, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.sm),
-        GridView.count(
-          key: ValueKey('home-quick-actions-$columns'),
-          crossAxisCount: columns,
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          mainAxisExtent: math.max(
-            minimumButtonHeight,
-            context.appUnit.un(minimumButtonHeight),
-          ),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _QuickAction(
-              buttonKey: const ValueKey('home-open-profile'),
-              icon: FLucideIcons.userRound,
-              label: translations.editProfile,
-              onPress: onOpenProfile,
-            ),
-            _QuickAction(
-              buttonKey: const ValueKey('home-open-pricing'),
-              icon: FLucideIcons.creditCard,
-              label: translations.openPricing,
-              onPress: onOpenPricing,
-            ),
-            _QuickAction(
-              buttonKey: const ValueKey('home-open-settings'),
-              icon: FLucideIcons.settings,
-              label: translations.openSettings,
-              onPress: onOpenSettings,
-            ),
-            _QuickAction(
-              buttonKey: const ValueKey('home-open-login'),
-              icon: FLucideIcons.logIn,
-              label: translations.openLogin,
-              onPress: onOpenLogin,
-            ),
-          ],
+        SizedBox(height: context.spacing.sm),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final minimumCardExtent = context.presentationTokens.focusTargetMinSize * 4;
+            final resolvedColumns =
+                constraints.maxWidth >= (minimumCardExtent * 2) + context.spacing.md
+                ? math.min(columns, 2)
+                : 1;
+            return FocusTraversalGroup(
+              policy: ReadingOrderTraversalPolicy(),
+              child: GridView.count(
+                key: ValueKey('home-quick-actions-$resolvedColumns'),
+                crossAxisCount: resolvedColumns,
+                mainAxisSpacing: context.spacing.md,
+                crossAxisSpacing: context.spacing.md,
+                mainAxisExtent: math.max(
+                  minimumButtonHeight,
+                  context.appUnit.un(minimumButtonHeight),
+                ),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _QuickAction(
+                    buttonKey: const ValueKey('home-open-profile'),
+                    icon: FLucideIcons.userRound,
+                    label: translations.editProfile,
+                    onPress: onOpenProfile,
+                  ),
+                  _QuickAction(
+                    buttonKey: const ValueKey('home-open-pricing'),
+                    icon: FLucideIcons.creditCard,
+                    label: translations.openPricing,
+                    onPress: onOpenPricing,
+                  ),
+                  _QuickAction(
+                    buttonKey: const ValueKey('home-open-settings'),
+                    icon: FLucideIcons.settings,
+                    label: translations.openSettings,
+                    onPress: onOpenSettings,
+                  ),
+                  _QuickAction(
+                    buttonKey: const ValueKey('home-open-login'),
+                    icon: FLucideIcons.logIn,
+                    label: translations.openLogin,
+                    onPress: onOpenLogin,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
@@ -208,15 +222,15 @@ class _StatusSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(context.t.home.statusTitle, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.sm),
+        SizedBox(height: context.spacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final gaps = AppSpacing.sm * (columns - 1);
+            final gaps = context.spacing.sm * (columns - 1);
             final cardWidth = (constraints.maxWidth - gaps) / columns;
             return Wrap(
               key: ValueKey('home-status-grid-$columns'),
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: context.spacing.sm,
+              runSpacing: context.spacing.sm,
               children: [
                 for (final status in viewData.statuses)
                   SizedBox(
@@ -243,14 +257,14 @@ class _StatusCard extends StatelessWidget {
     return FCard(
       key: ValueKey('home-status-${status.id}'),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: EdgeInsets.all(context.spacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(content.icon),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             Text(content.title, style: context.theme.typography.display.md),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: context.spacing.sm),
             Text(content.body, style: context.theme.typography.body.sm),
           ],
         ),
@@ -271,7 +285,7 @@ class _RecentActivity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(translations.recentTitle, style: context.theme.typography.display.lg),
-        const SizedBox(height: AppSpacing.sm),
+        SizedBox(height: context.spacing.sm),
         if (!viewData.hasRecentActivity)
           EmptyStateView(
             key: const ValueKey('home-activity-empty'),

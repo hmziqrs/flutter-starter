@@ -11,6 +11,9 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/last_route.dart';
+import 'package:starter/app/platform_capabilities_provider.dart';
+import 'package:starter/app/presentation/app_presentation_viewport.dart';
+import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
@@ -51,6 +54,7 @@ import 'package:starter/infrastructure/platform/system_ui_controller.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 import 'package:starter/infrastructure/sharing/share_service.dart';
 import 'package:starter/infrastructure/updates/app_update_service.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/motion/app_page_transitions.dart';
@@ -162,6 +166,7 @@ class App extends StatelessWidget {
         lockOnBackgroundProvider.overrideWith(
           (ref) => ref.watch(settingsControllerProvider).lockOnBackground,
         ),
+        platformCapabilitiesProvider.overrideWithValue(dependencies.platformCapabilities),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -329,7 +334,11 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsControllerProvider);
-    final interactionPolicy = ref.watch(interactionPolicyProvider);
+    final presentationPolicy = ref.watch(presentationPolicyProvider);
+    final interactionPolicy = presentationPolicy.interactionPolicy;
+    final pageTransitionsTheme = presentationPolicy.isTenFoot
+        ? televisionPageTransitionsTheme
+        : nativePageTransitionsTheme;
     final localeData = TranslationProvider.of(context);
     final lightTheme = ForuiThemeFactory.build(
       brightness: Brightness.light,
@@ -337,6 +346,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       fontScale: settings.fontScale,
       fontFamily: settings.fontFamily,
       interactionPolicy: interactionPolicy,
+      presentationPolicy: presentationPolicy,
     );
     final darkTheme = ForuiThemeFactory.build(
       brightness: Brightness.dark,
@@ -344,6 +354,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       fontScale: settings.fontScale,
       fontFamily: settings.fontFamily,
       interactionPolicy: interactionPolicy,
+      presentationPolicy: presentationPolicy,
     );
 
     return MaterialApp.router(
@@ -360,10 +371,10 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: FLocalizations.localizationsDelegates,
       theme: lightTheme.toApproximateMaterialTheme().copyWith(
-        pageTransitionsTheme: nativePageTransitionsTheme,
+        pageTransitionsTheme: pageTransitionsTheme,
       ),
       darkTheme: darkTheme.toApproximateMaterialTheme().copyWith(
-        pageTransitionsTheme: nativePageTransitionsTheme,
+        pageTransitionsTheme: pageTransitionsTheme,
       ),
       themeMode: _materialThemeMode(settings.themeMode),
       builder: (context, child) {
@@ -374,6 +385,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           fontFamily: settings.fontFamily,
           interactionPolicy: interactionPolicy,
           responsiveFontScale: context.appUnit.typographyScale,
+          presentationPolicy: presentationPolicy,
         );
 
         // Reactive system bars (system-ui): track the active brightness + accent
@@ -388,65 +400,90 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           capabilities: PlatformCapabilities.current(),
         );
 
-        return Theme(
-          data: activeTheme.toApproximateMaterialTheme().copyWith(
-            pageTransitionsTheme: nativePageTransitionsTheme,
-          ),
-          child: AppInputObserver(
-            child: FTheme(
-              data: activeTheme,
-              motion: const FThemeMotion(
-                duration: AppMotion.standard,
-                curve: AppMotion.standardCurve,
-              ),
-              child: AppKeyboardHost(
-                bindings: [
-                  AppKeyboardBinding(
-                    activator: const SingleActivator(
-                      LogicalKeyboardKey.backspace,
-                      meta: true,
-                      includeRepeats: false,
-                    ),
-                    onInvoke: _navigateBack,
-                  ),
-                ],
-                child: FToaster(
-                  child: FTooltipGroup(
-                    child: ConnectivityBanner(
-                      // AnnouncementBanner mounts ONCE above the router child so
-                      // auth/onboarding top-level routes (outside AppShell) see
-                      // it. ConnectivityBanner stays topmost (offline wins over
-                      // any announcement for the user's attention).
-                      child: AnnouncementBanner(
-                        // Shake-to-feedback (feedback feature): mounts once above
-                        // the router so the listener is alive on every route.
-                        // Gated by the user's shake opt-in (default off) AND
-                        // !isWeb (web/desktop have no accelerometer -> the
-                        // sensors_plus factory throws and the trigger disables
-                        // honestly). onShake opens the modal feedback sheet; the
-                        // Builder captures a context below the Navigator so the
-                        // sheet's overlay resolves correctly.
-                        child: Builder(
-                          builder: (sheetContext) => ShakeFeedbackTrigger(
-                            enabled:
-                                ref.watch(feedbackShakeEnabledControllerProvider) &&
-                                !PlatformCapabilities.current().isWeb,
-                            onShake: ({required magnitude}) =>
-                                unawaited(showFeedbackSheet(context: sheetContext)),
-                            // Idle auto-lock (pin-autolock) is inactivity-based.
-                            // Any pointer activity (tap / drag / scroll) on the
-                            // router's page content postpones the lockout by
-                            // restarting the idle timer via extend(). Gated on a
-                            // positive delay so the no-op default (idle locking
-                            // disabled) never builds a timer; extend() is itself
-                            // a no-op for delay <= 0, this guard keeps the read
-                            // inert when the feature is off.
-                            child: Listener(
-                              behavior: HitTestBehavior.translucent,
-                              onPointerDown: (_) => _maybeExtendAutoLock(),
-                              onPointerMove: (_) => _maybeExtendAutoLock(),
-                              onPointerSignal: (_) => _maybeExtendAutoLock(),
-                              child: child ?? const SizedBox.shrink(),
+        return AppPresentationScope(
+          policy: presentationPolicy,
+          child: Theme(
+            data: activeTheme.toApproximateMaterialTheme().copyWith(
+              pageTransitionsTheme: pageTransitionsTheme,
+            ),
+            child: AppInputObserver(
+              child: FTheme(
+                data: activeTheme,
+                accessibility: _tvAccessibility(presentationPolicy),
+                motion: const FThemeMotion(
+                  duration: AppMotion.standard,
+                  curve: AppMotion.standardCurve,
+                ),
+                child: AppPresentationViewport(
+                  child: AppKeyboardHost(
+                    interactionPolicy: interactionPolicy,
+                    bindings: [
+                      AppKeyboardBinding(
+                        activator: const SingleActivator(
+                          LogicalKeyboardKey.backspace,
+                          meta: true,
+                          includeRepeats: false,
+                        ),
+                        onInvoke: _navigateBack,
+                      ),
+                    ],
+                    child: Shortcuts(
+                      debugLabel: 'TV Back/Menu aliases',
+                      shortcuts: const <ShortcutActivator, Intent>{
+                        SingleActivator(
+                          LogicalKeyboardKey.goBack,
+                          includeRepeats: false,
+                        ): _RouterBackIntent(),
+                        SingleActivator(
+                          LogicalKeyboardKey.gameButtonB,
+                          includeRepeats: false,
+                        ): _RouterBackIntent(),
+                      },
+                      child: Actions(
+                        actions: <Type, Action<Intent>>{
+                          _RouterBackIntent: _RouterBackAction(),
+                        },
+                        child: FToaster(
+                          child: FTooltipGroup(
+                            child: ConnectivityBanner(
+                              // AnnouncementBanner mounts ONCE above the router child so
+                              // auth/onboarding top-level routes (outside AppShell) see
+                              // it. ConnectivityBanner stays topmost (offline wins over
+                              // any announcement for the user's attention).
+                              child: AnnouncementBanner(
+                                // Shake-to-feedback (feedback feature): mounts once above
+                                // the router so the listener is alive on every route.
+                                // Gated by the user's shake opt-in (default off) AND
+                                // !isWeb (web/desktop have no accelerometer -> the
+                                // sensors_plus factory throws and the trigger disables
+                                // honestly). onShake opens the modal feedback sheet; the
+                                // Builder captures a context below the Navigator so the
+                                // sheet's overlay resolves correctly.
+                                child: Builder(
+                                  builder: (sheetContext) => ShakeFeedbackTrigger(
+                                    enabled:
+                                        ref.watch(feedbackShakeEnabledControllerProvider) &&
+                                        !PlatformCapabilities.current().isWeb,
+                                    onShake: ({required magnitude}) =>
+                                        unawaited(showFeedbackSheet(context: sheetContext)),
+                                    // Idle auto-lock (pin-autolock) is inactivity-based.
+                                    // Any pointer activity (tap / drag / scroll) on the
+                                    // router's page content postpones the lockout by
+                                    // restarting the idle timer via extend(). Gated on a
+                                    // positive delay so the no-op default (idle locking
+                                    // disabled) never builds a timer; extend() is itself
+                                    // a no-op for delay <= 0, this guard keeps the read
+                                    // inert when the feature is off.
+                                    child: Listener(
+                                      behavior: HitTestBehavior.translucent,
+                                      onPointerDown: (_) => _maybeExtendAutoLock(),
+                                      onPointerMove: (_) => _maybeExtendAutoLock(),
+                                      onPointerSignal: (_) => _maybeExtendAutoLock(),
+                                      child: child ?? const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -477,6 +514,46 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       ref.read(autoLockControllerProvider.notifier).extend();
     }
   }
+}
+
+final class _RouterBackIntent extends Intent {
+  const _RouterBackIntent();
+}
+
+final class _RouterBackAction extends ContextAction<_RouterBackIntent> {
+  @override
+  bool isEnabled(_RouterBackIntent intent, [BuildContext? context]) {
+    if (context == null) {
+      return false;
+    }
+    final routeContext = FocusManager.instance.primaryFocus?.context ?? context;
+    return (Navigator.maybeOf(routeContext)?.canPop() ?? false) ||
+        ModalRoute.of(routeContext)?.popDisposition == RoutePopDisposition.doNotPop;
+  }
+
+  @override
+  Object? invoke(_RouterBackIntent intent, [BuildContext? context]) {
+    final routeContext = FocusManager.instance.primaryFocus?.context ?? context!;
+    unawaited(Navigator.of(routeContext).maybePop());
+    return null;
+  }
+}
+
+FAccessibility? _tvAccessibility(AppPresentationPolicy policy) {
+  if (!policy.usesDirectionalFocus) {
+    return null;
+  }
+
+  final features = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures;
+  return FAccessibility(
+    accessibleNavigation: features.accessibleNavigation,
+    motion: features.disableAnimations
+        ? FAccessibilityMotion.disabled
+        : features.reduceMotion
+        ? FAccessibilityMotion.reduced
+        : FAccessibilityMotion.all,
+    focusHighlight: true,
+  );
 }
 
 ThemeMode _materialThemeMode(AppThemeMode themeMode) {
