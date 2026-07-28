@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
+import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
@@ -59,7 +61,12 @@ Future<App> createApplication(
   // root (C5: never in a widget build). The result is carried on
   // AppDependencies.versionCheck and read by the redirect / force-update route.
   final buildInfo = await AppBuildInfo.load();
-  final dependencies = await AppDependencies.production(appLogger, buildInfo: buildInfo);
+  final dependencies = await AppDependencies.production(
+    appLogger,
+    buildInfo: buildInfo,
+    iosAppleId: config.iosAppleId,
+    allowedDeepLinkHosts: config.allowedDeepLinkHosts,
+  );
   // Apply the persisted locale once. Guarded so a failure flips
   // AppStartupResult.localeApplied to false (surfaced on the splash) rather
   // than tearing down startup; the device locale is the honest fallback.
@@ -86,11 +93,60 @@ Future<App> createApplication(
           appStartupResult: dependencies.appStartupResult.copyWith(localeApplied: localeApplied),
         );
 
+  // Deep linking (deep-linking spec): capture the cold-start initial link
+  // BEFORE the router builds so the deep link is not lost on first launch.
+  // A plugin failure degrades honestly to "no initial link" so the app boots
+  // to its normal initial location. The foreground link stream is wired in
+  // `_AppViewState.ref.listen` (see lib/app/app.dart).
+  String? coldStartInitialLocation;
+  try {
+    final initialLink = await dependencies.appLinkHandler.getInitialLink();
+    if (initialLink != null) {
+      coldStartInitialLocation = _initialLocationFromResolvedLink(initialLink);
+    }
+  } on Object {
+    // A plugin failure must never strand startup. The app boots to its normal
+    // initial location; foreground links still flow once the router mounts.
+    coldStartInitialLocation = null;
+  }
+
   return App(
     config: config,
     dependencies: dependenciesWithStartup,
-    initialLocation: initialLocation,
+    initialLocation: initialLocation ?? coldStartInitialLocation,
   );
+}
+
+/// Maps a cold-start [ResolvedLink] to the router's `initialLocation` string.
+/// Reuses the [AppRoutes] helper for the OTP dynamic route; static routes use
+/// their path constant directly. Used only at cold start — the foreground
+/// stream dispatches via `context.goNamed` / `pushNamed` from `_AppViewState`.
+String _initialLocationFromResolvedLink(ResolvedLink link) {
+  switch (link.routeName) {
+    case AppRoutes.home:
+      return AppRoutes.homePath;
+    case AppRoutes.login:
+      return AppRoutes.loginPath;
+    case AppRoutes.register:
+      return AppRoutes.registerPath;
+    case AppRoutes.forgotPassword:
+      return AppRoutes.forgotPasswordPath;
+    case AppRoutes.resetPassword:
+      return AppRoutes.resetPasswordPath;
+    case AppRoutes.settings:
+      return AppRoutes.settingsPath;
+    case AppRoutes.pricing:
+      return AppRoutes.pricingPath;
+    case AppRoutes.otp:
+      final purpose = link.pathParameters['purpose'];
+      if (purpose == null) {
+        return AppRoutes.homePath;
+      }
+      return '/auth/otp/$purpose';
+  }
+  // An unknown resolved route falls back to home so a stale / future link
+  // never strands the cold start.
+  return AppRoutes.homePath;
 }
 
 Future<void> showStartupFailure({

@@ -8,6 +8,10 @@ import 'package:starter/features/dev_gallery/cases/connectivity_gallery_cases.da
 import 'package:starter/features/dev_gallery/cases/force_update_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/form_scaffolding_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/haptics_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/license_share_update_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/mfa_otp_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/notifications_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/permissions_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/production_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/pull_refresh_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/session_gallery_cases.dart';
@@ -39,6 +43,13 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildHapticsGalleryCases(),
     ...buildA11yPresetsGalleryCases(),
     ...buildSystemGalleryCases(config: config),
+    // Wave-5b feature surfaces (mfa-otp, push, permissions-media,
+    // license-share-update). Gated by developmentToolsEnabled via the
+    // registry caller (the dev gallery route is only mounted in development).
+    ...buildMfaOtpGalleryCases(),
+    ...buildNotificationsGalleryCases(),
+    ...buildPermissionsGalleryCases(),
+    ...buildLicenseShareUpdateGalleryCases(),
   ];
   final ids = <String>{};
   for (final galleryCase in cases) {

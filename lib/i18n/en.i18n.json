@@ -169,6 +169,9 @@
     "haptics": {
       "title": "Haptic feedback",
       "enable": "Enable haptic feedback on key actions"
+    },
+    "about": {
+      "license": "Licenses"
     }
   },
   "auth": {
@@ -240,6 +243,7 @@
       "expired": "That verification code has expired. Request a new code.",
       "registrationSuccess": "Registration verified.",
       "passwordResetSuccess": "Reset request verified.",
+      "mfaSuccess": "Sign-in verified.",
       "lockedTitle": "Too many attempts",
       "tooManyAttempts": "Too many failed attempts. Please wait.",
       "attemptsRemaining(count)": {
@@ -249,7 +253,15 @@
       "lockedBody(seconds)": {
         "one": "Try again in 1 second.",
         "other": "Try again in $seconds seconds."
-      }
+      },
+      "mfaTitle": "Verify your sign-in",
+      "mfaBody": "Enter the six-digit code we sent to complete sign-in.",
+      "expiresIn(seconds)": {
+        "one": "Expires in 1 second",
+        "other": "Expires in $seconds seconds"
+      },
+      "expiredTitle": "Code expired",
+      "expiredBody": "Your verification code expired. Request a new code to continue."
     },
     "resetPassword": {
       "title": "Choose a new password",
@@ -528,6 +540,61 @@
     "caseHapticError": "Error",
     "screenSkeleton": "Skeleton loading",
     "caseSkeletonStatic": "Static (reduce-motion)",
-    "caseSkeletonShimmer": "Shimmer"
+    "caseSkeletonShimmer": "Shimmer",
+    "screenOtpMfa": "MFA verification",
+    "caseCountdown": "Countdown",
+    "screenNotifications": "Notifications",
+    "caseNotificationsNotRequested": "Permission rationale",
+    "caseNotificationsGranted": "Granted",
+    "caseNotificationsDenied": "Blocked",
+    "screenPermissions": "Permissions",
+    "casePermissionRationale": "Rationale",
+    "casePermissionDenied": "Denied",
+    "casePermissionPermanentlyDenied": "Permanently denied",
+    "screenLicense": "Licenses",
+    "screenShare": "Share sheet",
+    "screenAppUpdate": "In-app update"
+  },
+  "notifications": {
+    "enableTitle": "Turn on notifications",
+    "enableBody": "Get timely updates about your account and activity. You can change this anytime.",
+    "deny": "Not now",
+    "allow": "Allow",
+    "enableBlockedTitle": "Notifications are blocked",
+    "enableBlockedBody": "Open system settings to allow notifications for this app.",
+    "disabled": "Notifications are not connected in this starter."
+  },
+  "deepLink": {
+    "unsupported": "This link could not be opened in the app."
+  },
+  "permission": {
+    "camera": {
+      "title": "Camera access",
+      "rationale": "We use the camera to take a new profile photo. You can decline any time."
+    },
+    "photos": {
+      "title": "Photo library access",
+      "rationale": "We read your photo library so you can pick a profile photo. You can decline any time."
+    },
+    "location": {
+      "title": "Location access",
+      "rationale": "We use your location to personalize your experience. You can decline any time."
+    },
+    "continueRequest": "Continue",
+    "notNow": "Not now",
+    "openSettings": "Open settings",
+    "denied": "Permission was denied. You can try again any time.",
+    "permanentlyDenied": "Permission is blocked. Turn it on in system settings to continue."
+  },
+  "share": {
+    "success": "Shared",
+    "unavailable": "Sharing is not available on this device.",
+    "cancelled": "Share cancelled."
+  },
+  "update": {
+    "checkForUpdates": "Check for updates",
+    "available": "An update is available.",
+    "notAvailable": "You're on the latest version.",
+    "required": "An update is required to continue."
   }
 }

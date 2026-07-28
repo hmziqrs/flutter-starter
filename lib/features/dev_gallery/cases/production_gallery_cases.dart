@@ -443,7 +443,11 @@ List<GalleryCase> _buildProfileCases() {
       initialDraft: const ProfileDraft.defaults(),
       presentationState: state,
       onSave: (_) => _showUnavailableFeedback(context),
-      onAvatarFeedback: () => _showInformationDialog(
+      // permissions-media: the gallery uses a no-op callback (the rationale
+      // flow is exercised in the permissions gallery cases + the live
+      // update-profile route; the production gallery only renders the form
+      // state deterministically).
+      onAvatarPicked: (_) => _showInformationDialog(
         context,
         title: context.t.profile.update.changeAvatar,
         body: context.t.profile.update.avatarUnavailable,
@@ -502,6 +506,9 @@ List<GalleryCase> _buildSettingsCases() {
       onOpenPricing: () => _showUnavailableFeedback(context),
       onOpenTerms: () => _showLegalDialog(context, context.t.settings.terms),
       onOpenPrivacy: () => _showLegalDialog(context, context.t.settings.privacy),
+      // license-share-update: gallery settings tile surfaces the same legal
+      // dialog (the live route wires to the in-shell aboutLicense page).
+      onOpenLicense: () => _showLegalDialog(context, context.t.settings.about.license),
       loadBuildLabel: () => Future.value(context.t.common.notConnected),
     ),
   );

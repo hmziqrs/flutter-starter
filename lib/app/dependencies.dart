@@ -1,11 +1,17 @@
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
+import 'package:starter/features/auth/in_memory_otp_repository.dart';
+import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_store.dart';
+import 'package:starter/features/notifications/noop_notifications_repository.dart';
+import 'package:starter/features/notifications/notification_permission_status.dart';
+import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
@@ -29,11 +35,24 @@ import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/media/image_picker_media_picker.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/media/noop_media_picker.dart';
+import 'package:starter/infrastructure/permissions/device_permission_service.dart';
+import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
+import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
 import 'package:starter/infrastructure/secure_storage/flutter_secure_storage_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
+import 'package:starter/infrastructure/sharing/noop_share_service.dart';
+import 'package:starter/infrastructure/sharing/share_plus_share_service.dart';
+import 'package:starter/infrastructure/sharing/share_service.dart';
+import 'package:starter/infrastructure/updates/android_app_update_service.dart';
+import 'package:starter/infrastructure/updates/app_update_service.dart';
+import 'package:starter/infrastructure/updates/ios_app_update_service.dart';
+import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 
 final class AppDependencies {
   const AppDependencies({
@@ -59,6 +78,16 @@ final class AppDependencies {
     required this.biometricAuthenticator,
     required this.attemptTracker,
     required this.hapticService,
+    required this.otpRepository,
+    required this.notificationsRepository,
+    required this.notificationsBackend,
+    required this.initialNotificationPermission,
+    required this.initialNotificationToken,
+    required this.permissionService,
+    required this.mediaPicker,
+    required this.shareService,
+    required this.appUpdateService,
+    required this.appLinkHandler,
   });
 
   factory AppDependencies.inMemory({
@@ -121,6 +150,25 @@ final class AppDependencies {
       // Haptics: Noop keeps hermeticity so a tap in a test/golden harness never
       // reaches the platform channel.
       hapticService: NoopHapticService(),
+      // Wave-5b ports. Honest no-backend defaults so tests/goldens never reach
+      // a real platform channel (C2 / C13): InMemoryOtpRepository surfaces
+      // notConnected, NoopNotificationsRepository reports denied, the Noop
+      // permission/media/share/update adapters report denied / null /
+      // unavailable / noUpdate honestly. The real platform adapters are
+      // selected by `AppDependencies.production` per PlatformCapabilities.
+      otpRepository: const InMemoryOtpRepository(),
+      notificationsRepository: const NoopNotificationsRepository(),
+      notificationsBackend: const NoopNotificationsBackend(),
+      initialNotificationPermission: NotificationPermissionStatus.notRequested,
+      initialNotificationToken: null,
+      permissionService: const NoopPermissionService(),
+      mediaPicker: const NoopMediaPicker(),
+      shareService: const NoopShareService(),
+      appUpdateService: const NoopAppUpdateService(),
+      // Deep-link handler: tests do not drive inbound URIs; pass a no-op
+      // service whose stream is empty and whose initial link is null. A test
+      // that needs to drive links overrides the provider directly.
+      appLinkHandler: const _NoOpDeepLinkService(),
     );
   }
 
@@ -189,6 +237,51 @@ final class AppDependencies {
   /// `MediaQuery.disableAnimationsOf` and the `hapticsEnabled` setting.
   final HapticService hapticService;
 
+  /// OTP repository port (mfa-otp). The no-backend default
+  /// ([InMemoryOtpRepository]) surfaces `OtpRepositoryException.notConnected`
+  /// and never fakes an issued code; the optional real HTTP adapter against
+  /// the `tools/test_server/` OTP contract is a consumer override only.
+  final OtpRepository otpRepository;
+
+  /// Push notifications port (push-notifications). The no-backend default
+  /// ([NoopNotificationsRepository]) reports denied, publishes empty streams,
+  /// and throws notConnected for the registration actions. The optional real
+  /// Firebase adapter is constructed by the consumer only when credentials are
+  /// wired AND the platform is iOS / Android.
+  final NotificationsRepository notificationsRepository;
+  final NotificationsBackend notificationsBackend;
+  final NotificationPermissionStatus initialNotificationPermission;
+  final String? initialNotificationToken;
+
+  /// Runtime-permission port (permissions-media). The composition root selects
+  /// `DevicePermissionService` on supported native platforms or the honest
+  /// `NoopPermissionService` for web / unsupported / integration-test runs.
+  final PermissionService permissionService;
+
+  /// Media-picker port (permissions-media). The composition root selects
+  /// `ImagePickerMediaPicker` on supported native platforms or the honest
+  /// `NoopMediaPicker` for web / unsupported / integration-test runs.
+  final MediaPicker mediaPicker;
+
+  /// Native share-sheet port (license-share-update). The composition root
+  /// selects `SharePlusShareService` on platforms with a native share target
+  /// or the honest `NoopShareService` for web / unsupported / integration-test
+  /// runs.
+  final ShareService shareService;
+
+  /// OS-store in-app update port (license-share-update). The composition root
+  /// selects `AndroidAppUpdateService` / `IosAppUpdateService` on supported
+  /// native platforms or the honest `NoopAppUpdateService` for web /
+  /// unsupported / integration-test runs. Non-blocking by design: the server
+  /// `VersionGateStore` owns the hard / soft block (no double-block).
+  final AppUpdateService appUpdateService;
+
+  /// Inbound deep-link service (deep-linking). Owns the `app_links` plugin
+  /// instance and exposes the resolved inbound stream + the cold-start initial
+  /// link. Constructed at the composition root with the compile-time
+  /// `AllowedDeepLinkHosts`; tests use the no-op service (no inbound URIs).
+  final DeepLinkService appLinkHandler;
+
   /// Returns a copy with the provided fields replaced. Used by
   /// `createApplication` to finalize the startup result's `localeApplied` flag
   /// once the locale apply has run (which happens after `AppDependencies.production`).
@@ -216,11 +309,23 @@ final class AppDependencies {
       biometricAuthenticator: biometricAuthenticator,
       attemptTracker: attemptTracker,
       hapticService: hapticService,
+      otpRepository: otpRepository,
+      notificationsRepository: notificationsRepository,
+      notificationsBackend: notificationsBackend,
+      initialNotificationPermission: initialNotificationPermission,
+      initialNotificationToken: initialNotificationToken,
+      permissionService: permissionService,
+      mediaPicker: mediaPicker,
+      shareService: shareService,
+      appUpdateService: appUpdateService,
+      appLinkHandler: appLinkHandler,
     );
   }
 
   static Future<AppDependencies> production(
     AppLogger logger, {
+    required String iosAppleId,
+    required AllowedDeepLinkHosts allowedDeepLinkHosts,
     AppBuildInfo? buildInfo,
   }) async {
     final settingsStore = SharedPreferencesSettingsStore();
@@ -316,6 +421,100 @@ final class AppDependencies {
       // HapticFeedback — no credentials, no faking, C2). The reduce-motion guard
       // + hapticsEnabled setting are enforced at each call site, not here.
       hapticService: const DeviceHapticService(),
+      // Wave-5b no-backend production defaults. Each is a port override seam
+      // the consumer activates only when credentials / an endpoint are
+      // configured; every default degrades honestly and never fakes success
+      // (C2 / C13).
+      otpRepository: const InMemoryOtpRepository(),
+      // Notifications: Noop is the platform-agnostic default. The optional
+      // Firebase adapter is constructed by the consumer only on iOS / Android
+      // with credentials (firebase_messaging has no desktop/web support). Web
+      // / desktop / no-credentials all stay on the Noop default.
+      notificationsRepository: const NoopNotificationsRepository(),
+      notificationsBackend: const NoopNotificationsBackend(),
+      initialNotificationPermission: NotificationPermissionStatus.notRequested,
+      initialNotificationToken: null,
+      // Permissions / media / share / update: select the real device adapter on
+      // a supported native platform, honest Noop on web / unsupported / test
+      // runs. The selection is at the composition root (never via a global);
+      // each adapter degrades honestly and never fakes a grant / pick / share /
+      // available update.
+      permissionService: _selectPermissionService(capabilities),
+      mediaPicker: _selectMediaPicker(capabilities),
+      shareService: _selectShareService(capabilities),
+      appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
+      // Deep-link handler: the real `app_links` plugin is the production
+      // default on mobile; web is handled by `MaterialApp.router`'s browser
+      // URL bar (no double-wire); desktop / unsupported degrade honestly (the
+      // service publishes nothing, the app boots to its normal initial
+      // location). The cold-start `getInitialLink` is captured in
+      // `bootstrap.dart` before the router builds.
+      appLinkHandler: AppLinksDeepLinkService(
+        handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
+      ),
     );
   }
+
+  // The platform-selectors below are static private helpers so the production
+  // factory stays readable. Each maps a `PlatformCapabilities` snapshot to the
+  // honest adapter: real device adapter on supported native platforms, Noop
+  // for web / unsupported / integration-test runs. Never a global; never a
+  // fabricated success.
+
+  static PermissionService _selectPermissionService(PlatformCapabilities caps) {
+    if (caps.isWeb) return const NoopPermissionService();
+    return switch (caps.platform) {
+      // `permission_handler` is supported on iOS / Android only.
+      'ios' || 'android' => DevicePermissionService(),
+      _ => const NoopPermissionService(),
+    };
+  }
+
+  static MediaPicker _selectMediaPicker(PlatformCapabilities caps) {
+    if (caps.isWeb) return const NoopMediaPicker();
+    return switch (caps.platform) {
+      // `image_picker` is supported on iOS / Android only (macOS / Windows /
+      // Linux would need a different adapter; degrade honestly for now).
+      'ios' || 'android' => ImagePickerMediaPicker(),
+      _ => const NoopMediaPicker(),
+    };
+  }
+
+  static ShareService _selectShareService(PlatformCapabilities caps) {
+    if (caps.isWeb) return const NoopShareService();
+    return shareTargetAvailable(caps) ? const SharePlusShareService() : const NoopShareService();
+  }
+
+  static AppUpdateService _selectAppUpdateService(
+    PlatformCapabilities caps, {
+    required String iosAppleId,
+  }) {
+    if (caps.isWeb) return const NoopAppUpdateService();
+    return switch (caps.platform) {
+      // `in_app_update` is Android-only (Play Store). iOS uses `url_launcher`
+      // against the App Store listing (Apple ID from compile-time config).
+      // Both are non-blocking; the server `VersionGateStore` owns hard/soft.
+      'android' => const AndroidAppUpdateService(),
+      'ios' => IosAppUpdateService(appleId: iosAppleId),
+      _ => const NoopAppUpdateService(),
+    };
+  }
+}
+
+/// Honest no-op [DeepLinkService] for test harnesses and platforms that don't
+/// drive inbound URIs. The stream is empty and the cold-start initial link is
+/// `null`; a test that needs to drive deep links overrides
+/// [appLinkHandlerProvider] with a `StreamDeepLinkService` driven by a
+/// `StreamController<Uri>`. Never the production default.
+class _NoOpDeepLinkService implements DeepLinkService {
+  const _NoOpDeepLinkService();
+
+  @override
+  Stream<ResolvedLink> get links => const Stream<ResolvedLink>.empty();
+
+  @override
+  Future<ResolvedLink?> getInitialLink() async => null;
+
+  @override
+  void dispose() {}
 }

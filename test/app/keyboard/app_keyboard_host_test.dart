@@ -7,6 +7,7 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 
@@ -138,4 +139,6 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

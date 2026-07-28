@@ -1,6 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Biometric unlock (local_auth): BiometricPrompt requires USE_BIOMETRIC. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- permissions-media (Wave-5b): protected-resource permissions. CAMERA
+         (camera capture), READ_MEDIA_IMAGES (photo library on API 33+),
+         ACCESS_COARSE_LOCATION (location rationale). The runtime prompts are
+         driven by permission_handler; the rationale sheet always shows first. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- push-notifications (Wave-5b): runtime notification permission on
+         API 33+. The Noop default never requests it; the optional real
+         Firebase adapter requests it via NotificationsRepository. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="starter"
         android:name="${applicationName}"
@@ -25,6 +36,20 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- deep-linking (Wave-5b): Android App Links autoVerify
+                 intent-filter. Empty scheme/host placeholders; a consumer
+                 replaces them with the real associated host once the
+                 assetlinks.json file is hosted at
+                 https://<host>/.well-known/assetlinks.json. The compile-time
+                 ALLOWED_DEEP_LINK_HOSTS define mirrors this list at the Dart
+                 layer (AppConfig.allowedDeepLinkHosts). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <!-- <data android:host="example.com"/> -->
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -1,6 +1,7 @@
 enum OtpPurpose {
   registration('registration'),
-  passwordReset('password-reset');
+  passwordReset('password-reset'),
+  mfa('mfa');
 
   const OtpPurpose(this.pathSegment);
 
@@ -10,6 +11,7 @@ enum OtpPurpose {
     return switch (value) {
       'registration' => OtpPurpose.registration,
       'password-reset' => OtpPurpose.passwordReset,
+      'mfa' => OtpPurpose.mfa,
       _ => null,
     };
   }

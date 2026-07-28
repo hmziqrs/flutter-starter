@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 
 void main() {
@@ -8,7 +9,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(117));
+    expect(cases, hasLength(139));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -65,4 +66,6 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: false,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

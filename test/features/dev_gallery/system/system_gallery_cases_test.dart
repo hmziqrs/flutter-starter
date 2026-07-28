@@ -4,12 +4,12 @@ import 'package:forui/forui.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/diagnostics/diagnostics_page.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/route_error_page.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/system/system_gallery_cases.dart';
 import 'package:starter/i18n/translations.g.dart';
-
 import 'system_gallery_test_harness.dart';
 
 void main() {
@@ -126,4 +126,6 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

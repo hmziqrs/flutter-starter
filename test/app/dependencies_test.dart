@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/text_preset.dart';
@@ -38,7 +39,11 @@ void main() {
   tearDown(() => SharedPreferencesAsyncPlatform.instance = previousPlatform);
 
   test('reconstructed production dependencies load persisted settings', () async {
-    final first = await AppDependencies.production(AppLogger.bootstrap());
+    final first = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
     const expected = SettingsState(
       themeMode: AppThemeMode.dark,
       accent: AppAccent.violet,
@@ -48,7 +53,11 @@ void main() {
     );
 
     await first.settingsRepository.save(expected);
-    final reconstructed = await AppDependencies.production(AppLogger.bootstrap());
+    final reconstructed = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
 
     expect(reconstructed.initialSettings, expected);
   });

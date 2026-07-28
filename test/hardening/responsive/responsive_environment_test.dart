@@ -1,11 +1,11 @@
 import 'dart:ui' show DisplayFeatureType;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/shell/app_shell.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
@@ -414,6 +414,8 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: false,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 final _settingsRepository = SettingsRepository(InMemorySettingsStore());

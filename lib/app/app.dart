@@ -10,15 +10,20 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/announcements/announcement_banner.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
+import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
+import 'package:starter/features/notifications/notification_tap.dart';
+import 'package:starter/features/notifications/notifications_controller.dart';
+import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
@@ -31,9 +36,13 @@ import 'package:starter/infrastructure/analytics/analytics_route_observer.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/system_ui_controller.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
+import 'package:starter/infrastructure/sharing/share_service.dart';
+import 'package:starter/infrastructure/updates/app_update_service.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/motion/app_page_transitions.dart';
@@ -98,6 +107,30 @@ class App extends StatelessWidget {
         // NoopHapticService (inMemory). The provider throws StateError until
         // this override is present (HARD RULE 2).
         hapticServiceProvider.overrideWithValue(dependencies.hapticService),
+        // Wave-5b ports. Each is a peer of the existing port overrides; the
+        // composition root selected the no-backend default for every one of
+        // these. A consumer swaps in a real adapter only when credentials / an
+        // endpoint / a platform capability is configured.
+        otpRepositoryProvider.overrideWithValue(dependencies.otpRepository),
+        notificationsRepositoryProvider.overrideWithValue(
+          dependencies.notificationsRepository,
+        ),
+        notificationsBackendProvider.overrideWithValue(dependencies.notificationsBackend),
+        initialNotificationPermissionProvider.overrideWithValue(
+          dependencies.initialNotificationPermission,
+        ),
+        initialNotificationTokenProvider.overrideWithValue(
+          dependencies.initialNotificationToken,
+        ),
+        permissionServiceProvider.overrideWithValue(dependencies.permissionService),
+        mediaPickerProvider.overrideWithValue(dependencies.mediaPicker),
+        shareServiceProvider.overrideWithValue(dependencies.shareService),
+        appUpdateServiceProvider.overrideWithValue(dependencies.appUpdateService),
+        // Deep-link service (Wave-5b). The composition root constructed the
+        // production `AppLinksDeepLinkService` (or the no-op for unsupported
+        // platforms / tests); `_AppViewState` ref.listens the resolved stream
+        // and dispatches inbound links via context.goNamed / pushNamed.
+        appLinkHandlerProvider.overrideWithValue(dependencies.appLinkHandler),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -153,7 +186,75 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     // the session flips and subsequent navigations observe it.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
+      // Push-notifications foreground tap drain + deep-link stream wiring
+      // (Wave-5b). Both subscribe on the post-frame so the freshly created
+      // ProviderScope is used; both fire-and-forget their navigation side
+      // effects. `ref.listenManual` is the Riverpod 3 API for subscribing
+      // outside a `build` method (the auto-dispose variant would close the
+      // subscription on the next build; we own the subscription lifetime).
+      _drainNotificationTapQueue();
+      _listenAppLinkStream();
     });
+  }
+
+  void _drainNotificationTapQueue() {
+    // Drain any cold-start taps buffered before the router mounted, then keep
+    // listening for foreground taps. A tap resolves to an existing named route
+    // via context.pushNamed (the spec: never a raw URI). The queue is a
+    // `List<NotificationTap>` value exposed by `NotificationTapQueue`; we
+    // consume each dispatched tap through the notifier so the state stays in
+    // sync.
+    final notifier = ref.read(notificationTapQueueProvider.notifier);
+    ref.listenManual<List<NotificationTap>>(
+      notificationTapQueueProvider,
+      (previous, next) {
+        if (next.isEmpty) return;
+        for (final tap in next) {
+          _dispatchNotificationTap(tap);
+          notifier.consume(tap);
+        }
+      },
+    );
+    final initialPending = ref.read(notificationTapQueueProvider);
+    for (final tap in initialPending) {
+      _dispatchNotificationTap(tap);
+      notifier.consume(tap);
+    }
+  }
+
+  void _dispatchNotificationTap(NotificationTap tap) {
+    if (!mounted) return;
+    final target = tap.targetRoute;
+    if (target.isEmpty) return;
+    // Resolve to an existing named route via pushNamed. Params carry the
+    // typed route arguments; the router rejects unknown names safely.
+    unawaited(_router.pushNamed(target, pathParameters: tap.params));
+  }
+
+  void _listenAppLinkStream() {
+    // Deep links: dispatch every resolved inbound URI to its named route via
+    // context.goNamed (foreground links). The cold-start initial link is
+    // captured in createApplication and threaded as initialLocation — this
+    // stream handles everything AFTER the router mounts.
+    ref.listenManual<AsyncValue<ResolvedLink>>(
+      appLinkStreamProvider,
+      (previous, next) {
+        final link = next.value;
+        if (link == null) return;
+        _dispatchAppLink(link);
+      },
+    );
+  }
+
+  void _dispatchAppLink(ResolvedLink link) {
+    if (!mounted) return;
+    // Resolve to an existing named route. The AppLinkHandler already rejected
+    // foreign hosts and unknown paths; this only fires for trusted, known
+    // destinations.
+    _router.goNamed(
+      link.routeName,
+      pathParameters: link.pathParameters,
+    );
   }
 
   @override

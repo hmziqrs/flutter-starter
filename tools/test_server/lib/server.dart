@@ -4,6 +4,8 @@ import 'package:shelf_router/shelf_router.dart';
 import 'routes/auth.dart' as auth;
 import 'routes/crashes.dart' as crashes;
 import 'routes/events.dart' as events;
+import 'routes/notifications.dart' as notifications;
+import 'routes/otp.dart' as otp;
 import 'routes/remote_config.dart' as remote_config;
 
 /// A function that mounts one route group onto the server [Router].
@@ -22,6 +24,8 @@ final List<RouteRegistrar> _registrars = <RouteRegistrar>[
   auth.registerRoutes,
   crashes.registerRoutes,
   events.registerRoutes,
+  notifications.registerRoutes,
+  otp.registerRoutes,
   remote_config.registerRoutes,
 ];
 

@@ -52,6 +52,7 @@ class SettingsPage extends ConsumerWidget {
     required this.onOpenPricing,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
     super.key,
   });
@@ -68,6 +69,7 @@ class SettingsPage extends ConsumerWidget {
   final VoidCallback onOpenPricing;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -89,6 +91,7 @@ class SettingsPage extends ConsumerWidget {
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
+              onOpenLicense: onOpenLicense,
               loadBuildLabel: loadBuildLabel,
             ),
             null => _SettingsOverview(
@@ -113,6 +116,7 @@ class SettingsPage extends ConsumerWidget {
             onOpenPricing: onOpenPricing,
             onOpenTerms: onOpenTerms,
             onOpenPrivacy: onOpenPrivacy,
+            onOpenLicense: onOpenLicense,
             loadBuildLabel: loadBuildLabel,
           );
 
@@ -206,6 +210,7 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.onOpenPricing,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
   });
 
@@ -221,6 +226,7 @@ class _SettingsWideLayout extends StatelessWidget {
   final VoidCallback onOpenPricing;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -304,6 +310,7 @@ class _SettingsWideLayout extends StatelessWidget {
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
+              onOpenLicense: onOpenLicense,
               loadBuildLabel: loadBuildLabel,
             ),
           },
@@ -389,11 +396,13 @@ class _PrivacyAboutSettingsContent extends StatefulWidget {
   const _PrivacyAboutSettingsContent({
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
   });
 
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -442,6 +451,14 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 title: Text(translations.settings.privacy),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenPrivacy,
+              ),
+              FTile(
+                key: const ValueKey('settings-open-license'),
+                // license-share-update: tile -> in-shell aboutLicense route
+                // (Flutter's local license registry; backend-free).
+                title: Text(translations.settings.about.license),
+                suffix: const _DirectionalChevron(),
+                onPress: widget.onOpenLicense,
               ),
             ],
           ),

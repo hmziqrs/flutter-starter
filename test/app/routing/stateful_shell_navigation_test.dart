@@ -17,7 +17,6 @@
 // The 220 ms cross-fade is finite, so `pumpAndSettle` is safe throughout.
 
 import 'dart:async';
-
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +27,7 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/settings_controller.dart';
@@ -650,6 +650,8 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 /// Seeded authenticated session for auth-required destinations (/profile/edit,

@@ -6,6 +6,17 @@
 		<true/>
 		<key>NSFaceIDUsageDescription</key>
 		<string>App uses Face ID to unlock.</string>
+		<!-- permissions-media (Wave-5b): usage strings REQUIRED by the OS
+		     before it shows the runtime prompt. A missing string crashes the
+		     first request. Notification usage strings are owned by the
+		     push-notifications feature (aps-environment lives in
+		     Runner.entitlements). -->
+		<key>NSCameraUsageDescription</key>
+		<string>App uses the camera to take a new profile photo.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>App reads your photo library so you can pick a profile photo.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>App uses your location to personalize your experience.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

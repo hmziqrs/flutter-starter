@@ -6,6 +6,7 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
@@ -158,6 +159,8 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 /// Seeded authenticated session for the auth-required /profile/edit destination

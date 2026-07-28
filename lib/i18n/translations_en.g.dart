@@ -62,6 +62,11 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$startupFailure$en startupFailure = Translations$startupFailure$en.internal(_root);
 	late final Translations$diagnostics$en diagnostics = Translations$diagnostics$en.internal(_root);
 	late final Translations$devGallery$en devGallery = Translations$devGallery$en.internal(_root);
+	late final Translations$notifications$en notifications = Translations$notifications$en.internal(_root);
+	late final Translations$deepLink$en deepLink = Translations$deepLink$en.internal(_root);
+	late final Translations$permission$en permission = Translations$permission$en.internal(_root);
+	late final Translations$share$en share = Translations$share$en.internal(_root);
+	late final Translations$update$en update = Translations$update$en.internal(_root);
 }
 
 // Path: app
@@ -494,6 +499,7 @@ class Translations$settings$en {
 	late final Translations$settings$analytics$en analytics = Translations$settings$analytics$en.internal(_root);
 	late final Translations$settings$accessibility$en accessibility = Translations$settings$accessibility$en.internal(_root);
 	late final Translations$settings$haptics$en haptics = Translations$settings$haptics$en.internal(_root);
+	late final Translations$settings$about$en about = Translations$settings$about$en.internal(_root);
 }
 
 // Path: auth
@@ -1215,6 +1221,153 @@ class Translations$devGallery$en {
 
 	/// en: 'Shimmer'
 	String get caseSkeletonShimmer => 'Shimmer';
+
+	/// en: 'MFA verification'
+	String get screenOtpMfa => 'MFA verification';
+
+	/// en: 'Countdown'
+	String get caseCountdown => 'Countdown';
+
+	/// en: 'Notifications'
+	String get screenNotifications => 'Notifications';
+
+	/// en: 'Permission rationale'
+	String get caseNotificationsNotRequested => 'Permission rationale';
+
+	/// en: 'Granted'
+	String get caseNotificationsGranted => 'Granted';
+
+	/// en: 'Blocked'
+	String get caseNotificationsDenied => 'Blocked';
+
+	/// en: 'Permissions'
+	String get screenPermissions => 'Permissions';
+
+	/// en: 'Rationale'
+	String get casePermissionRationale => 'Rationale';
+
+	/// en: 'Denied'
+	String get casePermissionDenied => 'Denied';
+
+	/// en: 'Permanently denied'
+	String get casePermissionPermanentlyDenied => 'Permanently denied';
+
+	/// en: 'Licenses'
+	String get screenLicense => 'Licenses';
+
+	/// en: 'Share sheet'
+	String get screenShare => 'Share sheet';
+
+	/// en: 'In-app update'
+	String get screenAppUpdate => 'In-app update';
+}
+
+// Path: notifications
+class Translations$notifications$en {
+	Translations$notifications$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Turn on notifications'
+	String get enableTitle => 'Turn on notifications';
+
+	/// en: 'Get timely updates about your account and activity. You can change this anytime.'
+	String get enableBody => 'Get timely updates about your account and activity. You can change this anytime.';
+
+	/// en: 'Not now'
+	String get deny => 'Not now';
+
+	/// en: 'Allow'
+	String get allow => 'Allow';
+
+	/// en: 'Notifications are blocked'
+	String get enableBlockedTitle => 'Notifications are blocked';
+
+	/// en: 'Open system settings to allow notifications for this app.'
+	String get enableBlockedBody => 'Open system settings to allow notifications for this app.';
+
+	/// en: 'Notifications are not connected in this starter.'
+	String get disabled => 'Notifications are not connected in this starter.';
+}
+
+// Path: deepLink
+class Translations$deepLink$en {
+	Translations$deepLink$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'This link could not be opened in the app.'
+	String get unsupported => 'This link could not be opened in the app.';
+}
+
+// Path: permission
+class Translations$permission$en {
+	Translations$permission$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$permission$camera$en camera = Translations$permission$camera$en.internal(_root);
+	late final Translations$permission$photos$en photos = Translations$permission$photos$en.internal(_root);
+	late final Translations$permission$location$en location = Translations$permission$location$en.internal(_root);
+
+	/// en: 'Continue'
+	String get continueRequest => 'Continue';
+
+	/// en: 'Not now'
+	String get notNow => 'Not now';
+
+	/// en: 'Open settings'
+	String get openSettings => 'Open settings';
+
+	/// en: 'Permission was denied. You can try again any time.'
+	String get denied => 'Permission was denied. You can try again any time.';
+
+	/// en: 'Permission is blocked. Turn it on in system settings to continue.'
+	String get permanentlyDenied => 'Permission is blocked. Turn it on in system settings to continue.';
+}
+
+// Path: share
+class Translations$share$en {
+	Translations$share$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Shared'
+	String get success => 'Shared';
+
+	/// en: 'Sharing is not available on this device.'
+	String get unavailable => 'Sharing is not available on this device.';
+
+	/// en: 'Share cancelled.'
+	String get cancelled => 'Share cancelled.';
+}
+
+// Path: update
+class Translations$update$en {
+	Translations$update$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Check for updates'
+	String get checkForUpdates => 'Check for updates';
+
+	/// en: 'An update is available.'
+	String get available => 'An update is available.';
+
+	/// en: 'You're on the latest version.'
+	String get notAvailable => 'You\'re on the latest version.';
+
+	/// en: 'An update is required to continue.'
+	String get required => 'An update is required to continue.';
 }
 
 // Path: pricing.plans
@@ -1319,6 +1472,18 @@ class Translations$settings$haptics$en {
 
 	/// en: 'Enable haptic feedback on key actions'
 	String get enable => 'Enable haptic feedback on key actions';
+}
+
+// Path: settings.about
+class Translations$settings$about$en {
+	Translations$settings$about$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Licenses'
+	String get license => 'Licenses';
 }
 
 // Path: auth.common
@@ -1530,6 +1695,9 @@ class Translations$auth$otp$en {
 	/// en: 'Reset request verified.'
 	String get passwordResetSuccess => 'Reset request verified.';
 
+	/// en: 'Sign-in verified.'
+	String get mfaSuccess => 'Sign-in verified.';
+
 	/// en: 'Too many attempts'
 	String get lockedTitle => 'Too many attempts';
 
@@ -1547,6 +1715,24 @@ class Translations$auth$otp$en {
 		one: 'Try again in 1 second.',
 		other: 'Try again in ${seconds} seconds.',
 	);
+
+	/// en: 'Verify your sign-in'
+	String get mfaTitle => 'Verify your sign-in';
+
+	/// en: 'Enter the six-digit code we sent to complete sign-in.'
+	String get mfaBody => 'Enter the six-digit code we sent to complete sign-in.';
+
+	/// en: '(one) {Expires in 1 second} (other) {Expires in $seconds seconds}'
+	String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Expires in 1 second',
+		other: 'Expires in ${seconds} seconds',
+	);
+
+	/// en: 'Code expired'
+	String get expiredTitle => 'Code expired';
+
+	/// en: 'Your verification code expired. Request a new code to continue.'
+	String get expiredBody => 'Your verification code expired. Request a new code to continue.';
 }
 
 // Path: auth.resetPassword
@@ -1686,6 +1872,51 @@ class Translations$announcements$fixtures$en {
 	late final Translations$announcements$fixtures$changelog$en changelog = Translations$announcements$fixtures$changelog$en.internal(_root);
 	late final Translations$announcements$fixtures$deprecation$en deprecation = Translations$announcements$fixtures$deprecation$en.internal(_root);
 	late final Translations$announcements$fixtures$outage$en outage = Translations$announcements$fixtures$outage$en.internal(_root);
+}
+
+// Path: permission.camera
+class Translations$permission$camera$en {
+	Translations$permission$camera$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Camera access'
+	String get title => 'Camera access';
+
+	/// en: 'We use the camera to take a new profile photo. You can decline any time.'
+	String get rationale => 'We use the camera to take a new profile photo. You can decline any time.';
+}
+
+// Path: permission.photos
+class Translations$permission$photos$en {
+	Translations$permission$photos$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Photo library access'
+	String get title => 'Photo library access';
+
+	/// en: 'We read your photo library so you can pick a profile photo. You can decline any time.'
+	String get rationale => 'We read your photo library so you can pick a profile photo. You can decline any time.';
+}
+
+// Path: permission.location
+class Translations$permission$location$en {
+	Translations$permission$location$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Location access'
+	String get title => 'Location access';
+
+	/// en: 'We use your location to personalize your experience. You can decline any time.'
+	String get rationale => 'We use your location to personalize your experience. You can decline any time.';
 }
 
 // Path: settings.accessibility.preset
@@ -1929,6 +2160,7 @@ extension on Translations {
 			'settings.accessibility.preset.dyslexiaDescription' => 'Slightly larger text with a dyslexia-friendly font where available.',
 			'settings.haptics.title' => 'Haptic feedback',
 			'settings.haptics.enable' => 'Enable haptic feedback on key actions',
+			'settings.about.license' => 'Licenses',
 			'auth.common.email' => 'Email address',
 			'auth.common.password' => 'Password',
 			'auth.common.confirmPassword' => 'Confirm password',
@@ -1982,10 +2214,16 @@ extension on Translations {
 			'auth.otp.expired' => 'That verification code has expired. Request a new code.',
 			'auth.otp.registrationSuccess' => 'Registration verified.',
 			'auth.otp.passwordResetSuccess' => 'Reset request verified.',
+			'auth.otp.mfaSuccess' => 'Sign-in verified.',
 			'auth.otp.lockedTitle' => 'Too many attempts',
 			'auth.otp.tooManyAttempts' => 'Too many failed attempts. Please wait.',
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
 			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
+			'auth.otp.mfaTitle' => 'Verify your sign-in',
+			'auth.otp.mfaBody' => 'Enter the six-digit code we sent to complete sign-in.',
+			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Expires in 1 second', other: 'Expires in ${seconds} seconds', ), 
+			'auth.otp.expiredTitle' => 'Code expired',
+			'auth.otp.expiredBody' => 'Your verification code expired. Request a new code to continue.',
 			'auth.resetPassword.title' => 'Choose a new password',
 			'auth.resetPassword.body' => 'Use a strong password and enter it exactly the same way twice.',
 			'auth.resetPassword.newPassword' => 'New password',
@@ -2222,6 +2460,45 @@ extension on Translations {
 			'devGallery.screenSkeleton' => 'Skeleton loading',
 			'devGallery.caseSkeletonStatic' => 'Static (reduce-motion)',
 			'devGallery.caseSkeletonShimmer' => 'Shimmer',
+			'devGallery.screenOtpMfa' => 'MFA verification',
+			'devGallery.caseCountdown' => 'Countdown',
+			'devGallery.screenNotifications' => 'Notifications',
+			'devGallery.caseNotificationsNotRequested' => 'Permission rationale',
+			'devGallery.caseNotificationsGranted' => 'Granted',
+			'devGallery.caseNotificationsDenied' => 'Blocked',
+			'devGallery.screenPermissions' => 'Permissions',
+			'devGallery.casePermissionRationale' => 'Rationale',
+			'devGallery.casePermissionDenied' => 'Denied',
+			'devGallery.casePermissionPermanentlyDenied' => 'Permanently denied',
+			'devGallery.screenLicense' => 'Licenses',
+			'devGallery.screenShare' => 'Share sheet',
+			'devGallery.screenAppUpdate' => 'In-app update',
+			'notifications.enableTitle' => 'Turn on notifications',
+			'notifications.enableBody' => 'Get timely updates about your account and activity. You can change this anytime.',
+			'notifications.deny' => 'Not now',
+			'notifications.allow' => 'Allow',
+			'notifications.enableBlockedTitle' => 'Notifications are blocked',
+			'notifications.enableBlockedBody' => 'Open system settings to allow notifications for this app.',
+			'notifications.disabled' => 'Notifications are not connected in this starter.',
+			'deepLink.unsupported' => 'This link could not be opened in the app.',
+			'permission.camera.title' => 'Camera access',
+			'permission.camera.rationale' => 'We use the camera to take a new profile photo. You can decline any time.',
+			'permission.photos.title' => 'Photo library access',
+			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
+			'permission.location.title' => 'Location access',
+			'permission.location.rationale' => 'We use your location to personalize your experience. You can decline any time.',
+			'permission.continueRequest' => 'Continue',
+			'permission.notNow' => 'Not now',
+			'permission.openSettings' => 'Open settings',
+			'permission.denied' => 'Permission was denied. You can try again any time.',
+			'permission.permanentlyDenied' => 'Permission is blocked. Turn it on in system settings to continue.',
+			'share.success' => 'Shared',
+			'share.unavailable' => 'Sharing is not available on this device.',
+			'share.cancelled' => 'Share cancelled.',
+			'update.checkForUpdates' => 'Check for updates',
+			'update.available' => 'An update is available.',
+			'update.notAvailable' => 'You\'re on the latest version.',
+			'update.required' => 'An update is required to continue.',
 			_ => null,
 		};
 	}

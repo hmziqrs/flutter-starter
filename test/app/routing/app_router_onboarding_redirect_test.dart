@@ -4,11 +4,16 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
+import 'package:starter/features/auth/in_memory_otp_repository.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
+import 'package:starter/features/notifications/noop_notifications_repository.dart';
+import 'package:starter/features/notifications/notification_permission_status.dart';
+import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/in_memory_auth_repository.dart';
@@ -25,7 +30,11 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/media/noop_media_picker.dart';
+import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/infrastructure/sharing/noop_share_service.dart';
+import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
 void main() {
@@ -202,6 +211,8 @@ final _productionConfig = AppConfig(
   environment: AppEnvironment.production,
   enableVerboseLogging: false,
   enableDevTools: false,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 AppDependencies _freshInstallDependencies() => _dependencies();
@@ -249,7 +260,33 @@ AppDependencies _dependencies({
     ),
     buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
     initialDismissedAnnouncementIds: const <String>{},
+    // Wave-5b no-backend test defaults: each port degrades honestly (never
+    // fakes a grant / pick / share / update / token); the deep-link service
+    // is a no-op so the redirect path under test is unaffected.
+    otpRepository: const InMemoryOtpRepository(),
+    notificationsRepository: const NoopNotificationsRepository(),
+    notificationsBackend: const NoopNotificationsBackend(),
+    initialNotificationPermission: NotificationPermissionStatus.notRequested,
+    initialNotificationToken: null,
+    permissionService: const NoopPermissionService(),
+    mediaPicker: const NoopMediaPicker(),
+    shareService: const NoopShareService(),
+    appUpdateService: const NoopAppUpdateService(),
+    appLinkHandler: const _NoOpDeepLinkService(),
   );
+}
+
+class _NoOpDeepLinkService implements DeepLinkService {
+  const _NoOpDeepLinkService();
+
+  @override
+  Stream<ResolvedLink> get links => const Stream<ResolvedLink>.empty();
+
+  @override
+  Future<ResolvedLink?> getInitialLink() async => null;
+
+  @override
+  void dispose() {}
 }
 
 Future<void> _pumpApp(

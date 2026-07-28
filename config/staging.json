@@ -1,5 +1,7 @@
 {
   "APP_ENV": "staging",
   "ENABLE_VERBOSE_LOGGING": "false",
-  "ENABLE_DEV_TOOLS": "false"
+  "ENABLE_DEV_TOOLS": "false",
+  "IOS_APPLE_ID": "",
+  "ALLOWED_DEEP_LINK_HOSTS": ""
 }

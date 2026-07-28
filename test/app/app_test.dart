@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +7,7 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/features/settings/settings_controller.dart';
@@ -233,12 +233,16 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 final _productionConfig = AppConfig(
   environment: AppEnvironment.production,
   enableVerboseLogging: false,
   enableDevTools: false,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 void _setViewport(WidgetTester tester, Size size) {

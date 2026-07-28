@@ -174,6 +174,10 @@ class _OtpViewState extends ConsumerState<_OtpView> {
             Text(title, style: context.theme.typography.display.xl2),
             const SizedBox(height: AppSpacing.md),
             Text(body, style: context.theme.typography.body.md),
+            if (_countdownAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
             if (_attemptsRemainingAlert(context) case final alert?) ...[
               const SizedBox(height: AppSpacing.xl),
               alert,
@@ -262,6 +266,36 @@ class _OtpViewState extends ConsumerState<_OtpView> {
     );
   }
 
+  /// Live expiry countdown notice. Rendered while the issued code has not yet
+  /// expired (`remainingSeconds > 0`) and no terminal status is active. The
+  /// `expiresIn(seconds:)` plural key drives the localized text; the numeric
+  /// value flows LTR per the feature spec's RTL note. The gallery pins a fixed
+  /// `remainingSeconds` so the golden stays wall-clock-stable.
+  Widget? _countdownAlert(BuildContext context) {
+    final remaining = widget.presentation.remainingSeconds;
+    if (remaining <= 0) {
+      return null;
+    }
+    final status = widget.presentation.status;
+    if (status == OtpPresentationStatus.expired ||
+        status == OtpPresentationStatus.success ||
+        status == OtpPresentationStatus.globalFailure ||
+        status == OtpPresentationStatus.locked) {
+      return null;
+    }
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: FAlert(
+        key: const ValueKey('auth-otp-countdown'),
+        icon: const Icon(FLucideIcons.clock),
+        title: Text(
+          context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
+          textAlign: TextAlign.start,
+        ),
+      ),
+    );
+  }
+
   Widget? _feedbackAlert(BuildContext context) {
     final translations = context.t;
     return switch (widget.presentation.status) {
@@ -291,6 +325,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
           switch (widget.purpose) {
             OtpPurpose.registration => translations.auth.otp.registrationSuccess,
             OtpPurpose.passwordReset => translations.auth.otp.passwordResetSuccess,
+            OtpPurpose.mfa => translations.auth.otp.mfaSuccess,
           },
         ),
         icon: const Icon(FLucideIcons.circleCheck),
@@ -328,6 +363,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
         translations.passwordResetTitle,
         translations.passwordResetBody,
       ),
+      OtpPurpose.mfa => (translations.mfaTitle, translations.mfaBody),
     };
   }
 

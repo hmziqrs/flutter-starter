@@ -169,6 +169,9 @@
     "haptics": {
       "title": "الاهتزاز اللمسي",
       "enable": "تفعيل الاهتزاز اللمسي للإجراءات الرئيسية"
+    },
+    "about": {
+      "license": "التراخيص"
     }
   },
   "auth": {
@@ -248,6 +251,7 @@
       "expired": "انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.",
       "registrationSuccess": "تم التحقق من التسجيل.",
       "passwordResetSuccess": "تم التحقق من طلب إعادة التعيين.",
+      "mfaSuccess": "تم التحقق من تسجيل الدخول.",
       "lockedTitle": "محاولات كثيرة",
       "tooManyAttempts": "محاولات فاشلة كثيرة. يرجى الانتظار.",
       "attemptsRemaining(count)": {
@@ -265,7 +269,19 @@
         "few": "أعد المحاولة خلال $seconds ثوانٍ.",
         "many": "أعد المحاولة خلال $seconds ثانية.",
         "other": "أعد المحاولة خلال $seconds ثانية."
-      }
+      },
+      "mfaTitle": "تحقق من تسجيل الدخول",
+      "mfaBody": "أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.",
+      "expiresIn(seconds)": {
+        "zero": "تنتهي صلاحيته الآن",
+        "one": "تنتهي صلاحيته خلال ثانية واحدة",
+        "two": "تنتهي صلاحيته خلال ثانيتين",
+        "few": "تنتهي صلاحيته خلال $seconds ثوانٍ",
+        "many": "تنتهي صلاحيته خلال $seconds ثانية",
+        "other": "تنتهي صلاحيته خلال $seconds ثانية"
+      },
+      "expiredTitle": "انتهت صلاحية الرمز",
+      "expiredBody": "انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة."
     },
     "resetPassword": {
       "title": "اختر كلمة مرور جديدة",
@@ -544,6 +560,61 @@
     "caseHapticError": "خطأ",
     "screenSkeleton": "هيكل التحميل",
     "caseSkeletonStatic": "ثابت (تقليل الحركة)",
-    "caseSkeletonShimmer": "وميض"
+    "caseSkeletonShimmer": "وميض",
+    "screenOtpMfa": "التحقق متعدد العوامل",
+    "caseCountdown": "العد التنازلي",
+    "screenNotifications": "الإشعارات",
+    "caseNotificationsNotRequested": "سبب الإذن",
+    "caseNotificationsGranted": "مُمنوح",
+    "caseNotificationsDenied": "محظور",
+    "screenPermissions": "الأذونات",
+    "casePermissionRationale": "السبب",
+    "casePermissionDenied": "مرفوض",
+    "casePermissionPermanentlyDenied": "محظوف نهائيًا",
+    "screenLicense": "التراخيص",
+    "screenShare": "ورقة المشاركة",
+    "screenAppUpdate": "التحديث داخل التطبيق"
+  },
+  "notifications": {
+    "enableTitle": "تفعيل الإشعارات",
+    "enableBody": "احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.",
+    "deny": "ليس الآن",
+    "allow": "السماح",
+    "enableBlockedTitle": "الإشعارات محظورة",
+    "enableBlockedBody": "افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.",
+    "disabled": "الإشعارات غير متصلة في هذا القالب."
+  },
+  "deepLink": {
+    "unsupported": "تعذر فتح هذا الرابط داخل التطبيق."
+  },
+  "permission": {
+    "camera": {
+      "title": "الوصول إلى الكاميرا",
+      "rationale": "نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت."
+    },
+    "photos": {
+      "title": "الوصول إلى مكتبة الصور",
+      "rationale": "نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت."
+    },
+    "location": {
+      "title": "الوصول إلى الموقع",
+      "rationale": "نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت."
+    },
+    "continueRequest": "متابعة",
+    "notNow": "ليس الآن",
+    "openSettings": "فتح الإعدادات",
+    "denied": "تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.",
+    "permanentlyDenied": "الإذن محظور. فعّله من إعدادات النظام للمتابعة."
+  },
+  "share": {
+    "success": "تمت المشاركة",
+    "unavailable": "المشاركة غير متاحة على هذا الجهاز.",
+    "cancelled": "تم إلغاء المشاركة."
+  },
+  "update": {
+    "checkForUpdates": "التحقق من التحديثات",
+    "available": "يتوفر تحديث.",
+    "notAvailable": "أنت على أحدث إصدار.",
+    "required": "التحديث مطلوب للمتابعة."
   }
 }

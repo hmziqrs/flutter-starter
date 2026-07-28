@@ -14,6 +14,7 @@ import 'package:starter/app/shell/cross_fading_branch_container.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
+import 'package:starter/features/auth/otp_controller.dart';
 import 'package:starter/features/auth/otp_page.dart';
 import 'package:starter/features/auth/register_page.dart';
 import 'package:starter/features/auth/reset_password_page.dart';
@@ -37,6 +38,7 @@ import 'package:starter/features/security/biometric_unlock_controller.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
+import 'package:starter/features/settings/license_page.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_store.dart';
@@ -132,6 +134,14 @@ GoRouter buildAppRouter({
                 name: AppRoutes.accessibilitySettings,
                 path: AppRoutes.accessibilitySettingsPath,
                 builder: (context, state) => const AccessibilitySettingsPage(),
+              ),
+              GoRoute(
+                name: AppRoutes.aboutLicense,
+                path: AppRoutes.aboutLicensePath,
+                // In-shell license route (license-share-update spec). Pushed
+                // from the settings "About" tile; thin wrapper over Flutter's
+                // local license registry (backend-free).
+                builder: (context, state) => const AboutLicensePage(),
               ),
             ],
           ),
@@ -264,11 +274,23 @@ GoRouter buildAppRouter({
               message: context.t.routeError.invalidOtpPurpose,
             );
           }
+          // MFA is the controller-driven runtime path: the page reads live
+          // state from `otpControllerProvider` (countdown, lockout, verify /
+          // resend transitions) and the controller surfaces `globalFailure`
+          // honestly under the no-backend default. Registration / password-
+          // reset keep their existing fixture path so the dev-gallery stays
+          // deterministic (C5: reuse the existing OTP route, no new redirect).
+          if (purpose == OtpPurpose.mfa) {
+            return _MfaOtpRoutePage(
+              identifier: state.uri.queryParameters['identifier'] ?? '',
+            );
+          }
           return OtpPage(
             purpose: purpose,
             onSubmit: (_) => switch (purpose) {
               OtpPurpose.registration => context.goNamed(AppRoutes.home),
               OtpPurpose.passwordReset => unawaited(_openResetPassword(context)),
+              OtpPurpose.mfa => context.goNamed(AppRoutes.home),
             },
             onResend: () => _showInformationDialog(
               context,
@@ -302,11 +324,20 @@ GoRouter buildAppRouter({
             title: context.t.common.legalPlaceholderTitle,
             body: context.t.common.notConnected,
           ),
-          onAvatarFeedback: () => _showInformationDialog(
-            context,
-            title: context.t.profile.update.changeAvatar,
-            body: context.t.profile.update.avatarUnavailable,
-          ),
+          // permissions-media avatar flow: the page runs the
+          // permission → rationale-sheet → MediaPicker orchestration and
+          // forwards the typed result here. A null result (denied / cancelled /
+          // no backend) surfaces the honest `avatarUnavailable` copy; a real
+          // pick would update the avatar in a consumer build.
+          onAvatarPicked: (media) {
+            if (media == null) {
+              _showInformationDialog(
+                context,
+                title: context.t.profile.update.changeAvatar,
+                body: context.t.profile.update.avatarUnavailable,
+              );
+            }
+          },
         ),
       ),
       if (config.developmentToolsEnabled) ...[
@@ -670,6 +701,9 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
       context,
       title: context.t.settings.privacy,
     ),
+    // license-share-update: route the "License" tile to the in-shell
+    // aboutLicense route (Flutter's local license registry; backend-free).
+    onOpenLicense: () => context.pushNamed(AppRoutes.aboutLicense),
     loadBuildLabel: () async => (await AppBuildInfo.load()).displayValue,
   );
 }
@@ -771,4 +805,70 @@ RouteErrorPage _routeErrorPage(
       }
     },
   );
+}
+
+/// Controller-driven MFA OTP route page.
+///
+/// Wires the static [OtpPage] (the dev-gallery fixture surface) to the live
+/// [OtpController] family for the MFA runtime path. The controller owns the
+/// expiry `Timer`, the verify / resend state machine, and the auth-ratelimit
+/// handoff (locked state). The no-backend default surfaces `globalFailure`
+/// honestly: the controller calls `requestIssue` on mount, the
+/// `InMemoryOtpRepository` throws `OtpRepositoryException.notConnected`, and
+/// the page renders the `common.notConnected` alert (C2 — never fakes a code).
+///
+/// A successful verify navigates to home. Navigation never gates on animation
+/// (the page reads `state` and navigates on the success transition).
+class _MfaOtpRoutePage extends ConsumerStatefulWidget {
+  const _MfaOtpRoutePage({required this.identifier});
+
+  /// The account identifier the MFA code was issued for. Today sourced from
+  /// the `identifier` query parameter (the login flow pushes the email here);
+  /// the no-backend default still surfaces `globalFailure` regardless of the
+  /// identifier's value because the repository throws before reading it.
+  final String identifier;
+
+  @override
+  ConsumerState<_MfaOtpRoutePage> createState() => _MfaOtpRoutePageState();
+}
+
+class _MfaOtpRoutePageState extends ConsumerState<_MfaOtpRoutePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Kick off the issue request post-frame so the freshly created
+    // ProviderScope is used. Fire-and-forget: the controller surfaces the
+    // outcome (success / globalFailure) through state.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final key = (purpose: OtpPurpose.mfa, identifier: widget.identifier);
+      unawaited(ref.read(otpControllerProvider(key).notifier).requestIssue());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final key = (purpose: OtpPurpose.mfa, identifier: widget.identifier);
+    final state = ref.watch(otpControllerProvider(key));
+    final controller = ref.read(otpControllerProvider(key).notifier);
+    return OtpPage(
+      purpose: OtpPurpose.mfa,
+      // Merge the controller's live `remainingSeconds` into the static
+      // presentation so the page's countdown + lockout rendering observes the
+      // real values without the page reaching into the controller directly.
+      presentation: state.presentation.copyWithRemainingSeconds(state.remainingSeconds),
+      onSubmit: (value) async {
+        final ok = await controller.verify(value.code);
+        if (!ok || !mounted) {
+          return;
+        }
+        // Navigation never gates on animation; the controller's success
+        // transition is observed synchronously, and `mounted` guards the
+        // post-await context use.
+        // ignore: use_build_context_synchronously
+        context.goNamed(AppRoutes.home);
+      },
+      onResend: controller.resend,
+    );
+  }
 }

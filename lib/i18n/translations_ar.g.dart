@@ -61,6 +61,11 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$startupFailure$ar startupFailure = _Translations$startupFailure$ar._(_root);
 	@override late final _Translations$diagnostics$ar diagnostics = _Translations$diagnostics$ar._(_root);
 	@override late final _Translations$devGallery$ar devGallery = _Translations$devGallery$ar._(_root);
+	@override late final _Translations$notifications$ar notifications = _Translations$notifications$ar._(_root);
+	@override late final _Translations$deepLink$ar deepLink = _Translations$deepLink$ar._(_root);
+	@override late final _Translations$permission$ar permission = _Translations$permission$ar._(_root);
+	@override late final _Translations$share$ar share = _Translations$share$ar._(_root);
+	@override late final _Translations$update$ar update = _Translations$update$ar._(_root);
 }
 
 // Path: app
@@ -255,6 +260,7 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override late final _Translations$settings$analytics$ar analytics = _Translations$settings$analytics$ar._(_root);
 	@override late final _Translations$settings$accessibility$ar accessibility = _Translations$settings$accessibility$ar._(_root);
 	@override late final _Translations$settings$haptics$ar haptics = _Translations$settings$haptics$ar._(_root);
+	@override late final _Translations$settings$about$ar about = _Translations$settings$about$ar._(_root);
 }
 
 // Path: auth
@@ -585,6 +591,87 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenSkeleton => 'هيكل التحميل';
 	@override String get caseSkeletonStatic => 'ثابت (تقليل الحركة)';
 	@override String get caseSkeletonShimmer => 'وميض';
+	@override String get screenOtpMfa => 'التحقق متعدد العوامل';
+	@override String get caseCountdown => 'العد التنازلي';
+	@override String get screenNotifications => 'الإشعارات';
+	@override String get caseNotificationsNotRequested => 'سبب الإذن';
+	@override String get caseNotificationsGranted => 'مُمنوح';
+	@override String get caseNotificationsDenied => 'محظور';
+	@override String get screenPermissions => 'الأذونات';
+	@override String get casePermissionRationale => 'السبب';
+	@override String get casePermissionDenied => 'مرفوض';
+	@override String get casePermissionPermanentlyDenied => 'محظوف نهائيًا';
+	@override String get screenLicense => 'التراخيص';
+	@override String get screenShare => 'ورقة المشاركة';
+	@override String get screenAppUpdate => 'التحديث داخل التطبيق';
+}
+
+// Path: notifications
+class _Translations$notifications$ar extends Translations$notifications$en {
+	_Translations$notifications$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get enableTitle => 'تفعيل الإشعارات';
+	@override String get enableBody => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.';
+	@override String get deny => 'ليس الآن';
+	@override String get allow => 'السماح';
+	@override String get enableBlockedTitle => 'الإشعارات محظورة';
+	@override String get enableBlockedBody => 'افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.';
+	@override String get disabled => 'الإشعارات غير متصلة في هذا القالب.';
+}
+
+// Path: deepLink
+class _Translations$deepLink$ar extends Translations$deepLink$en {
+	_Translations$deepLink$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get unsupported => 'تعذر فتح هذا الرابط داخل التطبيق.';
+}
+
+// Path: permission
+class _Translations$permission$ar extends Translations$permission$en {
+	_Translations$permission$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$permission$camera$ar camera = _Translations$permission$camera$ar._(_root);
+	@override late final _Translations$permission$photos$ar photos = _Translations$permission$photos$ar._(_root);
+	@override late final _Translations$permission$location$ar location = _Translations$permission$location$ar._(_root);
+	@override String get continueRequest => 'متابعة';
+	@override String get notNow => 'ليس الآن';
+	@override String get openSettings => 'فتح الإعدادات';
+	@override String get denied => 'تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.';
+	@override String get permanentlyDenied => 'الإذن محظور. فعّله من إعدادات النظام للمتابعة.';
+}
+
+// Path: share
+class _Translations$share$ar extends Translations$share$en {
+	_Translations$share$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get success => 'تمت المشاركة';
+	@override String get unavailable => 'المشاركة غير متاحة على هذا الجهاز.';
+	@override String get cancelled => 'تم إلغاء المشاركة.';
+}
+
+// Path: update
+class _Translations$update$ar extends Translations$update$en {
+	_Translations$update$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkForUpdates => 'التحقق من التحديثات';
+	@override String get available => 'يتوفر تحديث.';
+	@override String get notAvailable => 'أنت على أحدث إصدار.';
+	@override String get required => 'التحديث مطلوب للمتابعة.';
 }
 
 // Path: pricing.plans
@@ -644,6 +731,16 @@ class _Translations$settings$haptics$ar extends Translations$settings$haptics$en
 	// Translations
 	@override String get title => 'الاهتزاز اللمسي';
 	@override String get enable => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية';
+}
+
+// Path: settings.about
+class _Translations$settings$about$ar extends Translations$settings$about$en {
+	_Translations$settings$about$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get license => 'التراخيص';
 }
 
 // Path: auth.common
@@ -756,6 +853,7 @@ class _Translations$auth$otp$ar extends Translations$auth$otp$en {
 	@override String get expired => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.';
 	@override String get registrationSuccess => 'تم التحقق من التسجيل.';
 	@override String get passwordResetSuccess => 'تم التحقق من طلب إعادة التعيين.';
+	@override String get mfaSuccess => 'تم التحقق من تسجيل الدخول.';
 	@override String get lockedTitle => 'محاولات كثيرة';
 	@override String get tooManyAttempts => 'محاولات فاشلة كثيرة. يرجى الانتظار.';
 	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
@@ -774,6 +872,18 @@ class _Translations$auth$otp$ar extends Translations$auth$otp$en {
 		many: 'أعد المحاولة خلال ${seconds} ثانية.',
 		other: 'أعد المحاولة خلال ${seconds} ثانية.',
 	);
+	@override String get mfaTitle => 'تحقق من تسجيل الدخول';
+	@override String get mfaBody => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.';
+	@override String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'تنتهي صلاحيته الآن',
+		one: 'تنتهي صلاحيته خلال ثانية واحدة',
+		two: 'تنتهي صلاحيته خلال ثانيتين',
+		few: 'تنتهي صلاحيته خلال ${seconds} ثوانٍ',
+		many: 'تنتهي صلاحيته خلال ${seconds} ثانية',
+		other: 'تنتهي صلاحيته خلال ${seconds} ثانية',
+	);
+	@override String get expiredTitle => 'انتهت صلاحية الرمز';
+	@override String get expiredBody => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة.';
 }
 
 // Path: auth.resetPassword
@@ -847,6 +957,39 @@ class _Translations$announcements$fixtures$ar extends Translations$announcements
 	@override late final _Translations$announcements$fixtures$changelog$ar changelog = _Translations$announcements$fixtures$changelog$ar._(_root);
 	@override late final _Translations$announcements$fixtures$deprecation$ar deprecation = _Translations$announcements$fixtures$deprecation$ar._(_root);
 	@override late final _Translations$announcements$fixtures$outage$ar outage = _Translations$announcements$fixtures$outage$ar._(_root);
+}
+
+// Path: permission.camera
+class _Translations$permission$camera$ar extends Translations$permission$camera$en {
+	_Translations$permission$camera$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى الكاميرا';
+	@override String get rationale => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.';
+}
+
+// Path: permission.photos
+class _Translations$permission$photos$ar extends Translations$permission$photos$en {
+	_Translations$permission$photos$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى مكتبة الصور';
+	@override String get rationale => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.';
+}
+
+// Path: permission.location
+class _Translations$permission$location$ar extends Translations$permission$location$en {
+	_Translations$permission$location$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى الموقع';
+	@override String get rationale => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.';
 }
 
 // Path: settings.accessibility.preset
@@ -1062,6 +1205,7 @@ extension on TranslationsAr {
 			'settings.accessibility.preset.dyslexiaDescription' => 'نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر.',
 			'settings.haptics.title' => 'الاهتزاز اللمسي',
 			'settings.haptics.enable' => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية',
+			'settings.about.license' => 'التراخيص',
 			'auth.common.email' => 'البريد الإلكتروني',
 			'auth.common.password' => 'كلمة المرور',
 			'auth.common.confirmPassword' => 'تأكيد كلمة المرور',
@@ -1115,10 +1259,16 @@ extension on TranslationsAr {
 			'auth.otp.expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.',
 			'auth.otp.registrationSuccess' => 'تم التحقق من التسجيل.',
 			'auth.otp.passwordResetSuccess' => 'تم التحقق من طلب إعادة التعيين.',
+			'auth.otp.mfaSuccess' => 'تم التحقق من تسجيل الدخول.',
 			'auth.otp.lockedTitle' => 'محاولات كثيرة',
 			'auth.otp.tooManyAttempts' => 'محاولات فاشلة كثيرة. يرجى الانتظار.',
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
 			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
+			'auth.otp.mfaTitle' => 'تحقق من تسجيل الدخول',
+			'auth.otp.mfaBody' => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.',
+			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'تنتهي صلاحيته الآن', one: 'تنتهي صلاحيته خلال ثانية واحدة', two: 'تنتهي صلاحيته خلال ثانيتين', few: 'تنتهي صلاحيته خلال ${seconds} ثوانٍ', many: 'تنتهي صلاحيته خلال ${seconds} ثانية', other: 'تنتهي صلاحيته خلال ${seconds} ثانية', ), 
+			'auth.otp.expiredTitle' => 'انتهت صلاحية الرمز',
+			'auth.otp.expiredBody' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة.',
 			'auth.resetPassword.title' => 'اختر كلمة مرور جديدة',
 			'auth.resetPassword.body' => 'استخدم كلمة مرور قوية وأدخلها بالطريقة نفسها مرتين.',
 			'auth.resetPassword.newPassword' => 'كلمة المرور الجديدة',
@@ -1355,6 +1505,45 @@ extension on TranslationsAr {
 			'devGallery.screenSkeleton' => 'هيكل التحميل',
 			'devGallery.caseSkeletonStatic' => 'ثابت (تقليل الحركة)',
 			'devGallery.caseSkeletonShimmer' => 'وميض',
+			'devGallery.screenOtpMfa' => 'التحقق متعدد العوامل',
+			'devGallery.caseCountdown' => 'العد التنازلي',
+			'devGallery.screenNotifications' => 'الإشعارات',
+			'devGallery.caseNotificationsNotRequested' => 'سبب الإذن',
+			'devGallery.caseNotificationsGranted' => 'مُمنوح',
+			'devGallery.caseNotificationsDenied' => 'محظور',
+			'devGallery.screenPermissions' => 'الأذونات',
+			'devGallery.casePermissionRationale' => 'السبب',
+			'devGallery.casePermissionDenied' => 'مرفوض',
+			'devGallery.casePermissionPermanentlyDenied' => 'محظوف نهائيًا',
+			'devGallery.screenLicense' => 'التراخيص',
+			'devGallery.screenShare' => 'ورقة المشاركة',
+			'devGallery.screenAppUpdate' => 'التحديث داخل التطبيق',
+			'notifications.enableTitle' => 'تفعيل الإشعارات',
+			'notifications.enableBody' => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.',
+			'notifications.deny' => 'ليس الآن',
+			'notifications.allow' => 'السماح',
+			'notifications.enableBlockedTitle' => 'الإشعارات محظورة',
+			'notifications.enableBlockedBody' => 'افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.',
+			'notifications.disabled' => 'الإشعارات غير متصلة في هذا القالب.',
+			'deepLink.unsupported' => 'تعذر فتح هذا الرابط داخل التطبيق.',
+			'permission.camera.title' => 'الوصول إلى الكاميرا',
+			'permission.camera.rationale' => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.',
+			'permission.photos.title' => 'الوصول إلى مكتبة الصور',
+			'permission.photos.rationale' => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.',
+			'permission.location.title' => 'الوصول إلى الموقع',
+			'permission.location.rationale' => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.',
+			'permission.continueRequest' => 'متابعة',
+			'permission.notNow' => 'ليس الآن',
+			'permission.openSettings' => 'فتح الإعدادات',
+			'permission.denied' => 'تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.',
+			'permission.permanentlyDenied' => 'الإذن محظور. فعّله من إعدادات النظام للمتابعة.',
+			'share.success' => 'تمت المشاركة',
+			'share.unavailable' => 'المشاركة غير متاحة على هذا الجهاز.',
+			'share.cancelled' => 'تم إلغاء المشاركة.',
+			'update.checkForUpdates' => 'التحقق من التحديثات',
+			'update.available' => 'يتوفر تحديث.',
+			'update.notAvailable' => 'أنت على أحدث إصدار.',
+			'update.required' => 'التحديث مطلوب للمتابعة.',
 			_ => null,
 		};
 	}
