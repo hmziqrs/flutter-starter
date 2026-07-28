@@ -39,7 +39,7 @@ dependencies:
   posthog_flutter: ^5.33.0
   pub_semver: ^2.1.0
   sensors_plus: ^6.1.1
-  sentry_flutter: ^8.14.0
+  sentry_flutter: ^9.25.0
   share_plus: ^13.0.0
   shared_preferences: ^2.5.5
   shared_preferences_tvos: ^0.0.2
