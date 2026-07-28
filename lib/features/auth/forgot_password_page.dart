@@ -13,6 +13,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef ForgotPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -58,7 +59,7 @@ class _ForgotPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
+class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailController = TextEditingController();
@@ -66,13 +67,36 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
   final _submitFocus = FocusNode(debugLabel: 'forgotPassword.submit');
   bool _callbackSubmitting = false;
 
+  // state-restoration: the email draft survives a simulated process death
+  // (state-restoration). No secret is entered on this page, so the single draft
+  // is the whole restorable surface.
+  final RestorableString _emailDraft = RestorableString('');
+
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ForgotPasswordPresentationStatus.submitting;
 
   @override
+  String get restorationId => 'forgot-password-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_emailDraft, 'email_draft');
+    if (_emailController.text != _emailDraft.value) {
+      _emailController.text = _emailDraft.value;
+    }
+  }
+
+  void _syncEmailDraft() {
+    if (_emailController.text != _emailDraft.value) {
+      _emailDraft.value = _emailController.text;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    _emailController.addListener(_syncEmailDraft);
     _requestFixtureFocus();
   }
 
@@ -94,7 +118,10 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _emailController
+      ..removeListener(_syncEmailDraft)
+      ..dispose();
+    _emailDraft.dispose();
     _emailFocus.dispose();
     _submitFocus.dispose();
     super.dispose();
@@ -105,13 +132,17 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final translations = context.t.auth.forgotPassword;
-    return AuthPageScaffold(
-      screenId: 'forgot-password',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.keyRound,
-      title: translations.title,
-      body: translations.body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: translations.submitting,
+      child: AuthPageScaffold(
+        screenId: 'forgot-password',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.keyRound,
+        title: translations.title,
+        body: translations.body,
+        form: form,
+      ),
     );
   }
 
@@ -195,9 +226,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> {
                   : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting
-                    ? translations.auth.forgotPassword.submitting
-                    : translations.auth.forgotPassword.submit,
+                translations.auth.forgotPassword.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

@@ -6,6 +6,9 @@ abstract final class AppRoutes {
   static const onboardingPaywall = 'onboarding-paywall';
   static const onboardingPaywallPath = '/onboarding/paywall';
 
+  static const splash = 'splash';
+  static const splashPath = '/splash';
+
   static const home = 'home';
   static const homePath = '/';
   static const settings = 'settings';
@@ -14,6 +17,10 @@ abstract final class AppRoutes {
   static const appearanceSettingsPath = '/settings/appearance';
   static const languageSettings = 'language-settings';
   static const languageSettingsPath = '/settings/language';
+  static const accessibilitySettings = 'accessibility-settings';
+  static const accessibilitySettingsPath = '/settings/accessibility';
+  static const aboutLicense = 'about-license';
+  static const aboutLicensePath = '/settings/about/license';
 
   static const login = 'login';
   static const loginPath = '/auth/login';
@@ -29,6 +36,17 @@ abstract final class AppRoutes {
   static const resetPassword = 'reset-password';
   static const resetPasswordPath = '/auth/reset-password';
 
+  static const forceUpdate = 'force-update';
+  static const forceUpdatePath = '/force-update';
+
+  static const biometricLock = 'biometric-lock';
+  static const biometricLockPath = '/lock';
+
+  static const passcodeEntry = 'passcode-entry';
+  static const passcodeEntryPath = '/passcode';
+  static const passcodeSetup = 'passcode-setup';
+  static const passcodeSetupPath = '/settings/security/passcode';
+
   static const updateProfile = 'update-profile';
   static const updateProfilePath = '/profile/edit';
   static const pricing = 'pricing';
@@ -38,4 +56,7 @@ abstract final class AppRoutes {
   static const developmentScreensPath = '/dev/screens';
   static const diagnostics = 'diagnostics';
   static const diagnosticsPath = '/dev/diagnostics';
+
+  static const search = 'search';
+  static const searchPath = '/search';
 }

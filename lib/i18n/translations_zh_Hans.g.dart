@@ -41,6 +41,7 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	// Translations
 	@override late final _Translations$app$zh_Hans app = _Translations$app$zh_Hans._(_root);
 	@override late final _Translations$common$zh_Hans common = _Translations$common$zh_Hans._(_root);
+	@override late final _Translations$connectivity$zh_Hans connectivity = _Translations$connectivity$zh_Hans._(_root);
 	@override late final _Translations$navigation$zh_Hans navigation = _Translations$navigation$zh_Hans._(_root);
 	@override late final _Translations$onboarding$zh_Hans onboarding = _Translations$onboarding$zh_Hans._(_root);
 	@override late final _Translations$pricing$zh_Hans pricing = _Translations$pricing$zh_Hans._(_root);
@@ -48,11 +49,24 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$settings$zh_Hans settings = _Translations$settings$zh_Hans._(_root);
 	@override late final _Translations$auth$zh_Hans auth = _Translations$auth$zh_Hans._(_root);
 	@override late final _Translations$profile$zh_Hans profile = _Translations$profile$zh_Hans._(_root);
+	@override late final _Translations$security$zh_Hans security = _Translations$security$zh_Hans._(_root);
+	@override late final _Translations$forceUpdate$zh_Hans forceUpdate = _Translations$forceUpdate$zh_Hans._(_root);
+	@override late final _Translations$softUpdate$zh_Hans softUpdate = _Translations$softUpdate$zh_Hans._(_root);
+	@override late final _Translations$session$zh_Hans session = _Translations$session$zh_Hans._(_root);
+	@override late final _Translations$splash$zh_Hans splash = _Translations$splash$zh_Hans._(_root);
+	@override late final _Translations$states$zh_Hans states = _Translations$states$zh_Hans._(_root);
+	@override late final _Translations$announcements$zh_Hans announcements = _Translations$announcements$zh_Hans._(_root);
 	@override late final _Translations$validation$zh_Hans validation = _Translations$validation$zh_Hans._(_root);
 	@override late final _Translations$routeError$zh_Hans routeError = _Translations$routeError$zh_Hans._(_root);
 	@override late final _Translations$startupFailure$zh_Hans startupFailure = _Translations$startupFailure$zh_Hans._(_root);
 	@override late final _Translations$diagnostics$zh_Hans diagnostics = _Translations$diagnostics$zh_Hans._(_root);
 	@override late final _Translations$devGallery$zh_Hans devGallery = _Translations$devGallery$zh_Hans._(_root);
+	@override late final _Translations$notifications$zh_Hans notifications = _Translations$notifications$zh_Hans._(_root);
+	@override late final _Translations$permission$zh_Hans permission = _Translations$permission$zh_Hans._(_root);
+	@override late final _Translations$share$zh_Hans share = _Translations$share$zh_Hans._(_root);
+	@override late final _Translations$update$zh_Hans update = _Translations$update$zh_Hans._(_root);
+	@override late final _Translations$search$zh_Hans search = _Translations$search$zh_Hans._(_root);
+	@override late final _Translations$feedback$zh_Hans feedback = _Translations$feedback$zh_Hans._(_root);
 }
 
 // Path: app
@@ -86,9 +100,27 @@ class _Translations$common$zh_Hans extends Translations$common$en {
 	@override String get next => '下一步';
 	@override String get optional => '可选';
 	@override String get loading => '正在加载';
+	@override String get saving => '正在保存…';
 	@override String get notConnected => '此操作尚未连接。';
 	@override String get legalPlaceholderTitle => '信息预览';
 	@override String get legalPlaceholderBody => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。';
+	@override String get confirm => '确认';
+	@override String get success => '成功';
+	@override String get discard => '放弃';
+	@override String get error => '错误';
+}
+
+// Path: connectivity
+class _Translations$connectivity$zh_Hans extends Translations$connectivity$en {
+	_Translations$connectivity$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get online => '已连接';
+	@override String get offline => '你已离线。部分操作可能不可用。';
+	@override String get backOnline => '网络已恢复。';
+	@override String get limited => '连接受限。部分操作可能缓慢或不可用。';
 }
 
 // Path: navigation
@@ -229,6 +261,14 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get aboutBuild => '构建信息';
 	@override String get terms => '条款预览';
 	@override String get privacy => '隐私预览';
+	@override String get enableBiometric => '使用生物识别解锁';
+	@override String get passcode => '密码';
+	@override String get autoLockDelay => '自动锁定延迟';
+	@override String get lockOnBackground => '切到后台时锁定';
+	@override late final _Translations$settings$analytics$zh_Hans analytics = _Translations$settings$analytics$zh_Hans._(_root);
+	@override late final _Translations$settings$accessibility$zh_Hans accessibility = _Translations$settings$accessibility$zh_Hans._(_root);
+	@override late final _Translations$settings$haptics$zh_Hans haptics = _Translations$settings$haptics$zh_Hans._(_root);
+	@override late final _Translations$settings$about$zh_Hans about = _Translations$settings$about$zh_Hans._(_root);
 }
 
 // Path: auth
@@ -254,6 +294,98 @@ class _Translations$profile$zh_Hans extends Translations$profile$en {
 
 	// Translations
 	@override late final _Translations$profile$update$zh_Hans update = _Translations$profile$update$zh_Hans._(_root);
+}
+
+// Path: security
+class _Translations$security$zh_Hans extends Translations$security$en {
+	_Translations$security$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$security$biometric$zh_Hans biometric = _Translations$security$biometric$zh_Hans._(_root);
+	@override late final _Translations$security$passcode$zh_Hans passcode = _Translations$security$passcode$zh_Hans._(_root);
+}
+
+// Path: forceUpdate
+class _Translations$forceUpdate$zh_Hans extends Translations$forceUpdate$en {
+	_Translations$forceUpdate$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '需要更新';
+	@override String get body => '此版本已不再受支持。请更新至最新版本以继续。';
+	@override String get updateNow => '立即更新';
+}
+
+// Path: softUpdate
+class _Translations$softUpdate$zh_Hans extends Translations$softUpdate$en {
+	_Translations$softUpdate$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '有新版本可用';
+	@override String get body => '更新至最新版本以获取最新改进和修复。';
+	@override String get update => '更新';
+	@override String get later => '稍后';
+}
+
+// Path: session
+class _Translations$session$zh_Hans extends Translations$session$en {
+	_Translations$session$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get expired => '您的会话已过期，请重新登录。';
+	@override String get signedOut => '您已退出登录。';
+	@override String signedInPreview({required Object userId}) => '已以 ${userId} 身份登录';
+	@override String get unavailable => '登录功能尚未连接。';
+}
+
+// Path: splash
+class _Translations$splash$zh_Hans extends Translations$splash$en {
+	_Translations$splash$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '正在启动';
+	@override String get tagline => '精心打造的起点';
+	@override String get error => '无法完成启动。';
+}
+
+// Path: states
+class _Translations$states$zh_Hans extends Translations$states$en {
+	_Translations$states$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => '暂时没有内容';
+	@override String get emptyBody => '内容可用后将显示在这里。';
+	@override String get errorTitle => '无法加载';
+	@override String get errorBody => '加载时出现问题。请重试。';
+	@override String get loadingTitle => '加载中…';
+}
+
+// Path: announcements
+class _Translations$announcements$zh_Hans extends Translations$announcements$en {
+	_Translations$announcements$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get dismiss => '关闭';
+	@override String get actionLearnMore => '了解更多';
+	@override String get dismissFailed => '无法关闭此公告。';
+	@override String get severityInfo => '信息';
+	@override String get severitySuccess => '成功';
+	@override String get severityWarning => '警告';
+	@override String get severityCritical => '严重';
+	@override late final _Translations$announcements$fixtures$zh_Hans fixtures = _Translations$announcements$fixtures$zh_Hans._(_root);
 }
 
 // Path: validation
@@ -310,10 +442,18 @@ class _Translations$diagnostics$zh_Hans extends Translations$diagnostics$en {
 	@override String get build => '构建版本';
 	@override String get layout => '布局类别';
 	@override String get interaction => '交互策略';
+	@override String get lifecycle => '应用生命周期';
 	@override String get viewingEnvironment => '观看环境';
 	@override String get locale => '语言区域';
 	@override String get capabilities => '平台能力';
+	@override String get secureStorage => '安全存储';
+	@override String get crashReporting => '崩溃报告';
+	@override String get crashReportingNone => '未配置';
+	@override String get analytics => '分析';
+	@override String get analyticsNone => '未配置';
+	@override String get featureFlags => '功能开关';
 	@override String get redactedNotice => '诊断信息不包含凭据或用户内容。';
+	@override late final _Translations$diagnostics$experiments$zh_Hans experiments = _Translations$diagnostics$experiments$zh_Hans._(_root);
 }
 
 // Path: devGallery
@@ -385,9 +525,35 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get screenProfile => '更新资料';
 	@override String get screenPricing => '方案定价';
 	@override String get screenSettings => '设置';
+	@override String get screenConnectivity => '连接状态栏';
+	@override String get screenForceUpdate => '强制更新';
+	@override String get screenSoftUpdate => '建议更新';
+	@override String get screenBusy => '忙碌指示器';
 	@override String get screenSystem => '系统界面';
 	@override String get screenOverlays => '浮层';
+	@override String get screenSplash => '应用内启动页';
+	@override String get screenStateViews => '状态视图';
+	@override String get screenFormScaffolding => '表单脚手架';
+	@override String get screenAnnouncements => '公告栏';
+	@override String get caseSplashLoading => '启动中';
+	@override String get caseSplashReady => '就绪';
+	@override String get caseSplashError => '启动错误';
+	@override String get caseStateEmpty => '空状态';
+	@override String get caseStateError => '错误';
+	@override String get caseStateLoading => '加载中';
+	@override String get caseFormScaffoldDisabled => '提交已禁用';
+	@override String get caseFormScaffoldEnabled => '提交已启用';
+	@override String get caseFormScaffoldSubmitting => '提交中';
+	@override String get caseAnnouncementsInfo => '信息';
+	@override String get caseAnnouncementsSuccess => '成功';
+	@override String get caseAnnouncementsWarning => '警告';
+	@override String get caseAnnouncementsCritical => '严重';
 	@override String get caseDefault => '默认';
+	@override String get caseHardBlock => '强制阻止';
+	@override String get caseSoftUpdate => '建议更新';
+	@override String get caseBusyIndeterminate => '不确定进度';
+	@override String get caseBusyDeterminate => '确定进度';
+	@override String get caseBusyOverlay => '模态遮罩';
 	@override String get caseExpandedCopy => '扩展文案';
 	@override String get caseFirst => '第一步';
 	@override String get caseMiddle => '中间';
@@ -421,7 +587,159 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get casePopover => '弹出层';
 	@override String get caseTooltip => '工具提示';
 	@override String get caseKeyboardInset => '键盘遮挡表单';
+	@override String get screenSession => '会话';
+	@override String get caseSessionLoggedOut => '已退出登录';
+	@override String get caseSessionLoggedIn => '已登录';
+	@override String get screenAnalytics => '分析数据选项';
+	@override String get screenBiometricLock => '生物识别锁';
+	@override String get caseLocked => '已锁定';
 	@override String get caseNotFound => '请求的图库用例未注册。';
+	@override String get screenAccessibility => '辅助功能预设';
+	@override String get caseAccessibilityComfortable => '舒适预设';
+	@override String get caseAccessibilityLarge => '大号预设';
+	@override String get caseAccessibilityDyslexia => '阅读障碍预设';
+	@override String get screenPullRefresh => '下拉刷新';
+	@override String get casePullRefreshList => '可刷新列表';
+	@override String get casePullRefreshGrid => '自适应网格';
+	@override String get screenHaptics => '触感反馈';
+	@override String get caseHapticKinds => '全部类型';
+	@override String get caseHapticSelection => '选择';
+	@override String get caseHapticImpactLight => '轻度震动';
+	@override String get caseHapticImpactMedium => '中度震动';
+	@override String get caseHapticImpactHeavy => '重度震动';
+	@override String get caseHapticSuccess => '成功';
+	@override String get caseHapticWarning => '警告';
+	@override String get caseHapticError => '错误';
+	@override String get screenSkeleton => '骨架加载';
+	@override String get caseSkeletonStatic => '静态（减少动态效果）';
+	@override String get caseSkeletonShimmer => '微光';
+	@override String get screenOtpMfa => 'MFA 验证';
+	@override String get caseCountdown => '倒计时';
+	@override String get screenNotifications => '通知';
+	@override String get caseNotificationsNotRequested => '权限说明';
+	@override String get caseNotificationsGranted => '已授予';
+	@override String get caseNotificationsDenied => '已阻止';
+	@override String get screenPermissions => '权限';
+	@override String get casePermissionRationale => '说明';
+	@override String get casePermissionDenied => '已拒绝';
+	@override String get casePermissionPermanentlyDenied => '永久拒绝';
+	@override String get screenLicense => '许可证';
+	@override String get screenShare => '分享面板';
+	@override String get screenAppUpdate => '应用内更新';
+	@override String get screenSearchPagination => '搜索与分页';
+	@override String get caseSearchField => '搜索框';
+	@override String get caseSearchPaged => '分页列表';
+	@override String get caseSearchPagedNoBackend => '分页列表（无后端）';
+	@override String get screenToastDialogs => '提示与对话框';
+	@override String get caseToastSuccess => '成功提示';
+	@override String get caseToastInfo => '信息提示';
+	@override String get caseToastWarning => '警告提示';
+	@override String get caseToastError => '错误提示';
+	@override String get caseDialogConfirm => '确认对话框';
+	@override String get caseDialogDestroy => '删除对话框';
+	@override String get screenPasscodeEntry => '密码输入';
+	@override String get screenPasscodeSetup => '密码设置';
+	@override String get casePasscodeIdle => '空闲';
+	@override String get casePasscodeError => '错误';
+	@override String get casePasscodeLockedOut => '已锁定';
+	@override String get casePasscodeSetupMismatch => '确认不匹配';
+	@override String get screenFeedback => '反馈';
+	@override String get caseFeedbackDrafting => '编写中';
+	@override String get caseFeedbackSubmitting => '提交中';
+	@override String get caseFeedbackFailed => '失败';
+	@override String get caseFeedbackSuccess => '成功';
+}
+
+// Path: notifications
+class _Translations$notifications$zh_Hans extends Translations$notifications$en {
+	_Translations$notifications$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get enableTitle => '开启通知';
+	@override String get enableBody => '及时获取账户和活动的更新。你可以随时更改此设置。';
+	@override String get deny => '暂不';
+	@override String get allow => '允许';
+	@override String get enableBlockedTitle => '通知已被阻止';
+	@override String get enableBlockedBody => '打开系统设置以允许此应用接收通知。';
+	@override String get disabled => '此模板中通知未连接。';
+}
+
+// Path: permission
+class _Translations$permission$zh_Hans extends Translations$permission$en {
+	_Translations$permission$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$permission$camera$zh_Hans camera = _Translations$permission$camera$zh_Hans._(_root);
+	@override late final _Translations$permission$photos$zh_Hans photos = _Translations$permission$photos$zh_Hans._(_root);
+	@override late final _Translations$permission$location$zh_Hans location = _Translations$permission$location$zh_Hans._(_root);
+	@override String get continueRequest => '继续';
+	@override String get notNow => '暂不';
+	@override String get openSettings => '打开设置';
+	@override String get denied => '权限已被拒绝。您可以随时重试。';
+	@override String get permanentlyDenied => '权限已被阻止。请在系统设置中开启以继续。';
+}
+
+// Path: share
+class _Translations$share$zh_Hans extends Translations$share$en {
+	_Translations$share$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get success => '已分享';
+	@override String get unavailable => '此设备不支持分享。';
+	@override String get cancelled => '已取消分享。';
+}
+
+// Path: update
+class _Translations$update$zh_Hans extends Translations$update$en {
+	_Translations$update$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkForUpdates => '检查更新';
+	@override String get available => '有可用更新。';
+	@override String get notAvailable => '已是最新版本。';
+	@override String get required => '需要更新才能继续。';
+}
+
+// Path: search
+class _Translations$search$zh_Hans extends Translations$search$en {
+	_Translations$search$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '搜索';
+	@override String get placeholder => '搜索…';
+	@override String get emptyTitle => '暂无结果';
+	@override String get emptyBody => '请尝试其他搜索词。';
+	@override String get errorTitle => '搜索暂不可用';
+}
+
+// Path: feedback
+class _Translations$feedback$zh_Hans extends Translations$feedback$en {
+	_Translations$feedback$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '发送反馈';
+	@override String get messageLabel => '内容';
+	@override String get messageHint => '发生了什么，或有什么可以改进？';
+	@override String get includeScreenshot => '附上截图';
+	@override String get emailOptional => '回复邮箱';
+	@override String get submit => '发送';
+	@override String get cancel => '取消';
+	@override String get successTitle => '谢谢！';
+	@override String get successBody => '您的反馈已发送。';
+	@override String get failedTitle => '暂时无法发送您的反馈。';
+	@override String get shakeEnabled => '摇动以打开反馈';
 }
 
 // Path: pricing.plans
@@ -446,6 +764,51 @@ class _Translations$pricing$plans$zh_Hans extends Translations$pricing$plans$en 
 	@override String get teamBenefitOne => '包含专业版全部内容';
 	@override String get teamBenefitTwo => '面向团队的约定';
 	@override String get teamBenefitThree => '多平台发布工作流';
+}
+
+// Path: settings.analytics
+class _Translations$settings$analytics$zh_Hans extends Translations$settings$analytics$en {
+	_Translations$settings$analytics$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get optInTitle => '分析';
+	@override String get optInBody => '通过发送匿名使用数据帮助改进应用。您可以随时关闭。';
+	@override String get statusOn => '已开启';
+	@override String get statusOff => '已关闭';
+}
+
+// Path: settings.accessibility
+class _Translations$settings$accessibility$zh_Hans extends Translations$settings$accessibility$en {
+	_Translations$settings$accessibility$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '辅助功能';
+	@override late final _Translations$settings$accessibility$preset$zh_Hans preset = _Translations$settings$accessibility$preset$zh_Hans._(_root);
+}
+
+// Path: settings.haptics
+class _Translations$settings$haptics$zh_Hans extends Translations$settings$haptics$en {
+	_Translations$settings$haptics$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '触感反馈';
+	@override String get enable => '对关键操作启用触感反馈';
+}
+
+// Path: settings.about
+class _Translations$settings$about$zh_Hans extends Translations$settings$about$en {
+	_Translations$settings$about$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get license => '许可证';
 }
 
 // Path: auth.common
@@ -481,6 +844,15 @@ class _Translations$auth$login$zh_Hans extends Translations$auth$login$en {
 	@override String get submitting => '正在登录';
 	@override String get globalError => '无法完成静态登录，已保留输入内容。';
 	@override String get success => '静态登录已完成。';
+	@override String get lockedTitle => '尝试次数过多';
+	@override String get tooManyAttempts => '失败尝试过多，请稍候。';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		other: '剩余 ${count} 次尝试',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '现在可以重试。',
+		other: '请在 ${seconds} 秒后重试。',
+	);
 }
 
 // Path: auth.register
@@ -540,6 +912,23 @@ class _Translations$auth$otp$zh_Hans extends Translations$auth$otp$en {
 	@override String get expired => '验证码已过期，请申请新代码。';
 	@override String get registrationSuccess => '注册已验证。';
 	@override String get passwordResetSuccess => '重置请求已验证。';
+	@override String get mfaSuccess => '登录已验证。';
+	@override String get lockedTitle => '尝试次数过多';
+	@override String get tooManyAttempts => '失败尝试过多，请稍候。';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		other: '剩余 ${count} 次尝试',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '现在可以重试。',
+		other: '请在 ${seconds} 秒后重试。',
+	);
+	@override String get mfaTitle => '验证登录';
+	@override String get mfaBody => '输入我们发送的六位验证码以完成登录。';
+	@override String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		other: '将在 ${seconds} 秒后过期',
+	);
+	@override String get expiredTitle => '验证码已过期';
+	@override String get expiredBody => '您的验证码已过期，请重新获取以继续。';
 }
 
 // Path: auth.resetPassword
@@ -586,6 +975,165 @@ class _Translations$profile$update$zh_Hans extends Translations$profile$update$e
 	@override String get discard => '放弃更改';
 }
 
+// Path: security.biometric
+class _Translations$security$biometric$zh_Hans extends Translations$security$biometric$en {
+	_Translations$security$biometric$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get lockTitle => '使用生物识别解锁';
+	@override String get lockBody => '使用您的指纹或面容解锁应用。';
+	@override String get authFailedTitle => '认证失败，请重试。';
+	@override String get unlock => '解锁';
+	@override String get unlocking => '正在解锁';
+	@override String get unavailableTitle => '生物识别解锁不可用';
+	@override String get unavailableBody => '此设备不支持生物识别解锁。请改用您的设备凭据。';
+	@override String get useFallback => '使用设备凭据';
+}
+
+// Path: security.passcode
+class _Translations$security$passcode$zh_Hans extends Translations$security$passcode$en {
+	_Translations$security$passcode$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get enterTitle => '输入密码';
+	@override String get enterBody => '输入您的密码以解锁应用。';
+	@override String get setupTitle => '设置密码';
+	@override String get setupBody => '选择一个在生物识别不可用时可以使用的数字密码。';
+	@override String get confirmTitle => '确认密码';
+	@override String get reenter => '再次输入密码';
+	@override String get mismatch => '两次输入的密码不一致，请重试。';
+	@override String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		one: '密码错误。还剩 1 次尝试机会。',
+		other: '密码错误。还剩 ${attempts} 次尝试机会。',
+	);
+	@override String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '尝试次数过多。请现在重试。',
+		one: '尝试次数过多。请在 1 秒后重试。',
+		other: '尝试次数过多。请在 ${seconds} 秒后重试。',
+	);
+	@override String get disable => '停用密码';
+}
+
+// Path: announcements.fixtures
+class _Translations$announcements$fixtures$zh_Hans extends Translations$announcements$fixtures$en {
+	_Translations$announcements$fixtures$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$announcements$fixtures$welcome$zh_Hans welcome = _Translations$announcements$fixtures$welcome$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$changelog$zh_Hans changelog = _Translations$announcements$fixtures$changelog$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$deprecation$zh_Hans deprecation = _Translations$announcements$fixtures$deprecation$zh_Hans._(_root);
+	@override late final _Translations$announcements$fixtures$outage$zh_Hans outage = _Translations$announcements$fixtures$outage$zh_Hans._(_root);
+}
+
+// Path: diagnostics.experiments
+class _Translations$diagnostics$experiments$zh_Hans extends Translations$diagnostics$experiments$en {
+	_Translations$diagnostics$experiments$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '实验';
+	@override String get source => '来源';
+}
+
+// Path: permission.camera
+class _Translations$permission$camera$zh_Hans extends Translations$permission$camera$en {
+	_Translations$permission$camera$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '相机访问';
+	@override String get rationale => '我们使用相机拍摄新的个人头像照片。您可以随时拒绝。';
+}
+
+// Path: permission.photos
+class _Translations$permission$photos$zh_Hans extends Translations$permission$photos$en {
+	_Translations$permission$photos$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '照片库访问';
+	@override String get rationale => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。';
+}
+
+// Path: permission.location
+class _Translations$permission$location$zh_Hans extends Translations$permission$location$en {
+	_Translations$permission$location$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '位置访问';
+	@override String get rationale => '我们使用您的位置来个性化您的体验。您可以随时拒绝。';
+}
+
+// Path: settings.accessibility.preset
+class _Translations$settings$accessibility$preset$zh_Hans extends Translations$settings$accessibility$preset$en {
+	_Translations$settings$accessibility$preset$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get comfortable => '舒适';
+	@override String get comfortableDescription => '适合日常阅读的默认文字大小。';
+	@override String get large => '大号';
+	@override String get largeDescription => '更大的文字，便于一眼阅读。';
+	@override String get dyslexia => '阅读障碍友好';
+	@override String get dyslexiaDescription => '略大的文字，并在可用时使用阅读障碍友好字体。';
+}
+
+// Path: announcements.fixtures.welcome
+class _Translations$announcements$fixtures$welcome$zh_Hans extends Translations$announcements$fixtures$welcome$en {
+	_Translations$announcements$fixtures$welcome$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '欢迎使用本起步模板';
+	@override String get message => '为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。';
+}
+
+// Path: announcements.fixtures.changelog
+class _Translations$announcements$fixtures$changelog$zh_Hans extends Translations$announcements$fixtures$changelog$en {
+	_Translations$announcements$fixtures$changelog$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '本版本的新内容';
+	@override String get message => '公告让所有人无需应用更新即可获知最新动态。';
+}
+
+// Path: announcements.fixtures.deprecation
+class _Translations$announcements$fixtures$deprecation$zh_Hans extends Translations$announcements$fixtures$deprecation$en {
+	_Translations$announcements$fixtures$deprecation$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '有更新版本可用';
+	@override String get message => '此版本即将停止维护，请尽快更新。';
+}
+
+// Path: announcements.fixtures.outage
+class _Translations$announcements$fixtures$outage$zh_Hans extends Translations$announcements$fixtures$outage$en {
+	_Translations$announcements$fixtures$outage$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '服务中断';
+	@override String get message => '我们正在处理服务故障，部分操作可能失败。';
+}
+
 /// The flat map containing all translations for locale <zh-Hans>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -609,9 +1157,18 @@ extension on TranslationsZhHans {
 			'common.next' => '下一步',
 			'common.optional' => '可选',
 			'common.loading' => '正在加载',
+			'common.saving' => '正在保存…',
 			'common.notConnected' => '此操作尚未连接。',
 			'common.legalPlaceholderTitle' => '信息预览',
 			'common.legalPlaceholderBody' => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。',
+			'common.confirm' => '确认',
+			'common.success' => '成功',
+			'common.discard' => '放弃',
+			'common.error' => '错误',
+			'connectivity.online' => '已连接',
+			'connectivity.offline' => '你已离线。部分操作可能不可用。',
+			'connectivity.backOnline' => '网络已恢复。',
+			'connectivity.limited' => '连接受限。部分操作可能缓慢或不可用。',
 			'navigation.home' => '主页',
 			'navigation.pricing' => '价格',
 			'navigation.settings' => '设置',
@@ -721,6 +1278,24 @@ extension on TranslationsZhHans {
 			'settings.aboutBuild' => '构建信息',
 			'settings.terms' => '条款预览',
 			'settings.privacy' => '隐私预览',
+			'settings.enableBiometric' => '使用生物识别解锁',
+			'settings.passcode' => '密码',
+			'settings.autoLockDelay' => '自动锁定延迟',
+			'settings.lockOnBackground' => '切到后台时锁定',
+			'settings.analytics.optInTitle' => '分析',
+			'settings.analytics.optInBody' => '通过发送匿名使用数据帮助改进应用。您可以随时关闭。',
+			'settings.analytics.statusOn' => '已开启',
+			'settings.analytics.statusOff' => '已关闭',
+			'settings.accessibility.title' => '辅助功能',
+			'settings.accessibility.preset.comfortable' => '舒适',
+			'settings.accessibility.preset.comfortableDescription' => '适合日常阅读的默认文字大小。',
+			'settings.accessibility.preset.large' => '大号',
+			'settings.accessibility.preset.largeDescription' => '更大的文字，便于一眼阅读。',
+			'settings.accessibility.preset.dyslexia' => '阅读障碍友好',
+			'settings.accessibility.preset.dyslexiaDescription' => '略大的文字，并在可用时使用阅读障碍友好字体。',
+			'settings.haptics.title' => '触感反馈',
+			'settings.haptics.enable' => '对关键操作启用触感反馈',
+			'settings.about.license' => '许可证',
 			'auth.common.email' => '电子邮箱',
 			'auth.common.password' => '密码',
 			'auth.common.confirmPassword' => '确认密码',
@@ -738,6 +1313,10 @@ extension on TranslationsZhHans {
 			'auth.login.submitting' => '正在登录',
 			'auth.login.globalError' => '无法完成静态登录，已保留输入内容。',
 			'auth.login.success' => '静态登录已完成。',
+			'auth.login.lockedTitle' => '尝试次数过多',
+			'auth.login.tooManyAttempts' => '失败尝试过多，请稍候。',
+			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
 			'auth.register.title' => '创建账户',
 			'auth.register.body' => '输入用于演示注册和确认行为的信息。',
 			'auth.register.acceptTerms' => '我同意条款与隐私预览。',
@@ -770,6 +1349,16 @@ extension on TranslationsZhHans {
 			'auth.otp.expired' => '验证码已过期，请申请新代码。',
 			'auth.otp.registrationSuccess' => '注册已验证。',
 			'auth.otp.passwordResetSuccess' => '重置请求已验证。',
+			'auth.otp.mfaSuccess' => '登录已验证。',
+			'auth.otp.lockedTitle' => '尝试次数过多',
+			'auth.otp.tooManyAttempts' => '失败尝试过多，请稍候。',
+			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
+			'auth.otp.mfaTitle' => '验证登录',
+			'auth.otp.mfaBody' => '输入我们发送的六位验证码以完成登录。',
+			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '将在 ${seconds} 秒后过期', ), 
+			'auth.otp.expiredTitle' => '验证码已过期',
+			'auth.otp.expiredBody' => '您的验证码已过期，请重新获取以继续。',
 			'auth.resetPassword.title' => '设置新密码',
 			'auth.resetPassword.body' => '使用高强度密码，并确保两次输入完全一致。',
 			'auth.resetPassword.newPassword' => '新密码',
@@ -796,6 +1385,58 @@ extension on TranslationsZhHans {
 			'profile.update.discardBody' => '未保存的个人资料更改将被清除。',
 			'profile.update.stay' => '继续编辑',
 			'profile.update.discard' => '放弃更改',
+			'security.biometric.lockTitle' => '使用生物识别解锁',
+			'security.biometric.lockBody' => '使用您的指纹或面容解锁应用。',
+			'security.biometric.authFailedTitle' => '认证失败，请重试。',
+			'security.biometric.unlock' => '解锁',
+			'security.biometric.unlocking' => '正在解锁',
+			'security.biometric.unavailableTitle' => '生物识别解锁不可用',
+			'security.biometric.unavailableBody' => '此设备不支持生物识别解锁。请改用您的设备凭据。',
+			'security.biometric.useFallback' => '使用设备凭据',
+			'security.passcode.enterTitle' => '输入密码',
+			'security.passcode.enterBody' => '输入您的密码以解锁应用。',
+			'security.passcode.setupTitle' => '设置密码',
+			'security.passcode.setupBody' => '选择一个在生物识别不可用时可以使用的数字密码。',
+			'security.passcode.confirmTitle' => '确认密码',
+			'security.passcode.reenter' => '再次输入密码',
+			'security.passcode.mismatch' => '两次输入的密码不一致，请重试。',
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, one: '密码错误。还剩 1 次尝试机会。', other: '密码错误。还剩 ${attempts} 次尝试机会。', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '尝试次数过多。请现在重试。', one: '尝试次数过多。请在 1 秒后重试。', other: '尝试次数过多。请在 ${seconds} 秒后重试。', ), 
+			'security.passcode.disable' => '停用密码',
+			'forceUpdate.title' => '需要更新',
+			'forceUpdate.body' => '此版本已不再受支持。请更新至最新版本以继续。',
+			'forceUpdate.updateNow' => '立即更新',
+			'softUpdate.title' => '有新版本可用',
+			'softUpdate.body' => '更新至最新版本以获取最新改进和修复。',
+			'softUpdate.update' => '更新',
+			'softUpdate.later' => '稍后',
+			'session.expired' => '您的会话已过期，请重新登录。',
+			'session.signedOut' => '您已退出登录。',
+			'session.signedInPreview' => ({required Object userId}) => '已以 ${userId} 身份登录',
+			'session.unavailable' => '登录功能尚未连接。',
+			'splash.loading' => '正在启动',
+			'splash.tagline' => '精心打造的起点',
+			'splash.error' => '无法完成启动。',
+			'states.emptyTitle' => '暂时没有内容',
+			'states.emptyBody' => '内容可用后将显示在这里。',
+			'states.errorTitle' => '无法加载',
+			'states.errorBody' => '加载时出现问题。请重试。',
+			'states.loadingTitle' => '加载中…',
+			'announcements.dismiss' => '关闭',
+			'announcements.actionLearnMore' => '了解更多',
+			'announcements.dismissFailed' => '无法关闭此公告。',
+			'announcements.severityInfo' => '信息',
+			'announcements.severitySuccess' => '成功',
+			'announcements.severityWarning' => '警告',
+			'announcements.severityCritical' => '严重',
+			'announcements.fixtures.welcome.title' => '欢迎使用本起步模板',
+			'announcements.fixtures.welcome.message' => '为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。',
+			'announcements.fixtures.changelog.title' => '本版本的新内容',
+			'announcements.fixtures.changelog.message' => '公告让所有人无需应用更新即可获知最新动态。',
+			'announcements.fixtures.deprecation.title' => '有更新版本可用',
+			'announcements.fixtures.deprecation.message' => '此版本即将停止维护，请尽快更新。',
+			'announcements.fixtures.outage.title' => '服务中断',
+			'announcements.fixtures.outage.message' => '我们正在处理服务故障，部分操作可能失败。',
 			'validation.required' => ({required Object field}) => '${field} 为必填项。',
 			'validation.email' => '请输入有效的电子邮箱。',
 			'validation.passwordWeak' => '至少使用 8 个字符，并包含一个大写字母和一个数字。',
@@ -816,10 +1457,19 @@ extension on TranslationsZhHans {
 			'diagnostics.build' => '构建版本',
 			'diagnostics.layout' => '布局类别',
 			'diagnostics.interaction' => '交互策略',
+			'diagnostics.lifecycle' => '应用生命周期',
 			'diagnostics.viewingEnvironment' => '观看环境',
 			'diagnostics.locale' => '语言区域',
 			'diagnostics.capabilities' => '平台能力',
+			'diagnostics.secureStorage' => '安全存储',
+			'diagnostics.crashReporting' => '崩溃报告',
+			'diagnostics.crashReportingNone' => '未配置',
+			'diagnostics.analytics' => '分析',
+			'diagnostics.analyticsNone' => '未配置',
+			'diagnostics.featureFlags' => '功能开关',
 			'diagnostics.redactedNotice' => '诊断信息不包含凭据或用户内容。',
+			'diagnostics.experiments.title' => '实验',
+			'diagnostics.experiments.source' => '来源',
 			'devGallery.title' => '生产页面图库',
 			'devGallery.search' => '搜索用例',
 			'devGallery.screen' => '页面',
@@ -882,9 +1532,35 @@ extension on TranslationsZhHans {
 			'devGallery.screenProfile' => '更新资料',
 			'devGallery.screenPricing' => '方案定价',
 			'devGallery.screenSettings' => '设置',
+			'devGallery.screenConnectivity' => '连接状态栏',
+			'devGallery.screenForceUpdate' => '强制更新',
+			'devGallery.screenSoftUpdate' => '建议更新',
+			'devGallery.screenBusy' => '忙碌指示器',
 			'devGallery.screenSystem' => '系统界面',
 			'devGallery.screenOverlays' => '浮层',
+			'devGallery.screenSplash' => '应用内启动页',
+			'devGallery.screenStateViews' => '状态视图',
+			'devGallery.screenFormScaffolding' => '表单脚手架',
+			'devGallery.screenAnnouncements' => '公告栏',
+			'devGallery.caseSplashLoading' => '启动中',
+			'devGallery.caseSplashReady' => '就绪',
+			'devGallery.caseSplashError' => '启动错误',
+			'devGallery.caseStateEmpty' => '空状态',
+			'devGallery.caseStateError' => '错误',
+			'devGallery.caseStateLoading' => '加载中',
+			'devGallery.caseFormScaffoldDisabled' => '提交已禁用',
+			'devGallery.caseFormScaffoldEnabled' => '提交已启用',
+			'devGallery.caseFormScaffoldSubmitting' => '提交中',
+			'devGallery.caseAnnouncementsInfo' => '信息',
+			'devGallery.caseAnnouncementsSuccess' => '成功',
+			'devGallery.caseAnnouncementsWarning' => '警告',
+			'devGallery.caseAnnouncementsCritical' => '严重',
 			'devGallery.caseDefault' => '默认',
+			'devGallery.caseHardBlock' => '强制阻止',
+			'devGallery.caseSoftUpdate' => '建议更新',
+			'devGallery.caseBusyIndeterminate' => '不确定进度',
+			'devGallery.caseBusyDeterminate' => '确定进度',
+			'devGallery.caseBusyOverlay' => '模态遮罩',
 			'devGallery.caseExpandedCopy' => '扩展文案',
 			'devGallery.caseFirst' => '第一步',
 			'devGallery.caseMiddle' => '中间',
@@ -918,7 +1594,110 @@ extension on TranslationsZhHans {
 			'devGallery.casePopover' => '弹出层',
 			'devGallery.caseTooltip' => '工具提示',
 			'devGallery.caseKeyboardInset' => '键盘遮挡表单',
+			'devGallery.screenSession' => '会话',
+			'devGallery.caseSessionLoggedOut' => '已退出登录',
+			'devGallery.caseSessionLoggedIn' => '已登录',
+			'devGallery.screenAnalytics' => '分析数据选项',
+			'devGallery.screenBiometricLock' => '生物识别锁',
+			'devGallery.caseLocked' => '已锁定',
 			'devGallery.caseNotFound' => '请求的图库用例未注册。',
+			'devGallery.screenAccessibility' => '辅助功能预设',
+			'devGallery.caseAccessibilityComfortable' => '舒适预设',
+			'devGallery.caseAccessibilityLarge' => '大号预设',
+			'devGallery.caseAccessibilityDyslexia' => '阅读障碍预设',
+			'devGallery.screenPullRefresh' => '下拉刷新',
+			'devGallery.casePullRefreshList' => '可刷新列表',
+			'devGallery.casePullRefreshGrid' => '自适应网格',
+			'devGallery.screenHaptics' => '触感反馈',
+			'devGallery.caseHapticKinds' => '全部类型',
+			'devGallery.caseHapticSelection' => '选择',
+			'devGallery.caseHapticImpactLight' => '轻度震动',
+			'devGallery.caseHapticImpactMedium' => '中度震动',
+			'devGallery.caseHapticImpactHeavy' => '重度震动',
+			'devGallery.caseHapticSuccess' => '成功',
+			'devGallery.caseHapticWarning' => '警告',
+			'devGallery.caseHapticError' => '错误',
+			'devGallery.screenSkeleton' => '骨架加载',
+			'devGallery.caseSkeletonStatic' => '静态（减少动态效果）',
+			'devGallery.caseSkeletonShimmer' => '微光',
+			'devGallery.screenOtpMfa' => 'MFA 验证',
+			'devGallery.caseCountdown' => '倒计时',
+			'devGallery.screenNotifications' => '通知',
+			'devGallery.caseNotificationsNotRequested' => '权限说明',
+			'devGallery.caseNotificationsGranted' => '已授予',
+			'devGallery.caseNotificationsDenied' => '已阻止',
+			'devGallery.screenPermissions' => '权限',
+			'devGallery.casePermissionRationale' => '说明',
+			'devGallery.casePermissionDenied' => '已拒绝',
+			'devGallery.casePermissionPermanentlyDenied' => '永久拒绝',
+			'devGallery.screenLicense' => '许可证',
+			'devGallery.screenShare' => '分享面板',
+			'devGallery.screenAppUpdate' => '应用内更新',
+			'devGallery.screenSearchPagination' => '搜索与分页',
+			'devGallery.caseSearchField' => '搜索框',
+			'devGallery.caseSearchPaged' => '分页列表',
+			'devGallery.caseSearchPagedNoBackend' => '分页列表（无后端）',
+			'devGallery.screenToastDialogs' => '提示与对话框',
+			'devGallery.caseToastSuccess' => '成功提示',
+			'devGallery.caseToastInfo' => '信息提示',
+			'devGallery.caseToastWarning' => '警告提示',
+			'devGallery.caseToastError' => '错误提示',
+			'devGallery.caseDialogConfirm' => '确认对话框',
+			'devGallery.caseDialogDestroy' => '删除对话框',
+			'devGallery.screenPasscodeEntry' => '密码输入',
+			'devGallery.screenPasscodeSetup' => '密码设置',
+			'devGallery.casePasscodeIdle' => '空闲',
+			'devGallery.casePasscodeError' => '错误',
+			'devGallery.casePasscodeLockedOut' => '已锁定',
+			'devGallery.casePasscodeSetupMismatch' => '确认不匹配',
+			'devGallery.screenFeedback' => '反馈',
+			'devGallery.caseFeedbackDrafting' => '编写中',
+			'devGallery.caseFeedbackSubmitting' => '提交中',
+			'devGallery.caseFeedbackFailed' => '失败',
+			_ => null,
+		} ?? switch (path) {
+			'devGallery.caseFeedbackSuccess' => '成功',
+			'notifications.enableTitle' => '开启通知',
+			'notifications.enableBody' => '及时获取账户和活动的更新。你可以随时更改此设置。',
+			'notifications.deny' => '暂不',
+			'notifications.allow' => '允许',
+			'notifications.enableBlockedTitle' => '通知已被阻止',
+			'notifications.enableBlockedBody' => '打开系统设置以允许此应用接收通知。',
+			'notifications.disabled' => '此模板中通知未连接。',
+			'permission.camera.title' => '相机访问',
+			'permission.camera.rationale' => '我们使用相机拍摄新的个人头像照片。您可以随时拒绝。',
+			'permission.photos.title' => '照片库访问',
+			'permission.photos.rationale' => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。',
+			'permission.location.title' => '位置访问',
+			'permission.location.rationale' => '我们使用您的位置来个性化您的体验。您可以随时拒绝。',
+			'permission.continueRequest' => '继续',
+			'permission.notNow' => '暂不',
+			'permission.openSettings' => '打开设置',
+			'permission.denied' => '权限已被拒绝。您可以随时重试。',
+			'permission.permanentlyDenied' => '权限已被阻止。请在系统设置中开启以继续。',
+			'share.success' => '已分享',
+			'share.unavailable' => '此设备不支持分享。',
+			'share.cancelled' => '已取消分享。',
+			'update.checkForUpdates' => '检查更新',
+			'update.available' => '有可用更新。',
+			'update.notAvailable' => '已是最新版本。',
+			'update.required' => '需要更新才能继续。',
+			'search.title' => '搜索',
+			'search.placeholder' => '搜索…',
+			'search.emptyTitle' => '暂无结果',
+			'search.emptyBody' => '请尝试其他搜索词。',
+			'search.errorTitle' => '搜索暂不可用',
+			'feedback.title' => '发送反馈',
+			'feedback.messageLabel' => '内容',
+			'feedback.messageHint' => '发生了什么，或有什么可以改进？',
+			'feedback.includeScreenshot' => '附上截图',
+			'feedback.emailOptional' => '回复邮箱',
+			'feedback.submit' => '发送',
+			'feedback.cancel' => '取消',
+			'feedback.successTitle' => '谢谢！',
+			'feedback.successBody' => '您的反馈已发送。',
+			'feedback.failedTitle' => '暂时无法发送您的反馈。',
+			'feedback.shakeEnabled' => '摇动以打开反馈',
 			_ => null,
 		};
 	}

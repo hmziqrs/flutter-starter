@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 
 void main() {
   group('AppEnvironment', () {
@@ -31,11 +32,16 @@ void main() {
         appEnvironment: 'development',
         enableVerboseLogging: 'true',
         enableDevTools: 'true',
+        iosAppleId: '1234567890',
+        allowedDeepLinkHosts: AllowedDeepLinkHosts.parse('app.example.com'),
       );
 
       expect(config.environment, AppEnvironment.development);
       expect(config.verboseLoggingEnabled, isTrue);
       expect(config.developmentToolsEnabled, isTrue);
+      expect(config.iosAppleId, '1234567890');
+      expect(config.allowedDeepLinkHosts.allows('app.example.com'), isTrue);
+      expect(config.allowedDeepLinkHosts.allows('evil.example.com'), isFalse);
     });
 
     test('keeps development flags ineffective outside development', () {
@@ -43,6 +49,8 @@ void main() {
         appEnvironment: 'staging',
         enableVerboseLogging: 'true',
         enableDevTools: 'true',
+        iosAppleId: '',
+        allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
       );
 
       expect(config.enableVerboseLogging, isTrue);
@@ -57,6 +65,8 @@ void main() {
           appEnvironment: 'development',
           enableVerboseLogging: 'yes',
           enableDevTools: 'true',
+          iosAppleId: '',
+          allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
         ),
         throwsA(isA<AppConfigException>()),
       );
@@ -68,6 +78,8 @@ void main() {
           appEnvironment: 'production',
           enableVerboseLogging: 'false',
           enableDevTools: 'true',
+          iosAppleId: '',
+          allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
         ),
         throwsA(isA<AppConfigException>()),
       );

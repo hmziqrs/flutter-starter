@@ -17,9 +17,20 @@
     "next": "下一步",
     "optional": "可选",
     "loading": "正在加载",
+    "saving": "正在保存…",
     "notConnected": "此操作尚未连接。",
     "legalPlaceholderTitle": "信息预览",
-    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。"
+    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。",
+    "confirm": "确认",
+    "success": "成功",
+    "discard": "放弃",
+    "error": "错误"
+  },
+  "connectivity": {
+    "online": "已连接",
+    "offline": "你已离线。部分操作可能不可用。",
+    "backOnline": "网络已恢复。",
+    "limited": "连接受限。部分操作可能缓慢或不可用。"
   },
   "navigation": {
     "home": "主页",
@@ -140,7 +151,35 @@
     "privacyBody": "静态阶段仅保存外观和语言偏好。",
     "aboutBuild": "构建信息",
     "terms": "条款预览",
-    "privacy": "隐私预览"
+    "privacy": "隐私预览",
+    "enableBiometric": "使用生物识别解锁",
+    "passcode": "密码",
+    "autoLockDelay": "自动锁定延迟",
+    "lockOnBackground": "切到后台时锁定",
+    "analytics": {
+      "optInTitle": "分析",
+      "optInBody": "通过发送匿名使用数据帮助改进应用。您可以随时关闭。",
+      "statusOn": "已开启",
+      "statusOff": "已关闭"
+    },
+    "accessibility": {
+      "title": "辅助功能",
+      "preset": {
+        "comfortable": "舒适",
+        "comfortableDescription": "适合日常阅读的默认文字大小。",
+        "large": "大号",
+        "largeDescription": "更大的文字，便于一眼阅读。",
+        "dyslexia": "阅读障碍友好",
+        "dyslexiaDescription": "略大的文字，并在可用时使用阅读障碍友好字体。"
+      }
+    },
+    "haptics": {
+      "title": "触感反馈",
+      "enable": "对关键操作启用触感反馈"
+    },
+    "about": {
+      "license": "许可证"
+    }
   },
   "auth": {
     "common": {
@@ -162,7 +201,16 @@
       "submit": "登录",
       "submitting": "正在登录",
       "globalError": "无法完成静态登录，已保留输入内容。",
-      "success": "静态登录已完成。"
+      "success": "静态登录已完成。",
+      "lockedTitle": "尝试次数过多",
+      "tooManyAttempts": "失败尝试过多，请稍候。",
+      "attemptsRemaining(count)": {
+        "other": "剩余 $count 次尝试"
+      },
+      "lockedBody(seconds)": {
+        "zero": "现在可以重试。",
+        "other": "请在 $seconds 秒后重试。"
+      }
     },
     "register": {
       "title": "创建账户",
@@ -200,7 +248,24 @@
       "invalid": "验证码无效。",
       "expired": "验证码已过期，请申请新代码。",
       "registrationSuccess": "注册已验证。",
-      "passwordResetSuccess": "重置请求已验证。"
+      "passwordResetSuccess": "重置请求已验证。",
+      "mfaSuccess": "登录已验证。",
+      "lockedTitle": "尝试次数过多",
+      "tooManyAttempts": "失败尝试过多，请稍候。",
+      "attemptsRemaining(count)": {
+        "other": "剩余 $count 次尝试"
+      },
+      "lockedBody(seconds)": {
+        "zero": "现在可以重试。",
+        "other": "请在 $seconds 秒后重试。"
+      },
+      "mfaTitle": "验证登录",
+      "mfaBody": "输入我们发送的六位验证码以完成登录。",
+      "expiresIn(seconds)": {
+        "other": "将在 $seconds 秒后过期"
+      },
+      "expiredTitle": "验证码已过期",
+      "expiredBody": "您的验证码已过期，请重新获取以继续。"
     },
     "resetPassword": {
       "title": "设置新密码",
@@ -235,6 +300,93 @@
       "discard": "放弃更改"
     }
   },
+  "security": {
+    "biometric": {
+      "lockTitle": "使用生物识别解锁",
+      "lockBody": "使用您的指纹或面容解锁应用。",
+      "authFailedTitle": "认证失败，请重试。",
+      "unlock": "解锁",
+      "unlocking": "正在解锁",
+      "unavailableTitle": "生物识别解锁不可用",
+      "unavailableBody": "此设备不支持生物识别解锁。请改用您的设备凭据。",
+      "useFallback": "使用设备凭据"
+    },
+    "passcode": {
+      "enterTitle": "输入密码",
+      "enterBody": "输入您的密码以解锁应用。",
+      "setupTitle": "设置密码",
+      "setupBody": "选择一个在生物识别不可用时可以使用的数字密码。",
+      "confirmTitle": "确认密码",
+      "reenter": "再次输入密码",
+      "mismatch": "两次输入的密码不一致，请重试。",
+      "incorrect(attempts)": {
+        "one": "密码错误。还剩 1 次尝试机会。",
+        "other": "密码错误。还剩 $attempts 次尝试机会。"
+      },
+      "lockedOut(seconds)": {
+        "zero": "尝试次数过多。请现在重试。",
+        "one": "尝试次数过多。请在 1 秒后重试。",
+        "other": "尝试次数过多。请在 $seconds 秒后重试。"
+      },
+      "disable": "停用密码"
+    }
+  },
+  "forceUpdate": {
+    "title": "需要更新",
+    "body": "此版本已不再受支持。请更新至最新版本以继续。",
+    "updateNow": "立即更新"
+  },
+  "softUpdate": {
+    "title": "有新版本可用",
+    "body": "更新至最新版本以获取最新改进和修复。",
+    "update": "更新",
+    "later": "稍后"
+  },
+  "session": {
+    "expired": "您的会话已过期，请重新登录。",
+    "signedOut": "您已退出登录。",
+    "signedInPreview": "已以 $userId 身份登录",
+    "unavailable": "登录功能尚未连接。"
+  },
+  "splash": {
+    "loading": "正在启动",
+    "tagline": "精心打造的起点",
+    "error": "无法完成启动。"
+  },
+  "states": {
+    "emptyTitle": "暂时没有内容",
+    "emptyBody": "内容可用后将显示在这里。",
+    "errorTitle": "无法加载",
+    "errorBody": "加载时出现问题。请重试。",
+    "loadingTitle": "加载中…"
+  },
+  "announcements": {
+    "dismiss": "关闭",
+    "actionLearnMore": "了解更多",
+    "dismissFailed": "无法关闭此公告。",
+    "severityInfo": "信息",
+    "severitySuccess": "成功",
+    "severityWarning": "警告",
+    "severityCritical": "严重",
+    "fixtures": {
+      "welcome": {
+        "title": "欢迎使用本起步模板",
+        "message": "为你的下一个产品提供坚实基础。关闭此公告即可开始浏览。"
+      },
+      "changelog": {
+        "title": "本版本的新内容",
+        "message": "公告让所有人无需应用更新即可获知最新动态。"
+      },
+      "deprecation": {
+        "title": "有更新版本可用",
+        "message": "此版本即将停止维护，请尽快更新。"
+      },
+      "outage": {
+        "title": "服务中断",
+        "message": "我们正在处理服务故障，部分操作可能失败。"
+      }
+    }
+  },
   "validation": {
     "required": "$field 为必填项。",
     "email": "请输入有效的电子邮箱。",
@@ -262,10 +414,21 @@
     "build": "构建版本",
     "layout": "布局类别",
     "interaction": "交互策略",
+    "lifecycle": "应用生命周期",
     "viewingEnvironment": "观看环境",
     "locale": "语言区域",
     "capabilities": "平台能力",
-    "redactedNotice": "诊断信息不包含凭据或用户内容。"
+    "secureStorage": "安全存储",
+    "crashReporting": "崩溃报告",
+    "crashReportingNone": "未配置",
+    "analytics": "分析",
+    "analyticsNone": "未配置",
+    "featureFlags": "功能开关",
+    "redactedNotice": "诊断信息不包含凭据或用户内容。",
+    "experiments": {
+      "title": "实验",
+      "source": "来源"
+    }
   },
   "devGallery": {
     "title": "生产页面图库",
@@ -330,9 +493,35 @@
     "screenProfile": "更新资料",
     "screenPricing": "方案定价",
     "screenSettings": "设置",
+    "screenConnectivity": "连接状态栏",
+    "screenForceUpdate": "强制更新",
+    "screenSoftUpdate": "建议更新",
+    "screenBusy": "忙碌指示器",
     "screenSystem": "系统界面",
     "screenOverlays": "浮层",
+    "screenSplash": "应用内启动页",
+    "screenStateViews": "状态视图",
+    "screenFormScaffolding": "表单脚手架",
+    "screenAnnouncements": "公告栏",
+    "caseSplashLoading": "启动中",
+    "caseSplashReady": "就绪",
+    "caseSplashError": "启动错误",
+    "caseStateEmpty": "空状态",
+    "caseStateError": "错误",
+    "caseStateLoading": "加载中",
+    "caseFormScaffoldDisabled": "提交已禁用",
+    "caseFormScaffoldEnabled": "提交已启用",
+    "caseFormScaffoldSubmitting": "提交中",
+    "caseAnnouncementsInfo": "信息",
+    "caseAnnouncementsSuccess": "成功",
+    "caseAnnouncementsWarning": "警告",
+    "caseAnnouncementsCritical": "严重",
     "caseDefault": "默认",
+    "caseHardBlock": "强制阻止",
+    "caseSoftUpdate": "建议更新",
+    "caseBusyIndeterminate": "不确定进度",
+    "caseBusyDeterminate": "确定进度",
+    "caseBusyOverlay": "模态遮罩",
     "caseExpandedCopy": "扩展文案",
     "caseFirst": "第一步",
     "caseMiddle": "中间",
@@ -366,6 +555,125 @@
     "casePopover": "弹出层",
     "caseTooltip": "工具提示",
     "caseKeyboardInset": "键盘遮挡表单",
-    "caseNotFound": "请求的图库用例未注册。"
+    "screenSession": "会话",
+    "caseSessionLoggedOut": "已退出登录",
+    "caseSessionLoggedIn": "已登录",
+    "screenAnalytics": "分析数据选项",
+    "screenBiometricLock": "生物识别锁",
+    "caseLocked": "已锁定",
+    "caseNotFound": "请求的图库用例未注册。",
+    "screenAccessibility": "辅助功能预设",
+    "caseAccessibilityComfortable": "舒适预设",
+    "caseAccessibilityLarge": "大号预设",
+    "caseAccessibilityDyslexia": "阅读障碍预设",
+    "screenPullRefresh": "下拉刷新",
+    "casePullRefreshList": "可刷新列表",
+    "casePullRefreshGrid": "自适应网格",
+    "screenHaptics": "触感反馈",
+    "caseHapticKinds": "全部类型",
+    "caseHapticSelection": "选择",
+    "caseHapticImpactLight": "轻度震动",
+    "caseHapticImpactMedium": "中度震动",
+    "caseHapticImpactHeavy": "重度震动",
+    "caseHapticSuccess": "成功",
+    "caseHapticWarning": "警告",
+    "caseHapticError": "错误",
+    "screenSkeleton": "骨架加载",
+    "caseSkeletonStatic": "静态（减少动态效果）",
+    "caseSkeletonShimmer": "微光",
+    "screenOtpMfa": "MFA 验证",
+    "caseCountdown": "倒计时",
+    "screenNotifications": "通知",
+    "caseNotificationsNotRequested": "权限说明",
+    "caseNotificationsGranted": "已授予",
+    "caseNotificationsDenied": "已阻止",
+    "screenPermissions": "权限",
+    "casePermissionRationale": "说明",
+    "casePermissionDenied": "已拒绝",
+    "casePermissionPermanentlyDenied": "永久拒绝",
+    "screenLicense": "许可证",
+    "screenShare": "分享面板",
+    "screenAppUpdate": "应用内更新",
+    "screenSearchPagination": "搜索与分页",
+    "caseSearchField": "搜索框",
+    "caseSearchPaged": "分页列表",
+    "caseSearchPagedNoBackend": "分页列表（无后端）",
+    "screenToastDialogs": "提示与对话框",
+    "caseToastSuccess": "成功提示",
+    "caseToastInfo": "信息提示",
+    "caseToastWarning": "警告提示",
+    "caseToastError": "错误提示",
+    "caseDialogConfirm": "确认对话框",
+    "caseDialogDestroy": "删除对话框",
+    "screenPasscodeEntry": "密码输入",
+    "screenPasscodeSetup": "密码设置",
+    "casePasscodeIdle": "空闲",
+    "casePasscodeError": "错误",
+    "casePasscodeLockedOut": "已锁定",
+    "casePasscodeSetupMismatch": "确认不匹配",
+    "screenFeedback": "反馈",
+    "caseFeedbackDrafting": "编写中",
+    "caseFeedbackSubmitting": "提交中",
+    "caseFeedbackFailed": "失败",
+    "caseFeedbackSuccess": "成功"
+  },
+  "notifications": {
+    "enableTitle": "开启通知",
+    "enableBody": "及时获取账户和活动的更新。你可以随时更改此设置。",
+    "deny": "暂不",
+    "allow": "允许",
+    "enableBlockedTitle": "通知已被阻止",
+    "enableBlockedBody": "打开系统设置以允许此应用接收通知。",
+    "disabled": "此模板中通知未连接。"
+  },
+  "permission": {
+    "camera": {
+      "title": "相机访问",
+      "rationale": "我们使用相机拍摄新的个人头像照片。您可以随时拒绝。"
+    },
+    "photos": {
+      "title": "照片库访问",
+      "rationale": "我们读取您的照片库以便选择个人头像。您可以随时拒绝。"
+    },
+    "location": {
+      "title": "位置访问",
+      "rationale": "我们使用您的位置来个性化您的体验。您可以随时拒绝。"
+    },
+    "continueRequest": "继续",
+    "notNow": "暂不",
+    "openSettings": "打开设置",
+    "denied": "权限已被拒绝。您可以随时重试。",
+    "permanentlyDenied": "权限已被阻止。请在系统设置中开启以继续。"
+  },
+  "share": {
+    "success": "已分享",
+    "unavailable": "此设备不支持分享。",
+    "cancelled": "已取消分享。"
+  },
+  "update": {
+    "checkForUpdates": "检查更新",
+    "available": "有可用更新。",
+    "notAvailable": "已是最新版本。",
+    "required": "需要更新才能继续。"
+  },
+  "search": {
+    "title": "搜索",
+    "placeholder": "搜索…",
+    "emptyTitle": "暂无结果",
+    "emptyBody": "请尝试其他搜索词。",
+    "errorTitle": "搜索暂不可用"
+  },
+  "feedback": {
+    "title": "发送反馈",
+    "messageLabel": "内容",
+    "messageHint": "发生了什么，或有什么可以改进？",
+    "includeScreenshot": "附上截图",
+    "emailOptional": "回复邮箱",
+    "submit": "发送",
+    "cancel": "取消",
+    "successTitle": "谢谢！",
+    "successBody": "您的反馈已发送。",
+    "failedTitle": "暂时无法发送您的反馈。",
+    "shakeEnabled": "摇动以打开反馈"
   }
 }

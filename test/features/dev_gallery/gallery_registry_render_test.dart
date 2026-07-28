@@ -6,13 +6,19 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/platform_capabilities_provider.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 import 'package:starter/features/dev_gallery/preview_frame.dart';
+import 'package:starter/features/experiments/experiment_source.dart';
+import 'package:starter/features/feature_flags/feature_flags_source.dart';
+import 'package:starter/features/feedback/feedback_controller.dart';
+import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
@@ -63,6 +69,22 @@ class _RegistryCaseHost extends StatelessWidget {
         platformCapabilitiesProvider.overrideWithValue(
           dependencies.platformCapabilities,
         ),
+        // Mirror the production composition root (app.dart): the DiagnosticsPage
+        // gallery case reads featureFlagsControllerProvider +
+        // experimentAssignmentsProvider + cacheStoreProvider, each of which
+        // throws until its port is overridden; the feedback gallery cases read
+        // feedbackControllerProvider (-> transport / metadata / draft). Seed the
+        // no-backend / real-local defaults from AppDependencies.inMemory so every
+        // registered case mounts without a composition-root gap.
+        featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
+        experimentSourceProvider.overrideWithValue(dependencies.experimentSource),
+        cacheStoreProvider.overrideWithValue(dependencies.cacheStore),
+        feedbackTransportProvider.overrideWithValue(dependencies.feedbackTransport),
+        initialFeedbackDraftProvider.overrideWithValue(dependencies.initialFeedbackDraft),
+        initialFeedbackShakeEnabledProvider.overrideWithValue(
+          dependencies.initialFeedbackShakeEnabled,
+        ),
+        feedbackAppMetadataProvider.overrideWithValue(dependencies.feedbackAppMetadata),
       ],
       child: TranslationProvider(
         child: MaterialApp(
@@ -89,4 +111,6 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: false,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

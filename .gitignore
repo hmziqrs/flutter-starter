@@ -44,3 +44,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Golden test failure diffs (transient output from `flutter test --update-goldens` misses)
+test/goldens/failures/
+
+# Native build caches created when adding plugins with native deps (SPM, Kotlin)
+**/xcshareddata/swiftpm/
+android/.kotlin/

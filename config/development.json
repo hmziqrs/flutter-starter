@@ -1,5 +1,7 @@
 {
   "APP_ENV": "development",
   "ENABLE_VERBOSE_LOGGING": "true",
-  "ENABLE_DEV_TOOLS": "true"
+  "ENABLE_DEV_TOOLS": "true",
+  "IOS_APPLE_ID": "",
+  "ALLOWED_DEEP_LINK_HOSTS": ""
 }

@@ -1,0 +1,47 @@
+# flutter_native_splash configuration.
+#
+# Regenerate the committed native launch assets with:
+#   just splash         # dart run flutter_native_splash:create
+#   just splash-remove  # dart run flutter_native_splash:remove
+#
+# Brand color sourcing (keep in sync with the app theme):
+# The background is pinned to the SAME accent value the neutral-default theme
+# ships in lib/shared/theme/forui_theme_factory.dart (`_accentColors`).
+# For AppAccent.neutral, `_accentColors` returns the generated theme's
+# `colors.primary`, which resolves (see lib/shared/theme/colors.dart) to:
+#   - light brightness: FColors.lightColors.primary  = #171717
+#   - dark  brightness: FColors.darkColors.primary   = #E5E5E5
+# Do NOT introduce a divergent brand color here — if the neutral-default
+# primary token changes in generated_forui_theme.dart, update these two
+# hex values and rerun `just splash`.
+#
+# Logo assets live in assets/brand/. logo_light.png is shown on the light
+# (default) splash background; logo_dark.png on the dark splash background.
+# The tracked assets are PLACEHOLDERS — replace before release (see
+# docs/release_readiness.md).
+
+flutter_native_splash:
+  # Brand background — neutral-default primary token (see header note).
+  color: "#171717"
+  color_dark: "#E5E5E5"
+
+  # Brand logo — sized for ~4x pixel density (~288px renders at ~72dp).
+  image: assets/brand/logo_light.png
+  image_dark: assets/brand/logo_dark.png
+
+  # Android 12+ (Splash Screen API) uses a separate icon-on-background
+  # surface; mirror the same brand tokens so the handoff matches.
+  android_12:
+    color: "#171717"
+    color_dark: "#E5E5E5"
+    image: assets/brand/logo_light.png
+    image_dark: assets/brand/logo_dark.png
+    icon_background_color: "#171717"
+    icon_background_color_dark: "#E5E5E5"
+
+  # Platform coverage matches the starter's targets (iOS/Android/macOS).
+  # Web is optional in the starter; generation is enabled so a web build
+  # also receives a branded favicon/splash.
+  android: true
+  ios: true
+  web: true

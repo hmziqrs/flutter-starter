@@ -14,6 +14,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef OtpSubmitCallback = FutureOr<void> Function(OtpFormValue value);
 typedef OtpResendCallback = FutureOr<void> Function();
@@ -62,7 +63,7 @@ class _OtpView extends ConsumerStatefulWidget {
   ConsumerState<_OtpView> createState() => _OtpViewState();
 }
 
-class _OtpViewState extends ConsumerState<_OtpView> {
+class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _otpFieldKey = GlobalKey<FormFieldState<String>>();
   final _otpFocus = FocusNode(debugLabel: 'otp.code');
@@ -80,17 +81,92 @@ class _OtpViewState extends ConsumerState<_OtpView> {
   bool _callbackSubmitting = false;
   String _savedCode = '';
 
+  // state-restoration: the typed OTP code draft survives a simulated process
+  // death. The code is a transient auth token (not a long-lived secret), so
+  // restoring it is the data-loss-prevention this feature exists for; a fresh
+  // restoration build (empty draft) keeps the fixture code below.
+  final RestorableString _codeDraft = RestorableString('');
+
+  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
+  // decremented by a 1s Timer.periodic; submit and resend are OR-ed with _locked.
+  Timer? _countdownTimer;
+  int _liveLockedSeconds = 0;
+
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == OtpPresentationStatus.submitting;
 
   bool get _resending =>
       _callbackResending || widget.presentation.status == OtpPresentationStatus.resending;
 
-  bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0;
+  bool get _locked =>
+      widget.presentation.status == OtpPresentationStatus.locked && _liveLockedSeconds > 0;
+
+  bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0 || _locked;
+
+  @override
+  String get restorationId => 'otp-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_codeDraft, 'code_draft');
+    // Only override the fixture when a real user draft exists, so a fresh
+    // restoration build keeps the dev-gallery/fixture code.
+    if (_codeDraft.value.isNotEmpty) {
+      _otpController.value = TextEditingValue(
+        text: _codeDraft.value,
+        selection: TextSelection.collapsed(offset: _codeDraft.value.length),
+      );
+      _savedCode = _codeDraft.value;
+    }
+  }
+
+  void _syncCodeDraft() {
+    if (_otpController.text != _codeDraft.value) {
+      _codeDraft.value = _otpController.text;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _otpController.addListener(_syncCodeDraft);
+    _liveLockedSeconds = widget.presentation.lockedSeconds;
+    _startLockoutCountdownIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OtpView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
+      _liveLockedSeconds = widget.presentation.lockedSeconds;
+      _startLockoutCountdownIfNeeded();
+    }
+  }
+
+  void _startLockoutCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    if (_liveLockedSeconds <= 0) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
+        if (_liveLockedSeconds <= 0) timer.cancel();
+      });
+    });
+  }
 
   @override
   void dispose() {
-    _otpController.dispose();
+    _countdownTimer?.cancel();
+    _otpController
+      ..removeListener(_syncCodeDraft)
+      ..dispose();
+    _codeDraft.dispose();
     _otpFocus.dispose();
     _submitFocus.dispose();
     _resendFocus.dispose();
@@ -102,13 +178,17 @@ class _OtpViewState extends ConsumerState<_OtpView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final (title, body) = _copy(context);
-    return AuthPageScaffold(
-      screenId: 'otp',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.badgeCheck,
-      title: title,
-      body: body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: context.t.auth.otp.submitting,
+      child: AuthPageScaffold(
+        screenId: 'otp',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.badgeCheck,
+        title: title,
+        body: body,
+        form: form,
+      ),
     );
   }
 
@@ -134,6 +214,14 @@ class _OtpViewState extends ConsumerState<_OtpView> {
             Text(title, style: context.theme.typography.display.xl2),
             const SizedBox(height: AppSpacing.md),
             Text(body, style: context.theme.typography.body.md),
+            if (_countdownAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
+            if (_attemptsRemainingAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
             if (_feedbackAlert(context) case final alert?) ...[
               const SizedBox(height: AppSpacing.xl),
               alert,
@@ -150,7 +238,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
                   label: translations.auth.otp.code,
                   controller: _otpController,
                   focusNode: _otpFocus,
-                  enabled: !_submitting,
+                  enabled: !(_submitting || _locked),
                   secure: true,
                   autofocus: true,
                   builder: (context, editorFocusNode, completeEditing) {
@@ -175,7 +263,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
                         FilteringTextInputFormatter.allow(RegExp('[0-9]')),
                         LengthLimitingTextInputFormatter(6),
                       ],
-                      enabled: !_submitting,
+                      enabled: !(_submitting || _locked),
                       autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                       forceErrorText: forcedError,
                       validator: (value) {
@@ -207,14 +295,14 @@ class _OtpViewState extends ConsumerState<_OtpView> {
             FButton(
               key: const ValueKey('auth-otp-submit'),
               focusNode: _submitFocus,
-              onPress: _submitting
-                  ? isTenFoot
-                        ? () {}
-                        : null
+              onPress: _locked
+                  ? null
+                  : _submitting
+                  ? (isTenFoot ? () {} : null)
                   : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting ? translations.auth.otp.submitting : translations.auth.otp.submit,
+                translations.auth.otp.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -239,6 +327,36 @@ class _OtpViewState extends ConsumerState<_OtpView> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Live expiry countdown notice. Rendered while the issued code has not yet
+  /// expired (`remainingSeconds > 0`) and no terminal status is active. The
+  /// `expiresIn(seconds:)` plural key drives the localized text; the numeric
+  /// value flows LTR per the feature spec's RTL note. The gallery pins a fixed
+  /// `remainingSeconds` so the golden stays wall-clock-stable.
+  Widget? _countdownAlert(BuildContext context) {
+    final remaining = widget.presentation.remainingSeconds;
+    if (remaining <= 0) {
+      return null;
+    }
+    final status = widget.presentation.status;
+    if (status == OtpPresentationStatus.expired ||
+        status == OtpPresentationStatus.success ||
+        status == OtpPresentationStatus.globalFailure ||
+        status == OtpPresentationStatus.locked) {
+      return null;
+    }
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: FAlert(
+        key: const ValueKey('auth-otp-countdown'),
+        icon: const Icon(FLucideIcons.clock),
+        title: Text(
+          context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
+          textAlign: TextAlign.start,
         ),
       ),
     );
@@ -273,11 +391,34 @@ class _OtpViewState extends ConsumerState<_OtpView> {
           switch (widget.purpose) {
             OtpPurpose.registration => translations.auth.otp.registrationSuccess,
             OtpPurpose.passwordReset => translations.auth.otp.passwordResetSuccess,
+            OtpPurpose.mfa => translations.auth.otp.mfaSuccess,
           },
         ),
         icon: const Icon(FLucideIcons.circleCheck),
       ),
+      OtpPresentationStatus.locked => FAlert(
+        key: const ValueKey('auth-otp-locked'),
+        variant: .destructive,
+        title: Text(translations.auth.otp.lockedTitle),
+        subtitle: Text(
+          translations.auth.otp.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
+        ),
+      ),
     };
+  }
+
+  /// Non-destructive "attempts remaining" notice, shown while the user still
+  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// destructive [_feedbackAlert] carries the countdown instead).
+  Widget? _attemptsRemainingAlert(BuildContext context) {
+    final remaining = widget.presentation.attemptsRemaining;
+    if (remaining <= 0 || widget.presentation.status == OtpPresentationStatus.locked) {
+      return null;
+    }
+    return FAlert(
+      key: const ValueKey('auth-otp-attempts-remaining'),
+      title: Text(context.t.auth.otp.attemptsRemaining(n: remaining, count: remaining)),
+    );
   }
 
   (String, String) _copy(BuildContext context) {
@@ -288,6 +429,7 @@ class _OtpViewState extends ConsumerState<_OtpView> {
         translations.passwordResetTitle,
         translations.passwordResetBody,
       ),
+      OtpPurpose.mfa => (translations.mfaTitle, translations.mfaBody),
     };
   }
 

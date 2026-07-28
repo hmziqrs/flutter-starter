@@ -1,0 +1,20 @@
+name: test_server
+description: >-
+  Standalone in-repo Dart (shelf) server implementing the backend contracts the
+  starter's features talk to, for development runs and integration tests. Never
+  compiled into the app.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  shelf: ^1.4.0
+  # The dart:io adapter (`package:shelf/shelf_io.dart`, `serve`) ships inside the
+  # `shelf` package itself — there is no separate `shelf_io` package on pub.dev.
+  shelf_router: ^1.1.0
+
+dev_dependencies:
+  lints: ^5.1.0
+  test: ^1.25.0

@@ -42,6 +42,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	// Translations
 	late final Translations$app$en app = Translations$app$en.internal(_root);
 	late final Translations$common$en common = Translations$common$en.internal(_root);
+	late final Translations$connectivity$en connectivity = Translations$connectivity$en.internal(_root);
 	late final Translations$navigation$en navigation = Translations$navigation$en.internal(_root);
 	late final Translations$onboarding$en onboarding = Translations$onboarding$en.internal(_root);
 	late final Translations$pricing$en pricing = Translations$pricing$en.internal(_root);
@@ -49,11 +50,24 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
 	late final Translations$profile$en profile = Translations$profile$en.internal(_root);
+	late final Translations$security$en security = Translations$security$en.internal(_root);
+	late final Translations$forceUpdate$en forceUpdate = Translations$forceUpdate$en.internal(_root);
+	late final Translations$softUpdate$en softUpdate = Translations$softUpdate$en.internal(_root);
+	late final Translations$session$en session = Translations$session$en.internal(_root);
+	late final Translations$splash$en splash = Translations$splash$en.internal(_root);
+	late final Translations$states$en states = Translations$states$en.internal(_root);
+	late final Translations$announcements$en announcements = Translations$announcements$en.internal(_root);
 	late final Translations$validation$en validation = Translations$validation$en.internal(_root);
 	late final Translations$routeError$en routeError = Translations$routeError$en.internal(_root);
 	late final Translations$startupFailure$en startupFailure = Translations$startupFailure$en.internal(_root);
 	late final Translations$diagnostics$en diagnostics = Translations$diagnostics$en.internal(_root);
 	late final Translations$devGallery$en devGallery = Translations$devGallery$en.internal(_root);
+	late final Translations$notifications$en notifications = Translations$notifications$en.internal(_root);
+	late final Translations$permission$en permission = Translations$permission$en.internal(_root);
+	late final Translations$share$en share = Translations$share$en.internal(_root);
+	late final Translations$update$en update = Translations$update$en.internal(_root);
+	late final Translations$search$en search = Translations$search$en.internal(_root);
+	late final Translations$feedback$en feedback = Translations$feedback$en.internal(_root);
 }
 
 // Path: app
@@ -118,6 +132,9 @@ class Translations$common$en {
 	/// en: 'Loading'
 	String get loading => 'Loading';
 
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
 	/// en: 'This action is not connected yet.'
 	String get notConnected => 'This action is not connected yet.';
 
@@ -126,6 +143,39 @@ class Translations$common$en {
 
 	/// en: 'This starter shows deterministic placeholder content until product-specific legal text is approved.'
 	String get legalPlaceholderBody => 'This starter shows deterministic placeholder content until product-specific legal text is approved.';
+
+	/// en: 'Confirm'
+	String get confirm => 'Confirm';
+
+	/// en: 'Success'
+	String get success => 'Success';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Error'
+	String get error => 'Error';
+}
+
+// Path: connectivity
+class Translations$connectivity$en {
+	Translations$connectivity$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Online'
+	String get online => 'Online';
+
+	/// en: 'You are offline. Some actions may be unavailable.'
+	String get offline => 'You are offline. Some actions may be unavailable.';
+
+	/// en: 'You are back online.'
+	String get backOnline => 'You are back online.';
+
+	/// en: 'Limited connection. Some actions may be slow or unavailable.'
+	String get limited => 'Limited connection. Some actions may be slow or unavailable.';
 }
 
 // Path: navigation
@@ -455,6 +505,23 @@ class Translations$settings$en {
 
 	/// en: 'Privacy preview'
 	String get privacy => 'Privacy preview';
+
+	/// en: 'Unlock with biometrics'
+	String get enableBiometric => 'Unlock with biometrics';
+
+	/// en: 'Passcode'
+	String get passcode => 'Passcode';
+
+	/// en: 'Auto-lock delay'
+	String get autoLockDelay => 'Auto-lock delay';
+
+	/// en: 'Lock when backgrounded'
+	String get lockOnBackground => 'Lock when backgrounded';
+
+	late final Translations$settings$analytics$en analytics = Translations$settings$analytics$en.internal(_root);
+	late final Translations$settings$accessibility$en accessibility = Translations$settings$accessibility$en.internal(_root);
+	late final Translations$settings$haptics$en haptics = Translations$settings$haptics$en.internal(_root);
+	late final Translations$settings$about$en about = Translations$settings$about$en.internal(_root);
 }
 
 // Path: auth
@@ -480,6 +547,151 @@ class Translations$profile$en {
 
 	// Translations
 	late final Translations$profile$update$en update = Translations$profile$update$en.internal(_root);
+}
+
+// Path: security
+class Translations$security$en {
+	Translations$security$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$security$biometric$en biometric = Translations$security$biometric$en.internal(_root);
+	late final Translations$security$passcode$en passcode = Translations$security$passcode$en.internal(_root);
+}
+
+// Path: forceUpdate
+class Translations$forceUpdate$en {
+	Translations$forceUpdate$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Update required'
+	String get title => 'Update required';
+
+	/// en: 'This version is no longer supported. Update to the latest version to continue.'
+	String get body => 'This version is no longer supported. Update to the latest version to continue.';
+
+	/// en: 'Update now'
+	String get updateNow => 'Update now';
+}
+
+// Path: softUpdate
+class Translations$softUpdate$en {
+	Translations$softUpdate$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'A newer version is available'
+	String get title => 'A newer version is available';
+
+	/// en: 'Update to the latest version for the latest improvements and fixes.'
+	String get body => 'Update to the latest version for the latest improvements and fixes.';
+
+	/// en: 'Update'
+	String get update => 'Update';
+
+	/// en: 'Later'
+	String get later => 'Later';
+}
+
+// Path: session
+class Translations$session$en {
+	Translations$session$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Your session has expired. Please sign in again.'
+	String get expired => 'Your session has expired. Please sign in again.';
+
+	/// en: 'You are signed out.'
+	String get signedOut => 'You are signed out.';
+
+	/// en: 'Signed in as $userId'
+	String signedInPreview({required Object userId}) => 'Signed in as ${userId}';
+
+	/// en: 'Sign-in is not connected yet.'
+	String get unavailable => 'Sign-in is not connected yet.';
+}
+
+// Path: splash
+class Translations$splash$en {
+	Translations$splash$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Starting up'
+	String get loading => 'Starting up';
+
+	/// en: 'A thoughtful starting point'
+	String get tagline => 'A thoughtful starting point';
+
+	/// en: 'We couldn't finish starting up.'
+	String get error => 'We couldn\'t finish starting up.';
+}
+
+// Path: states
+class Translations$states$en {
+	Translations$states$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nothing here yet'
+	String get emptyTitle => 'Nothing here yet';
+
+	/// en: 'When content is available, it will appear here.'
+	String get emptyBody => 'When content is available, it will appear here.';
+
+	/// en: 'Could not load this'
+	String get errorTitle => 'Could not load this';
+
+	/// en: 'Something went wrong while loading. Try again.'
+	String get errorBody => 'Something went wrong while loading. Try again.';
+
+	/// en: 'Loading…'
+	String get loadingTitle => 'Loading…';
+}
+
+// Path: announcements
+class Translations$announcements$en {
+	Translations$announcements$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Dismiss'
+	String get dismiss => 'Dismiss';
+
+	/// en: 'Learn more'
+	String get actionLearnMore => 'Learn more';
+
+	/// en: 'Couldn't dismiss the announcement.'
+	String get dismissFailed => 'Couldn\'t dismiss the announcement.';
+
+	/// en: 'Information'
+	String get severityInfo => 'Information';
+
+	/// en: 'Success'
+	String get severitySuccess => 'Success';
+
+	/// en: 'Warning'
+	String get severityWarning => 'Warning';
+
+	/// en: 'Critical'
+	String get severityCritical => 'Critical';
+
+	late final Translations$announcements$fixtures$en fixtures = Translations$announcements$fixtures$en.internal(_root);
 }
 
 // Path: validation
@@ -577,6 +789,9 @@ class Translations$diagnostics$en {
 	/// en: 'Interaction policy'
 	String get interaction => 'Interaction policy';
 
+	/// en: 'App lifecycle'
+	String get lifecycle => 'App lifecycle';
+
 	/// en: 'Viewing environment'
 	String get viewingEnvironment => 'Viewing environment';
 
@@ -586,8 +801,28 @@ class Translations$diagnostics$en {
 	/// en: 'Platform capabilities'
 	String get capabilities => 'Platform capabilities';
 
+	/// en: 'Secure storage'
+	String get secureStorage => 'Secure storage';
+
+	/// en: 'Crash reporting'
+	String get crashReporting => 'Crash reporting';
+
+	/// en: 'Not configured'
+	String get crashReportingNone => 'Not configured';
+
+	/// en: 'Analytics'
+	String get analytics => 'Analytics';
+
+	/// en: 'Not configured'
+	String get analyticsNone => 'Not configured';
+
+	/// en: 'Feature flags'
+	String get featureFlags => 'Feature flags';
+
 	/// en: 'Diagnostics exclude credentials and user content.'
 	String get redactedNotice => 'Diagnostics exclude credentials and user content.';
+
+	late final Translations$diagnostics$experiments$en experiments = Translations$diagnostics$experiments$en.internal(_root);
 }
 
 // Path: devGallery
@@ -784,14 +1019,92 @@ class Translations$devGallery$en {
 	/// en: 'Settings'
 	String get screenSettings => 'Settings';
 
+	/// en: 'Connectivity banner'
+	String get screenConnectivity => 'Connectivity banner';
+
+	/// en: 'Force update'
+	String get screenForceUpdate => 'Force update';
+
+	/// en: 'Soft update'
+	String get screenSoftUpdate => 'Soft update';
+
+	/// en: 'Busy indicators'
+	String get screenBusy => 'Busy indicators';
+
 	/// en: 'System surfaces'
 	String get screenSystem => 'System surfaces';
 
 	/// en: 'Overlays'
 	String get screenOverlays => 'Overlays';
 
+	/// en: 'In-app splash'
+	String get screenSplash => 'In-app splash';
+
+	/// en: 'State views'
+	String get screenStateViews => 'State views';
+
+	/// en: 'Form scaffolding'
+	String get screenFormScaffolding => 'Form scaffolding';
+
+	/// en: 'Announcements banner'
+	String get screenAnnouncements => 'Announcements banner';
+
+	/// en: 'Loading'
+	String get caseSplashLoading => 'Loading';
+
+	/// en: 'Ready'
+	String get caseSplashReady => 'Ready';
+
+	/// en: 'Startup error'
+	String get caseSplashError => 'Startup error';
+
+	/// en: 'Empty'
+	String get caseStateEmpty => 'Empty';
+
+	/// en: 'Error'
+	String get caseStateError => 'Error';
+
+	/// en: 'Loading'
+	String get caseStateLoading => 'Loading';
+
+	/// en: 'Submit disabled'
+	String get caseFormScaffoldDisabled => 'Submit disabled';
+
+	/// en: 'Submit enabled'
+	String get caseFormScaffoldEnabled => 'Submit enabled';
+
+	/// en: 'Submitting'
+	String get caseFormScaffoldSubmitting => 'Submitting';
+
+	/// en: 'Info'
+	String get caseAnnouncementsInfo => 'Info';
+
+	/// en: 'Success'
+	String get caseAnnouncementsSuccess => 'Success';
+
+	/// en: 'Warning'
+	String get caseAnnouncementsWarning => 'Warning';
+
+	/// en: 'Critical'
+	String get caseAnnouncementsCritical => 'Critical';
+
 	/// en: 'Default'
 	String get caseDefault => 'Default';
+
+	/// en: 'Hard block'
+	String get caseHardBlock => 'Hard block';
+
+	/// en: 'Soft update'
+	String get caseSoftUpdate => 'Soft update';
+
+	/// en: 'Indeterminate'
+	String get caseBusyIndeterminate => 'Indeterminate';
+
+	/// en: 'Determinate'
+	String get caseBusyDeterminate => 'Determinate';
+
+	/// en: 'Modal overlay'
+	String get caseBusyOverlay => 'Modal overlay';
 
 	/// en: 'Expanded copy'
 	String get caseExpandedCopy => 'Expanded copy';
@@ -892,8 +1205,350 @@ class Translations$devGallery$en {
 	/// en: 'Keyboard-inset form'
 	String get caseKeyboardInset => 'Keyboard-inset form';
 
+	/// en: 'Session'
+	String get screenSession => 'Session';
+
+	/// en: 'Logged out'
+	String get caseSessionLoggedOut => 'Logged out';
+
+	/// en: 'Logged in'
+	String get caseSessionLoggedIn => 'Logged in';
+
+	/// en: 'Analytics opt-in'
+	String get screenAnalytics => 'Analytics opt-in';
+
+	/// en: 'Biometric lock'
+	String get screenBiometricLock => 'Biometric lock';
+
+	/// en: 'Locked'
+	String get caseLocked => 'Locked';
+
 	/// en: 'The requested gallery case is not registered.'
 	String get caseNotFound => 'The requested gallery case is not registered.';
+
+	/// en: 'Accessibility presets'
+	String get screenAccessibility => 'Accessibility presets';
+
+	/// en: 'Comfortable preset'
+	String get caseAccessibilityComfortable => 'Comfortable preset';
+
+	/// en: 'Large preset'
+	String get caseAccessibilityLarge => 'Large preset';
+
+	/// en: 'Dyslexia preset'
+	String get caseAccessibilityDyslexia => 'Dyslexia preset';
+
+	/// en: 'Pull-to-refresh'
+	String get screenPullRefresh => 'Pull-to-refresh';
+
+	/// en: 'Refreshable list'
+	String get casePullRefreshList => 'Refreshable list';
+
+	/// en: 'Responsive grid'
+	String get casePullRefreshGrid => 'Responsive grid';
+
+	/// en: 'Haptics'
+	String get screenHaptics => 'Haptics';
+
+	/// en: 'All kinds'
+	String get caseHapticKinds => 'All kinds';
+
+	/// en: 'Selection'
+	String get caseHapticSelection => 'Selection';
+
+	/// en: 'Light impact'
+	String get caseHapticImpactLight => 'Light impact';
+
+	/// en: 'Medium impact'
+	String get caseHapticImpactMedium => 'Medium impact';
+
+	/// en: 'Heavy impact'
+	String get caseHapticImpactHeavy => 'Heavy impact';
+
+	/// en: 'Success'
+	String get caseHapticSuccess => 'Success';
+
+	/// en: 'Warning'
+	String get caseHapticWarning => 'Warning';
+
+	/// en: 'Error'
+	String get caseHapticError => 'Error';
+
+	/// en: 'Skeleton loading'
+	String get screenSkeleton => 'Skeleton loading';
+
+	/// en: 'Static (reduce-motion)'
+	String get caseSkeletonStatic => 'Static (reduce-motion)';
+
+	/// en: 'Shimmer'
+	String get caseSkeletonShimmer => 'Shimmer';
+
+	/// en: 'MFA verification'
+	String get screenOtpMfa => 'MFA verification';
+
+	/// en: 'Countdown'
+	String get caseCountdown => 'Countdown';
+
+	/// en: 'Notifications'
+	String get screenNotifications => 'Notifications';
+
+	/// en: 'Permission rationale'
+	String get caseNotificationsNotRequested => 'Permission rationale';
+
+	/// en: 'Granted'
+	String get caseNotificationsGranted => 'Granted';
+
+	/// en: 'Blocked'
+	String get caseNotificationsDenied => 'Blocked';
+
+	/// en: 'Permissions'
+	String get screenPermissions => 'Permissions';
+
+	/// en: 'Rationale'
+	String get casePermissionRationale => 'Rationale';
+
+	/// en: 'Denied'
+	String get casePermissionDenied => 'Denied';
+
+	/// en: 'Permanently denied'
+	String get casePermissionPermanentlyDenied => 'Permanently denied';
+
+	/// en: 'Licenses'
+	String get screenLicense => 'Licenses';
+
+	/// en: 'Share sheet'
+	String get screenShare => 'Share sheet';
+
+	/// en: 'In-app update'
+	String get screenAppUpdate => 'In-app update';
+
+	/// en: 'Search & pagination'
+	String get screenSearchPagination => 'Search & pagination';
+
+	/// en: 'Search field'
+	String get caseSearchField => 'Search field';
+
+	/// en: 'Paged list'
+	String get caseSearchPaged => 'Paged list';
+
+	/// en: 'Paged list (no backend)'
+	String get caseSearchPagedNoBackend => 'Paged list (no backend)';
+
+	/// en: 'Toasts & dialogs'
+	String get screenToastDialogs => 'Toasts & dialogs';
+
+	/// en: 'Success toast'
+	String get caseToastSuccess => 'Success toast';
+
+	/// en: 'Info toast'
+	String get caseToastInfo => 'Info toast';
+
+	/// en: 'Warning toast'
+	String get caseToastWarning => 'Warning toast';
+
+	/// en: 'Error toast'
+	String get caseToastError => 'Error toast';
+
+	/// en: 'Confirm dialog'
+	String get caseDialogConfirm => 'Confirm dialog';
+
+	/// en: 'Destroy dialog'
+	String get caseDialogDestroy => 'Destroy dialog';
+
+	/// en: 'Passcode entry'
+	String get screenPasscodeEntry => 'Passcode entry';
+
+	/// en: 'Passcode setup'
+	String get screenPasscodeSetup => 'Passcode setup';
+
+	/// en: 'Idle'
+	String get casePasscodeIdle => 'Idle';
+
+	/// en: 'Incorrect'
+	String get casePasscodeError => 'Incorrect';
+
+	/// en: 'Locked out'
+	String get casePasscodeLockedOut => 'Locked out';
+
+	/// en: 'Confirm mismatch'
+	String get casePasscodeSetupMismatch => 'Confirm mismatch';
+
+	/// en: 'Feedback'
+	String get screenFeedback => 'Feedback';
+
+	/// en: 'Drafting'
+	String get caseFeedbackDrafting => 'Drafting';
+
+	/// en: 'Submitting'
+	String get caseFeedbackSubmitting => 'Submitting';
+
+	/// en: 'Failed'
+	String get caseFeedbackFailed => 'Failed';
+
+	/// en: 'Success'
+	String get caseFeedbackSuccess => 'Success';
+}
+
+// Path: notifications
+class Translations$notifications$en {
+	Translations$notifications$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Turn on notifications'
+	String get enableTitle => 'Turn on notifications';
+
+	/// en: 'Get timely updates about your account and activity. You can change this anytime.'
+	String get enableBody => 'Get timely updates about your account and activity. You can change this anytime.';
+
+	/// en: 'Not now'
+	String get deny => 'Not now';
+
+	/// en: 'Allow'
+	String get allow => 'Allow';
+
+	/// en: 'Notifications are blocked'
+	String get enableBlockedTitle => 'Notifications are blocked';
+
+	/// en: 'Open system settings to allow notifications for this app.'
+	String get enableBlockedBody => 'Open system settings to allow notifications for this app.';
+
+	/// en: 'Notifications are not connected in this starter.'
+	String get disabled => 'Notifications are not connected in this starter.';
+}
+
+// Path: permission
+class Translations$permission$en {
+	Translations$permission$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$permission$camera$en camera = Translations$permission$camera$en.internal(_root);
+	late final Translations$permission$photos$en photos = Translations$permission$photos$en.internal(_root);
+	late final Translations$permission$location$en location = Translations$permission$location$en.internal(_root);
+
+	/// en: 'Continue'
+	String get continueRequest => 'Continue';
+
+	/// en: 'Not now'
+	String get notNow => 'Not now';
+
+	/// en: 'Open settings'
+	String get openSettings => 'Open settings';
+
+	/// en: 'Permission was denied. You can try again any time.'
+	String get denied => 'Permission was denied. You can try again any time.';
+
+	/// en: 'Permission is blocked. Turn it on in system settings to continue.'
+	String get permanentlyDenied => 'Permission is blocked. Turn it on in system settings to continue.';
+}
+
+// Path: share
+class Translations$share$en {
+	Translations$share$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Shared'
+	String get success => 'Shared';
+
+	/// en: 'Sharing is not available on this device.'
+	String get unavailable => 'Sharing is not available on this device.';
+
+	/// en: 'Share cancelled.'
+	String get cancelled => 'Share cancelled.';
+}
+
+// Path: update
+class Translations$update$en {
+	Translations$update$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Check for updates'
+	String get checkForUpdates => 'Check for updates';
+
+	/// en: 'An update is available.'
+	String get available => 'An update is available.';
+
+	/// en: 'You're on the latest version.'
+	String get notAvailable => 'You\'re on the latest version.';
+
+	/// en: 'An update is required to continue.'
+	String get required => 'An update is required to continue.';
+}
+
+// Path: search
+class Translations$search$en {
+	Translations$search$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Search'
+	String get title => 'Search';
+
+	/// en: 'Search…'
+	String get placeholder => 'Search…';
+
+	/// en: 'No results'
+	String get emptyTitle => 'No results';
+
+	/// en: 'Try a different search term.'
+	String get emptyBody => 'Try a different search term.';
+
+	/// en: 'Search is unavailable'
+	String get errorTitle => 'Search is unavailable';
+}
+
+// Path: feedback
+class Translations$feedback$en {
+	Translations$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Send feedback'
+	String get title => 'Send feedback';
+
+	/// en: 'Message'
+	String get messageLabel => 'Message';
+
+	/// en: 'What happened, or what could be better?'
+	String get messageHint => 'What happened, or what could be better?';
+
+	/// en: 'Include a screenshot'
+	String get includeScreenshot => 'Include a screenshot';
+
+	/// en: 'Reply-to email'
+	String get emailOptional => 'Reply-to email';
+
+	/// en: 'Send'
+	String get submit => 'Send';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Thanks!'
+	String get successTitle => 'Thanks!';
+
+	/// en: 'Your feedback was sent.'
+	String get successBody => 'Your feedback was sent.';
+
+	/// en: 'We couldn't send your feedback right now.'
+	String get failedTitle => 'We couldn\'t send your feedback right now.';
+
+	/// en: 'Open feedback on shake'
+	String get shakeEnabled => 'Open feedback on shake';
 }
 
 // Path: pricing.plans
@@ -948,6 +1603,68 @@ class Translations$pricing$plans$en {
 
 	/// en: 'Multi-platform release workflow'
 	String get teamBenefitThree => 'Multi-platform release workflow';
+}
+
+// Path: settings.analytics
+class Translations$settings$analytics$en {
+	Translations$settings$analytics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Analytics'
+	String get optInTitle => 'Analytics';
+
+	/// en: 'Help improve the app by sending anonymous usage data. You can turn this off anytime.'
+	String get optInBody => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.';
+
+	/// en: 'On'
+	String get statusOn => 'On';
+
+	/// en: 'Off'
+	String get statusOff => 'Off';
+}
+
+// Path: settings.accessibility
+class Translations$settings$accessibility$en {
+	Translations$settings$accessibility$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Accessibility'
+	String get title => 'Accessibility';
+
+	late final Translations$settings$accessibility$preset$en preset = Translations$settings$accessibility$preset$en.internal(_root);
+}
+
+// Path: settings.haptics
+class Translations$settings$haptics$en {
+	Translations$settings$haptics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Haptic feedback'
+	String get title => 'Haptic feedback';
+
+	/// en: 'Enable haptic feedback on key actions'
+	String get enable => 'Enable haptic feedback on key actions';
+}
+
+// Path: settings.about
+class Translations$settings$about$en {
+	Translations$settings$about$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Licenses'
+	String get license => 'Licenses';
 }
 
 // Path: auth.common
@@ -1017,6 +1734,25 @@ class Translations$auth$login$en {
 
 	/// en: 'Static sign-in complete.'
 	String get success => 'Static sign-in complete.';
+
+	/// en: 'Too many attempts'
+	String get lockedTitle => 'Too many attempts';
+
+	/// en: 'Too many failed attempts. Please wait.'
+	String get tooManyAttempts => 'Too many failed attempts. Please wait.';
+
+	/// en: '(one) {1 attempt remaining} (other) {$count attempts remaining}'
+	String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 attempt remaining',
+		other: '${count} attempts remaining',
+	);
+
+	/// en: '(zero) {Try again now.} (one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Try again now.',
+		one: 'Try again in 1 second.',
+		other: 'Try again in ${seconds} seconds.',
+	);
 }
 
 // Path: auth.register
@@ -1140,6 +1876,46 @@ class Translations$auth$otp$en {
 
 	/// en: 'Reset request verified.'
 	String get passwordResetSuccess => 'Reset request verified.';
+
+	/// en: 'Sign-in verified.'
+	String get mfaSuccess => 'Sign-in verified.';
+
+	/// en: 'Too many attempts'
+	String get lockedTitle => 'Too many attempts';
+
+	/// en: 'Too many failed attempts. Please wait.'
+	String get tooManyAttempts => 'Too many failed attempts. Please wait.';
+
+	/// en: '(one) {1 attempt remaining} (other) {$count attempts remaining}'
+	String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 attempt remaining',
+		other: '${count} attempts remaining',
+	);
+
+	/// en: '(zero) {Try again now.} (one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Try again now.',
+		one: 'Try again in 1 second.',
+		other: 'Try again in ${seconds} seconds.',
+	);
+
+	/// en: 'Verify your sign-in'
+	String get mfaTitle => 'Verify your sign-in';
+
+	/// en: 'Enter the six-digit code we sent to complete sign-in.'
+	String get mfaBody => 'Enter the six-digit code we sent to complete sign-in.';
+
+	/// en: '(one) {Expires in 1 second} (other) {Expires in $seconds seconds}'
+	String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Expires in 1 second',
+		other: 'Expires in ${seconds} seconds',
+	);
+
+	/// en: 'Code expired'
+	String get expiredTitle => 'Code expired';
+
+	/// en: 'Your verification code expired. Request a new code to continue.'
+	String get expiredBody => 'Your verification code expired. Request a new code to continue.';
 }
 
 // Path: auth.resetPassword
@@ -1238,6 +2014,245 @@ class Translations$profile$update$en {
 	String get discard => 'Discard changes';
 }
 
+// Path: security.biometric
+class Translations$security$biometric$en {
+	Translations$security$biometric$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Unlock with biometrics'
+	String get lockTitle => 'Unlock with biometrics';
+
+	/// en: 'Use your fingerprint or face to unlock the app.'
+	String get lockBody => 'Use your fingerprint or face to unlock the app.';
+
+	/// en: 'Authentication failed. Try again.'
+	String get authFailedTitle => 'Authentication failed. Try again.';
+
+	/// en: 'Unlock'
+	String get unlock => 'Unlock';
+
+	/// en: 'Unlocking'
+	String get unlocking => 'Unlocking';
+
+	/// en: 'Biometric unlock unavailable'
+	String get unavailableTitle => 'Biometric unlock unavailable';
+
+	/// en: 'Biometric unlock is not available on this device. Use your device credentials instead.'
+	String get unavailableBody => 'Biometric unlock is not available on this device. Use your device credentials instead.';
+
+	/// en: 'Use credentials'
+	String get useFallback => 'Use credentials';
+}
+
+// Path: security.passcode
+class Translations$security$passcode$en {
+	Translations$security$passcode$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Enter passcode'
+	String get enterTitle => 'Enter passcode';
+
+	/// en: 'Enter your passcode to unlock the app.'
+	String get enterBody => 'Enter your passcode to unlock the app.';
+
+	/// en: 'Set a passcode'
+	String get setupTitle => 'Set a passcode';
+
+	/// en: 'Choose a numeric passcode you can use when biometrics are unavailable.'
+	String get setupBody => 'Choose a numeric passcode you can use when biometrics are unavailable.';
+
+	/// en: 'Confirm passcode'
+	String get confirmTitle => 'Confirm passcode';
+
+	/// en: 'Re-enter passcode'
+	String get reenter => 'Re-enter passcode';
+
+	/// en: 'The passcodes do not match. Try again.'
+	String get mismatch => 'The passcodes do not match. Try again.';
+
+	/// en: '(one) {Incorrect passcode. 1 attempt remaining.} (other) {Incorrect passcode. $attempts attempts remaining.}'
+	String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Incorrect passcode. 1 attempt remaining.',
+		other: 'Incorrect passcode. ${attempts} attempts remaining.',
+	);
+
+	/// en: '(zero) {Too many attempts. Try again now.} (one) {Too many attempts. Try again in 1 second.} (other) {Too many attempts. Try again in $seconds seconds.}'
+	String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Too many attempts. Try again now.',
+		one: 'Too many attempts. Try again in 1 second.',
+		other: 'Too many attempts. Try again in ${seconds} seconds.',
+	);
+
+	/// en: 'Disable passcode'
+	String get disable => 'Disable passcode';
+}
+
+// Path: announcements.fixtures
+class Translations$announcements$fixtures$en {
+	Translations$announcements$fixtures$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$announcements$fixtures$welcome$en welcome = Translations$announcements$fixtures$welcome$en.internal(_root);
+	late final Translations$announcements$fixtures$changelog$en changelog = Translations$announcements$fixtures$changelog$en.internal(_root);
+	late final Translations$announcements$fixtures$deprecation$en deprecation = Translations$announcements$fixtures$deprecation$en.internal(_root);
+	late final Translations$announcements$fixtures$outage$en outage = Translations$announcements$fixtures$outage$en.internal(_root);
+}
+
+// Path: diagnostics.experiments
+class Translations$diagnostics$experiments$en {
+	Translations$diagnostics$experiments$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Experiments'
+	String get title => 'Experiments';
+
+	/// en: 'Source'
+	String get source => 'Source';
+}
+
+// Path: permission.camera
+class Translations$permission$camera$en {
+	Translations$permission$camera$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Camera access'
+	String get title => 'Camera access';
+
+	/// en: 'We use the camera to take a new profile photo. You can decline any time.'
+	String get rationale => 'We use the camera to take a new profile photo. You can decline any time.';
+}
+
+// Path: permission.photos
+class Translations$permission$photos$en {
+	Translations$permission$photos$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Photo library access'
+	String get title => 'Photo library access';
+
+	/// en: 'We read your photo library so you can pick a profile photo. You can decline any time.'
+	String get rationale => 'We read your photo library so you can pick a profile photo. You can decline any time.';
+}
+
+// Path: permission.location
+class Translations$permission$location$en {
+	Translations$permission$location$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Location access'
+	String get title => 'Location access';
+
+	/// en: 'We use your location to personalize your experience. You can decline any time.'
+	String get rationale => 'We use your location to personalize your experience. You can decline any time.';
+}
+
+// Path: settings.accessibility.preset
+class Translations$settings$accessibility$preset$en {
+	Translations$settings$accessibility$preset$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Comfortable'
+	String get comfortable => 'Comfortable';
+
+	/// en: 'Default text size for everyday reading.'
+	String get comfortableDescription => 'Default text size for everyday reading.';
+
+	/// en: 'Large'
+	String get large => 'Large';
+
+	/// en: 'Larger text for easier reading at a glance.'
+	String get largeDescription => 'Larger text for easier reading at a glance.';
+
+	/// en: 'Dyslexia-friendly'
+	String get dyslexia => 'Dyslexia-friendly';
+
+	/// en: 'Slightly larger text with a dyslexia-friendly font where available.'
+	String get dyslexiaDescription => 'Slightly larger text with a dyslexia-friendly font where available.';
+}
+
+// Path: announcements.fixtures.welcome
+class Translations$announcements$fixtures$welcome$en {
+	Translations$announcements$fixtures$welcome$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Welcome to the starter'
+	String get title => 'Welcome to the starter';
+
+	/// en: 'A durable foundation for your next product. Dismiss this to explore the shell.'
+	String get message => 'A durable foundation for your next product. Dismiss this to explore the shell.';
+}
+
+// Path: announcements.fixtures.changelog
+class Translations$announcements$fixtures$changelog$en {
+	Translations$announcements$fixtures$changelog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New in this version'
+	String get title => 'New in this version';
+
+	/// en: 'Announcements keep everyone in the loop without an app update.'
+	String get message => 'Announcements keep everyone in the loop without an app update.';
+}
+
+// Path: announcements.fixtures.deprecation
+class Translations$announcements$fixtures$deprecation$en {
+	Translations$announcements$fixtures$deprecation$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'A newer version is available'
+	String get title => 'A newer version is available';
+
+	/// en: 'This build will be deprecated soon. Update when you can.'
+	String get message => 'This build will be deprecated soon. Update when you can.';
+}
+
+// Path: announcements.fixtures.outage
+class Translations$announcements$fixtures$outage$en {
+	Translations$announcements$fixtures$outage$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Service outage'
+	String get title => 'Service outage';
+
+	/// en: 'Some actions may fail while we resolve a service disruption.'
+	String get message => 'Some actions may fail while we resolve a service disruption.';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -1261,9 +2276,18 @@ extension on Translations {
 			'common.next' => 'Next',
 			'common.optional' => 'Optional',
 			'common.loading' => 'Loading',
+			'common.saving' => 'Saving…',
 			'common.notConnected' => 'This action is not connected yet.',
 			'common.legalPlaceholderTitle' => 'Information preview',
 			'common.legalPlaceholderBody' => 'This starter shows deterministic placeholder content until product-specific legal text is approved.',
+			'common.confirm' => 'Confirm',
+			'common.success' => 'Success',
+			'common.discard' => 'Discard',
+			'common.error' => 'Error',
+			'connectivity.online' => 'Online',
+			'connectivity.offline' => 'You are offline. Some actions may be unavailable.',
+			'connectivity.backOnline' => 'You are back online.',
+			'connectivity.limited' => 'Limited connection. Some actions may be slow or unavailable.',
 			'navigation.home' => 'Home',
 			'navigation.pricing' => 'Pricing',
 			'navigation.settings' => 'Settings',
@@ -1373,6 +2397,24 @@ extension on Translations {
 			'settings.aboutBuild' => 'Build information',
 			'settings.terms' => 'Terms preview',
 			'settings.privacy' => 'Privacy preview',
+			'settings.enableBiometric' => 'Unlock with biometrics',
+			'settings.passcode' => 'Passcode',
+			'settings.autoLockDelay' => 'Auto-lock delay',
+			'settings.lockOnBackground' => 'Lock when backgrounded',
+			'settings.analytics.optInTitle' => 'Analytics',
+			'settings.analytics.optInBody' => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.',
+			'settings.analytics.statusOn' => 'On',
+			'settings.analytics.statusOff' => 'Off',
+			'settings.accessibility.title' => 'Accessibility',
+			'settings.accessibility.preset.comfortable' => 'Comfortable',
+			'settings.accessibility.preset.comfortableDescription' => 'Default text size for everyday reading.',
+			'settings.accessibility.preset.large' => 'Large',
+			'settings.accessibility.preset.largeDescription' => 'Larger text for easier reading at a glance.',
+			'settings.accessibility.preset.dyslexia' => 'Dyslexia-friendly',
+			'settings.accessibility.preset.dyslexiaDescription' => 'Slightly larger text with a dyslexia-friendly font where available.',
+			'settings.haptics.title' => 'Haptic feedback',
+			'settings.haptics.enable' => 'Enable haptic feedback on key actions',
+			'settings.about.license' => 'Licenses',
 			'auth.common.email' => 'Email address',
 			'auth.common.password' => 'Password',
 			'auth.common.confirmPassword' => 'Confirm password',
@@ -1390,6 +2432,10 @@ extension on Translations {
 			'auth.login.submitting' => 'Signing in',
 			'auth.login.globalError' => 'We could not complete the static sign-in. Your values were kept.',
 			'auth.login.success' => 'Static sign-in complete.',
+			'auth.login.lockedTitle' => 'Too many attempts',
+			'auth.login.tooManyAttempts' => 'Too many failed attempts. Please wait.',
+			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.register.title' => 'Create your account',
 			'auth.register.body' => 'Enter the details used to demonstrate registration and confirmation behavior.',
 			'auth.register.acceptTerms' => 'I agree to the terms and privacy preview.',
@@ -1422,6 +2468,16 @@ extension on Translations {
 			'auth.otp.expired' => 'That verification code has expired. Request a new code.',
 			'auth.otp.registrationSuccess' => 'Registration verified.',
 			'auth.otp.passwordResetSuccess' => 'Reset request verified.',
+			'auth.otp.mfaSuccess' => 'Sign-in verified.',
+			'auth.otp.lockedTitle' => 'Too many attempts',
+			'auth.otp.tooManyAttempts' => 'Too many failed attempts. Please wait.',
+			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
+			'auth.otp.mfaTitle' => 'Verify your sign-in',
+			'auth.otp.mfaBody' => 'Enter the six-digit code we sent to complete sign-in.',
+			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Expires in 1 second', other: 'Expires in ${seconds} seconds', ), 
+			'auth.otp.expiredTitle' => 'Code expired',
+			'auth.otp.expiredBody' => 'Your verification code expired. Request a new code to continue.',
 			'auth.resetPassword.title' => 'Choose a new password',
 			'auth.resetPassword.body' => 'Use a strong password and enter it exactly the same way twice.',
 			'auth.resetPassword.newPassword' => 'New password',
@@ -1448,6 +2504,58 @@ extension on Translations {
 			'profile.update.discardBody' => 'Your unsaved profile changes will be cleared.',
 			'profile.update.stay' => 'Keep editing',
 			'profile.update.discard' => 'Discard changes',
+			'security.biometric.lockTitle' => 'Unlock with biometrics',
+			'security.biometric.lockBody' => 'Use your fingerprint or face to unlock the app.',
+			'security.biometric.authFailedTitle' => 'Authentication failed. Try again.',
+			'security.biometric.unlock' => 'Unlock',
+			'security.biometric.unlocking' => 'Unlocking',
+			'security.biometric.unavailableTitle' => 'Biometric unlock unavailable',
+			'security.biometric.unavailableBody' => 'Biometric unlock is not available on this device. Use your device credentials instead.',
+			'security.biometric.useFallback' => 'Use credentials',
+			'security.passcode.enterTitle' => 'Enter passcode',
+			'security.passcode.enterBody' => 'Enter your passcode to unlock the app.',
+			'security.passcode.setupTitle' => 'Set a passcode',
+			'security.passcode.setupBody' => 'Choose a numeric passcode you can use when biometrics are unavailable.',
+			'security.passcode.confirmTitle' => 'Confirm passcode',
+			'security.passcode.reenter' => 'Re-enter passcode',
+			'security.passcode.mismatch' => 'The passcodes do not match. Try again.',
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Incorrect passcode. 1 attempt remaining.', other: 'Incorrect passcode. ${attempts} attempts remaining.', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Too many attempts. Try again now.', one: 'Too many attempts. Try again in 1 second.', other: 'Too many attempts. Try again in ${seconds} seconds.', ), 
+			'security.passcode.disable' => 'Disable passcode',
+			'forceUpdate.title' => 'Update required',
+			'forceUpdate.body' => 'This version is no longer supported. Update to the latest version to continue.',
+			'forceUpdate.updateNow' => 'Update now',
+			'softUpdate.title' => 'A newer version is available',
+			'softUpdate.body' => 'Update to the latest version for the latest improvements and fixes.',
+			'softUpdate.update' => 'Update',
+			'softUpdate.later' => 'Later',
+			'session.expired' => 'Your session has expired. Please sign in again.',
+			'session.signedOut' => 'You are signed out.',
+			'session.signedInPreview' => ({required Object userId}) => 'Signed in as ${userId}',
+			'session.unavailable' => 'Sign-in is not connected yet.',
+			'splash.loading' => 'Starting up',
+			'splash.tagline' => 'A thoughtful starting point',
+			'splash.error' => 'We couldn\'t finish starting up.',
+			'states.emptyTitle' => 'Nothing here yet',
+			'states.emptyBody' => 'When content is available, it will appear here.',
+			'states.errorTitle' => 'Could not load this',
+			'states.errorBody' => 'Something went wrong while loading. Try again.',
+			'states.loadingTitle' => 'Loading…',
+			'announcements.dismiss' => 'Dismiss',
+			'announcements.actionLearnMore' => 'Learn more',
+			'announcements.dismissFailed' => 'Couldn\'t dismiss the announcement.',
+			'announcements.severityInfo' => 'Information',
+			'announcements.severitySuccess' => 'Success',
+			'announcements.severityWarning' => 'Warning',
+			'announcements.severityCritical' => 'Critical',
+			'announcements.fixtures.welcome.title' => 'Welcome to the starter',
+			'announcements.fixtures.welcome.message' => 'A durable foundation for your next product. Dismiss this to explore the shell.',
+			'announcements.fixtures.changelog.title' => 'New in this version',
+			'announcements.fixtures.changelog.message' => 'Announcements keep everyone in the loop without an app update.',
+			'announcements.fixtures.deprecation.title' => 'A newer version is available',
+			'announcements.fixtures.deprecation.message' => 'This build will be deprecated soon. Update when you can.',
+			'announcements.fixtures.outage.title' => 'Service outage',
+			'announcements.fixtures.outage.message' => 'Some actions may fail while we resolve a service disruption.',
 			'validation.required' => ({required Object field}) => '${field} is required.',
 			'validation.email' => 'Enter a valid email address.',
 			'validation.passwordWeak' => 'Use at least 8 characters with an uppercase letter and a number.',
@@ -1468,10 +2576,19 @@ extension on Translations {
 			'diagnostics.build' => 'Build',
 			'diagnostics.layout' => 'Layout class',
 			'diagnostics.interaction' => 'Interaction policy',
+			'diagnostics.lifecycle' => 'App lifecycle',
 			'diagnostics.viewingEnvironment' => 'Viewing environment',
 			'diagnostics.locale' => 'Locale',
 			'diagnostics.capabilities' => 'Platform capabilities',
+			'diagnostics.secureStorage' => 'Secure storage',
+			'diagnostics.crashReporting' => 'Crash reporting',
+			'diagnostics.crashReportingNone' => 'Not configured',
+			'diagnostics.analytics' => 'Analytics',
+			'diagnostics.analyticsNone' => 'Not configured',
+			'diagnostics.featureFlags' => 'Feature flags',
 			'diagnostics.redactedNotice' => 'Diagnostics exclude credentials and user content.',
+			'diagnostics.experiments.title' => 'Experiments',
+			'diagnostics.experiments.source' => 'Source',
 			'devGallery.title' => 'Production screen gallery',
 			'devGallery.search' => 'Search cases',
 			'devGallery.screen' => 'Screen',
@@ -1534,9 +2651,35 @@ extension on Translations {
 			'devGallery.screenProfile' => 'Update profile',
 			'devGallery.screenPricing' => 'Pricing',
 			'devGallery.screenSettings' => 'Settings',
+			'devGallery.screenConnectivity' => 'Connectivity banner',
+			'devGallery.screenForceUpdate' => 'Force update',
+			'devGallery.screenSoftUpdate' => 'Soft update',
+			'devGallery.screenBusy' => 'Busy indicators',
 			'devGallery.screenSystem' => 'System surfaces',
 			'devGallery.screenOverlays' => 'Overlays',
+			'devGallery.screenSplash' => 'In-app splash',
+			'devGallery.screenStateViews' => 'State views',
+			'devGallery.screenFormScaffolding' => 'Form scaffolding',
+			'devGallery.screenAnnouncements' => 'Announcements banner',
+			'devGallery.caseSplashLoading' => 'Loading',
+			'devGallery.caseSplashReady' => 'Ready',
+			'devGallery.caseSplashError' => 'Startup error',
+			'devGallery.caseStateEmpty' => 'Empty',
+			'devGallery.caseStateError' => 'Error',
+			'devGallery.caseStateLoading' => 'Loading',
+			'devGallery.caseFormScaffoldDisabled' => 'Submit disabled',
+			'devGallery.caseFormScaffoldEnabled' => 'Submit enabled',
+			'devGallery.caseFormScaffoldSubmitting' => 'Submitting',
+			'devGallery.caseAnnouncementsInfo' => 'Info',
+			'devGallery.caseAnnouncementsSuccess' => 'Success',
+			'devGallery.caseAnnouncementsWarning' => 'Warning',
+			'devGallery.caseAnnouncementsCritical' => 'Critical',
 			'devGallery.caseDefault' => 'Default',
+			'devGallery.caseHardBlock' => 'Hard block',
+			'devGallery.caseSoftUpdate' => 'Soft update',
+			'devGallery.caseBusyIndeterminate' => 'Indeterminate',
+			'devGallery.caseBusyDeterminate' => 'Determinate',
+			'devGallery.caseBusyOverlay' => 'Modal overlay',
 			'devGallery.caseExpandedCopy' => 'Expanded copy',
 			'devGallery.caseFirst' => 'First',
 			'devGallery.caseMiddle' => 'Middle',
@@ -1570,7 +2713,110 @@ extension on Translations {
 			'devGallery.casePopover' => 'Popover',
 			'devGallery.caseTooltip' => 'Tooltip',
 			'devGallery.caseKeyboardInset' => 'Keyboard-inset form',
+			'devGallery.screenSession' => 'Session',
+			'devGallery.caseSessionLoggedOut' => 'Logged out',
+			'devGallery.caseSessionLoggedIn' => 'Logged in',
+			'devGallery.screenAnalytics' => 'Analytics opt-in',
+			'devGallery.screenBiometricLock' => 'Biometric lock',
+			'devGallery.caseLocked' => 'Locked',
 			'devGallery.caseNotFound' => 'The requested gallery case is not registered.',
+			'devGallery.screenAccessibility' => 'Accessibility presets',
+			'devGallery.caseAccessibilityComfortable' => 'Comfortable preset',
+			'devGallery.caseAccessibilityLarge' => 'Large preset',
+			'devGallery.caseAccessibilityDyslexia' => 'Dyslexia preset',
+			'devGallery.screenPullRefresh' => 'Pull-to-refresh',
+			'devGallery.casePullRefreshList' => 'Refreshable list',
+			'devGallery.casePullRefreshGrid' => 'Responsive grid',
+			'devGallery.screenHaptics' => 'Haptics',
+			'devGallery.caseHapticKinds' => 'All kinds',
+			'devGallery.caseHapticSelection' => 'Selection',
+			'devGallery.caseHapticImpactLight' => 'Light impact',
+			'devGallery.caseHapticImpactMedium' => 'Medium impact',
+			'devGallery.caseHapticImpactHeavy' => 'Heavy impact',
+			'devGallery.caseHapticSuccess' => 'Success',
+			'devGallery.caseHapticWarning' => 'Warning',
+			'devGallery.caseHapticError' => 'Error',
+			'devGallery.screenSkeleton' => 'Skeleton loading',
+			'devGallery.caseSkeletonStatic' => 'Static (reduce-motion)',
+			'devGallery.caseSkeletonShimmer' => 'Shimmer',
+			'devGallery.screenOtpMfa' => 'MFA verification',
+			'devGallery.caseCountdown' => 'Countdown',
+			'devGallery.screenNotifications' => 'Notifications',
+			'devGallery.caseNotificationsNotRequested' => 'Permission rationale',
+			'devGallery.caseNotificationsGranted' => 'Granted',
+			'devGallery.caseNotificationsDenied' => 'Blocked',
+			'devGallery.screenPermissions' => 'Permissions',
+			'devGallery.casePermissionRationale' => 'Rationale',
+			'devGallery.casePermissionDenied' => 'Denied',
+			'devGallery.casePermissionPermanentlyDenied' => 'Permanently denied',
+			'devGallery.screenLicense' => 'Licenses',
+			'devGallery.screenShare' => 'Share sheet',
+			'devGallery.screenAppUpdate' => 'In-app update',
+			'devGallery.screenSearchPagination' => 'Search & pagination',
+			'devGallery.caseSearchField' => 'Search field',
+			'devGallery.caseSearchPaged' => 'Paged list',
+			'devGallery.caseSearchPagedNoBackend' => 'Paged list (no backend)',
+			'devGallery.screenToastDialogs' => 'Toasts & dialogs',
+			'devGallery.caseToastSuccess' => 'Success toast',
+			'devGallery.caseToastInfo' => 'Info toast',
+			'devGallery.caseToastWarning' => 'Warning toast',
+			'devGallery.caseToastError' => 'Error toast',
+			'devGallery.caseDialogConfirm' => 'Confirm dialog',
+			'devGallery.caseDialogDestroy' => 'Destroy dialog',
+			'devGallery.screenPasscodeEntry' => 'Passcode entry',
+			'devGallery.screenPasscodeSetup' => 'Passcode setup',
+			'devGallery.casePasscodeIdle' => 'Idle',
+			'devGallery.casePasscodeError' => 'Incorrect',
+			'devGallery.casePasscodeLockedOut' => 'Locked out',
+			'devGallery.casePasscodeSetupMismatch' => 'Confirm mismatch',
+			'devGallery.screenFeedback' => 'Feedback',
+			'devGallery.caseFeedbackDrafting' => 'Drafting',
+			'devGallery.caseFeedbackSubmitting' => 'Submitting',
+			'devGallery.caseFeedbackFailed' => 'Failed',
+			_ => null,
+		} ?? switch (path) {
+			'devGallery.caseFeedbackSuccess' => 'Success',
+			'notifications.enableTitle' => 'Turn on notifications',
+			'notifications.enableBody' => 'Get timely updates about your account and activity. You can change this anytime.',
+			'notifications.deny' => 'Not now',
+			'notifications.allow' => 'Allow',
+			'notifications.enableBlockedTitle' => 'Notifications are blocked',
+			'notifications.enableBlockedBody' => 'Open system settings to allow notifications for this app.',
+			'notifications.disabled' => 'Notifications are not connected in this starter.',
+			'permission.camera.title' => 'Camera access',
+			'permission.camera.rationale' => 'We use the camera to take a new profile photo. You can decline any time.',
+			'permission.photos.title' => 'Photo library access',
+			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
+			'permission.location.title' => 'Location access',
+			'permission.location.rationale' => 'We use your location to personalize your experience. You can decline any time.',
+			'permission.continueRequest' => 'Continue',
+			'permission.notNow' => 'Not now',
+			'permission.openSettings' => 'Open settings',
+			'permission.denied' => 'Permission was denied. You can try again any time.',
+			'permission.permanentlyDenied' => 'Permission is blocked. Turn it on in system settings to continue.',
+			'share.success' => 'Shared',
+			'share.unavailable' => 'Sharing is not available on this device.',
+			'share.cancelled' => 'Share cancelled.',
+			'update.checkForUpdates' => 'Check for updates',
+			'update.available' => 'An update is available.',
+			'update.notAvailable' => 'You\'re on the latest version.',
+			'update.required' => 'An update is required to continue.',
+			'search.title' => 'Search',
+			'search.placeholder' => 'Search…',
+			'search.emptyTitle' => 'No results',
+			'search.emptyBody' => 'Try a different search term.',
+			'search.errorTitle' => 'Search is unavailable',
+			'feedback.title' => 'Send feedback',
+			'feedback.messageLabel' => 'Message',
+			'feedback.messageHint' => 'What happened, or what could be better?',
+			'feedback.includeScreenshot' => 'Include a screenshot',
+			'feedback.emailOptional' => 'Reply-to email',
+			'feedback.submit' => 'Send',
+			'feedback.cancel' => 'Cancel',
+			'feedback.successTitle' => 'Thanks!',
+			'feedback.successBody' => 'Your feedback was sent.',
+			'feedback.failedTitle' => 'We couldn\'t send your feedback right now.',
+			'feedback.shakeEnabled' => 'Open feedback on shake',
 			_ => null,
 		};
 	}

@@ -13,6 +13,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef LoginSubmitCallback = FutureOr<void> Function(LoginFormValue value);
 
@@ -60,25 +61,69 @@ class _LoginView extends ConsumerStatefulWidget {
   ConsumerState<_LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends ConsumerState<_LoginView> {
+class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
-  final _emailController = TextEditingController();
+  // The email draft is restorable across a simulated process death
+  // (state-restoration). The (secret) password deliberately has NO restorable
+  // counterpart: secrets never participate in restoration.
+  late final TextEditingController _emailController;
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'login.email');
   final _passwordFocus = FocusNode(debugLabel: 'login.password');
+  final RestorableString _emailDraft = RestorableString('');
   final _submitFocus = FocusNode(debugLabel: 'login.submit');
   bool _callbackSubmitting = false;
   bool _rememberMe = false;
 
+  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
+  // decremented by a 1s Timer.periodic; the submit gate is OR-ed with _locked.
+  Timer? _countdownTimer;
+  int _liveLockedSeconds = 0;
+
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == LoginPresentationStatus.submitting;
+
+  /// True while a rate-limit lockout is active. Independent of any animation so
+  /// the non-animated fallback still disables submit.
+  bool get _locked =>
+      widget.presentation.status == LoginPresentationStatus.locked && _liveLockedSeconds > 0;
 
   @override
   void initState() {
     super.initState();
+    // The controller starts empty; restoreState seeds it from [_emailDraft]
+    // once registration flushes the saved value. The [RestorableProperty.value]
+    // getter asserts isRegistered, so it is not read here before restoreState.
+    _emailController = TextEditingController()..addListener(_syncEmailDraft);
+    _liveLockedSeconds = widget.presentation.lockedSeconds;
     _requestFixtureFocus();
+    _startLockoutCountdownIfNeeded();
+  }
+
+  void _syncEmailDraft() {
+    // _emailDraft is registered by the time the user can type (restoreState ran
+    // during didChangeDependencies), so the value getter is safe here.
+    if (_emailController.text != _emailDraft.value) {
+      _emailDraft.value = _emailController.text;
+    }
+  }
+
+  @override
+  String get restorationId => 'login-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    // Restore ONLY the email draft (state-restoration contract). registerFor-
+    // Restoration flushes the saved value into [_emailDraft]; we then seed the
+    // controller so restartAndRestore lands the user back on their typed email.
+    // On a no-restoration build (goldens / disabled scope) restoreState is never
+    // called and the draft stays empty — the controller renders empty text.
+    registerForRestoration(_emailDraft, 'email_draft');
+    if (_emailController.text != _emailDraft.value) {
+      _emailController.text = _emailDraft.value;
+    }
   }
 
   @override
@@ -86,6 +131,10 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.presentation.status != widget.presentation.status) {
       _requestFixtureFocus();
+    }
+    if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
+      _liveLockedSeconds = widget.presentation.lockedSeconds;
+      _startLockoutCountdownIfNeeded();
     }
   }
 
@@ -97,12 +146,31 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     }
   }
 
+  void _startLockoutCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    if (_liveLockedSeconds <= 0) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
+        if (_liveLockedSeconds <= 0) timer.cancel();
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    _emailDraft.dispose();
     _submitFocus.dispose();
     super.dispose();
   }
@@ -113,13 +181,17 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     final form = _buildForm(context);
     final translations = context.t.auth.login;
 
-    return AuthPageScaffold(
-      screenId: 'login',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.shieldCheck,
-      title: translations.title,
-      body: translations.body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: translations.submitting,
+      child: AuthPageScaffold(
+        screenId: 'login',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.shieldCheck,
+        title: translations.title,
+        body: translations.body,
+        form: form,
+      ),
     );
   }
 
@@ -146,6 +218,10 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               translations.auth.login.body,
               style: context.theme.typography.body.md,
             ),
+            if (_attemptsRemainingAlert(context) case final alert?) ...[
+              const SizedBox(height: AppSpacing.xl),
+              alert,
+            ],
             if (_feedbackAlert(context) case final alert?) ...[
               const SizedBox(height: AppSpacing.xl),
               alert,
@@ -156,7 +232,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               label: translations.auth.common.email,
               controller: _emailController,
               focusNode: _emailFocus,
-              enabled: !_submitting,
+              enabled: !(_submitting || _locked),
               autofocus: true,
               builder: (context, editorFocusNode, completeEditing) {
                 return FTextFormField.email(
@@ -167,7 +243,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
                   label: Text(translations.auth.common.email),
                   textDirection: TextDirection.ltr,
                   autofillHints: const [AutofillHints.username, AutofillHints.email],
-                  enabled: !_submitting,
+                  enabled: !(_submitting || _locked),
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture || fieldFailureFixture
                       ? translations.validation.email
@@ -195,7 +271,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
               label: translations.auth.common.password,
               controller: _passwordController,
               focusNode: _passwordFocus,
-              enabled: !_submitting,
+              enabled: !(_submitting || _locked),
               secure: true,
               builder: (context, editorFocusNode, completeEditing) {
                 return FTextFormField.password(
@@ -205,7 +281,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
                   focusNode: editorFocusNode,
                   label: Text(translations.auth.common.password),
                   textInputAction: TextInputAction.done,
-                  enabled: !_submitting,
+                  enabled: !(_submitting || _locked),
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
                   validator: (value) => validateAuthPassword(
@@ -240,7 +316,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
                   child: FCheckbox(
                     key: const ValueKey('auth-login-remember'),
                     value: field.value ?? false,
-                    enabled: !_submitting,
+                    enabled: !(_submitting || _locked),
                     label: Text(translations.auth.login.rememberMe),
                     error: field.errorText == null ? null : Text(field.errorText!),
                     onChange: field.didChange,
@@ -252,10 +328,14 @@ class _LoginViewState extends ConsumerState<_LoginView> {
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
-              onPress: _submitting ? () {} : () => unawaited(_submit()),
+              onPress: _locked
+                  ? null
+                  : _submitting
+                  ? () {}
+                  : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting ? translations.auth.login.submitting : translations.auth.login.submit,
+                translations.auth.login.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -329,7 +409,29 @@ class _LoginViewState extends ConsumerState<_LoginView> {
         title: Text(widget.presentation.successMessage ?? translations.auth.login.success),
         icon: const Icon(FLucideIcons.circleCheck),
       ),
+      LoginPresentationStatus.locked => FAlert(
+        key: const ValueKey('auth-login-locked'),
+        variant: .destructive,
+        title: Text(translations.auth.login.lockedTitle),
+        subtitle: Text(
+          translations.auth.login.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
+        ),
+      ),
     };
+  }
+
+  /// Non-destructive "attempts remaining" notice, shown while the user still
+  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// destructive [_feedbackAlert] carries the countdown instead).
+  Widget? _attemptsRemainingAlert(BuildContext context) {
+    final remaining = widget.presentation.attemptsRemaining;
+    if (remaining <= 0 || widget.presentation.status == LoginPresentationStatus.locked) {
+      return null;
+    }
+    return FAlert(
+      key: const ValueKey('auth-login-attempts-remaining'),
+      title: Text(context.t.auth.login.attemptsRemaining(n: remaining, count: remaining)),
+    );
   }
 
   Future<void> _submit() async {

@@ -17,7 +17,6 @@
 // The 220 ms cross-fade is finite, so `pumpAndSettle` is safe throughout.
 
 import 'dart:async';
-
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +27,9 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -205,7 +206,13 @@ void main() {
   testWidgets(
     'pushed top-level overlay preserves the settings branch stack beneath it',
     (tester) async {
-      await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.settingsPath,
+        // /profile/edit is auth-required (C5 session gate); seed an authenticated
+        // session so the pushNamed(updateProfile) overlay is not bounced.
+        initialSession: _authenticatedSession,
+      );
 
       // Build a settings branch stack: overview -> account detail.
       await tester.tap(find.byKey(const ValueKey('settings-open-account')));
@@ -390,7 +397,13 @@ void main() {
       await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
       await tester.tap(find.byKey(const ValueKey('settings-open-privacy-about')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('settings-open-terms')));
+      // The Wave-6 pin-autolock tile grew the privacy-about section past the
+      // 844-tall test viewport, so the Terms affordance sits below the fold.
+      // Scroll it into view before tapping so the press reaches the handler
+      // (mirrors tapVisible in integration_test_support.dart).
+      await tester.ensureVisible(find.byKey(const ValueKey('settings-open-terms')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('settings-open-terms')).hitTestable());
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
 
@@ -610,13 +623,14 @@ Future<void> _pumpApp(
   WidgetTester tester, {
   required String initialLocation,
   Size size = const Size(390, 844),
+  AuthSession? initialSession,
 }) async {
   _setViewport(tester, size);
   await LocaleSettings.setLocale(AppLocale.en);
   await tester.pumpWidget(
     App(
       config: _developmentConfig,
-      dependencies: AppDependencies.inMemory(),
+      dependencies: AppDependencies.inMemory(initialSession: initialSession),
       initialLocation: initialLocation,
     ),
   );
@@ -642,4 +656,15 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: true,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+);
+
+/// Seeded authenticated session for auth-required destinations (/profile/edit,
+/// C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );

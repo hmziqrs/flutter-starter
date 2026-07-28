@@ -12,21 +12,43 @@ final class PlatformCapabilities {
   const PlatformCapabilities({
     required this.platform,
     required this.isWeb,
-    required this.tvPlatform,
+    this.supportsFileSystem = true,
+    this.tvPlatform = AppTvPlatform.none,
   });
 
   const PlatformCapabilities.nonTelevision({
     this.platform = 'test',
     this.isWeb = false,
-  }) : tvPlatform = AppTvPlatform.none;
+  }) : supportsFileSystem = true,
+       tvPlatform = AppTvPlatform.none;
+
+  factory PlatformCapabilities.current() {
+    return PlatformCapabilities(
+      platform: defaultTargetPlatform.name,
+      isWeb: kIsWeb,
+      supportsFileSystem: !kIsWeb,
+    );
+  }
 
   final String platform;
   final bool isWeb;
+  final bool supportsFileSystem;
   final AppTvPlatform tvPlatform;
+
+  /// Whether the current platform is an Apple platform (iOS / macOS).
+  ///
+  /// Derived read-only from [platform] (no platform channel) so shared widgets
+  /// keep a single platform seam when choosing Cupertino vs Material affordances
+  /// (e.g. pull-to-refresh — see `AppRefreshIndicator` / `RefreshableListView`).
+  /// Matches the existing read-only-derived-getter pattern: it adds no state and
+  /// no side effects.
+  bool get isApplePlatform =>
+      platform == TargetPlatform.iOS.name || platform == TargetPlatform.macOS.name;
 
   bool get isTelevision => tvPlatform != AppTvPlatform.none;
 
-  String get redactedSummary => 'platform=$platform, web=$isWeb, tv=${tvPlatform.name}';
+  String get redactedSummary =>
+      'platform=$platform, web=$isWeb, filesystem=$supportsFileSystem, tv=${tvPlatform.name}';
 
   @override
   bool operator ==(Object other) {
@@ -34,9 +56,10 @@ final class PlatformCapabilities {
         other is PlatformCapabilities &&
             platform == other.platform &&
             isWeb == other.isWeb &&
+            supportsFileSystem == other.supportsFileSystem &&
             tvPlatform == other.tvPlatform;
   }
 
   @override
-  int get hashCode => Object.hash(platform, isWeb, tvPlatform);
+  int get hashCode => Object.hash(platform, isWeb, supportsFileSystem, tvPlatform);
 }

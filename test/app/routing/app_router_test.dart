@@ -4,8 +4,10 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 void main() {
@@ -32,7 +34,13 @@ void main() {
       await tester.pumpWidget(
         App(
           config: _productionConfig,
-          dependencies: AppDependencies.inMemory(),
+          // /profile/edit is the only auth-required production route (C5 session
+          // gate); seed an authenticated session so the redirect does not bounce
+          // it to /auth/login. Other routes are unaffected (auth routes are
+          // exempt; shell tabs need no session).
+          dependencies: AppDependencies.inMemory(
+            initialSession: location == AppRoutes.updateProfilePath ? _authenticatedSession : null,
+          ),
           initialLocation: location,
         ),
       );
@@ -99,4 +107,15 @@ final _productionConfig = AppConfig(
   environment: AppEnvironment.production,
   enableVerboseLogging: false,
   enableDevTools: false,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+);
+
+/// Seeded session for the auth-required /profile/edit route case. Tokens are
+/// deterministic placeholders; the redirect only checks `isAuthenticated`.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );

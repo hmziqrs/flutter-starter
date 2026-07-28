@@ -1,5 +1,6 @@
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 final class SettingsRepository {
@@ -8,12 +9,26 @@ final class SettingsRepository {
   static const themeModeKey = 'appearance.theme_mode';
   static const accentKey = 'appearance.accent';
   static const fontScaleKey = 'appearance.font_scale';
+  static const textPresetKey = 'appearance.text_preset';
   static const localeKey = 'localization.locale';
+  static const onboardingKey = 'onboarding.completed';
+  static const biometricUnlockKey = 'security.biometric_unlock_enabled';
+  static const hapticsEnabledKey = 'appearance.haptics_enabled';
+  static const passcodeEnabledKey = 'security.passcode_enabled';
+  static const autoLockDelayKey = 'security.auto_lock_delay_seconds';
+  static const lockOnBackgroundKey = 'security.lock_on_background';
   static const persistedKeys = <String>[
     themeModeKey,
     accentKey,
     fontScaleKey,
+    textPresetKey,
     localeKey,
+    onboardingKey,
+    biometricUnlockKey,
+    hapticsEnabledKey,
+    passcodeEnabledKey,
+    autoLockDelayKey,
+    lockOnBackgroundKey,
   ];
 
   final SettingsStore _store;
@@ -24,14 +39,32 @@ final class SettingsRepository {
         _store.readString(themeModeKey),
         _store.readString(accentKey),
         _store.readString(fontScaleKey),
+        _store.readString(textPresetKey),
         _store.readString(localeKey),
+        _store.readString(onboardingKey),
+        _store.readString(biometricUnlockKey),
+        _store.readString(hapticsEnabledKey),
+        _store.readString(passcodeEnabledKey),
+        _store.readString(autoLockDelayKey),
+        _store.readString(lockOnBackgroundKey),
       ]);
 
+      final textPreset = _enumByName(AppTextPreset.values, values[3]) ?? AppTextPreset.comfortable;
       return SettingsState(
         themeMode: _enumByName(AppThemeMode.values, values[0]) ?? AppThemeMode.system,
         accent: _enumByName(AppAccent.values, values[1]) ?? AppAccent.neutral,
         fontScale: _parseFontScale(values[2]),
-        localeOverride: _parseLocale(values[3]),
+        textPreset: textPreset,
+        localeOverride: _parseLocale(values[4]),
+        // Treat any non-"true" value (missing, "false", legacy) as incomplete so
+        // fresh installs and pre-flag installs both gate through onboarding.
+        hasCompletedOnboarding: values[5] == 'true',
+        biometricUnlockEnabled: values[6] == 'true',
+        // Default-on semantics: missing/legacy -> true, explicit 'false' -> false.
+        hapticsEnabled: values[7] != 'false',
+        passcodeEnabled: values[8] == 'true',
+        autoLockDelaySeconds: _parseAutoLockDelay(values[9]),
+        lockOnBackground: values[10] == 'true',
       );
     } on SettingsStoreException catch (error) {
       throw SettingsFailure.read(error.operation);
@@ -44,9 +77,38 @@ final class SettingsRepository {
         _store.writeString(themeModeKey, state.themeMode.name),
         _store.writeString(accentKey, state.accent.name),
         _store.writeString(fontScaleKey, state.fontScale.toStringAsFixed(2)),
+        // Persist the preset name only; fontFamily is always derivable from
+        // textPreset.toSettings() (no separate key).
+        _store.writeString(textPresetKey, state.textPreset.name),
         switch (state.localeOverride) {
           final locale? => _store.writeString(localeKey, locale.languageTag),
           null => _store.remove(localeKey),
+        },
+        switch (state.hasCompletedOnboarding) {
+          true => _store.writeString(onboardingKey, 'true'),
+          false => _store.remove(onboardingKey),
+        },
+        switch (state.biometricUnlockEnabled) {
+          true => _store.writeString(biometricUnlockKey, 'true'),
+          false => _store.remove(biometricUnlockKey),
+        },
+        // Persist only the opt-out so a missing key reads as default-on.
+        switch (state.hapticsEnabled) {
+          false => _store.writeString(hapticsEnabledKey, 'false'),
+          true => _store.remove(hapticsEnabledKey),
+        },
+        switch (state.passcodeEnabled) {
+          true => _store.writeString(passcodeEnabledKey, 'true'),
+          false => _store.remove(passcodeEnabledKey),
+        },
+        // 0 is the default (idle locking off); persist only non-default values.
+        switch (state.autoLockDelaySeconds) {
+          0 => _store.remove(autoLockDelayKey),
+          final seconds => _store.writeString(autoLockDelayKey, seconds.toString()),
+        },
+        switch (state.lockOnBackground) {
+          true => _store.writeString(lockOnBackgroundKey, 'true'),
+          false => _store.remove(lockOnBackgroundKey),
         },
       ]);
     } on SettingsStoreException catch (error) {
@@ -73,6 +135,17 @@ final class SettingsRepository {
         parsed < SettingsState.minimumFontScale ||
         parsed > SettingsState.maximumFontScale) {
       return const SettingsState.defaults().fontScale;
+    }
+    return parsed;
+  }
+
+  /// Parses the auto-lock delay. A missing/malformed/negative value reads as 0
+  /// (idle locking off). Clamped to >= 0 so a corrupted negative value cannot
+  /// crash the AutoLockController timer.
+  static int _parseAutoLockDelay(String? savedValue) {
+    final parsed = int.tryParse(savedValue ?? '');
+    if (parsed == null || parsed < 0) {
+      return const SettingsState.defaults().autoLockDelaySeconds;
     }
     return parsed;
   }

@@ -17,9 +17,20 @@
     "next": "التالي",
     "optional": "اختياري",
     "loading": "جارٍ التحميل",
+    "saving": "جارٍ الحفظ…",
     "notConnected": "هذا الإجراء غير متصل بعد.",
     "legalPlaceholderTitle": "معاينة المعلومات",
-    "legalPlaceholderBody": "يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج."
+    "legalPlaceholderBody": "يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.",
+    "confirm": "تأكيد",
+    "success": "تم بنجاح",
+    "discard": "تجاهل",
+    "error": "خطأ"
+  },
+  "connectivity": {
+    "online": "متصل",
+    "offline": "أنت غير متصل. قد لا تتوفر بعض الإجراءات.",
+    "backOnline": "عاد الاتصال بالإنترنت.",
+    "limited": "اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة."
   },
   "navigation": {
     "home": "الرئيسية",
@@ -140,7 +151,35 @@
     "privacyBody": "يخزن هذا القالب تفضيلات المظهر واللغة فقط خلال المرحلة الثابتة.",
     "aboutBuild": "معلومات الإصدار",
     "terms": "معاينة الشروط",
-    "privacy": "معاينة الخصوصية"
+    "privacy": "معاينة الخصوصية",
+    "enableBiometric": "إلغاء القفل بالقياس الحيوي",
+    "passcode": "رمز المرور",
+    "autoLockDelay": "تأخر القفل التلقائي",
+    "lockOnBackground": "القفل عند الانتقال للخلفية",
+    "analytics": {
+      "optInTitle": "التحليلات",
+      "optInBody": "ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.",
+      "statusOn": "مُفعّل",
+      "statusOff": "غير مُفعّل"
+    },
+    "accessibility": {
+      "title": "إمكانية الوصول",
+      "preset": {
+        "comfortable": "مريح",
+        "comfortableDescription": "حجم النص الافتراضي للقراءة اليومية.",
+        "large": "كبير",
+        "largeDescription": "نص أكبر لتسهيل القراءة بنظرة سريعة.",
+        "dyslexia": "ملاءم لعسر القراءة",
+        "dyslexiaDescription": "نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر."
+      }
+    },
+    "haptics": {
+      "title": "الاهتزاز اللمسي",
+      "enable": "تفعيل الاهتزاز اللمسي للإجراءات الرئيسية"
+    },
+    "about": {
+      "license": "التراخيص"
+    }
   },
   "auth": {
     "common": {
@@ -162,7 +201,25 @@
       "submit": "تسجيل الدخول",
       "submitting": "جارٍ تسجيل الدخول",
       "globalError": "تعذر إكمال تسجيل الدخول الثابت. تم الاحتفاظ بالقيم.",
-      "success": "اكتمل تسجيل الدخول الثابت."
+      "success": "اكتمل تسجيل الدخول الثابت.",
+      "lockedTitle": "محاولات كثيرة",
+      "tooManyAttempts": "محاولات فاشلة كثيرة. يرجى الانتظار.",
+      "attemptsRemaining(count)": {
+        "zero": "لا محاولات متبقية",
+        "one": "محاولة واحدة متبقية",
+        "two": "محاولتان متبقيتان",
+        "few": "$count محاولات متبقية",
+        "many": "$count محاولة متبقية",
+        "other": "$count محاولة متبقية"
+      },
+      "lockedBody(seconds)": {
+        "zero": "أعد المحاولة الآن.",
+        "one": "أعد المحاولة خلال ثانية واحدة.",
+        "two": "أعد المحاولة خلال ثانيتين.",
+        "few": "أعد المحاولة خلال $seconds ثوانٍ.",
+        "many": "أعد المحاولة خلال $seconds ثانية.",
+        "other": "أعد المحاولة خلال $seconds ثانية."
+      }
     },
     "register": {
       "title": "إنشاء حسابك",
@@ -200,7 +257,38 @@
       "invalid": "رمز التحقق غير صالح.",
       "expired": "انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.",
       "registrationSuccess": "تم التحقق من التسجيل.",
-      "passwordResetSuccess": "تم التحقق من طلب إعادة التعيين."
+      "passwordResetSuccess": "تم التحقق من طلب إعادة التعيين.",
+      "mfaSuccess": "تم التحقق من تسجيل الدخول.",
+      "lockedTitle": "محاولات كثيرة",
+      "tooManyAttempts": "محاولات فاشلة كثيرة. يرجى الانتظار.",
+      "attemptsRemaining(count)": {
+        "zero": "لا محاولات متبقية",
+        "one": "محاولة واحدة متبقية",
+        "two": "محاولتان متبقيتان",
+        "few": "$count محاولات متبقية",
+        "many": "$count محاولة متبقية",
+        "other": "$count محاولة متبقية"
+      },
+      "lockedBody(seconds)": {
+        "zero": "أعد المحاولة الآن.",
+        "one": "أعد المحاولة خلال ثانية واحدة.",
+        "two": "أعد المحاولة خلال ثانيتين.",
+        "few": "أعد المحاولة خلال $seconds ثوانٍ.",
+        "many": "أعد المحاولة خلال $seconds ثانية.",
+        "other": "أعد المحاولة خلال $seconds ثانية."
+      },
+      "mfaTitle": "تحقق من تسجيل الدخول",
+      "mfaBody": "أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.",
+      "expiresIn(seconds)": {
+        "zero": "تنتهي صلاحيته الآن",
+        "one": "تنتهي صلاحيته خلال ثانية واحدة",
+        "two": "تنتهي صلاحيته خلال ثانيتين",
+        "few": "تنتهي صلاحيته خلال $seconds ثوانٍ",
+        "many": "تنتهي صلاحيته خلال $seconds ثانية",
+        "other": "تنتهي صلاحيته خلال $seconds ثانية"
+      },
+      "expiredTitle": "انتهت صلاحية الرمز",
+      "expiredBody": "انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة."
     },
     "resetPassword": {
       "title": "اختر كلمة مرور جديدة",
@@ -235,6 +323,100 @@
       "discard": "تجاهل التغييرات"
     }
   },
+  "security": {
+    "biometric": {
+      "lockTitle": "إلغاء القفل بالقياس الحيوي",
+      "lockBody": "استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.",
+      "authFailedTitle": "فشلت المصادقة. أعد المحاولة.",
+      "unlock": "إلغاء القفل",
+      "unlocking": "جارٍ إلغاء القفل",
+      "unavailableTitle": "إلغاء القفل بالقياس الحيوي غير متاح",
+      "unavailableBody": "لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.",
+      "useFallback": "استخدام بيانات الاعتماد"
+    },
+    "passcode": {
+      "enterTitle": "أدخل رمز المرور",
+      "enterBody": "أدخل رمز المرور لإلغاء قفل التطبيق.",
+      "setupTitle": "تعيين رمز مرور",
+      "setupBody": "اختر رمزًا رقميًا يمكنك استخدامه عندما لا تكون القياسات الحيوية متاحة.",
+      "confirmTitle": "تأكيد رمز المرور",
+      "reenter": "أعد إدخال رمز المرور",
+      "mismatch": "رمزا المرور غير متطابقين. حاول مرة أخرى.",
+      "incorrect(attempts)": {
+        "zero": "رمز مرور غير صحيح. لا محاولات متبقية.",
+        "one": "رمز مرور غير صحيح. يتبقى محاولة واحدة.",
+        "two": "رمز مرور غير صحيح. يتبقى محاولتان.",
+        "few": "رمز مرور غير صحيح. يتبقى $attempts محاولات.",
+        "many": "رمز مرور غير صحيح. يتبقى $attempts محاولة.",
+        "other": "رمز مرور غير صحيح. يتبقى $attempts محاولات."
+      },
+      "lockedOut(seconds)": {
+        "zero": "محاولات كثيرة. أعد المحاولة الآن.",
+        "one": "محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.",
+        "two": "محاولات كثيرة. أعد المحاولة خلال ثانيتين.",
+        "few": "محاولات كثيرة. أعد المحاولة خلال $seconds ثوانٍ.",
+        "many": "محاولات كثيرة. أعد المحاولة خلال $seconds ثانية.",
+        "other": "محاولات كثيرة. أعد المحاولة خلال $seconds ثوانٍ."
+      },
+      "disable": "تعطيل رمز المرور"
+    }
+  },
+  "forceUpdate": {
+    "title": "يلزم تحديث التطبيق",
+    "body": "لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.",
+    "updateNow": "تحديث الآن"
+  },
+  "softUpdate": {
+    "title": "يتوفر إصدار أحدث",
+    "body": "حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.",
+    "update": "تحديث",
+    "later": "لاحقًا"
+  },
+  "session": {
+    "expired": "انتهت جلستك. يُرجى تسجيل الدخول من جديد.",
+    "signedOut": "تم تسجيل خروجك.",
+    "signedInPreview": "تم تسجيل دخولك بصفتك $userId",
+    "unavailable": "تسجيل الدخول غير متصل بعد."
+  },
+  "splash": {
+    "loading": "جارٍ التشغيل",
+    "tagline": "نقطة انطلاق مدروسة",
+    "error": "تعذّر إكمال التشغيل."
+  },
+  "states": {
+    "emptyTitle": "لا يوجد شيء هنا بعد",
+    "emptyBody": "عند توفّر المحتوى، سيظهر هنا.",
+    "errorTitle": "تعذّر تحميل هذا",
+    "errorBody": "حدث خطأ أثناء التحميل. حاول مرة أخرى.",
+    "loadingTitle": "جارٍ التحميل…"
+  },
+  "announcements": {
+    "dismiss": "إغلاق",
+    "actionLearnMore": "اعرف المزيد",
+    "dismissFailed": "تعذّر إغلاق الإعلان.",
+    "severityInfo": "معلومة",
+    "severitySuccess": "نجاح",
+    "severityWarning": "تحذير",
+    "severityCritical": "حرج",
+    "fixtures": {
+      "welcome": {
+        "title": "أهلًا بك في نقطة الانطلاق",
+        "message": "أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة."
+      },
+      "changelog": {
+        "title": "الجديد في هذا الإصدار",
+        "message": "تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق."
+      },
+      "deprecation": {
+        "title": "يتوفر إصدار أحدث",
+        "message": "سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك."
+      },
+      "outage": {
+        "title": "انقطاع الخدمة",
+        "message": "قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة."
+      }
+    }
+  },
   "validation": {
     "required": "حقل $field مطلوب.",
     "email": "أدخل بريدًا إلكترونيًا صالحًا.",
@@ -262,10 +444,21 @@
     "build": "الإصدار",
     "layout": "فئة التخطيط",
     "interaction": "سياسة التفاعل",
+    "lifecycle": "دورة حياة التطبيق",
     "viewingEnvironment": "بيئة المشاهدة",
     "locale": "اللغة",
     "capabilities": "إمكانات المنصة",
-    "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم."
+    "secureStorage": "التخزين الآمن",
+    "crashReporting": "الإبلاغ عن الأعطال",
+    "crashReportingNone": "غير مُهيَّأ",
+    "analytics": "التحليلات",
+    "analyticsNone": "غير مُهيّأ",
+    "featureFlags": "ميزات تجريبية",
+    "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.",
+    "experiments": {
+      "title": "التجارب",
+      "source": "المصدر"
+    }
   },
   "devGallery": {
     "title": "معرض شاشات الإنتاج",
@@ -330,9 +523,35 @@
     "screenProfile": "تحديث الملف الشخصي",
     "screenPricing": "الأسعار",
     "screenSettings": "الإعدادات",
+    "screenConnectivity": "شريط حالة الاتصال",
+    "screenForceUpdate": "تحديث إلزامي",
+    "screenSoftUpdate": "تحديث اختياري",
+    "screenBusy": "مؤشرات الانشغال",
     "screenSystem": "واجهات النظام",
     "screenOverlays": "الطبقات العلوية",
+    "screenSplash": "شاشة البداية داخل التطبيق",
+    "screenStateViews": "حالات العرض",
+    "screenFormScaffolding": "هيكل النموذج",
+    "screenAnnouncements": "شريط الإعلانات",
+    "caseSplashLoading": "جارٍ التشغيل",
+    "caseSplashReady": "جاهز",
+    "caseSplashError": "خطأ في التشغيل",
+    "caseStateEmpty": "فارغة",
+    "caseStateError": "خطأ",
+    "caseStateLoading": "جارٍ التحميل",
+    "caseFormScaffoldDisabled": "إرسال معطّل",
+    "caseFormScaffoldEnabled": "إرسال مفعّل",
+    "caseFormScaffoldSubmitting": "جارٍ الإرسال",
+    "caseAnnouncementsInfo": "معلومة",
+    "caseAnnouncementsSuccess": "نجاح",
+    "caseAnnouncementsWarning": "تحذير",
+    "caseAnnouncementsCritical": "حرج",
     "caseDefault": "افتراضية",
+    "caseHardBlock": "حظر إلزامي",
+    "caseSoftUpdate": "تحديث اختياري",
+    "caseBusyIndeterminate": "غير محدد",
+    "caseBusyDeterminate": "محدد",
+    "caseBusyOverlay": "طبقة مشروطة",
     "caseExpandedCopy": "نص موسّع",
     "caseFirst": "الأولى",
     "caseMiddle": "الوسطى",
@@ -366,6 +585,125 @@
     "casePopover": "نافذة منبثقة",
     "caseTooltip": "تلميح",
     "caseKeyboardInset": "نموذج مع إزاحة لوحة المفاتيح",
-    "caseNotFound": "حالة المعرض المطلوبة غير مسجلة."
+    "screenSession": "الجلسة",
+    "caseSessionLoggedOut": "تم تسجيل الخروج",
+    "caseSessionLoggedIn": "تم تسجيل الدخول",
+    "screenAnalytics": "الاشتراك في التحليلات",
+    "screenBiometricLock": "قفل القياس الحيوي",
+    "caseLocked": "مقفل",
+    "caseNotFound": "حالة المعرض المطلوبة غير مسجلة.",
+    "screenAccessibility": "إعدادات إمكانية الوصول",
+    "caseAccessibilityComfortable": "الإعداد المريح",
+    "caseAccessibilityLarge": "الإعداد الكبير",
+    "caseAccessibilityDyslexia": "إعداد عسر القراءة",
+    "screenPullRefresh": "اسحب للتحديث",
+    "casePullRefreshList": "قائمة قابلة للتحديث",
+    "casePullRefreshGrid": "شبكة متجاوبة",
+    "screenHaptics": "الاهتزاز اللمسي",
+    "caseHapticKinds": "جميع الأنواع",
+    "caseHapticSelection": "التحديد",
+    "caseHapticImpactLight": "اهتزاز خفيف",
+    "caseHapticImpactMedium": "اهتزاز متوسط",
+    "caseHapticImpactHeavy": "اهتزاز قوي",
+    "caseHapticSuccess": "نجاح",
+    "caseHapticWarning": "تحذير",
+    "caseHapticError": "خطأ",
+    "screenSkeleton": "هيكل التحميل",
+    "caseSkeletonStatic": "ثابت (تقليل الحركة)",
+    "caseSkeletonShimmer": "وميض",
+    "screenOtpMfa": "التحقق متعدد العوامل",
+    "caseCountdown": "العد التنازلي",
+    "screenNotifications": "الإشعارات",
+    "caseNotificationsNotRequested": "سبب الإذن",
+    "caseNotificationsGranted": "مُمنوح",
+    "caseNotificationsDenied": "محظور",
+    "screenPermissions": "الأذونات",
+    "casePermissionRationale": "السبب",
+    "casePermissionDenied": "مرفوض",
+    "casePermissionPermanentlyDenied": "محظور نهائيًا",
+    "screenLicense": "التراخيص",
+    "screenShare": "ورقة المشاركة",
+    "screenAppUpdate": "التحديث داخل التطبيق",
+    "screenSearchPagination": "بحث وترقيم صفحات",
+    "caseSearchField": "حقل البحث",
+    "caseSearchPaged": "قائمة مقسّمة",
+    "caseSearchPagedNoBackend": "قائمة مقسّمة (بلا خادم)",
+    "screenToastDialogs": "الإشعارات ومربعات الحوار",
+    "caseToastSuccess": "إشعار نجاح",
+    "caseToastInfo": "إشعار معلومات",
+    "caseToastWarning": "إشعار تحذير",
+    "caseToastError": "إشعار خطأ",
+    "caseDialogConfirm": "مربع تأكيد",
+    "caseDialogDestroy": "مربع حذف",
+    "screenPasscodeEntry": "إدخال رمز المرور",
+    "screenPasscodeSetup": "إعداد رمز المرور",
+    "casePasscodeIdle": "خامل",
+    "casePasscodeError": "غير صحيح",
+    "casePasscodeLockedOut": "مقفل",
+    "casePasscodeSetupMismatch": "عدم تطابق التأكيد",
+    "screenFeedback": "الملاحظات",
+    "caseFeedbackDrafting": "كتابة",
+    "caseFeedbackSubmitting": "إرسال",
+    "caseFeedbackFailed": "فشل",
+    "caseFeedbackSuccess": "نجاح"
+  },
+  "notifications": {
+    "enableTitle": "تفعيل الإشعارات",
+    "enableBody": "احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.",
+    "deny": "ليس الآن",
+    "allow": "السماح",
+    "enableBlockedTitle": "الإشعارات محظورة",
+    "enableBlockedBody": "افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.",
+    "disabled": "الإشعارات غير متصلة في هذا القالب."
+  },
+  "permission": {
+    "camera": {
+      "title": "الوصول إلى الكاميرا",
+      "rationale": "نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت."
+    },
+    "photos": {
+      "title": "الوصول إلى مكتبة الصور",
+      "rationale": "نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت."
+    },
+    "location": {
+      "title": "الوصول إلى الموقع",
+      "rationale": "نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت."
+    },
+    "continueRequest": "متابعة",
+    "notNow": "ليس الآن",
+    "openSettings": "فتح الإعدادات",
+    "denied": "تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.",
+    "permanentlyDenied": "الإذن محظور. فعّله من إعدادات النظام للمتابعة."
+  },
+  "share": {
+    "success": "تمت المشاركة",
+    "unavailable": "المشاركة غير متاحة على هذا الجهاز.",
+    "cancelled": "تم إلغاء المشاركة."
+  },
+  "update": {
+    "checkForUpdates": "التحقق من التحديثات",
+    "available": "يتوفر تحديث.",
+    "notAvailable": "أنت على أحدث إصدار.",
+    "required": "التحديث مطلوب للمتابعة."
+  },
+  "search": {
+    "title": "بحث",
+    "placeholder": "بحث…",
+    "emptyTitle": "لا توجد نتائج",
+    "emptyBody": "جرّب مصطلح بحث آخر.",
+    "errorTitle": "البحث غير متاح"
+  },
+  "feedback": {
+    "title": "إرسال ملاحظات",
+    "messageLabel": "الرسالة",
+    "messageHint": "ماذا حدث، أو ما الذي يمكن تحسينه؟",
+    "includeScreenshot": "إرفاق لقطة شاشة",
+    "emailOptional": "بريد الرد",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "successTitle": "شكراً لك!",
+    "successBody": "تم إرسال ملاحظاتك.",
+    "failedTitle": "تعذّر إرسال ملاحظاتك في الوقت الحالي.",
+    "shakeEnabled": "فتح الملاحظات عند الاهتزاز"
   }
 }

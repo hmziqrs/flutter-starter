@@ -10,6 +10,8 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/lists/data_list_view.dart';
+import 'package:starter/shared/widgets/states/empty_state_view.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({
@@ -285,32 +287,29 @@ class _RecentActivity extends StatelessWidget {
         Text(translations.recentTitle, style: context.theme.typography.display.lg),
         SizedBox(height: context.spacing.sm),
         if (!viewData.hasRecentActivity)
-          FCard(
+          EmptyStateView(
             key: const ValueKey('home-activity-empty'),
-            child: Padding(
-              padding: EdgeInsets.all(context.spacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    translations.recentEmptyTitle,
-                    style: context.theme.typography.display.md,
-                  ),
-                  SizedBox(height: context.spacing.sm),
-                  Text(translations.recentEmptyBody),
-                ],
-              ),
-            ),
+            title: translations.recentEmptyTitle,
+            body: translations.recentEmptyBody,
           )
         else
-          Column(
+          // Lazy virtualized builder (pull-refresh feature): the home activity
+          // list is the first concrete DataListView consumer. shrinkWrap +
+          // NeverScrollableScrollPhysics keep it inline within the outer home
+          // ListView (the home-wide pull-to-refresh gesture is deferred to the
+          // toast-dialogs wave; this keeps the HomePage contract frozen). The
+          // per-tile ValueKey is preserved on _ActivityTile so existing tests
+          // that target `home-activity-<id>` keep working alongside DataListView's
+          // own `data-list-<id>` KeyedSubtree wrapper.
+          DataListView<HomeActivityViewData>(
             key: const ValueKey('home-activity-list'),
-            children: [
-              for (var index = 0; index < viewData.recentActivity.length; index++) ...[
-                if (index > 0) SizedBox(height: context.spacing.sm),
-                _ActivityTile(activity: viewData.recentActivity[index]),
-              ],
-            ],
+            items: viewData.recentActivity,
+            itemBuilder: (context, activity) => _ActivityTile(activity: activity),
+            keyOf: (activity) => activity.id,
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            separator: const SizedBox(height: AppSpacing.sm),
           ),
       ],
     );

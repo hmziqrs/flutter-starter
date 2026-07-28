@@ -41,6 +41,7 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	// Translations
 	@override late final _Translations$app$ar app = _Translations$app$ar._(_root);
 	@override late final _Translations$common$ar common = _Translations$common$ar._(_root);
+	@override late final _Translations$connectivity$ar connectivity = _Translations$connectivity$ar._(_root);
 	@override late final _Translations$navigation$ar navigation = _Translations$navigation$ar._(_root);
 	@override late final _Translations$onboarding$ar onboarding = _Translations$onboarding$ar._(_root);
 	@override late final _Translations$pricing$ar pricing = _Translations$pricing$ar._(_root);
@@ -48,11 +49,24 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$settings$ar settings = _Translations$settings$ar._(_root);
 	@override late final _Translations$auth$ar auth = _Translations$auth$ar._(_root);
 	@override late final _Translations$profile$ar profile = _Translations$profile$ar._(_root);
+	@override late final _Translations$security$ar security = _Translations$security$ar._(_root);
+	@override late final _Translations$forceUpdate$ar forceUpdate = _Translations$forceUpdate$ar._(_root);
+	@override late final _Translations$softUpdate$ar softUpdate = _Translations$softUpdate$ar._(_root);
+	@override late final _Translations$session$ar session = _Translations$session$ar._(_root);
+	@override late final _Translations$splash$ar splash = _Translations$splash$ar._(_root);
+	@override late final _Translations$states$ar states = _Translations$states$ar._(_root);
+	@override late final _Translations$announcements$ar announcements = _Translations$announcements$ar._(_root);
 	@override late final _Translations$validation$ar validation = _Translations$validation$ar._(_root);
 	@override late final _Translations$routeError$ar routeError = _Translations$routeError$ar._(_root);
 	@override late final _Translations$startupFailure$ar startupFailure = _Translations$startupFailure$ar._(_root);
 	@override late final _Translations$diagnostics$ar diagnostics = _Translations$diagnostics$ar._(_root);
 	@override late final _Translations$devGallery$ar devGallery = _Translations$devGallery$ar._(_root);
+	@override late final _Translations$notifications$ar notifications = _Translations$notifications$ar._(_root);
+	@override late final _Translations$permission$ar permission = _Translations$permission$ar._(_root);
+	@override late final _Translations$share$ar share = _Translations$share$ar._(_root);
+	@override late final _Translations$update$ar update = _Translations$update$ar._(_root);
+	@override late final _Translations$search$ar search = _Translations$search$ar._(_root);
+	@override late final _Translations$feedback$ar feedback = _Translations$feedback$ar._(_root);
 }
 
 // Path: app
@@ -86,9 +100,27 @@ class _Translations$common$ar extends Translations$common$en {
 	@override String get next => 'التالي';
 	@override String get optional => 'اختياري';
 	@override String get loading => 'جارٍ التحميل';
+	@override String get saving => 'جارٍ الحفظ…';
 	@override String get notConnected => 'هذا الإجراء غير متصل بعد.';
 	@override String get legalPlaceholderTitle => 'معاينة المعلومات';
 	@override String get legalPlaceholderBody => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.';
+	@override String get confirm => 'تأكيد';
+	@override String get success => 'تم بنجاح';
+	@override String get discard => 'تجاهل';
+	@override String get error => 'خطأ';
+}
+
+// Path: connectivity
+class _Translations$connectivity$ar extends Translations$connectivity$en {
+	_Translations$connectivity$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get online => 'متصل';
+	@override String get offline => 'أنت غير متصل. قد لا تتوفر بعض الإجراءات.';
+	@override String get backOnline => 'عاد الاتصال بالإنترنت.';
+	@override String get limited => 'اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة.';
 }
 
 // Path: navigation
@@ -229,6 +261,14 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get aboutBuild => 'معلومات الإصدار';
 	@override String get terms => 'معاينة الشروط';
 	@override String get privacy => 'معاينة الخصوصية';
+	@override String get enableBiometric => 'إلغاء القفل بالقياس الحيوي';
+	@override String get passcode => 'رمز المرور';
+	@override String get autoLockDelay => 'تأخر القفل التلقائي';
+	@override String get lockOnBackground => 'القفل عند الانتقال للخلفية';
+	@override late final _Translations$settings$analytics$ar analytics = _Translations$settings$analytics$ar._(_root);
+	@override late final _Translations$settings$accessibility$ar accessibility = _Translations$settings$accessibility$ar._(_root);
+	@override late final _Translations$settings$haptics$ar haptics = _Translations$settings$haptics$ar._(_root);
+	@override late final _Translations$settings$about$ar about = _Translations$settings$about$ar._(_root);
 }
 
 // Path: auth
@@ -254,6 +294,98 @@ class _Translations$profile$ar extends Translations$profile$en {
 
 	// Translations
 	@override late final _Translations$profile$update$ar update = _Translations$profile$update$ar._(_root);
+}
+
+// Path: security
+class _Translations$security$ar extends Translations$security$en {
+	_Translations$security$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$security$biometric$ar biometric = _Translations$security$biometric$ar._(_root);
+	@override late final _Translations$security$passcode$ar passcode = _Translations$security$passcode$ar._(_root);
+}
+
+// Path: forceUpdate
+class _Translations$forceUpdate$ar extends Translations$forceUpdate$en {
+	_Translations$forceUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يلزم تحديث التطبيق';
+	@override String get body => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.';
+	@override String get updateNow => 'تحديث الآن';
+}
+
+// Path: softUpdate
+class _Translations$softUpdate$ar extends Translations$softUpdate$en {
+	_Translations$softUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يتوفر إصدار أحدث';
+	@override String get body => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.';
+	@override String get update => 'تحديث';
+	@override String get later => 'لاحقًا';
+}
+
+// Path: session
+class _Translations$session$ar extends Translations$session$en {
+	_Translations$session$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get expired => 'انتهت جلستك. يُرجى تسجيل الدخول من جديد.';
+	@override String get signedOut => 'تم تسجيل خروجك.';
+	@override String signedInPreview({required Object userId}) => 'تم تسجيل دخولك بصفتك ${userId}';
+	@override String get unavailable => 'تسجيل الدخول غير متصل بعد.';
+}
+
+// Path: splash
+class _Translations$splash$ar extends Translations$splash$en {
+	_Translations$splash$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'جارٍ التشغيل';
+	@override String get tagline => 'نقطة انطلاق مدروسة';
+	@override String get error => 'تعذّر إكمال التشغيل.';
+}
+
+// Path: states
+class _Translations$states$ar extends Translations$states$en {
+	_Translations$states$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => 'لا يوجد شيء هنا بعد';
+	@override String get emptyBody => 'عند توفّر المحتوى، سيظهر هنا.';
+	@override String get errorTitle => 'تعذّر تحميل هذا';
+	@override String get errorBody => 'حدث خطأ أثناء التحميل. حاول مرة أخرى.';
+	@override String get loadingTitle => 'جارٍ التحميل…';
+}
+
+// Path: announcements
+class _Translations$announcements$ar extends Translations$announcements$en {
+	_Translations$announcements$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get dismiss => 'إغلاق';
+	@override String get actionLearnMore => 'اعرف المزيد';
+	@override String get dismissFailed => 'تعذّر إغلاق الإعلان.';
+	@override String get severityInfo => 'معلومة';
+	@override String get severitySuccess => 'نجاح';
+	@override String get severityWarning => 'تحذير';
+	@override String get severityCritical => 'حرج';
+	@override late final _Translations$announcements$fixtures$ar fixtures = _Translations$announcements$fixtures$ar._(_root);
 }
 
 // Path: validation
@@ -310,10 +442,18 @@ class _Translations$diagnostics$ar extends Translations$diagnostics$en {
 	@override String get build => 'الإصدار';
 	@override String get layout => 'فئة التخطيط';
 	@override String get interaction => 'سياسة التفاعل';
+	@override String get lifecycle => 'دورة حياة التطبيق';
 	@override String get viewingEnvironment => 'بيئة المشاهدة';
 	@override String get locale => 'اللغة';
 	@override String get capabilities => 'إمكانات المنصة';
+	@override String get secureStorage => 'التخزين الآمن';
+	@override String get crashReporting => 'الإبلاغ عن الأعطال';
+	@override String get crashReportingNone => 'غير مُهيَّأ';
+	@override String get analytics => 'التحليلات';
+	@override String get analyticsNone => 'غير مُهيّأ';
+	@override String get featureFlags => 'ميزات تجريبية';
 	@override String get redactedNotice => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.';
+	@override late final _Translations$diagnostics$experiments$ar experiments = _Translations$diagnostics$experiments$ar._(_root);
 }
 
 // Path: devGallery
@@ -385,9 +525,35 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenProfile => 'تحديث الملف الشخصي';
 	@override String get screenPricing => 'الأسعار';
 	@override String get screenSettings => 'الإعدادات';
+	@override String get screenConnectivity => 'شريط حالة الاتصال';
+	@override String get screenForceUpdate => 'تحديث إلزامي';
+	@override String get screenSoftUpdate => 'تحديث اختياري';
+	@override String get screenBusy => 'مؤشرات الانشغال';
 	@override String get screenSystem => 'واجهات النظام';
 	@override String get screenOverlays => 'الطبقات العلوية';
+	@override String get screenSplash => 'شاشة البداية داخل التطبيق';
+	@override String get screenStateViews => 'حالات العرض';
+	@override String get screenFormScaffolding => 'هيكل النموذج';
+	@override String get screenAnnouncements => 'شريط الإعلانات';
+	@override String get caseSplashLoading => 'جارٍ التشغيل';
+	@override String get caseSplashReady => 'جاهز';
+	@override String get caseSplashError => 'خطأ في التشغيل';
+	@override String get caseStateEmpty => 'فارغة';
+	@override String get caseStateError => 'خطأ';
+	@override String get caseStateLoading => 'جارٍ التحميل';
+	@override String get caseFormScaffoldDisabled => 'إرسال معطّل';
+	@override String get caseFormScaffoldEnabled => 'إرسال مفعّل';
+	@override String get caseFormScaffoldSubmitting => 'جارٍ الإرسال';
+	@override String get caseAnnouncementsInfo => 'معلومة';
+	@override String get caseAnnouncementsSuccess => 'نجاح';
+	@override String get caseAnnouncementsWarning => 'تحذير';
+	@override String get caseAnnouncementsCritical => 'حرج';
 	@override String get caseDefault => 'افتراضية';
+	@override String get caseHardBlock => 'حظر إلزامي';
+	@override String get caseSoftUpdate => 'تحديث اختياري';
+	@override String get caseBusyIndeterminate => 'غير محدد';
+	@override String get caseBusyDeterminate => 'محدد';
+	@override String get caseBusyOverlay => 'طبقة مشروطة';
 	@override String get caseExpandedCopy => 'نص موسّع';
 	@override String get caseFirst => 'الأولى';
 	@override String get caseMiddle => 'الوسطى';
@@ -421,7 +587,159 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get casePopover => 'نافذة منبثقة';
 	@override String get caseTooltip => 'تلميح';
 	@override String get caseKeyboardInset => 'نموذج مع إزاحة لوحة المفاتيح';
+	@override String get screenSession => 'الجلسة';
+	@override String get caseSessionLoggedOut => 'تم تسجيل الخروج';
+	@override String get caseSessionLoggedIn => 'تم تسجيل الدخول';
+	@override String get screenAnalytics => 'الاشتراك في التحليلات';
+	@override String get screenBiometricLock => 'قفل القياس الحيوي';
+	@override String get caseLocked => 'مقفل';
 	@override String get caseNotFound => 'حالة المعرض المطلوبة غير مسجلة.';
+	@override String get screenAccessibility => 'إعدادات إمكانية الوصول';
+	@override String get caseAccessibilityComfortable => 'الإعداد المريح';
+	@override String get caseAccessibilityLarge => 'الإعداد الكبير';
+	@override String get caseAccessibilityDyslexia => 'إعداد عسر القراءة';
+	@override String get screenPullRefresh => 'اسحب للتحديث';
+	@override String get casePullRefreshList => 'قائمة قابلة للتحديث';
+	@override String get casePullRefreshGrid => 'شبكة متجاوبة';
+	@override String get screenHaptics => 'الاهتزاز اللمسي';
+	@override String get caseHapticKinds => 'جميع الأنواع';
+	@override String get caseHapticSelection => 'التحديد';
+	@override String get caseHapticImpactLight => 'اهتزاز خفيف';
+	@override String get caseHapticImpactMedium => 'اهتزاز متوسط';
+	@override String get caseHapticImpactHeavy => 'اهتزاز قوي';
+	@override String get caseHapticSuccess => 'نجاح';
+	@override String get caseHapticWarning => 'تحذير';
+	@override String get caseHapticError => 'خطأ';
+	@override String get screenSkeleton => 'هيكل التحميل';
+	@override String get caseSkeletonStatic => 'ثابت (تقليل الحركة)';
+	@override String get caseSkeletonShimmer => 'وميض';
+	@override String get screenOtpMfa => 'التحقق متعدد العوامل';
+	@override String get caseCountdown => 'العد التنازلي';
+	@override String get screenNotifications => 'الإشعارات';
+	@override String get caseNotificationsNotRequested => 'سبب الإذن';
+	@override String get caseNotificationsGranted => 'مُمنوح';
+	@override String get caseNotificationsDenied => 'محظور';
+	@override String get screenPermissions => 'الأذونات';
+	@override String get casePermissionRationale => 'السبب';
+	@override String get casePermissionDenied => 'مرفوض';
+	@override String get casePermissionPermanentlyDenied => 'محظور نهائيًا';
+	@override String get screenLicense => 'التراخيص';
+	@override String get screenShare => 'ورقة المشاركة';
+	@override String get screenAppUpdate => 'التحديث داخل التطبيق';
+	@override String get screenSearchPagination => 'بحث وترقيم صفحات';
+	@override String get caseSearchField => 'حقل البحث';
+	@override String get caseSearchPaged => 'قائمة مقسّمة';
+	@override String get caseSearchPagedNoBackend => 'قائمة مقسّمة (بلا خادم)';
+	@override String get screenToastDialogs => 'الإشعارات ومربعات الحوار';
+	@override String get caseToastSuccess => 'إشعار نجاح';
+	@override String get caseToastInfo => 'إشعار معلومات';
+	@override String get caseToastWarning => 'إشعار تحذير';
+	@override String get caseToastError => 'إشعار خطأ';
+	@override String get caseDialogConfirm => 'مربع تأكيد';
+	@override String get caseDialogDestroy => 'مربع حذف';
+	@override String get screenPasscodeEntry => 'إدخال رمز المرور';
+	@override String get screenPasscodeSetup => 'إعداد رمز المرور';
+	@override String get casePasscodeIdle => 'خامل';
+	@override String get casePasscodeError => 'غير صحيح';
+	@override String get casePasscodeLockedOut => 'مقفل';
+	@override String get casePasscodeSetupMismatch => 'عدم تطابق التأكيد';
+	@override String get screenFeedback => 'الملاحظات';
+	@override String get caseFeedbackDrafting => 'كتابة';
+	@override String get caseFeedbackSubmitting => 'إرسال';
+	@override String get caseFeedbackFailed => 'فشل';
+	@override String get caseFeedbackSuccess => 'نجاح';
+}
+
+// Path: notifications
+class _Translations$notifications$ar extends Translations$notifications$en {
+	_Translations$notifications$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get enableTitle => 'تفعيل الإشعارات';
+	@override String get enableBody => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.';
+	@override String get deny => 'ليس الآن';
+	@override String get allow => 'السماح';
+	@override String get enableBlockedTitle => 'الإشعارات محظورة';
+	@override String get enableBlockedBody => 'افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.';
+	@override String get disabled => 'الإشعارات غير متصلة في هذا القالب.';
+}
+
+// Path: permission
+class _Translations$permission$ar extends Translations$permission$en {
+	_Translations$permission$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$permission$camera$ar camera = _Translations$permission$camera$ar._(_root);
+	@override late final _Translations$permission$photos$ar photos = _Translations$permission$photos$ar._(_root);
+	@override late final _Translations$permission$location$ar location = _Translations$permission$location$ar._(_root);
+	@override String get continueRequest => 'متابعة';
+	@override String get notNow => 'ليس الآن';
+	@override String get openSettings => 'فتح الإعدادات';
+	@override String get denied => 'تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.';
+	@override String get permanentlyDenied => 'الإذن محظور. فعّله من إعدادات النظام للمتابعة.';
+}
+
+// Path: share
+class _Translations$share$ar extends Translations$share$en {
+	_Translations$share$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get success => 'تمت المشاركة';
+	@override String get unavailable => 'المشاركة غير متاحة على هذا الجهاز.';
+	@override String get cancelled => 'تم إلغاء المشاركة.';
+}
+
+// Path: update
+class _Translations$update$ar extends Translations$update$en {
+	_Translations$update$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkForUpdates => 'التحقق من التحديثات';
+	@override String get available => 'يتوفر تحديث.';
+	@override String get notAvailable => 'أنت على أحدث إصدار.';
+	@override String get required => 'التحديث مطلوب للمتابعة.';
+}
+
+// Path: search
+class _Translations$search$ar extends Translations$search$en {
+	_Translations$search$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'بحث';
+	@override String get placeholder => 'بحث…';
+	@override String get emptyTitle => 'لا توجد نتائج';
+	@override String get emptyBody => 'جرّب مصطلح بحث آخر.';
+	@override String get errorTitle => 'البحث غير متاح';
+}
+
+// Path: feedback
+class _Translations$feedback$ar extends Translations$feedback$en {
+	_Translations$feedback$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'إرسال ملاحظات';
+	@override String get messageLabel => 'الرسالة';
+	@override String get messageHint => 'ماذا حدث، أو ما الذي يمكن تحسينه؟';
+	@override String get includeScreenshot => 'إرفاق لقطة شاشة';
+	@override String get emailOptional => 'بريد الرد';
+	@override String get submit => 'إرسال';
+	@override String get cancel => 'إلغاء';
+	@override String get successTitle => 'شكراً لك!';
+	@override String get successBody => 'تم إرسال ملاحظاتك.';
+	@override String get failedTitle => 'تعذّر إرسال ملاحظاتك في الوقت الحالي.';
+	@override String get shakeEnabled => 'فتح الملاحظات عند الاهتزاز';
 }
 
 // Path: pricing.plans
@@ -446,6 +764,51 @@ class _Translations$pricing$plans$ar extends Translations$pricing$plans$en {
 	@override String get teamBenefitOne => 'كل ما في الاحترافية';
 	@override String get teamBenefitTwo => 'قواعد جاهزة للفريق';
 	@override String get teamBenefitThree => 'سير إصدار متعدد المنصات';
+}
+
+// Path: settings.analytics
+class _Translations$settings$analytics$ar extends Translations$settings$analytics$en {
+	_Translations$settings$analytics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get optInTitle => 'التحليلات';
+	@override String get optInBody => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.';
+	@override String get statusOn => 'مُفعّل';
+	@override String get statusOff => 'غير مُفعّل';
+}
+
+// Path: settings.accessibility
+class _Translations$settings$accessibility$ar extends Translations$settings$accessibility$en {
+	_Translations$settings$accessibility$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'إمكانية الوصول';
+	@override late final _Translations$settings$accessibility$preset$ar preset = _Translations$settings$accessibility$preset$ar._(_root);
+}
+
+// Path: settings.haptics
+class _Translations$settings$haptics$ar extends Translations$settings$haptics$en {
+	_Translations$settings$haptics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الاهتزاز اللمسي';
+	@override String get enable => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية';
+}
+
+// Path: settings.about
+class _Translations$settings$about$ar extends Translations$settings$about$en {
+	_Translations$settings$about$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get license => 'التراخيص';
 }
 
 // Path: auth.common
@@ -481,6 +844,24 @@ class _Translations$auth$login$ar extends Translations$auth$login$en {
 	@override String get submitting => 'جارٍ تسجيل الدخول';
 	@override String get globalError => 'تعذر إكمال تسجيل الدخول الثابت. تم الاحتفاظ بالقيم.';
 	@override String get success => 'اكتمل تسجيل الدخول الثابت.';
+	@override String get lockedTitle => 'محاولات كثيرة';
+	@override String get tooManyAttempts => 'محاولات فاشلة كثيرة. يرجى الانتظار.';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'لا محاولات متبقية',
+		one: 'محاولة واحدة متبقية',
+		two: 'محاولتان متبقيتان',
+		few: '${count} محاولات متبقية',
+		many: '${count} محاولة متبقية',
+		other: '${count} محاولة متبقية',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'أعد المحاولة الآن.',
+		one: 'أعد المحاولة خلال ثانية واحدة.',
+		two: 'أعد المحاولة خلال ثانيتين.',
+		few: 'أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'أعد المحاولة خلال ${seconds} ثانية.',
+		other: 'أعد المحاولة خلال ${seconds} ثانية.',
+	);
 }
 
 // Path: auth.register
@@ -540,6 +921,37 @@ class _Translations$auth$otp$ar extends Translations$auth$otp$en {
 	@override String get expired => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.';
 	@override String get registrationSuccess => 'تم التحقق من التسجيل.';
 	@override String get passwordResetSuccess => 'تم التحقق من طلب إعادة التعيين.';
+	@override String get mfaSuccess => 'تم التحقق من تسجيل الدخول.';
+	@override String get lockedTitle => 'محاولات كثيرة';
+	@override String get tooManyAttempts => 'محاولات فاشلة كثيرة. يرجى الانتظار.';
+	@override String attemptsRemaining({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'لا محاولات متبقية',
+		one: 'محاولة واحدة متبقية',
+		two: 'محاولتان متبقيتان',
+		few: '${count} محاولات متبقية',
+		many: '${count} محاولة متبقية',
+		other: '${count} محاولة متبقية',
+	);
+	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'أعد المحاولة الآن.',
+		one: 'أعد المحاولة خلال ثانية واحدة.',
+		two: 'أعد المحاولة خلال ثانيتين.',
+		few: 'أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'أعد المحاولة خلال ${seconds} ثانية.',
+		other: 'أعد المحاولة خلال ${seconds} ثانية.',
+	);
+	@override String get mfaTitle => 'تحقق من تسجيل الدخول';
+	@override String get mfaBody => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.';
+	@override String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'تنتهي صلاحيته الآن',
+		one: 'تنتهي صلاحيته خلال ثانية واحدة',
+		two: 'تنتهي صلاحيته خلال ثانيتين',
+		few: 'تنتهي صلاحيته خلال ${seconds} ثوانٍ',
+		many: 'تنتهي صلاحيته خلال ${seconds} ثانية',
+		other: 'تنتهي صلاحيته خلال ${seconds} ثانية',
+	);
+	@override String get expiredTitle => 'انتهت صلاحية الرمز';
+	@override String get expiredBody => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة.';
 }
 
 // Path: auth.resetPassword
@@ -586,6 +998,172 @@ class _Translations$profile$update$ar extends Translations$profile$update$en {
 	@override String get discard => 'تجاهل التغييرات';
 }
 
+// Path: security.biometric
+class _Translations$security$biometric$ar extends Translations$security$biometric$en {
+	_Translations$security$biometric$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get lockTitle => 'إلغاء القفل بالقياس الحيوي';
+	@override String get lockBody => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.';
+	@override String get authFailedTitle => 'فشلت المصادقة. أعد المحاولة.';
+	@override String get unlock => 'إلغاء القفل';
+	@override String get unlocking => 'جارٍ إلغاء القفل';
+	@override String get unavailableTitle => 'إلغاء القفل بالقياس الحيوي غير متاح';
+	@override String get unavailableBody => 'لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.';
+	@override String get useFallback => 'استخدام بيانات الاعتماد';
+}
+
+// Path: security.passcode
+class _Translations$security$passcode$ar extends Translations$security$passcode$en {
+	_Translations$security$passcode$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get enterTitle => 'أدخل رمز المرور';
+	@override String get enterBody => 'أدخل رمز المرور لإلغاء قفل التطبيق.';
+	@override String get setupTitle => 'تعيين رمز مرور';
+	@override String get setupBody => 'اختر رمزًا رقميًا يمكنك استخدامه عندما لا تكون القياسات الحيوية متاحة.';
+	@override String get confirmTitle => 'تأكيد رمز المرور';
+	@override String get reenter => 'أعد إدخال رمز المرور';
+	@override String get mismatch => 'رمزا المرور غير متطابقين. حاول مرة أخرى.';
+	@override String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'رمز مرور غير صحيح. لا محاولات متبقية.',
+		one: 'رمز مرور غير صحيح. يتبقى محاولة واحدة.',
+		two: 'رمز مرور غير صحيح. يتبقى محاولتان.',
+		few: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.',
+		many: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولة.',
+		other: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.',
+	);
+	@override String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
+		zero: 'محاولات كثيرة. أعد المحاولة الآن.',
+		one: 'محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.',
+		two: 'محاولات كثيرة. أعد المحاولة خلال ثانيتين.',
+		few: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.',
+		many: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثانية.',
+		other: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.',
+	);
+	@override String get disable => 'تعطيل رمز المرور';
+}
+
+// Path: announcements.fixtures
+class _Translations$announcements$fixtures$ar extends Translations$announcements$fixtures$en {
+	_Translations$announcements$fixtures$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$announcements$fixtures$welcome$ar welcome = _Translations$announcements$fixtures$welcome$ar._(_root);
+	@override late final _Translations$announcements$fixtures$changelog$ar changelog = _Translations$announcements$fixtures$changelog$ar._(_root);
+	@override late final _Translations$announcements$fixtures$deprecation$ar deprecation = _Translations$announcements$fixtures$deprecation$ar._(_root);
+	@override late final _Translations$announcements$fixtures$outage$ar outage = _Translations$announcements$fixtures$outage$ar._(_root);
+}
+
+// Path: diagnostics.experiments
+class _Translations$diagnostics$experiments$ar extends Translations$diagnostics$experiments$en {
+	_Translations$diagnostics$experiments$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التجارب';
+	@override String get source => 'المصدر';
+}
+
+// Path: permission.camera
+class _Translations$permission$camera$ar extends Translations$permission$camera$en {
+	_Translations$permission$camera$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى الكاميرا';
+	@override String get rationale => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.';
+}
+
+// Path: permission.photos
+class _Translations$permission$photos$ar extends Translations$permission$photos$en {
+	_Translations$permission$photos$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى مكتبة الصور';
+	@override String get rationale => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.';
+}
+
+// Path: permission.location
+class _Translations$permission$location$ar extends Translations$permission$location$en {
+	_Translations$permission$location$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الوصول إلى الموقع';
+	@override String get rationale => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.';
+}
+
+// Path: settings.accessibility.preset
+class _Translations$settings$accessibility$preset$ar extends Translations$settings$accessibility$preset$en {
+	_Translations$settings$accessibility$preset$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get comfortable => 'مريح';
+	@override String get comfortableDescription => 'حجم النص الافتراضي للقراءة اليومية.';
+	@override String get large => 'كبير';
+	@override String get largeDescription => 'نص أكبر لتسهيل القراءة بنظرة سريعة.';
+	@override String get dyslexia => 'ملاءم لعسر القراءة';
+	@override String get dyslexiaDescription => 'نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر.';
+}
+
+// Path: announcements.fixtures.welcome
+class _Translations$announcements$fixtures$welcome$ar extends Translations$announcements$fixtures$welcome$en {
+	_Translations$announcements$fixtures$welcome$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'أهلًا بك في نقطة الانطلاق';
+	@override String get message => 'أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة.';
+}
+
+// Path: announcements.fixtures.changelog
+class _Translations$announcements$fixtures$changelog$ar extends Translations$announcements$fixtures$changelog$en {
+	_Translations$announcements$fixtures$changelog$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الجديد في هذا الإصدار';
+	@override String get message => 'تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق.';
+}
+
+// Path: announcements.fixtures.deprecation
+class _Translations$announcements$fixtures$deprecation$ar extends Translations$announcements$fixtures$deprecation$en {
+	_Translations$announcements$fixtures$deprecation$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'يتوفر إصدار أحدث';
+	@override String get message => 'سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك.';
+}
+
+// Path: announcements.fixtures.outage
+class _Translations$announcements$fixtures$outage$ar extends Translations$announcements$fixtures$outage$en {
+	_Translations$announcements$fixtures$outage$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'انقطاع الخدمة';
+	@override String get message => 'قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة.';
+}
+
 /// The flat map containing all translations for locale <ar>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -609,9 +1187,18 @@ extension on TranslationsAr {
 			'common.next' => 'التالي',
 			'common.optional' => 'اختياري',
 			'common.loading' => 'جارٍ التحميل',
+			'common.saving' => 'جارٍ الحفظ…',
 			'common.notConnected' => 'هذا الإجراء غير متصل بعد.',
 			'common.legalPlaceholderTitle' => 'معاينة المعلومات',
 			'common.legalPlaceholderBody' => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.',
+			'common.confirm' => 'تأكيد',
+			'common.success' => 'تم بنجاح',
+			'common.discard' => 'تجاهل',
+			'common.error' => 'خطأ',
+			'connectivity.online' => 'متصل',
+			'connectivity.offline' => 'أنت غير متصل. قد لا تتوفر بعض الإجراءات.',
+			'connectivity.backOnline' => 'عاد الاتصال بالإنترنت.',
+			'connectivity.limited' => 'اتصال محدود. قد تكون بعض الإجراءات بطيئة أو غير متوفرة.',
 			'navigation.home' => 'الرئيسية',
 			'navigation.pricing' => 'الأسعار',
 			'navigation.settings' => 'الإعدادات',
@@ -721,6 +1308,24 @@ extension on TranslationsAr {
 			'settings.aboutBuild' => 'معلومات الإصدار',
 			'settings.terms' => 'معاينة الشروط',
 			'settings.privacy' => 'معاينة الخصوصية',
+			'settings.enableBiometric' => 'إلغاء القفل بالقياس الحيوي',
+			'settings.passcode' => 'رمز المرور',
+			'settings.autoLockDelay' => 'تأخر القفل التلقائي',
+			'settings.lockOnBackground' => 'القفل عند الانتقال للخلفية',
+			'settings.analytics.optInTitle' => 'التحليلات',
+			'settings.analytics.optInBody' => 'ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.',
+			'settings.analytics.statusOn' => 'مُفعّل',
+			'settings.analytics.statusOff' => 'غير مُفعّل',
+			'settings.accessibility.title' => 'إمكانية الوصول',
+			'settings.accessibility.preset.comfortable' => 'مريح',
+			'settings.accessibility.preset.comfortableDescription' => 'حجم النص الافتراضي للقراءة اليومية.',
+			'settings.accessibility.preset.large' => 'كبير',
+			'settings.accessibility.preset.largeDescription' => 'نص أكبر لتسهيل القراءة بنظرة سريعة.',
+			'settings.accessibility.preset.dyslexia' => 'ملاءم لعسر القراءة',
+			'settings.accessibility.preset.dyslexiaDescription' => 'نص أكبر قليلًا مع خط ملائم لعسر القراءة حيثما يتوفر.',
+			'settings.haptics.title' => 'الاهتزاز اللمسي',
+			'settings.haptics.enable' => 'تفعيل الاهتزاز اللمسي للإجراءات الرئيسية',
+			'settings.about.license' => 'التراخيص',
 			'auth.common.email' => 'البريد الإلكتروني',
 			'auth.common.password' => 'كلمة المرور',
 			'auth.common.confirmPassword' => 'تأكيد كلمة المرور',
@@ -738,6 +1343,10 @@ extension on TranslationsAr {
 			'auth.login.submitting' => 'جارٍ تسجيل الدخول',
 			'auth.login.globalError' => 'تعذر إكمال تسجيل الدخول الثابت. تم الاحتفاظ بالقيم.',
 			'auth.login.success' => 'اكتمل تسجيل الدخول الثابت.',
+			'auth.login.lockedTitle' => 'محاولات كثيرة',
+			'auth.login.tooManyAttempts' => 'محاولات فاشلة كثيرة. يرجى الانتظار.',
+			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
 			'auth.register.title' => 'إنشاء حسابك',
 			'auth.register.body' => 'أدخل التفاصيل المستخدمة لعرض سلوك التسجيل والتأكيد.',
 			'auth.register.acceptTerms' => 'أوافق على معاينة الشروط والخصوصية.',
@@ -770,6 +1379,16 @@ extension on TranslationsAr {
 			'auth.otp.expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.',
 			'auth.otp.registrationSuccess' => 'تم التحقق من التسجيل.',
 			'auth.otp.passwordResetSuccess' => 'تم التحقق من طلب إعادة التعيين.',
+			'auth.otp.mfaSuccess' => 'تم التحقق من تسجيل الدخول.',
+			'auth.otp.lockedTitle' => 'محاولات كثيرة',
+			'auth.otp.tooManyAttempts' => 'محاولات فاشلة كثيرة. يرجى الانتظار.',
+			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
+			'auth.otp.mfaTitle' => 'تحقق من تسجيل الدخول',
+			'auth.otp.mfaBody' => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.',
+			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'تنتهي صلاحيته الآن', one: 'تنتهي صلاحيته خلال ثانية واحدة', two: 'تنتهي صلاحيته خلال ثانيتين', few: 'تنتهي صلاحيته خلال ${seconds} ثوانٍ', many: 'تنتهي صلاحيته خلال ${seconds} ثانية', other: 'تنتهي صلاحيته خلال ${seconds} ثانية', ), 
+			'auth.otp.expiredTitle' => 'انتهت صلاحية الرمز',
+			'auth.otp.expiredBody' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة.',
 			'auth.resetPassword.title' => 'اختر كلمة مرور جديدة',
 			'auth.resetPassword.body' => 'استخدم كلمة مرور قوية وأدخلها بالطريقة نفسها مرتين.',
 			'auth.resetPassword.newPassword' => 'كلمة المرور الجديدة',
@@ -796,6 +1415,58 @@ extension on TranslationsAr {
 			'profile.update.discardBody' => 'سيتم مسح تغييرات الملف الشخصي غير المحفوظة.',
 			'profile.update.stay' => 'متابعة التحرير',
 			'profile.update.discard' => 'تجاهل التغييرات',
+			'security.biometric.lockTitle' => 'إلغاء القفل بالقياس الحيوي',
+			'security.biometric.lockBody' => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.',
+			'security.biometric.authFailedTitle' => 'فشلت المصادقة. أعد المحاولة.',
+			'security.biometric.unlock' => 'إلغاء القفل',
+			'security.biometric.unlocking' => 'جارٍ إلغاء القفل',
+			'security.biometric.unavailableTitle' => 'إلغاء القفل بالقياس الحيوي غير متاح',
+			'security.biometric.unavailableBody' => 'لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.',
+			'security.biometric.useFallback' => 'استخدام بيانات الاعتماد',
+			'security.passcode.enterTitle' => 'أدخل رمز المرور',
+			'security.passcode.enterBody' => 'أدخل رمز المرور لإلغاء قفل التطبيق.',
+			'security.passcode.setupTitle' => 'تعيين رمز مرور',
+			'security.passcode.setupBody' => 'اختر رمزًا رقميًا يمكنك استخدامه عندما لا تكون القياسات الحيوية متاحة.',
+			'security.passcode.confirmTitle' => 'تأكيد رمز المرور',
+			'security.passcode.reenter' => 'أعد إدخال رمز المرور',
+			'security.passcode.mismatch' => 'رمزا المرور غير متطابقين. حاول مرة أخرى.',
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'رمز مرور غير صحيح. لا محاولات متبقية.', one: 'رمز مرور غير صحيح. يتبقى محاولة واحدة.', two: 'رمز مرور غير صحيح. يتبقى محاولتان.', few: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.', many: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولة.', other: 'رمز مرور غير صحيح. يتبقى ${attempts} محاولات.', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'محاولات كثيرة. أعد المحاولة الآن.', one: 'محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.', two: 'محاولات كثيرة. أعد المحاولة خلال ثانيتين.', few: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثانية.', other: 'محاولات كثيرة. أعد المحاولة خلال ${seconds} ثوانٍ.', ), 
+			'security.passcode.disable' => 'تعطيل رمز المرور',
+			'forceUpdate.title' => 'يلزم تحديث التطبيق',
+			'forceUpdate.body' => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.',
+			'forceUpdate.updateNow' => 'تحديث الآن',
+			'softUpdate.title' => 'يتوفر إصدار أحدث',
+			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.',
+			'softUpdate.update' => 'تحديث',
+			'softUpdate.later' => 'لاحقًا',
+			'session.expired' => 'انتهت جلستك. يُرجى تسجيل الدخول من جديد.',
+			'session.signedOut' => 'تم تسجيل خروجك.',
+			'session.signedInPreview' => ({required Object userId}) => 'تم تسجيل دخولك بصفتك ${userId}',
+			'session.unavailable' => 'تسجيل الدخول غير متصل بعد.',
+			'splash.loading' => 'جارٍ التشغيل',
+			'splash.tagline' => 'نقطة انطلاق مدروسة',
+			'splash.error' => 'تعذّر إكمال التشغيل.',
+			'states.emptyTitle' => 'لا يوجد شيء هنا بعد',
+			'states.emptyBody' => 'عند توفّر المحتوى، سيظهر هنا.',
+			'states.errorTitle' => 'تعذّر تحميل هذا',
+			'states.errorBody' => 'حدث خطأ أثناء التحميل. حاول مرة أخرى.',
+			'states.loadingTitle' => 'جارٍ التحميل…',
+			'announcements.dismiss' => 'إغلاق',
+			'announcements.actionLearnMore' => 'اعرف المزيد',
+			'announcements.dismissFailed' => 'تعذّر إغلاق الإعلان.',
+			'announcements.severityInfo' => 'معلومة',
+			'announcements.severitySuccess' => 'نجاح',
+			'announcements.severityWarning' => 'تحذير',
+			'announcements.severityCritical' => 'حرج',
+			'announcements.fixtures.welcome.title' => 'أهلًا بك في نقطة الانطلاق',
+			'announcements.fixtures.welcome.message' => 'أساس متين لمنتجك القادم. أغلق هذا الإعلان لاستكشاف الواجهة.',
+			'announcements.fixtures.changelog.title' => 'الجديد في هذا الإصدار',
+			'announcements.fixtures.changelog.message' => 'تبقي الإعلانات الجميع على اطلاع دون الحاجة إلى تحديث التطبيق.',
+			'announcements.fixtures.deprecation.title' => 'يتوفر إصدار أحدث',
+			'announcements.fixtures.deprecation.message' => 'سيُوقف دعم هذا الإصدار قريبًا. حدّث عندما يمكنك ذلك.',
+			'announcements.fixtures.outage.title' => 'انقطاع الخدمة',
+			'announcements.fixtures.outage.message' => 'قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة.',
 			'validation.required' => ({required Object field}) => 'حقل ${field} مطلوب.',
 			'validation.email' => 'أدخل بريدًا إلكترونيًا صالحًا.',
 			'validation.passwordWeak' => 'استخدم 8 أحرف على الأقل مع حرف لاتيني كبير ورقم.',
@@ -816,10 +1487,19 @@ extension on TranslationsAr {
 			'diagnostics.build' => 'الإصدار',
 			'diagnostics.layout' => 'فئة التخطيط',
 			'diagnostics.interaction' => 'سياسة التفاعل',
+			'diagnostics.lifecycle' => 'دورة حياة التطبيق',
 			'diagnostics.viewingEnvironment' => 'بيئة المشاهدة',
 			'diagnostics.locale' => 'اللغة',
 			'diagnostics.capabilities' => 'إمكانات المنصة',
+			'diagnostics.secureStorage' => 'التخزين الآمن',
+			'diagnostics.crashReporting' => 'الإبلاغ عن الأعطال',
+			'diagnostics.crashReportingNone' => 'غير مُهيَّأ',
+			'diagnostics.analytics' => 'التحليلات',
+			'diagnostics.analyticsNone' => 'غير مُهيّأ',
+			'diagnostics.featureFlags' => 'ميزات تجريبية',
 			'diagnostics.redactedNotice' => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.',
+			'diagnostics.experiments.title' => 'التجارب',
+			'diagnostics.experiments.source' => 'المصدر',
 			'devGallery.title' => 'معرض شاشات الإنتاج',
 			'devGallery.search' => 'البحث في الحالات',
 			'devGallery.screen' => 'الشاشة',
@@ -882,9 +1562,35 @@ extension on TranslationsAr {
 			'devGallery.screenProfile' => 'تحديث الملف الشخصي',
 			'devGallery.screenPricing' => 'الأسعار',
 			'devGallery.screenSettings' => 'الإعدادات',
+			'devGallery.screenConnectivity' => 'شريط حالة الاتصال',
+			'devGallery.screenForceUpdate' => 'تحديث إلزامي',
+			'devGallery.screenSoftUpdate' => 'تحديث اختياري',
+			'devGallery.screenBusy' => 'مؤشرات الانشغال',
 			'devGallery.screenSystem' => 'واجهات النظام',
 			'devGallery.screenOverlays' => 'الطبقات العلوية',
+			'devGallery.screenSplash' => 'شاشة البداية داخل التطبيق',
+			'devGallery.screenStateViews' => 'حالات العرض',
+			'devGallery.screenFormScaffolding' => 'هيكل النموذج',
+			'devGallery.screenAnnouncements' => 'شريط الإعلانات',
+			'devGallery.caseSplashLoading' => 'جارٍ التشغيل',
+			'devGallery.caseSplashReady' => 'جاهز',
+			'devGallery.caseSplashError' => 'خطأ في التشغيل',
+			'devGallery.caseStateEmpty' => 'فارغة',
+			'devGallery.caseStateError' => 'خطأ',
+			'devGallery.caseStateLoading' => 'جارٍ التحميل',
+			'devGallery.caseFormScaffoldDisabled' => 'إرسال معطّل',
+			'devGallery.caseFormScaffoldEnabled' => 'إرسال مفعّل',
+			'devGallery.caseFormScaffoldSubmitting' => 'جارٍ الإرسال',
+			'devGallery.caseAnnouncementsInfo' => 'معلومة',
+			'devGallery.caseAnnouncementsSuccess' => 'نجاح',
+			'devGallery.caseAnnouncementsWarning' => 'تحذير',
+			'devGallery.caseAnnouncementsCritical' => 'حرج',
 			'devGallery.caseDefault' => 'افتراضية',
+			'devGallery.caseHardBlock' => 'حظر إلزامي',
+			'devGallery.caseSoftUpdate' => 'تحديث اختياري',
+			'devGallery.caseBusyIndeterminate' => 'غير محدد',
+			'devGallery.caseBusyDeterminate' => 'محدد',
+			'devGallery.caseBusyOverlay' => 'طبقة مشروطة',
 			'devGallery.caseExpandedCopy' => 'نص موسّع',
 			'devGallery.caseFirst' => 'الأولى',
 			'devGallery.caseMiddle' => 'الوسطى',
@@ -918,7 +1624,110 @@ extension on TranslationsAr {
 			'devGallery.casePopover' => 'نافذة منبثقة',
 			'devGallery.caseTooltip' => 'تلميح',
 			'devGallery.caseKeyboardInset' => 'نموذج مع إزاحة لوحة المفاتيح',
+			'devGallery.screenSession' => 'الجلسة',
+			'devGallery.caseSessionLoggedOut' => 'تم تسجيل الخروج',
+			'devGallery.caseSessionLoggedIn' => 'تم تسجيل الدخول',
+			'devGallery.screenAnalytics' => 'الاشتراك في التحليلات',
+			'devGallery.screenBiometricLock' => 'قفل القياس الحيوي',
+			'devGallery.caseLocked' => 'مقفل',
 			'devGallery.caseNotFound' => 'حالة المعرض المطلوبة غير مسجلة.',
+			'devGallery.screenAccessibility' => 'إعدادات إمكانية الوصول',
+			'devGallery.caseAccessibilityComfortable' => 'الإعداد المريح',
+			'devGallery.caseAccessibilityLarge' => 'الإعداد الكبير',
+			'devGallery.caseAccessibilityDyslexia' => 'إعداد عسر القراءة',
+			'devGallery.screenPullRefresh' => 'اسحب للتحديث',
+			'devGallery.casePullRefreshList' => 'قائمة قابلة للتحديث',
+			'devGallery.casePullRefreshGrid' => 'شبكة متجاوبة',
+			'devGallery.screenHaptics' => 'الاهتزاز اللمسي',
+			'devGallery.caseHapticKinds' => 'جميع الأنواع',
+			'devGallery.caseHapticSelection' => 'التحديد',
+			'devGallery.caseHapticImpactLight' => 'اهتزاز خفيف',
+			'devGallery.caseHapticImpactMedium' => 'اهتزاز متوسط',
+			'devGallery.caseHapticImpactHeavy' => 'اهتزاز قوي',
+			'devGallery.caseHapticSuccess' => 'نجاح',
+			'devGallery.caseHapticWarning' => 'تحذير',
+			'devGallery.caseHapticError' => 'خطأ',
+			'devGallery.screenSkeleton' => 'هيكل التحميل',
+			'devGallery.caseSkeletonStatic' => 'ثابت (تقليل الحركة)',
+			'devGallery.caseSkeletonShimmer' => 'وميض',
+			'devGallery.screenOtpMfa' => 'التحقق متعدد العوامل',
+			'devGallery.caseCountdown' => 'العد التنازلي',
+			'devGallery.screenNotifications' => 'الإشعارات',
+			'devGallery.caseNotificationsNotRequested' => 'سبب الإذن',
+			'devGallery.caseNotificationsGranted' => 'مُمنوح',
+			'devGallery.caseNotificationsDenied' => 'محظور',
+			'devGallery.screenPermissions' => 'الأذونات',
+			'devGallery.casePermissionRationale' => 'السبب',
+			'devGallery.casePermissionDenied' => 'مرفوض',
+			'devGallery.casePermissionPermanentlyDenied' => 'محظور نهائيًا',
+			'devGallery.screenLicense' => 'التراخيص',
+			'devGallery.screenShare' => 'ورقة المشاركة',
+			'devGallery.screenAppUpdate' => 'التحديث داخل التطبيق',
+			'devGallery.screenSearchPagination' => 'بحث وترقيم صفحات',
+			'devGallery.caseSearchField' => 'حقل البحث',
+			'devGallery.caseSearchPaged' => 'قائمة مقسّمة',
+			'devGallery.caseSearchPagedNoBackend' => 'قائمة مقسّمة (بلا خادم)',
+			'devGallery.screenToastDialogs' => 'الإشعارات ومربعات الحوار',
+			'devGallery.caseToastSuccess' => 'إشعار نجاح',
+			'devGallery.caseToastInfo' => 'إشعار معلومات',
+			'devGallery.caseToastWarning' => 'إشعار تحذير',
+			'devGallery.caseToastError' => 'إشعار خطأ',
+			'devGallery.caseDialogConfirm' => 'مربع تأكيد',
+			'devGallery.caseDialogDestroy' => 'مربع حذف',
+			'devGallery.screenPasscodeEntry' => 'إدخال رمز المرور',
+			'devGallery.screenPasscodeSetup' => 'إعداد رمز المرور',
+			'devGallery.casePasscodeIdle' => 'خامل',
+			'devGallery.casePasscodeError' => 'غير صحيح',
+			'devGallery.casePasscodeLockedOut' => 'مقفل',
+			'devGallery.casePasscodeSetupMismatch' => 'عدم تطابق التأكيد',
+			'devGallery.screenFeedback' => 'الملاحظات',
+			'devGallery.caseFeedbackDrafting' => 'كتابة',
+			'devGallery.caseFeedbackSubmitting' => 'إرسال',
+			'devGallery.caseFeedbackFailed' => 'فشل',
+			_ => null,
+		} ?? switch (path) {
+			'devGallery.caseFeedbackSuccess' => 'نجاح',
+			'notifications.enableTitle' => 'تفعيل الإشعارات',
+			'notifications.enableBody' => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.',
+			'notifications.deny' => 'ليس الآن',
+			'notifications.allow' => 'السماح',
+			'notifications.enableBlockedTitle' => 'الإشعارات محظورة',
+			'notifications.enableBlockedBody' => 'افتح إعدادات النظام للسماح بالإشعارات لهذا التطبيق.',
+			'notifications.disabled' => 'الإشعارات غير متصلة في هذا القالب.',
+			'permission.camera.title' => 'الوصول إلى الكاميرا',
+			'permission.camera.rationale' => 'نستخدم الكاميرا لالتقاط صورة ملف شخصي جديدة. يمكنك الرفض في أي وقت.',
+			'permission.photos.title' => 'الوصول إلى مكتبة الصور',
+			'permission.photos.rationale' => 'نقرأ مكتبة الصور لتتمكن من اختيار صورة شخصية. يمكنك الرفض في أي وقت.',
+			'permission.location.title' => 'الوصول إلى الموقع',
+			'permission.location.rationale' => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.',
+			'permission.continueRequest' => 'متابعة',
+			'permission.notNow' => 'ليس الآن',
+			'permission.openSettings' => 'فتح الإعدادات',
+			'permission.denied' => 'تم رفض الإذن. يمكنك المحاولة مرة أخرى في أي وقت.',
+			'permission.permanentlyDenied' => 'الإذن محظور. فعّله من إعدادات النظام للمتابعة.',
+			'share.success' => 'تمت المشاركة',
+			'share.unavailable' => 'المشاركة غير متاحة على هذا الجهاز.',
+			'share.cancelled' => 'تم إلغاء المشاركة.',
+			'update.checkForUpdates' => 'التحقق من التحديثات',
+			'update.available' => 'يتوفر تحديث.',
+			'update.notAvailable' => 'أنت على أحدث إصدار.',
+			'update.required' => 'التحديث مطلوب للمتابعة.',
+			'search.title' => 'بحث',
+			'search.placeholder' => 'بحث…',
+			'search.emptyTitle' => 'لا توجد نتائج',
+			'search.emptyBody' => 'جرّب مصطلح بحث آخر.',
+			'search.errorTitle' => 'البحث غير متاح',
+			'feedback.title' => 'إرسال ملاحظات',
+			'feedback.messageLabel' => 'الرسالة',
+			'feedback.messageHint' => 'ماذا حدث، أو ما الذي يمكن تحسينه؟',
+			'feedback.includeScreenshot' => 'إرفاق لقطة شاشة',
+			'feedback.emailOptional' => 'بريد الرد',
+			'feedback.submit' => 'إرسال',
+			'feedback.cancel' => 'إلغاء',
+			'feedback.successTitle' => 'شكراً لك!',
+			'feedback.successBody' => 'تم إرسال ملاحظاتك.',
+			'feedback.failedTitle' => 'تعذّر إرسال ملاحظاتك في الوقت الحالي.',
+			'feedback.shakeEnabled' => 'فتح الملاحظات عند الاهتزاز',
 			_ => null,
 		};
 	}

@@ -44,6 +44,17 @@ gen-check:
     dart run build_runner build
     git diff --exit-code
 
+# --- native splash (codegen; config in flutter_native_splash.yaml) ------------
+# Regenerate the committed native launch assets (iOS storyboard, Android
+# drawable + Android-12 styles, web splash). Mirrors `gen`/`gen-check`: review
+# the committed native diff before accepting the CLI output.
+splash:
+    dart run flutter_native_splash:create
+
+# Remove the generated native splash launch assets (undo `splash`).
+splash-remove:
+    dart run flutter_native_splash:remove
+
 # --- run the app (development config) -----------------------------------------
 # Run on a device (default macos): just run [chrome|macos|ios|<device-id>]
 run dev='macos':
@@ -168,3 +179,9 @@ build target:
 # iOS release without code signing (matches CI).
 build-ios:
     {{flutter}} build ios --release --no-codesign --dart-define-from-file={{prod_config}}
+
+# --- in-repo test server (C3) -------------------------------------------------
+# Start the standalone shelf test server on a configurable port (default 8080).
+# Never compiled into the app — runs via `dart run` from tools/test_server.
+test-server port='8080':
+    dart run tools/test_server/bin/server.dart --port {{port}}

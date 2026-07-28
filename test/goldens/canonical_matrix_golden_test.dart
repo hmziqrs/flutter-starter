@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/dev_gallery/cases/production_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
@@ -19,6 +20,8 @@ void main() {
       environment: AppEnvironment.development,
       enableVerboseLogging: true,
       enableDevTools: true,
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
     ),
   );
   final cases = [...productionCases, ...systemCases];

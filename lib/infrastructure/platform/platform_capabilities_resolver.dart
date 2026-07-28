@@ -20,7 +20,7 @@ final class PlatformCapabilitiesResolver {
       return const PlatformCapabilities(
         platform: 'web',
         isWeb: true,
-        tvPlatform: AppTvPlatform.none,
+        supportsFileSystem: false,
       );
     }
 
@@ -37,7 +37,6 @@ final class PlatformCapabilitiesResolver {
       return PlatformCapabilities(
         platform: targetPlatform.name,
         isWeb: false,
-        tvPlatform: AppTvPlatform.none,
       );
     }
 

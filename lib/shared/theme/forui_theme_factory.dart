@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
@@ -48,6 +49,7 @@ abstract final class ForuiThemeFactory {
     required AppAccent accent,
     required double fontScale,
     required AppInteractionPolicy interactionPolicy,
+    String? fontFamily,
     double responsiveFontScale = 1,
     AppPresentationPolicy? presentationPolicy,
   }) {
@@ -94,6 +96,7 @@ abstract final class ForuiThemeFactory {
       generatedTheme.typography,
       bodySizeScalar: fontScale * responsiveFontScale * presentationTokens.bodyTypeScale,
       displaySizeScalar: fontScale * responsiveFontScale * presentationTokens.displayTypeScale,
+      fontFamily: fontFamily,
     );
     final style = FStyle.inherit(
       colors: colors,
@@ -191,17 +194,20 @@ abstract final class ForuiThemeFactory {
     FTypography typography, {
     required double bodySizeScalar,
     required double displaySizeScalar,
+    String? fontFamily,
   }) {
     return typography.copyWith(
       display: _buildTypeface(
         typography.display,
         tokens: _displayTokens,
         sizeScalar: displaySizeScalar,
+        fontFamily: fontFamily,
       ),
       body: _buildTypeface(
         typography.body,
         tokens: _bodyTokens,
         sizeScalar: bodySizeScalar,
+        fontFamily: fontFamily,
       ),
     );
   }
@@ -210,10 +216,17 @@ abstract final class ForuiThemeFactory {
     FTypeface typeface, {
     required List<({double size, double height})> tokens,
     required double sizeScalar,
+    String? fontFamily,
   }) {
+    // The optional Latin-only dyslexia family overrides the primary family when
+    // set; scriptFontFamilies stays as fontFamilyFallback on every token so
+    // non-Latin glyphs (Arabic / CJK) still render. A null fontFamily leaves the
+    // generated Noto Sans family untouched (comfortable / large presets).
+    final resolvedFontFamily = fontFamily ?? typeface.fontFamily;
     TextStyle token(TextStyle style, int index) {
       final token = tokens[index];
       return style.copyWith(
+        fontFamily: resolvedFontFamily,
         fontFamilyFallback: scriptFontFamilies,
         fontSize: token.size * sizeScalar,
         height: token.height,
@@ -222,7 +235,7 @@ abstract final class ForuiThemeFactory {
     }
 
     return FTypeface(
-      fontFamily: typeface.fontFamily,
+      fontFamily: resolvedFontFamily,
       fontFamilyFallback: scriptFontFamilies,
       xs3: token(typeface.xs3, 0),
       xs2: token(typeface.xs2, 1),
@@ -238,6 +251,29 @@ abstract final class ForuiThemeFactory {
       xl6: token(typeface.xl6, 11),
       xl7: token(typeface.xl7, 12),
       xl8: token(typeface.xl8, 13),
+    );
+  }
+
+  /// Derives the [SystemUiOverlayStyle] for the given [brightness] + [accent].
+  /// Kept conservative (edge-to-edge default) so transparent bars render behind
+  /// app content regardless of accent; a future brand-tinted variant can resolve
+  /// an accent color here via [_accentColors] without touching call sites. This
+  /// is the single source of truth consulted by `SystemUiController` so the
+  /// overlay style and the theme colors never drift (system-ui feature).
+  static SystemUiOverlayStyle overlayStyle({
+    required Brightness brightness,
+    required AppAccent accent,
+  }) {
+    final isDark = brightness == Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+      systemStatusBarContrastEnforced: false,
     );
   }
 

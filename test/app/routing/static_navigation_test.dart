@@ -1,11 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 void main() {
@@ -57,7 +60,13 @@ void main() {
     ];
 
     for (final entry in cases) {
-      await _pumpApp(tester, AppRoutes.homePath);
+      // /profile/edit is auth-required (C5 session gate); seed an authenticated
+      // session so the quick action is not bounced to /auth/login.
+      await _pumpApp(
+        tester,
+        AppRoutes.homePath,
+        initialSession: entry.source == 'home-open-profile' ? _authenticatedSession : null,
+      );
       final source = find.byKey(ValueKey(entry.source));
       await tester.ensureVisible(source);
       await tester.pumpAndSettle();
@@ -72,7 +81,11 @@ void main() {
   });
 
   testWidgets('Profile save provides honest deterministic feedback', (tester) async {
-    await _pumpApp(tester, AppRoutes.updateProfilePath);
+    await _pumpApp(
+      tester,
+      AppRoutes.updateProfilePath,
+      initialSession: _authenticatedSession,
+    );
     await tester.enterText(
       find.byKey(const ValueKey('profile-bio')),
       'Updated locally for the static preview.',
@@ -83,7 +96,7 @@ void main() {
     expect(find.text('This action is not connected yet.'), findsOneWidget);
   });
 
-  testWidgets('Login validates locally and reaches Home', (tester) async {
+  testWidgets('Login surfaces honest globalFailure with no backend (C13)', (tester) async {
     await _pumpApp(tester, AppRoutes.loginPath);
     await tester.enterText(
       find.byKey(const ValueKey('auth-login-email')),
@@ -95,10 +108,62 @@ void main() {
     );
     await _tapVisible(tester, 'auth-login-submit');
 
-    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    // The no-backend default (InMemoryAuthRepository.login) throws
+    // AuthException.notConnected — the page surfaces globalFailure honestly
+    // rather than navigating to Home as if authentication succeeded (C13).
+    expect(find.byKey(const ValueKey('auth-login-global-failure')), findsOneWidget);
   });
 
-  testWidgets('Register and registration OTP reach Home', (tester) async {
+  testWidgets('Login engages the auth-ratelimit lockout after repeated failures (C1)', (
+    tester,
+  ) async {
+    await _pumpApp(tester, AppRoutes.loginPath);
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-email')),
+      'person@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('auth-login-password')),
+      'Password1',
+    );
+
+    // The no-backend InMemoryAuthRepository throws AuthException on every call.
+    // The default schedule [0, 0, 30, ...] grants two free attempts, then locks
+    // for 30s on the third failure. The shared AttemptTracker is the same one
+    // the OTP surface consumes, so this is the login-named-consumer wiring the
+    // auth-ratelimit spec requires (login, OTP, pin-autolock = 3 consumers).
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      await _tapVisible(tester, 'auth-login-submit');
+      expect(
+        find.byKey(const ValueKey('auth-login-global-failure')),
+        findsOneWidget,
+        reason: 'attempt $attempt is still within the free allowance',
+      );
+    }
+
+    // Third failure escalates to a 30s lockout. Tap + bounded pumps (NOT
+    // pumpAndSettle) because the lockout Timer.periodic fires every 1s and
+    // would otherwise keep pumpAndSettle alive past its timeout.
+    final submit = find.byKey(const ValueKey('auth-login-submit'));
+    await tester.ensureVisible(submit);
+    await tester.pump();
+    await tester.tap(submit);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const ValueKey('auth-login-locked')), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+      isNull,
+      reason: 'submit is disabled while the lockout countdown is active',
+    );
+
+    // Expire the 30s lockout so the countdown Timer.periodic self-cancels and
+    // the test binding's no-pending-timers invariant holds at teardown.
+    await tester.pump(const Duration(seconds: 31));
+  });
+
+  testWidgets('Register surfaces honest notConnected with no backend (C13)', (tester) async {
     await _pumpApp(tester, AppRoutes.registerPath);
     await tester.enterText(
       find.byKey(const ValueKey('auth-register-display-name')),
@@ -119,14 +184,11 @@ void main() {
     await _tapVisible(tester, 'auth-register-accept-terms');
     await _tapVisible(tester, 'auth-register-submit');
 
-    expect(find.text('Verify your registration'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const ValueKey('auth-otp-code')),
-      '123456',
-    );
-    await _tapVisible(tester, 'auth-otp-submit');
-
-    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    // Registration is backend-dependent; the no-backend default surfaces
+    // common.notConnected rather than navigating to OTP as if the account was
+    // created (C13).
+    expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
   });
 
   testWidgets('Forgot Password follows reset OTP to Login success feedback', (tester) async {
@@ -180,7 +242,11 @@ Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpApp(WidgetTester tester, String initialLocation) async {
+Future<void> _pumpApp(
+  WidgetTester tester,
+  String initialLocation, {
+  AuthSession? initialSession,
+}) async {
   tester.view
     ..devicePixelRatio = 1
     ..physicalSize = const Size(390, 844);
@@ -190,7 +256,7 @@ Future<void> _pumpApp(WidgetTester tester, String initialLocation) async {
   await tester.pumpWidget(
     App(
       config: _productionConfig,
-      dependencies: AppDependencies.inMemory(),
+      dependencies: AppDependencies.inMemory(initialSession: initialSession),
       initialLocation: initialLocation,
     ),
   );
@@ -201,4 +267,15 @@ final _productionConfig = AppConfig(
   environment: AppEnvironment.production,
   enableVerboseLogging: false,
   enableDevTools: false,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+);
+
+/// Seeded authenticated session for auth-required destinations (/profile/edit,
+/// C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
 );

@@ -1,29 +1,45 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/media/noop_media_picker.dart';
+import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
+import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
-  testWidgets('avatar action is deterministic and does not request a plugin', (tester) async {
+  testWidgets('avatar action runs the permission rationale flow deterministically', (tester) async {
+    // permissions-media: tapping "Change profile image" now opens the
+    // rationale sheet (always before the OS prompt). With the Noop permission
+    // service, dismissing the sheet fires onAvatarPicked(null) — the honest
+    // "denied / unavailable" surface. The flow never reaches a platform
+    // channel; it stays deterministic for the test harness.
     var feedbackCount = 0;
     await _pumpProfile(
       tester,
       page: UpdateProfilePage(
         initialDraft: const ProfileDraft.defaults(),
         onSave: _noopSave,
-        onAvatarFeedback: () => feedbackCount += 1,
+        onAvatarPicked: (_) => feedbackCount += 1,
       ),
     );
 
     await tester.tap(find.byKey(const ValueKey('profile-avatar-feedback')));
+    await tester.pumpAndSettle();
+    // Rationale sheet is shown.
+    expect(find.text('Photo library access'), findsOneWidget);
+
+    // Dismiss via "Not now" → onAvatarPicked(null) fires.
+    await tester.tap(find.byKey(const ValueKey('permission-rationale-dismiss')));
     await tester.pumpAndSettle();
 
     expect(feedbackCount, 1);
@@ -37,7 +53,7 @@ void main() {
       page: const UpdateProfilePage(
         initialDraft: ProfileDraft.defaults(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 
@@ -54,7 +70,7 @@ void main() {
       page: const UpdateProfilePage(
         initialDraft: ProfileDraft.defaults(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 
@@ -77,7 +93,7 @@ void main() {
       page: UpdateProfilePage(
         initialDraft: const ProfileDraft.defaults(),
         onSave: (_) => saveCount += 1,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 
@@ -103,7 +119,7 @@ void main() {
           submitted = draft;
           return completion.future;
         },
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 
@@ -138,7 +154,7 @@ void main() {
       page: UpdateProfilePage(
         initialDraft: const ProfileDraft.defaults(),
         onSave: (_) => completion.future,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 
@@ -159,7 +175,7 @@ void main() {
       page: const UpdateProfilePage(
         initialDraft: ProfileDraft.defaults(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
     final displayName = find.byKey(const ValueKey('profile-display-name'));
@@ -194,7 +210,7 @@ void main() {
       page: const UpdateProfilePage(
         initialDraft: ProfileDraft.defaults(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
     await tester.enterText(find.byKey(const ValueKey('profile-display-name')), 'Unsaved name');
@@ -226,7 +242,7 @@ void main() {
         initialDraft: ProfileDraft.defaults(),
         presentationState: ProfilePresentationState.saving(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
     expect(find.text('Saving profile'), findsOneWidget);
@@ -237,7 +253,7 @@ void main() {
         initialDraft: ProfileDraft.defaults(),
         presentationState: ProfilePresentationState.saved(),
         onSave: _noopSave,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
     await tester.ensureVisible(find.byKey(const ValueKey('profile-saved')));
@@ -271,33 +287,43 @@ Future<void> _pumpProfile(
     presentationPolicy: presentationPolicy,
   );
   await tester.pumpWidget(
-    TranslationProvider(
-      child: MaterialApp(
-        key: ValueKey(page.presentationState.phase),
-        initialRoute: '/profile',
-        routes: {
-          '/': (_) => const SizedBox(key: ValueKey('profile-test-home')),
-          '/profile': (_) => page,
-        },
-        locale: AppLocale.en.flutterLocale,
-        supportedLocales: AppLocaleUtils.supportedLocales,
-        localizationsDelegates: FLocalizations.localizationsDelegates,
-        theme: theme.toApproximateMaterialTheme(),
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              padding: safePadding,
-              viewPadding: safePadding,
-            ),
-            child: AppPresentationScope(
-              policy: presentationPolicy,
-              child: FTheme(
-                data: theme,
-                child: child ?? const SizedBox.shrink(),
+    ProviderScope(
+      // permissions-media: the avatar flow reads the permission + media
+      // providers via `ProviderScope.containerOf`. Override both with the
+      // Noop defaults so the flow surfaces an honest `null` (denied / no
+      // pick) without reaching a platform channel.
+      overrides: [
+        permissionServiceProvider.overrideWithValue(const NoopPermissionService()),
+        mediaPickerProvider.overrideWithValue(const NoopMediaPicker()),
+      ],
+      child: TranslationProvider(
+        child: MaterialApp(
+          key: ValueKey(page.presentationState.phase),
+          initialRoute: '/profile',
+          routes: {
+            '/': (_) => const SizedBox(key: ValueKey('profile-test-home')),
+            '/profile': (_) => page,
+          },
+          locale: AppLocale.en.flutterLocale,
+          supportedLocales: AppLocaleUtils.supportedLocales,
+          localizationsDelegates: FLocalizations.localizationsDelegates,
+          theme: theme.toApproximateMaterialTheme(),
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                padding: safePadding,
+                viewPadding: safePadding,
               ),
-            ),
-          );
-        },
+              child: AppPresentationScope(
+                policy: presentationPolicy,
+                child: FTheme(
+                  data: theme,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     ),
   );
@@ -352,4 +378,4 @@ bool _focusIsWithin(WidgetTester tester, String key) {
 
 Future<void> _noopSave(ProfileDraft _) async {}
 
-void _noop() {}
+void _noopAvatar(PickedMedia? _) {}

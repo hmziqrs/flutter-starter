@@ -2,24 +2,30 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
+import 'package:starter/features/profile/widgets/permission_rationale_sheet.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 typedef ProfileSaveCallback = FutureOr<void> Function(ProfileDraft draft);
+typedef AvatarPickedCallback = void Function(PickedMedia? media);
 
 class UpdateProfilePage extends StatefulWidget {
   const UpdateProfilePage({
     required this.initialDraft,
     required this.onSave,
-    required this.onAvatarFeedback,
+    required this.onAvatarPicked,
     this.presentationState = const ProfilePresentationState.defaults(),
     super.key,
   });
@@ -27,13 +33,19 @@ class UpdateProfilePage extends StatefulWidget {
   final ProfileDraft initialDraft;
   final ProfilePresentationState presentationState;
   final ProfileSaveCallback onSave;
-  final VoidCallback onAvatarFeedback;
+
+  /// Invoked with the result of the avatar picker flow (typed `PickedMedia?`
+  /// per the permissions-media contract). `null` means the user cancelled, the
+  /// permission was denied, or no media backend is configured (the honest
+  /// unavailable surface). A non-null value carries the picked image's path +
+  /// MIME type for the caller to render / upload.
+  final AvatarPickedCallback onAvatarPicked;
 
   @override
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
 }
 
-class _UpdateProfilePageState extends State<UpdateProfilePage> {
+class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationMixin {
   static const displayNameMaximum = 80;
   static const bioMaximum = 160;
 
@@ -59,6 +71,15 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   String _savedDisplayName = '';
   String _savedUsername = '';
   String _savedBio = '';
+  // Restored in-progress draft (state-restoration). RestorableStringN so a
+  // fresh launch (no saved bucket) keeps the initial draft verbatim — null
+  // means "no restored value, leave the controller as-is". Email is read-only,
+  // so it has no restorable counterpart. The value getter asserts isRegistered,
+  // so these are only read after restoreState registers them.
+  final RestorableStringN _displayNameDraft = RestorableStringN(null);
+  final RestorableStringN _usernameDraft = RestorableStringN(null);
+  final RestorableStringN _bioDraft = RestorableStringN(null);
+  bool _restored = false;
 
   ProfileDraft get _currentDraft {
     return ProfileDraft(
@@ -89,6 +110,50 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _validateInjectedState());
     } else if (_phase case ProfilePresentationPhase.discardPrompt) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showDiscardDialog());
+    }
+  }
+
+  @override
+  String get restorationId => 'update-profile';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_displayNameDraft, 'display_name');
+    registerForRestoration(_usernameDraft, 'username');
+    registerForRestoration(_bioDraft, 'bio');
+    // Seed ONLY the fields with a saved value so restartAndRestore lands the
+    // user back on their unsaved draft. A fresh launch (no saved bucket) reads
+    // null for every field and leaves the initial-draft controllers untouched,
+    // so the page renders identically to a no-restoration build.
+    _synchronizing = true;
+    final displayName = _displayNameDraft.value;
+    if (displayName != null) {
+      _replaceControllerText(_displayNameController, displayName);
+    }
+    final username = _usernameDraft.value;
+    if (username != null) {
+      _replaceControllerText(_usernameController, username);
+    }
+    final bio = _bioDraft.value;
+    if (bio != null) {
+      _replaceControllerText(_bioController, bio);
+    }
+    _synchronizing = false;
+    _restored = true;
+  }
+
+  /// Persists the live controller text to the restorable drafts (state-
+  /// restoration). Guarded by [_restored]: the RestorableProperty value setters
+  /// are only safe after restoreState registers them.
+  void _syncDrafts() {
+    if (_displayNameDraft.value != _displayNameController.text) {
+      _displayNameDraft.value = _displayNameController.text;
+    }
+    if (_usernameDraft.value != _usernameController.text) {
+      _usernameDraft.value = _usernameController.text;
+    }
+    if (_bioDraft.value != _bioController.text) {
+      _bioDraft.value = _bioController.text;
     }
   }
 
@@ -134,6 +199,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     _bioFocusNode.dispose();
     _saveFocusNode.dispose();
     _scrollController.dispose();
+    _displayNameDraft.dispose();
+    _usernameDraft.dispose();
+    _bioDraft.dispose();
     super.dispose();
   }
 
@@ -155,7 +223,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           bioFocusNode: _bioFocusNode,
           saveFocusNode: _saveFocusNode,
           phase: _phase,
-          onAvatarFeedback: widget.onAvatarFeedback,
+          onAvatarPicked: widget.onAvatarPicked,
           onDisplayNameSaved: (value) => _savedDisplayName = value ?? '',
           onUsernameSaved: (value) => _savedUsername = value ?? '',
           onBioSaved: (value) => _savedBio = value ?? '',
@@ -218,6 +286,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   void _onChanged() {
     if (!mounted || _isSaving || _synchronizing) return;
+    // Persist the in-progress draft so the next process death restores it.
+    if (_restored) {
+      _syncDrafts();
+    }
     final nextPhase = _isDirty ? ProfilePresentationPhase.dirty : ProfilePresentationPhase.idle;
     if (_phase != nextPhase) {
       setState(() => _phase = nextPhase);
@@ -390,7 +462,7 @@ class _ProfileForm extends StatelessWidget {
     required this.bioFocusNode,
     required this.saveFocusNode,
     required this.phase,
-    required this.onAvatarFeedback,
+    required this.onAvatarPicked,
     required this.onDisplayNameSaved,
     required this.onUsernameSaved,
     required this.onBioSaved,
@@ -410,7 +482,7 @@ class _ProfileForm extends StatelessWidget {
   final FocusNode bioFocusNode;
   final FocusNode saveFocusNode;
   final ProfilePresentationPhase phase;
-  final VoidCallback onAvatarFeedback;
+  final AvatarPickedCallback onAvatarPicked;
   final ValueChanged<String?> onDisplayNameSaved;
   final ValueChanged<String?> onUsernameSaved;
   final ValueChanged<String?> onBioSaved;
@@ -431,7 +503,7 @@ class _ProfileForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(profile.body, style: context.theme.typography.body.lg),
           const SizedBox(height: AppSpacing.xl2),
-          _AvatarEditor(onAvatarFeedback: onAvatarFeedback, enabled: _enabled),
+          _AvatarEditor(onAvatarPicked: onAvatarPicked, enabled: _enabled),
           const SizedBox(height: AppSpacing.xl2),
           AppTvEditableField(
             activationKey: const ValueKey('profile-display-name-activation'),
@@ -550,7 +622,7 @@ class _ProfileForm extends StatelessWidget {
             focusNode: saveFocusNode,
             onPress: _enabled ? onSave : () {},
             prefix: phase == ProfilePresentationPhase.saving
-                ? FCircularProgress(semanticsLabel: profile.saving)
+                ? BusyIndicator(severity: BusySeverity.saving, semanticsLabel: profile.saving)
                 : const Icon(FLucideIcons.save),
             child: Text(
               phase == ProfilePresentationPhase.saving ? profile.saving : profile.save,
@@ -562,11 +634,63 @@ class _ProfileForm extends StatelessWidget {
   }
 }
 
-class _AvatarEditor extends StatelessWidget {
-  const _AvatarEditor({required this.onAvatarFeedback, required this.enabled});
+class _AvatarEditor extends StatefulWidget {
+  const _AvatarEditor({required this.onAvatarPicked, required this.enabled});
 
-  final VoidCallback onAvatarFeedback;
+  final AvatarPickedCallback onAvatarPicked;
   final bool enabled;
+
+  @override
+  State<_AvatarEditor> createState() => _AvatarEditorState();
+}
+
+class _AvatarEditorState extends State<_AvatarEditor> {
+  bool _avatarFlowInProgress = false;
+
+  /// Runs the full avatar picker flow:
+  /// (1) read the current photos permission (no surprise prompt),
+  /// (2) show the rationale sheet (always before the OS prompt — stores reject
+  ///     apps that request without context, and a rationale prevents silent
+  ///     permanent denials),
+  /// (3) request the permission if the user continues,
+  /// (4) call `MediaPicker.pickImage` when granted,
+  /// (5) forward the typed `PickedMedia?` to the route via the `onAvatarPicked`
+  ///     callback on the parent [UpdateProfilePage].
+  ///
+  /// The no-backend default (`NoopPermissionService` + `NoopMediaPicker`)
+  /// surfaces an honest `null`: the rationale sheet still shows, the request
+  /// returns denied, and `onAvatarPicked(null)` is called — the route renders
+  /// the `avatarUnavailable` surface. Never fakes a grant or a picked image.
+  Future<void> _runAvatarFlow() async {
+    if (_avatarFlowInProgress) return;
+    setState(() => _avatarFlowInProgress = true);
+    try {
+      final container = ProviderScope.containerOf(context, listen: false);
+      final permissionService = container.read(permissionServiceProvider);
+      final mediaPicker = container.read(mediaPickerProvider);
+
+      final initial = await permissionService.checkStatus(AppPermission.photos);
+      if (!mounted) return;
+      final rationale = await showPermissionRationaleSheet(
+        context: context,
+        permission: AppPermission.photos,
+        permanentlyDenied: initial.isPermanentlyDenied,
+      );
+      if (rationale != PermissionRationaleResult.continueRequest) {
+        widget.onAvatarPicked(null);
+        return;
+      }
+      final status = await permissionService.requestStatus(AppPermission.photos);
+      if (!status.isGranted) {
+        widget.onAvatarPicked(null);
+        return;
+      }
+      final picked = await mediaPicker.pickImage();
+      widget.onAvatarPicked(picked);
+    } finally {
+      if (mounted) setState(() => _avatarFlowInProgress = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -598,7 +722,7 @@ class _AvatarEditor extends StatelessWidget {
               variant: .outline,
               mainAxisSize: .min,
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              onPress: enabled ? onAvatarFeedback : null,
+              onPress: widget.enabled && !_avatarFlowInProgress ? _runAvatarFlow : null,
               child: Text(translations.changeAvatar),
             ),
           ],

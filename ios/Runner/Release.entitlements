@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- push-notifications (Wave-5b): APNs entitlement for App Store
+	     releases. The development build uses Runner.entitlements
+	     (`development`); this is the production variant. -->
+	<key>aps-environment</key>
+	<string>production</string>
+	<!-- deep-linking (Wave-5b): associated domains for Universal Links.
+	     Empty by default; a consumer replaces this with the real
+	     `applinks:<host>` entry once the apple-app-site-association file is
+	     hosted. The compile-time ALLOWED_DEEP_LINK_HOSTS define mirrors this
+	     list at the Dart layer (AppConfig.allowedDeepLinkHosts). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array/>
+</dict>
+</plist>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 35 (Android 15) overlay of the v31 launch + normal themes.
+     Android 15 enforces edge-to-edge for any app targeting a modern
+     targetSdk. This overlay opts the themes into the matching window
+     posturings so the app ships a correct layout on current devices:
+       - windowDrawsSystemBarBackgrounds=true so app content extends behind
+         the bars (the bars themselves are made transparent by
+         SystemUiController.applyOverlayStyle at runtime).
+       - enforceStatusBarContrast / enforceNavigationBarContrast=false so the
+         transparent bar style is not auto-scrimmed by the platform
+         (Android 29+; mirrors the SystemUiOverlayStyle flags
+         *ContrastEnforced:false set in code).
+       - windowLayoutInDisplayCutoutMode=shortEdges so content draws into the
+         cutout area on landscape / foldable form factors.
+     The activity-level android:windowSoftInputMode="adjustResize" is already
+     set in AndroidManifest.xml (line 16), so the viewport resizes under the
+     IME — no manifest change required.
+     Splash-screen items are inherited verbatim from values-v31/styles.xml so
+     the Android 12+ launch animation is identical on API 35. -->
+<resources>
+    <style name="LaunchTheme" parent="android:style/Theme.Light.NoTitleBar">
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">#171717</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#171717</item>
+    </style>
+    <style name="NormalTheme" parent="android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

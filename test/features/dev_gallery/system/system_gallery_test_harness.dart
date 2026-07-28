@@ -4,7 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/platform_capabilities_provider.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/features/experiments/experiment_source.dart';
+import 'package:starter/features/experiments/in_memory_experiment_source.dart';
+import 'package:starter/features/feature_flags/feature_flags_source.dart';
+import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
+import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
@@ -13,10 +19,17 @@ Widget systemGalleryTestApp({
   double bottomViewInset = 0,
 }) {
   return ProviderScope(
+    // Mirror the production composition root: the DiagnosticsPage case reads
+    // featureFlagsControllerProvider, experimentAssignmentsProvider, and
+    // cacheStoreProvider — each throws until its port is overridden. Seed the
+    // no-backend / real-local defaults for every system case.
     overrides: [
       platformCapabilitiesProvider.overrideWithValue(
         const PlatformCapabilities.nonTelevision(),
       ),
+      featureFlagsSourceProvider.overrideWithValue(InMemoryFeatureFlagsSource()),
+      experimentSourceProvider.overrideWithValue(InMemoryExperimentSource()),
+      cacheStoreProvider.overrideWithValue(InMemoryCacheStore()),
     ],
     child: TranslationProvider(
       child: Builder(

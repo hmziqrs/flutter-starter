@@ -31,14 +31,41 @@ class OnboardingPage extends StatefulWidget {
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
+  // Restored slide index (state-restoration). RestorableIntN so a fresh launch
+  // (no saved bucket) and a no-restoration build (goldens / disabled scope) both
+  // fall back to [OnboardingPage.initialPage] unchanged.
+  final RestorableIntN _restoredPage = RestorableIntN(null);
   late PageController _controller = PageController(initialPage: widget.initialPage);
   late int _page = widget.initialPage;
   AppLayoutClass? _lastLayoutClass;
+  bool _restored = false;
+
+  @override
+  String get restorationId => 'onboarding-page';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restoredPage, 'page');
+    _restored = true;
+    final restored = _restoredPage.value;
+    // Re-bind the controller + live page to the restored slide so
+    // restartAndRestore lands the user back on the slide they left. Runs before
+    // the first build with the bucket attached, so the recreated controller is
+    // the one the PageView mounts.
+    if (restored != null && restored != _page) {
+      _page = restored;
+      if (_controller.initialPage != restored) {
+        _controller.dispose();
+        _controller = PageController(initialPage: restored);
+      }
+    }
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _restoredPage.dispose();
     super.dispose();
   }
 
@@ -88,7 +115,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 key: const ValueKey('onboarding-pager'),
                 controller: _controller,
                 itemCount: slides.length,
-                onPageChanged: (page) => setState(() => _page = page),
+                onPageChanged: _onPageChanged,
                 itemBuilder: (context, index) => OnboardingSlide(
                   data: slides[index],
                   brandLabel: translations.onboarding.brand,
@@ -150,6 +177,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _next() => _moveTo(_page + 1);
 
   void _previous() => _moveTo(_page - 1);
+
+  void _onPageChanged(int page) {
+    // Persist the live slide so the next process death restores it. Guarded by
+    // _restored: RestorableProperty.value is only writable once registered.
+    if (_restored) {
+      _restoredPage.value = page;
+    }
+    setState(() => _page = page);
+  }
 
   void _moveTo(int page) {
     if (MediaQuery.disableAnimationsOf(context)) {

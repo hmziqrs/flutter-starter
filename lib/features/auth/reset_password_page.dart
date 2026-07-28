@@ -13,6 +13,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/busy_overlay.dart';
 
 typedef ResetPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -58,7 +59,7 @@ class _ResetPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
+class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -72,6 +73,18 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ResetPasswordPresentationStatus.submitting;
+
+  @override
+  String get restorationId => 'reset-password-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    // This page participates in the restoration tree (state-restoration
+    // contract) but registers NO restorable properties: both fields are new
+    // passwords, and secrets never participate in restoration (mirrors the
+    // login_page rule). The user re-types a new password after a process death
+    // rather than having a credential draft persisted.
+  }
 
   @override
   void initState() {
@@ -110,13 +123,17 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final form = _buildForm(context);
     final translations = context.t.auth.resetPassword;
-    return AuthPageScaffold(
-      screenId: 'reset-password',
-      layoutClass: layoutClass,
-      icon: FLucideIcons.lockKeyhole,
-      title: translations.title,
-      body: translations.body,
-      form: form,
+    return BusyOverlay(
+      isBusy: _submitting,
+      label: translations.submitting,
+      child: AuthPageScaffold(
+        screenId: 'reset-password',
+        layoutClass: layoutClass,
+        icon: FLucideIcons.lockKeyhole,
+        title: translations.title,
+        body: translations.body,
+        form: form,
+      ),
     );
   }
 
@@ -252,9 +269,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
                   : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
-                _submitting
-                    ? translations.auth.resetPassword.submitting
-                    : translations.auth.resetPassword.submit,
+                translations.auth.resetPassword.submit,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

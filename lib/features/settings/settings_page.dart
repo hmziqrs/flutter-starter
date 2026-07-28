@@ -3,10 +3,16 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/feedback/feedback_sheet.dart';
+import 'package:starter/features/security/passcode_controller.dart';
+import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -42,6 +48,7 @@ class SettingsPage extends ConsumerWidget {
     required this.section,
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -50,6 +57,7 @@ class SettingsPage extends ConsumerWidget {
     required this.onOpenPricing,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
     super.key,
   });
@@ -57,6 +65,7 @@ class SettingsPage extends ConsumerWidget {
   final SettingsSection? section;
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -65,6 +74,7 @@ class SettingsPage extends ConsumerWidget {
   final VoidCallback onOpenPricing;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -86,11 +96,13 @@ class SettingsPage extends ConsumerWidget {
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
+              onOpenLicense: onOpenLicense,
               loadBuildLabel: loadBuildLabel,
             ),
             null => _SettingsOverview(
               onOpenAppearance: onOpenAppearance,
               onOpenLanguage: onOpenLanguage,
+              onOpenAccessibility: onOpenAccessibility,
               onOpenAccount: onOpenAccount,
               onOpenSubscription: onOpenSubscription,
               onOpenPrivacyAbout: onOpenPrivacyAbout,
@@ -100,6 +112,7 @@ class SettingsPage extends ConsumerWidget {
             section: effectiveSection,
             onOpenAppearance: onOpenAppearance,
             onOpenLanguage: onOpenLanguage,
+            onOpenAccessibility: onOpenAccessibility,
             onOpenAccount: onOpenAccount,
             onOpenSubscription: onOpenSubscription,
             onOpenPrivacyAbout: onOpenPrivacyAbout,
@@ -108,6 +121,7 @@ class SettingsPage extends ConsumerWidget {
             onOpenPricing: onOpenPricing,
             onOpenTerms: onOpenTerms,
             onOpenPrivacy: onOpenPrivacy,
+            onOpenLicense: onOpenLicense,
             loadBuildLabel: loadBuildLabel,
           );
 
@@ -119,6 +133,7 @@ class _SettingsOverview extends StatelessWidget {
   const _SettingsOverview({
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -126,6 +141,7 @@ class _SettingsOverview extends StatelessWidget {
 
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -150,6 +166,13 @@ class _SettingsOverview extends StatelessWidget {
             title: Text(translations.settings.language),
             suffix: const _DirectionalChevron(),
             onPress: onOpenLanguage,
+          ),
+          FTile(
+            key: const ValueKey('settings-open-accessibility'),
+            prefix: const Icon(FLucideIcons.accessibility),
+            title: Text(translations.settings.accessibility.title),
+            suffix: const _DirectionalChevron(),
+            onPress: onOpenAccessibility,
           ),
           FTile(
             key: const ValueKey('settings-open-account'),
@@ -183,6 +206,7 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.section,
     required this.onOpenAppearance,
     required this.onOpenLanguage,
+    required this.onOpenAccessibility,
     required this.onOpenAccount,
     required this.onOpenSubscription,
     required this.onOpenPrivacyAbout,
@@ -191,12 +215,14 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.onOpenPricing,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
   });
 
   final SettingsSection section;
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
+  final VoidCallback onOpenAccessibility;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenSubscription;
   final VoidCallback onOpenPrivacyAbout;
@@ -205,6 +231,7 @@ class _SettingsWideLayout extends StatelessWidget {
   final VoidCallback onOpenPricing;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -245,6 +272,12 @@ class _SettingsWideLayout extends StatelessWidget {
                         onPress: onOpenLanguage,
                       ),
                       FSidebarItem(
+                        key: const ValueKey('settings-wide-accessibility'),
+                        icon: const Icon(FLucideIcons.accessibility),
+                        label: Text(translations.settings.accessibility.title),
+                        onPress: onOpenAccessibility,
+                      ),
+                      FSidebarItem(
                         key: const ValueKey('settings-wide-account'),
                         selected: section == SettingsSection.account,
                         icon: const Icon(FLucideIcons.userRound),
@@ -259,9 +292,7 @@ class _SettingsWideLayout extends StatelessWidget {
                         onPress: onOpenSubscription,
                       ),
                       FSidebarItem(
-                        key: const ValueKey(
-                          'settings-wide-privacy-about',
-                        ),
+                        key: const ValueKey('settings-wide-privacy-about'),
                         selected: section == SettingsSection.privacyAbout,
                         icon: const Icon(FLucideIcons.shieldCheck),
                         label: Text(translations.settings.privacyAbout),
@@ -293,6 +324,7 @@ class _SettingsWideLayout extends StatelessWidget {
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
+              onOpenLicense: onOpenLicense,
               loadBuildLabel: loadBuildLabel,
             ),
           },
@@ -507,11 +539,13 @@ class _PrivacyAboutSettingsContent extends StatefulWidget {
   const _PrivacyAboutSettingsContent({
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    required this.onOpenLicense,
     required this.loadBuildLabel,
   });
 
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
+  final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
   @override
@@ -547,6 +581,11 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                   },
                 ),
               ),
+              const _BiometricUnlockTile(),
+              const _PasscodeTile(),
+              const _LockOnBackgroundTile(),
+              const _AutoLockDelayTile(),
+              const _AnalyticsOptInTile(),
               FTile(
                 key: const ValueKey('settings-open-terms'),
                 title: Text(translations.settings.terms),
@@ -559,9 +598,372 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenPrivacy,
               ),
+              FTile(
+                key: const ValueKey('settings-open-license'),
+                // license-share-update: tile -> in-shell aboutLicense route
+                // (Flutter's local license registry; backend-free).
+                title: Text(translations.settings.about.license),
+                suffix: const _DirectionalChevron(),
+                onPress: widget.onOpenLicense,
+              ),
+              // feedback: the primary 'menu entry' open path (feedback.md
+              // Contract: the sheet opens from a menu entry + the shake
+              // listener). Always present — the sheet degrades honestly to
+              // notConnected via NoopFeedbackTransport, so no capability gate.
+              FTile(
+                key: const ValueKey('settings-send-feedback'),
+                title: Text(translations.feedback.title),
+                suffix: const _DirectionalChevron(),
+                onPress: () => unawaited(showFeedbackSheet(context: context)),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Haptic-feedback opt-in. Watches [settingsControllerProvider] for the
+/// `hapticsEnabled` flag (a plaintext settings key, default-on). The flag is a
+/// necessary-but-not-sufficient gate: each call site ALSO checks
+/// `MediaQuery.disableAnimationsOf` so the reduce-motion accessibility setting
+/// always wins. Surfaces `common.notConnected` on persistence failure.
+class _HapticsTile extends ConsumerStatefulWidget {
+  const _HapticsTile();
+
+  @override
+  ConsumerState<_HapticsTile> createState() => _HapticsTileState();
+}
+
+class _HapticsTileState extends ConsumerState<_HapticsTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).hapticsEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'haptics',
+      label: Text(translations.settings.haptics.title),
+      description: Text(translations.settings.haptics.enable),
+      value: enabled,
+      onChange: (value) => _run(() => controller.setHapticsEnabled(enabled: value)),
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Biometric-unlock opt-in. Watches [settingsControllerProvider] (the
+/// enablement flag is a plaintext settings key, unlike the analytics opt-in
+/// which is SecureStore-backed). Surfaces `common.notConnected` on persistence
+/// failure, mirroring the appearance save-error pattern.
+///
+/// The toggle is gated on [biometricAvailabilityProvider]: the optimistic write
+/// is refused when the OS reports no usable biometric (web / desktop-no-
+/// biometric / not-enrolled). Without this gate a user could enable biometric
+/// on an unsupported device and be permanently trapped on /lock on the next
+/// cold start (the C5 redirect fires during the controller's conservative
+/// loading window, then the state becomes Unavailable and the /lock page has
+/// no real escape). Turning OFF is always allowed so a user whose biometric
+/// disappeared post-enable can recover from the /lock fallback action.
+class _BiometricUnlockTile extends ConsumerStatefulWidget {
+  const _BiometricUnlockTile();
+
+  @override
+  ConsumerState<_BiometricUnlockTile> createState() => _BiometricUnlockTileState();
+}
+
+class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).biometricUnlockEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    final availability = ref.watch(biometricAvailabilityProvider);
+    final canCheck = availability.maybeWhen(
+      data: (report) => report.canCheck,
+      orElse: () => false,
+    );
+    return _ToggleCard(
+      keyName: 'biometric',
+      label: Text(translations.settings.enableBiometric),
+      value: enabled,
+      onChange: (value) {
+        // Refuse to enable on a device that cannot authenticate. The switch is
+        // controlled by the watched settings value, so refusing the write snaps
+        // the toggle back to off on the next rebuild. Turning off is always
+        // allowed so a user can recover from a post-enable biometric loss.
+        if (value && !canCheck) return;
+        unawaited(_run(() => controller.setBiometricUnlockEnabled(enabled: value)));
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Passcode opt-in (pin-autolock). Toggling ON pushes the passcode-setup route
+/// so the user can configure a numeric passcode; the gate does not arm until a
+/// hash is actually stored ([PasscodeState.isSet]). Toggling OFF disables the
+/// passcode (clears the hash + armed flag) and clears the settings flag.
+/// Surfaces `common.notConnected` on persistence failure.
+class _PasscodeTile extends ConsumerStatefulWidget {
+  const _PasscodeTile();
+
+  @override
+  ConsumerState<_PasscodeTile> createState() => _PasscodeTileState();
+}
+
+class _PasscodeTileState extends ConsumerState<_PasscodeTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).passcodeEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'passcode',
+      label: Text(translations.settings.passcode),
+      value: enabled,
+      onChange: (value) async {
+        if (value) {
+          // Reflect the intent immediately so the toggle shows ON, then push
+          // the setup route. The gate only arms once the setup surface stores
+          // a hash (isSet becomes true), so this intermediate state is safe.
+          await _run(() => controller.setPasscodeEnabled(enabled: true));
+          if (context.mounted) context.goNamed(AppRoutes.passcodeSetup);
+        } else {
+          await _run(() async {
+            await ref.read(passcodeControllerProvider.notifier).disable();
+            await controller.setPasscodeEnabled(enabled: false);
+          });
+        }
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Lock-when-backgrounded toggle (pin-autolock). Only meaningful when a
+/// passcode is configured; the tile is disabled (read-only) otherwise.
+class _LockOnBackgroundTile extends ConsumerStatefulWidget {
+  const _LockOnBackgroundTile();
+
+  @override
+  ConsumerState<_LockOnBackgroundTile> createState() => _LockOnBackgroundTileState();
+}
+
+class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final state = ref.watch(settingsControllerProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'lock-on-background',
+      label: Text(translations.settings.lockOnBackground),
+      value: state.lockOnBackground,
+      // Refuse toggles when no passcode is configured: the auto-lock subsystem
+      // has nothing to re-lock to. The controlled toggle snaps back on rebuild.
+      onChange: (value) {
+        if (!state.passcodeEnabled) return;
+        unawaited(_run(() => controller.setLockOnBackground(enabled: value)));
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Idle auto-lock delay selector (pin-autolock). Cycles through a small fixed
+/// set of delays on tap: Off -> 30s -> 1m -> 5m -> Off. Only meaningful when a
+/// passcode is configured; the tile is inert otherwise.
+class _AutoLockDelayTile extends ConsumerStatefulWidget {
+  const _AutoLockDelayTile();
+
+  @override
+  ConsumerState<_AutoLockDelayTile> createState() => _AutoLockDelayTileState();
+}
+
+class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> {
+  static const _options = <int>[0, 30, 60, 300];
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final state = ref.watch(settingsControllerProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'auto-lock-delay',
+      label: Text(translations.settings.autoLockDelay),
+      status: _labelFor(translations, state.autoLockDelaySeconds),
+      value: state.autoLockDelaySeconds > 0,
+      // Rendered as a toggle-like card: tapping cycles to the next delay option.
+      // Only active when a passcode is configured.
+      onChange: (_) {
+        if (!state.passcodeEnabled) return;
+        final currentIndex = _options.indexOf(state.autoLockDelaySeconds);
+        final nextIndex = (currentIndex + 1) % _options.length;
+        unawaited(_run(() => controller.setAutoLockDelaySeconds(_options[nextIndex])));
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  String _labelFor(Translations translations, int seconds) {
+    if (seconds <= 0) return translations.settings.analytics.statusOff;
+    if (seconds < 60) return '${seconds}s';
+    final minutes = seconds ~/ 60;
+    return '${minutes}m';
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Analytics opt-in. Watches [analyticsOptInControllerProvider] (the opt-in is a
+/// SecureStore-backed sensitive preference, NOT a [SettingsState] field). The
+/// same controller is consulted by the real analytics client before every emit;
+/// the Noop default ignores it. Surfaces `common.notConnected` on failure.
+class _AnalyticsOptInTile extends ConsumerStatefulWidget {
+  const _AnalyticsOptInTile();
+
+  @override
+  ConsumerState<_AnalyticsOptInTile> createState() => _AnalyticsOptInTileState();
+}
+
+class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final optedIn = ref.watch(analyticsOptInControllerProvider);
+    final controller = ref.read(analyticsOptInControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'analytics',
+      label: Text(translations.settings.analytics.optInTitle),
+      description: Text(translations.settings.analytics.optInBody),
+      status: optedIn
+          ? translations.settings.analytics.statusOn
+          : translations.settings.analytics.statusOff,
+      value: optedIn,
+      onChange: (value) => _run(() => controller.setOptIn(value: value)),
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Shared FCard shell for a boolean opt-in toggle with a status line and an
+/// optional save-error notice. Used by the biometric and analytics tiles.
+class _ToggleCard extends StatelessWidget {
+  const _ToggleCard({
+    required this.keyName,
+    required this.label,
+    required this.value,
+    required this.onChange,
+    required this.saveFailed,
+    this.description,
+    this.status,
+  });
+
+  final String keyName;
+  final Widget label;
+  final Widget? description;
+  final String? status;
+  final bool value;
+  final ValueChanged<bool> onChange;
+  final bool saveFailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FSwitch(
+              key: ValueKey('settings-toggle-$keyName'),
+              value: value,
+              label: label,
+              description: description,
+              onChange: onChange,
+            ),
+            if (status case final status?) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(status, style: context.theme.typography.body.sm),
+            ],
+            if (saveFailed) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                translations.common.notConnected,
+                key: const ValueKey('settings-toggle-save-error'),
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.error,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -670,6 +1072,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             title: translations.settings.motionPreview,
             child: const _AppearanceMotionPreview(),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          const _HapticsTile(),
           if (_saveFailed) ...[
             const SizedBox(height: AppSpacing.md),
             Text(

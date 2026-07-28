@@ -6,6 +6,10 @@ plugins:
 analyzer:
   exclude:
     - "**/*.g.dart"
+    # `tools/test_server` is a standalone Dart package with its own
+    # pubspec/analysis_options; it is analyzed and tested separately via
+    # `cd tools/test_server && dart analyze && dart test`.
+    - "tools/**"
   language:
     strict-casts: true
     strict-inference: true

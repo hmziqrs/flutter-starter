@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 import 'package:starter/features/dev_gallery/preview_frame.dart';
@@ -16,6 +17,8 @@ final accessibilityDevelopmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: false,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
 Future<void> pumpGalleryCase(
