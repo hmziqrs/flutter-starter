@@ -600,7 +600,7 @@ class _Translations$devGallery$ar extends Translations$devGallery$en {
 	@override String get screenPermissions => 'الأذونات';
 	@override String get casePermissionRationale => 'السبب';
 	@override String get casePermissionDenied => 'مرفوض';
-	@override String get casePermissionPermanentlyDenied => 'محظوف نهائيًا';
+	@override String get casePermissionPermanentlyDenied => 'محظور نهائيًا';
 	@override String get screenLicense => 'التراخيص';
 	@override String get screenShare => 'ورقة المشاركة';
 	@override String get screenAppUpdate => 'التحديث داخل التطبيق';
@@ -939,6 +939,7 @@ class _Translations$security$biometric$ar extends Translations$security$biometri
 	// Translations
 	@override String get lockTitle => 'إلغاء القفل بالقياس الحيوي';
 	@override String get lockBody => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.';
+	@override String get authFailedTitle => 'فشلت المصادقة. أعد المحاولة.';
 	@override String get unlock => 'إلغاء القفل';
 	@override String get unlocking => 'جارٍ إلغاء القفل';
 	@override String get unavailableTitle => 'إلغاء القفل بالقياس الحيوي غير متاح';
@@ -1297,6 +1298,7 @@ extension on TranslationsAr {
 			'profile.update.discard' => 'تجاهل التغييرات',
 			'security.biometric.lockTitle' => 'إلغاء القفل بالقياس الحيوي',
 			'security.biometric.lockBody' => 'استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.',
+			'security.biometric.authFailedTitle' => 'فشلت المصادقة. أعد المحاولة.',
 			'security.biometric.unlock' => 'إلغاء القفل',
 			'security.biometric.unlocking' => 'جارٍ إلغاء القفل',
 			'security.biometric.unavailableTitle' => 'إلغاء القفل بالقياس الحيوي غير متاح',
@@ -1514,7 +1516,7 @@ extension on TranslationsAr {
 			'devGallery.screenPermissions' => 'الأذونات',
 			'devGallery.casePermissionRationale' => 'السبب',
 			'devGallery.casePermissionDenied' => 'مرفوض',
-			'devGallery.casePermissionPermanentlyDenied' => 'محظوف نهائيًا',
+			'devGallery.casePermissionPermanentlyDenied' => 'محظور نهائيًا',
 			'devGallery.screenLicense' => 'التراخيص',
 			'devGallery.screenShare' => 'ورقة المشاركة',
 			'devGallery.screenAppUpdate' => 'التحديث داخل التطبيق',

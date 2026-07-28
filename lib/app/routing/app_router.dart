@@ -35,6 +35,7 @@ import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/security/biometric_lock_page.dart';
 import 'package:starter/features/security/biometric_unlock_controller.dart';
+import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
@@ -219,11 +220,13 @@ GoRouter buildAppRouter({
         // when biometric unlock is enabled and the lock subsystem is locked.
         builder: (context, state) => BiometricLockPage(
           onUnlocked: () => context.goNamed(AppRoutes.home),
-          onUseFallback: () => _showInformationDialog(
-            context,
-            title: context.t.common.legalPlaceholderTitle,
-            body: context.t.common.notConnected,
-          ),
+          // Disables the biometric-unlock setting (the only thing keeping the
+          // user on /lock) and navigates to home. This gives the Unavailable
+          // state a real escape: a device whose biometric disappeared post-
+          // enable is not stranded (the redirect's live read sees
+          // biometricUnlockEnabled flip to false on the same tick and stops
+          // gating). Once pin-autolock ships, this becomes the PIN handoff seam.
+          onUseFallback: () => _disableBiometricAndGoHome(context),
         ),
       ),
       GoRoute(
@@ -237,8 +240,17 @@ GoRouter buildAppRouter({
         name: AppRoutes.register,
         path: AppRoutes.registerPath,
         builder: (context, state) => RegisterPage(
-          onSubmit: (_) => context.go(
-            AppRoutes.otpLocation(OtpPurpose.registration),
+          // Registration is backend-dependent (account creation + OTP issue).
+          // The AuthRepository port does not expose a register method, and the
+          // no-backend default cannot create an account — surfacing
+          // `common.notConnected` here is the honest C13 stance. Navigation to
+          // the OTP step fires only when a consumer wires a real registration
+          // endpoint; the dev-gallery exercises RegisterPage directly with its
+          // own callbacks so the fixture flow stays intact.
+          onSubmit: (_) => _showInformationDialog(
+            context,
+            title: context.t.common.legalPlaceholderTitle,
+            body: context.t.common.notConnected,
           ),
           onLogin: () => _returnToLogin(context),
           onOpenTerms: () => _showInformationDialog(
@@ -524,17 +536,27 @@ bool _readLiveBiometricUnlockActive(BuildContext context) {
   }
 }
 
-/// Once-per-process guard so the soft-update prompt never nags within a single
-/// session (the snooze timestamp covers cross-launch suppression).
-bool _softUpdatePromptShown = false;
+/// Once-per-container guard so the soft-update prompt never nags within a
+/// single session (the snooze timestamp covers cross-launch suppression).
+/// Scoped to the [ProviderContainer] rather than a module-level global so it
+/// resets per test (checklist #4 — composition root confined, no globals).
+final softUpdatePromptShownProvider = NotifierProvider<_SoftUpdatePromptShown, bool>(
+  _SoftUpdatePromptShown.new,
+);
+
+class _SoftUpdatePromptShown extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void markShown() => state = true;
+}
 
 void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requirement) {
-  if (_softUpdatePromptShown) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  if (container.read(softUpdatePromptShownProvider)) {
     return;
   }
-  final container = ProviderScope.containerOf(context, listen: false);
   final store = container.read(settingsStoreProvider);
-  _softUpdatePromptShown = true;
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!context.mounted) {
       return;
@@ -544,6 +566,10 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
         if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
           return;
         }
+        // Mark the flag only when the dialog is actually presented, not before
+        // the post-frame callback — a detection that races with
+        // context.dispose() must not permanently suppress the dialog.
+        container.read(softUpdatePromptShownProvider.notifier).markShown();
         unawaited(
           showSoftUpdateDialog(
             context,
@@ -569,6 +595,18 @@ Future<void> _launchStoreUrl(String storeUrl) async {
   }
 }
 
+/// Disables the biometric-unlock setting and navigates to home. The optimistic
+/// `state =` inside `SettingsController._replace` runs before the first await,
+/// so the C5 redirect's live read sees `biometricUnlockEnabled` flip to false
+/// on the same tick as `goNamed(home)` and stops gating.
+void _disableBiometricAndGoHome(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  unawaited(
+    container.read(settingsControllerProvider.notifier).setBiometricUnlockEnabled(enabled: false),
+  );
+  context.goNamed(AppRoutes.home);
+}
+
 /// Marks first-launch onboarding complete (optimistic in-memory write through
 /// the settings controller) and then navigates to home. Called from every
 /// home-navigating onboarding callback — OnboardingPage.onSkip, the paywall
@@ -591,17 +629,18 @@ enum _PasswordResetFlowResult {
   returnToLogin,
 }
 
-class _LoginRoutePage extends StatefulWidget {
+class _LoginRoutePage extends ConsumerStatefulWidget {
   const _LoginRoutePage({required this.passwordResetComplete});
 
   final bool passwordResetComplete;
 
   @override
-  State<_LoginRoutePage> createState() => _LoginRoutePageState();
+  ConsumerState<_LoginRoutePage> createState() => _LoginRoutePageState();
 }
 
-class _LoginRoutePageState extends State<_LoginRoutePage> {
+class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
   late bool _passwordResetComplete = widget.passwordResetComplete;
+  LoginPresentationStatus _status = LoginPresentationStatus.idle;
 
   @override
   void didUpdateWidget(covariant _LoginRoutePage oldWidget) {
@@ -628,8 +667,34 @@ class _LoginRoutePageState extends State<_LoginRoutePage> {
           ? LoginPresentationState.success(
               successMessage: context.t.auth.resetPassword.success,
             )
-          : const LoginPresentationState(),
-      onSubmit: (_) => context.goNamed(AppRoutes.home),
+          : LoginPresentationState(status: _status),
+      onSubmit: (value) async {
+        // Wire authentication through the SessionController (C13 — never fake
+        // success). The no-backend default (InMemoryAuthRepository.login)
+        // throws AuthException.notConnected, which surfaces as globalFailure.
+        // Navigation to home fires only on a real AuthAuthenticated result.
+        final router = GoRouter.of(context);
+        setState(() => _status = LoginPresentationStatus.submitting);
+        try {
+          await ref
+              .read(sessionControllerProvider.notifier)
+              .login(
+                AuthCredentials(email: value.email, password: value.password),
+              );
+          if (!mounted) return;
+          final session = ref.read(sessionControllerProvider);
+          if (session is AuthAuthenticated) {
+            router.goNamed(AppRoutes.home);
+          } else {
+            // The repository returned without error but did not authenticate
+            // — never navigate as if it did (C13).
+            setState(() => _status = LoginPresentationStatus.globalFailure);
+          }
+        } on AuthException {
+          if (!mounted) return;
+          setState(() => _status = LoginPresentationStatus.globalFailure);
+        }
+      },
       onForgotPassword: () => unawaited(_openForgotPassword()),
       onRegister: () => context.pushNamed(AppRoutes.register),
     );

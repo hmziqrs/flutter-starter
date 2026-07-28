@@ -201,6 +201,7 @@
         "other": "剩余 $count 次尝试"
       },
       "lockedBody(seconds)": {
+        "zero": "现在可以重试。",
         "other": "请在 $seconds 秒后重试。"
       }
     },
@@ -248,6 +249,7 @@
         "other": "剩余 $count 次尝试"
       },
       "lockedBody(seconds)": {
+        "zero": "现在可以重试。",
         "other": "请在 $seconds 秒后重试。"
       },
       "mfaTitle": "验证登录",
@@ -295,6 +297,7 @@
     "biometric": {
       "lockTitle": "使用生物识别解锁",
       "lockBody": "使用您的指纹或面容解锁应用。",
+      "authFailedTitle": "认证失败，请重试。",
       "unlock": "解锁",
       "unlocking": "正在解锁",
       "unavailableTitle": "生物识别解锁不可用",

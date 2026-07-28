@@ -120,7 +120,7 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
           FAlert(
             key: const ValueKey('biometric-lock-failure'),
             variant: .destructive,
-            title: Text(translations.lockBody),
+            title: Text(translations.authFailedTitle),
           ),
         ],
         const SizedBox(height: AppSpacing.xl),

@@ -1566,8 +1566,9 @@ class Translations$auth$login$en {
 		other: '${count} attempts remaining',
 	);
 
-	/// en: '(one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	/// en: '(zero) {Try again now.} (one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
 	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Try again now.',
 		one: 'Try again in 1 second.',
 		other: 'Try again in ${seconds} seconds.',
 	);
@@ -1710,8 +1711,9 @@ class Translations$auth$otp$en {
 		other: '${count} attempts remaining',
 	);
 
-	/// en: '(one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
+	/// en: '(zero) {Try again now.} (one) {Try again in 1 second.} (other) {Try again in $seconds seconds.}'
 	String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Try again now.',
 		one: 'Try again in 1 second.',
 		other: 'Try again in ${seconds} seconds.',
 	);
@@ -1844,6 +1846,9 @@ class Translations$security$biometric$en {
 
 	/// en: 'Use your fingerprint or face to unlock the app.'
 	String get lockBody => 'Use your fingerprint or face to unlock the app.';
+
+	/// en: 'Authentication failed. Try again.'
+	String get authFailedTitle => 'Authentication failed. Try again.';
 
 	/// en: 'Unlock'
 	String get unlock => 'Unlock';
@@ -2181,7 +2186,7 @@ extension on Translations {
 			'auth.login.lockedTitle' => 'Too many attempts',
 			'auth.login.tooManyAttempts' => 'Too many failed attempts. Please wait.',
 			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
-			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.register.title' => 'Create your account',
 			'auth.register.body' => 'Enter the details used to demonstrate registration and confirmation behavior.',
 			'auth.register.acceptTerms' => 'I agree to the terms and privacy preview.',
@@ -2218,7 +2223,7 @@ extension on Translations {
 			'auth.otp.lockedTitle' => 'Too many attempts',
 			'auth.otp.tooManyAttempts' => 'Too many failed attempts. Please wait.',
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
-			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.otp.mfaTitle' => 'Verify your sign-in',
 			'auth.otp.mfaBody' => 'Enter the six-digit code we sent to complete sign-in.',
 			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Expires in 1 second', other: 'Expires in ${seconds} seconds', ), 
@@ -2252,6 +2257,7 @@ extension on Translations {
 			'profile.update.discard' => 'Discard changes',
 			'security.biometric.lockTitle' => 'Unlock with biometrics',
 			'security.biometric.lockBody' => 'Use your fingerprint or face to unlock the app.',
+			'security.biometric.authFailedTitle' => 'Authentication failed. Try again.',
 			'security.biometric.unlock' => 'Unlock',
 			'security.biometric.unlocking' => 'Unlocking',
 			'security.biometric.unavailableTitle' => 'Biometric unlock unavailable',

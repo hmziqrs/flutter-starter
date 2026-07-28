@@ -320,6 +320,7 @@
     "biometric": {
       "lockTitle": "إلغاء القفل بالقياس الحيوي",
       "lockBody": "استخدم بصمتك أو وجهك لإلغاء قفل التطبيق.",
+      "authFailedTitle": "فشلت المصادقة. أعد المحاولة.",
       "unlock": "إلغاء القفل",
       "unlocking": "جارٍ إلغاء القفل",
       "unavailableTitle": "إلغاء القفل بالقياس الحيوي غير متاح",
@@ -570,7 +571,7 @@
     "screenPermissions": "الأذونات",
     "casePermissionRationale": "السبب",
     "casePermissionDenied": "مرفوض",
-    "casePermissionPermanentlyDenied": "محظوف نهائيًا",
+    "casePermissionPermanentlyDenied": "محظور نهائيًا",
     "screenLicense": "التراخيص",
     "screenShare": "ورقة المشاركة",
     "screenAppUpdate": "التحديث داخل التطبيق"

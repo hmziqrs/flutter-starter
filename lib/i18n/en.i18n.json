@@ -202,6 +202,7 @@
         "other": "$count attempts remaining"
       },
       "lockedBody(seconds)": {
+        "zero": "Try again now.",
         "one": "Try again in 1 second.",
         "other": "Try again in $seconds seconds."
       }
@@ -251,6 +252,7 @@
         "other": "$count attempts remaining"
       },
       "lockedBody(seconds)": {
+        "zero": "Try again now.",
         "one": "Try again in 1 second.",
         "other": "Try again in $seconds seconds."
       },
@@ -300,6 +302,7 @@
     "biometric": {
       "lockTitle": "Unlock with biometrics",
       "lockBody": "Use your fingerprint or face to unlock the app.",
+      "authFailedTitle": "Authentication failed. Try again.",
       "unlock": "Unlock",
       "unlocking": "Unlocking",
       "unavailableTitle": "Biometric unlock unavailable",

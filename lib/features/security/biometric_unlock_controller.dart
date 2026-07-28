@@ -1,18 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
-
-/// Resolves the OS biometric availability once per [ProviderContainer] through
-/// the overridden [biometricAuthenticatorProvider].
-///
-/// Mirrors `versionCheckProvider`: the composition root selects the adapter
-/// (real on supported platforms, `NoopBiometricAuthenticator` for web /
-/// unsupported / integration tests) so this future resolves deterministically
-/// and never triggers the platform plugin from a widget `build`. The
-/// controller watches it and translates the result into a [BiometricLockState].
-final biometricAvailabilityProvider = FutureProvider<BiometricAvailability>((ref) {
-  return ref.watch(biometricAuthenticatorProvider).checkAvailability();
-});
 
 /// Handwritten Riverpod [NotifierProvider] over the biometric lock state.
 ///
@@ -41,6 +30,18 @@ final biometricUnlockControllerProvider =
 class BiometricUnlockController extends Notifier<BiometricLockState> {
   @override
   BiometricLockState build() {
+    // Background -> relock (defense-in-depth). When the app transitions from
+    // the foreground to paused (backgrounded), re-lock the subsystem so the
+    // biometric gate re-evaluates on resume. `inactive` / `hidden` are noisy
+    // (overlays, system sheets) and never trigger a relock; only the
+    // resumed -> paused edge fires. `relock()` is a no-op when already locked
+    // or unavailable, so this listener is safe for every platform.
+    ref.listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
+      final wasResumed = previous?.isResumed ?? false;
+      if (wasResumed && next.kind == AppLifecycleKind.paused) {
+        relock();
+      }
+    });
     final availability = ref.watch(biometricAvailabilityProvider);
     return availability.when(
       data: (report) =>
@@ -76,9 +77,10 @@ class BiometricUnlockController extends Notifier<BiometricLockState> {
     return ok;
   }
 
-  /// Re-locks the subsystem if it is currently unlocked. Reserved for the
-  /// app-lifecycle resume hook (background -> relock) and tests; the cold-start
-  /// gate is established in [build]. No-op when already locked or unavailable.
+  /// Re-locks the subsystem if it is currently unlocked. Wired to the
+  /// app-lifecycle paused edge (background -> relock) in [build]; the cold-start
+  /// gate is also established in [build]. No-op when already locked or
+  /// unavailable. Also used by tests to drive unlocked -> locked transitions.
   void relock() {
     if (state is BiometricLockUnlocked) {
       state = const BiometricLockLocked();

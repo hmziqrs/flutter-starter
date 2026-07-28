@@ -194,6 +194,16 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       // subscription on the next build; we own the subscription lifetime).
       _drainNotificationTapQueue();
       _listenAppLinkStream();
+      // Re-evaluate the C5 redirect the moment the version check resolves.
+      // On a cold-start deep link, go_router evaluates the redirect
+      // synchronously before the FutureProvider has produced a value, so the
+      // HARD update-blocker block can be missed on the first evaluation.
+      // Refreshing here ensures the redirect re-runs with the resolved
+      // requirement (HARD wins over everything per the update-blocker spec).
+      ref.listenManual(
+        versionCheckProvider,
+        (_, _) => _router.refresh(),
+      );
     });
   }
 
@@ -267,6 +277,15 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     ref.read(appLifecyclePhaseProvider.notifier).transitionTo(state);
+    // Re-evaluate the C5 redirect after a background -> foreground transition.
+    // The BiometricUnlockController relocks on the paused edge; on resume the
+    // redirect must fire again so the user is sent to /lock when biometric is
+    // enabled and the subsystem is Locked. Without this the user returns to
+    // the protected shell they were viewing before backgrounding, bypassing
+    // the gate.
+    if (state == AppLifecycleState.resumed) {
+      _router.refresh();
+    }
   }
 
   @override

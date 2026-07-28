@@ -25,7 +25,7 @@ void main() {
 
   testWidgets('preset tiles traverse in enum order under Tab (LTR)', (tester) async {
     await tester.pumpWidget(_harness(locale: AppLocale.en));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     // Tab into the page. The first focusable preset tile is comfortable.
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -44,7 +44,7 @@ void main() {
   testWidgets('preset tiles preserve declared order under RTL (Arabic)', (tester) async {
     await LocaleSettings.setLocale(AppLocale.ar);
     await tester.pumpWidget(_harness(locale: AppLocale.ar));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(
       Directionality.of(
@@ -68,7 +68,7 @@ void main() {
 
   testWidgets('activating the focused large tile via keyboard applies the preset', (tester) async {
     await tester.pumpWidget(_harness(locale: AppLocale.en));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
@@ -77,7 +77,7 @@ void main() {
     expect(_focusedPresetKey(tester), 'a11y-preset-large');
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byKey(const ValueKey('a11y-preset-large'))),
@@ -87,6 +87,13 @@ void main() {
       AppTextPreset.large,
     );
   });
+}
+
+/// Bounded frame pump (checklist #5 — never pumpAndSettle).
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }
 
 /// Returns the ValueKey string of the preset tile that currently holds primary

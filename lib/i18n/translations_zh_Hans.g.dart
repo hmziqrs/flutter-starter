@@ -782,6 +782,7 @@ class _Translations$auth$login$zh_Hans extends Translations$auth$login$en {
 		other: '剩余 ${count} 次尝试',
 	);
 	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '现在可以重试。',
 		other: '请在 ${seconds} 秒后重试。',
 	);
 }
@@ -850,6 +851,7 @@ class _Translations$auth$otp$zh_Hans extends Translations$auth$otp$en {
 		other: '剩余 ${count} 次尝试',
 	);
 	@override String lockedBody({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '现在可以重试。',
 		other: '请在 ${seconds} 秒后重试。',
 	);
 	@override String get mfaTitle => '验证登录';
@@ -914,6 +916,7 @@ class _Translations$security$biometric$zh_Hans extends Translations$security$bio
 	// Translations
 	@override String get lockTitle => '使用生物识别解锁';
 	@override String get lockBody => '使用您的指纹或面容解锁应用。';
+	@override String get authFailedTitle => '认证失败，请重试。';
 	@override String get unlock => '解锁';
 	@override String get unlocking => '正在解锁';
 	@override String get unavailableTitle => '生物识别解锁不可用';
@@ -1201,7 +1204,7 @@ extension on TranslationsZhHans {
 			'auth.login.lockedTitle' => '尝试次数过多',
 			'auth.login.tooManyAttempts' => '失败尝试过多，请稍候。',
 			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
-			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '请在 ${seconds} 秒后重试。', ), 
+			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
 			'auth.register.title' => '创建账户',
 			'auth.register.body' => '输入用于演示注册和确认行为的信息。',
 			'auth.register.acceptTerms' => '我同意条款与隐私预览。',
@@ -1238,7 +1241,7 @@ extension on TranslationsZhHans {
 			'auth.otp.lockedTitle' => '尝试次数过多',
 			'auth.otp.tooManyAttempts' => '失败尝试过多，请稍候。',
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
-			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '请在 ${seconds} 秒后重试。', ), 
+			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
 			'auth.otp.mfaTitle' => '验证登录',
 			'auth.otp.mfaBody' => '输入我们发送的六位验证码以完成登录。',
 			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '将在 ${seconds} 秒后过期', ), 
@@ -1272,6 +1275,7 @@ extension on TranslationsZhHans {
 			'profile.update.discard' => '放弃更改',
 			'security.biometric.lockTitle' => '使用生物识别解锁',
 			'security.biometric.lockBody' => '使用您的指纹或面容解锁应用。',
+			'security.biometric.authFailedTitle' => '认证失败，请重试。',
 			'security.biometric.unlock' => '解锁',
 			'security.biometric.unlocking' => '正在解锁',
 			'security.biometric.unavailableTitle' => '生物识别解锁不可用',

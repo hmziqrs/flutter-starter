@@ -8,6 +8,7 @@ import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -512,6 +513,15 @@ class _HapticsTileState extends ConsumerState<_HapticsTile> {
 /// enablement flag is a plaintext settings key, unlike the analytics opt-in
 /// which is SecureStore-backed). Surfaces `common.notConnected` on persistence
 /// failure, mirroring the appearance save-error pattern.
+///
+/// The toggle is gated on [biometricAvailabilityProvider]: the optimistic write
+/// is refused when the OS reports no usable biometric (web / desktop-no-
+/// biometric / not-enrolled). Without this gate a user could enable biometric
+/// on an unsupported device and be permanently trapped on /lock on the next
+/// cold start (the C5 redirect fires during the controller's conservative
+/// loading window, then the state becomes Unavailable and the /lock page has
+/// no real escape). Turning OFF is always allowed so a user whose biometric
+/// disappeared post-enable can recover from the /lock fallback action.
 class _BiometricUnlockTile extends ConsumerStatefulWidget {
   const _BiometricUnlockTile();
 
@@ -527,11 +537,23 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
     final translations = context.t;
     final enabled = ref.watch(settingsControllerProvider).biometricUnlockEnabled;
     final controller = ref.read(settingsControllerProvider.notifier);
+    final availability = ref.watch(biometricAvailabilityProvider);
+    final canCheck = availability.maybeWhen(
+      data: (report) => report.canCheck,
+      orElse: () => false,
+    );
     return _ToggleCard(
       keyName: 'biometric',
       label: Text(translations.settings.enableBiometric),
       value: enabled,
-      onChange: (value) => _run(() => controller.setBiometricUnlockEnabled(enabled: value)),
+      onChange: (value) {
+        // Refuse to enable on a device that cannot authenticate. The switch is
+        // controlled by the watched settings value, so refusing the write snaps
+        // the toggle back to off on the next rebuild. Turning off is always
+        // allowed so a user can recover from a post-enable biometric loss.
+        if (value && !canCheck) return;
+        unawaited(_run(() => controller.setBiometricUnlockEnabled(enabled: value)));
+      },
       saveFailed: _saveFailed,
     );
   }

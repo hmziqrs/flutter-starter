@@ -95,7 +95,7 @@ void main() {
     expect(find.text('This action is not connected yet.'), findsOneWidget);
   });
 
-  testWidgets('Login validates locally and reaches Home', (tester) async {
+  testWidgets('Login surfaces honest globalFailure with no backend (C13)', (tester) async {
     await _pumpApp(tester, AppRoutes.loginPath);
     await tester.enterText(
       find.byKey(const ValueKey('auth-login-email')),
@@ -107,10 +107,13 @@ void main() {
     );
     await _tapVisible(tester, 'auth-login-submit');
 
-    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    // The no-backend default (InMemoryAuthRepository.login) throws
+    // AuthException.notConnected — the page surfaces globalFailure honestly
+    // rather than navigating to Home as if authentication succeeded (C13).
+    expect(find.byKey(const ValueKey('auth-login-global-failure')), findsOneWidget);
   });
 
-  testWidgets('Register and registration OTP reach Home', (tester) async {
+  testWidgets('Register surfaces honest notConnected with no backend (C13)', (tester) async {
     await _pumpApp(tester, AppRoutes.registerPath);
     await tester.enterText(
       find.byKey(const ValueKey('auth-register-display-name')),
@@ -131,14 +134,11 @@ void main() {
     await _tapVisible(tester, 'auth-register-accept-terms');
     await _tapVisible(tester, 'auth-register-submit');
 
-    expect(find.text('Verify your registration'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const ValueKey('auth-otp-code')),
-      '123456',
-    );
-    await _tapVisible(tester, 'auth-otp-submit');
-
-    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    // Registration is backend-dependent; the no-backend default surfaces
+    // common.notConnected rather than navigating to OTP as if the account was
+    // created (C13).
+    expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
   });
 
   testWidgets('Forgot Password follows reset OTP to Login success feedback', (tester) async {

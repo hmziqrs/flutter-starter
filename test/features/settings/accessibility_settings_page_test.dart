@@ -21,7 +21,7 @@ void main() {
     await tester.pumpWidget(
       _harness(initialPreset: AppTextPreset.comfortable),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.byKey(const ValueKey('a11y-preset-comfortable')), findsOneWidget);
     expect(find.byKey(const ValueKey('a11y-preset-large')), findsOneWidget);
@@ -40,10 +40,10 @@ void main() {
 
   testWidgets('selecting the large preset updates the controller state live', (tester) async {
     await tester.pumpWidget(_harness(initialPreset: AppTextPreset.comfortable));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.tap(find.byKey(const ValueKey('a11y-preset-large')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byKey(const ValueKey('a11y-preset-large'))),
@@ -68,10 +68,10 @@ void main() {
     await tester.pumpWidget(
       _harness(initialPreset: AppTextPreset.comfortable, failWrites: true),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.tap(find.byKey(const ValueKey('a11y-preset-dyslexia')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.byKey(const ValueKey('a11y-preset-save-error')), findsOneWidget);
     expect(find.textContaining('not connected'), findsOneWidget);
@@ -82,7 +82,7 @@ void main() {
     await tester.pumpWidget(
       _harness(initialPreset: AppTextPreset.comfortable, locale: AppLocale.ar),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.text('إمكانية الوصول'), findsWidgets);
     expect(find.text('مريح'), findsOneWidget);
@@ -93,6 +93,15 @@ void main() {
       TextDirection.rtl,
     );
   });
+}
+
+/// Bounded frame pump (checklist #5 — never pumpAndSettle). The accessibility
+/// page has no persistent animations, but the shared FThemeMotion duration
+/// (AppMotion.standard) covers the tile selection transition deterministically.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }
 
 Widget _harness({
