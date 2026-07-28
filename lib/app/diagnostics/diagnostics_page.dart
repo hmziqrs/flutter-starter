@@ -15,7 +15,6 @@ import 'package:starter/infrastructure/cache/cache_diagnostics.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
-import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_backend.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_sizes.dart';

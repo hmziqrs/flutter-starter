@@ -37,6 +37,7 @@ import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/media/noop_media_picker.dart';
 import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/sharing/noop_share_service.dart';
 import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
@@ -290,6 +291,7 @@ AppDependencies _dependencies({
       platform: 'test',
       locale: 'en',
     ),
+    platformCapabilities: const PlatformCapabilities.nonTelevision(),
   );
 }
 

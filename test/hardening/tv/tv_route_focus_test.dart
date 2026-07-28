@@ -5,10 +5,19 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/session/auth_session.dart';
 
 import 'tv_test_harness.dart';
+
+final _authenticatedSession = AuthAuthenticated(
+  accessToken: 'test-access-token',
+  refreshToken: 'test-refresh-token',
+  expiresAt: DateTime.utc(9999, 12, 31),
+  userId: 'test-user',
+);
 
 void main() {
   const routeAnchors = <({String location, String focusKey})>[
@@ -55,7 +64,13 @@ void main() {
       tester,
     ) async {
       configureTvTestView(tester);
-      await _pumpTvApp(tester, initialLocation: route.location);
+      await _pumpTvApp(
+        tester,
+        initialLocation: route.location,
+        initialSession: route.location == AppRoutes.updateProfilePath
+            ? _authenticatedSession
+            : null,
+      );
 
       expect(
         focusIsWithin(tester, route.focusKey),
@@ -103,6 +118,7 @@ void main() {
     await _pumpTvApp(
       tester,
       initialLocation: AppRoutes.updateProfilePath,
+      initialSession: _authenticatedSession,
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -171,12 +187,14 @@ Future<void> _sendRemoteBack(WidgetTester tester) async {
 Future<void> _pumpTvApp(
   WidgetTester tester, {
   required String initialLocation,
+  AuthSession? initialSession,
 }) async {
   await tester.pumpWidget(
     App(
       config: _developmentConfig,
       dependencies: AppDependencies.inMemory(
         platformCapabilities: androidTvCapabilities,
+        initialSession: initialSession,
       ),
       initialLocation: initialLocation,
     ),
@@ -249,4 +267,6 @@ final _developmentConfig = AppConfig(
   environment: AppEnvironment.development,
   enableVerboseLogging: false,
   enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

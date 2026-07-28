@@ -19,15 +19,14 @@ final class PlatformCapabilities {
   const PlatformCapabilities.nonTelevision({
     this.platform = 'test',
     this.isWeb = false,
-    this.supportsFileSystem = true,
-  }) : tvPlatform = AppTvPlatform.none;
+  }) : supportsFileSystem = true,
+       tvPlatform = AppTvPlatform.none;
 
   factory PlatformCapabilities.current() {
     return PlatformCapabilities(
       platform: defaultTargetPlatform.name,
       isWeb: kIsWeb,
       supportsFileSystem: !kIsWeb,
-      tvPlatform: AppTvPlatform.none,
     );
   }
 

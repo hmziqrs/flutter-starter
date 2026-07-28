@@ -74,17 +74,14 @@ void main() {
     const desktopCapabilities = PlatformCapabilities(
       platform: 'macOS',
       isWeb: false,
-      supportsFileSystem: true,
     );
     const linuxCapabilities = PlatformCapabilities(
       platform: 'linux',
       isWeb: false,
-      supportsFileSystem: true,
     );
     const windowsCapabilities = PlatformCapabilities(
       platform: 'windows',
       isWeb: false,
-      supportsFileSystem: true,
     );
     const webCapabilities = PlatformCapabilities(
       // Web is platform-agnostic; only isWeb matters for the gate.
@@ -95,12 +92,10 @@ void main() {
     const mobileCapabilities = PlatformCapabilities(
       platform: 'android',
       isWeb: false,
-      supportsFileSystem: true,
     );
     const iosCapabilities = PlatformCapabilities(
       platform: 'iOS',
       isWeb: false,
-      supportsFileSystem: true,
     );
 
     test('applyEdgeToEdge short-circuits on every desktop platform', () async {

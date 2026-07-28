@@ -154,7 +154,7 @@ void main() {
       page: UpdateProfilePage(
         initialDraft: const ProfileDraft.defaults(),
         onSave: (_) => completion.future,
-        onAvatarFeedback: _noop,
+        onAvatarPicked: _noopAvatar,
       ),
     );
 

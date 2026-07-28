@@ -414,7 +414,6 @@ final class AppDependencies {
       capabilities = PlatformCapabilities(
         platform: defaultTargetPlatform.name,
         isWeb: kIsWeb,
-        tvPlatform: AppTvPlatform.none,
       );
     }
 

@@ -21,7 +21,6 @@ final class PlatformCapabilitiesResolver {
         platform: 'web',
         isWeb: true,
         supportsFileSystem: false,
-        tvPlatform: AppTvPlatform.none,
       );
     }
 
@@ -29,7 +28,6 @@ final class PlatformCapabilitiesResolver {
       return const PlatformCapabilities(
         platform: 'tvOS',
         isWeb: false,
-        supportsFileSystem: true,
         tvPlatform: AppTvPlatform.tvOS,
       );
     }
@@ -39,8 +37,6 @@ final class PlatformCapabilitiesResolver {
       return PlatformCapabilities(
         platform: targetPlatform.name,
         isWeb: false,
-        supportsFileSystem: true,
-        tvPlatform: AppTvPlatform.none,
       );
     }
 
@@ -50,7 +46,6 @@ final class PlatformCapabilitiesResolver {
     return PlatformCapabilities(
       platform: targetPlatform.name,
       isWeb: false,
-      supportsFileSystem: true,
       tvPlatform: isAndroidTv ? AppTvPlatform.androidTv : AppTvPlatform.none,
     );
   }

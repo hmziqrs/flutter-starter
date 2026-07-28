@@ -328,7 +328,11 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
-              onPress: (_submitting || _locked) ? null : () => unawaited(_submit()),
+              onPress: _locked
+                  ? null
+                  : _submitting
+                  ? () {}
+                  : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
               child: Text(
                 translations.auth.login.submit,

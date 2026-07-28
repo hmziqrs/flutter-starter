@@ -452,9 +452,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                         : null
                   : () => unawaited(_submit()),
               child: Text(
-                _submitting
-                    ? translations.auth.register.submitting
-                    : translations.auth.register.submit,
+                translations.auth.register.submit,
               ),
             ),
             const SizedBox(height: AppSpacing.md),

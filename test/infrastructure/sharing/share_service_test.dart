@@ -29,7 +29,6 @@ void main() {
           PlatformCapabilities(
             platform: TargetPlatform.android.name,
             isWeb: false,
-            supportsFileSystem: true,
           ),
         ),
         isTrue,
@@ -39,7 +38,6 @@ void main() {
           PlatformCapabilities(
             platform: TargetPlatform.iOS.name,
             isWeb: false,
-            supportsFileSystem: true,
           ),
         ),
         isTrue,
@@ -63,7 +61,7 @@ void main() {
       for (final platform in const <String>['macos', 'windows', 'linux']) {
         expect(
           shareTargetAvailable(
-            PlatformCapabilities(platform: platform, isWeb: false, supportsFileSystem: true),
+            PlatformCapabilities(platform: platform, isWeb: false),
           ),
           isFalse,
           reason: '$platform should report no native share target',

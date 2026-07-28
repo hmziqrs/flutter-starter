@@ -46,7 +46,7 @@ void main() {
     );
     expect(
       capabilities.redactedSummary,
-      'platform=tvOS, web=false, tv=tvOS',
+      'platform=tvOS, web=false, filesystem=true, tv=tvOS',
     );
     expect(capabilities.redactedSummary, isNot(contains('SECRET-MACHINE-ID')));
     expect(
@@ -98,7 +98,6 @@ void main() {
       const PlatformCapabilities(
         platform: 'linux',
         isWeb: false,
-        tvPlatform: AppTvPlatform.none,
       ),
     );
   });
