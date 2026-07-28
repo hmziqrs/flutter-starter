@@ -43,7 +43,7 @@ class UpdateProfilePage extends StatefulWidget {
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
 }
 
-class _UpdateProfilePageState extends State<UpdateProfilePage> {
+class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationMixin {
   static const displayNameMaximum = 80;
   static const bioMaximum = 160;
 
@@ -68,6 +68,15 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   String _savedDisplayName = '';
   String _savedUsername = '';
   String _savedBio = '';
+  // Restored in-progress draft (state-restoration). RestorableStringN so a
+  // fresh launch (no saved bucket) keeps the initial draft verbatim — null
+  // means "no restored value, leave the controller as-is". Email is read-only,
+  // so it has no restorable counterpart. The value getter asserts isRegistered,
+  // so these are only read after restoreState registers them.
+  final RestorableStringN _displayNameDraft = RestorableStringN(null);
+  final RestorableStringN _usernameDraft = RestorableStringN(null);
+  final RestorableStringN _bioDraft = RestorableStringN(null);
+  bool _restored = false;
 
   ProfileDraft get _currentDraft {
     return ProfileDraft(
@@ -98,6 +107,50 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _validateInjectedState());
     } else if (_phase case ProfilePresentationPhase.discardPrompt) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showDiscardDialog());
+    }
+  }
+
+  @override
+  String get restorationId => 'update-profile';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_displayNameDraft, 'display_name');
+    registerForRestoration(_usernameDraft, 'username');
+    registerForRestoration(_bioDraft, 'bio');
+    // Seed ONLY the fields with a saved value so restartAndRestore lands the
+    // user back on their unsaved draft. A fresh launch (no saved bucket) reads
+    // null for every field and leaves the initial-draft controllers untouched,
+    // so the page renders identically to a no-restoration build.
+    _synchronizing = true;
+    final displayName = _displayNameDraft.value;
+    if (displayName != null) {
+      _replaceControllerText(_displayNameController, displayName);
+    }
+    final username = _usernameDraft.value;
+    if (username != null) {
+      _replaceControllerText(_usernameController, username);
+    }
+    final bio = _bioDraft.value;
+    if (bio != null) {
+      _replaceControllerText(_bioController, bio);
+    }
+    _synchronizing = false;
+    _restored = true;
+  }
+
+  /// Persists the live controller text to the restorable drafts (state-
+  /// restoration). Guarded by [_restored]: the RestorableProperty value setters
+  /// are only safe after restoreState registers them.
+  void _syncDrafts() {
+    if (_displayNameDraft.value != _displayNameController.text) {
+      _displayNameDraft.value = _displayNameController.text;
+    }
+    if (_usernameDraft.value != _usernameController.text) {
+      _usernameDraft.value = _usernameController.text;
+    }
+    if (_bioDraft.value != _bioController.text) {
+      _bioDraft.value = _bioController.text;
     }
   }
 
@@ -142,6 +195,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     _usernameFocusNode.dispose();
     _bioFocusNode.dispose();
     _scrollController.dispose();
+    _displayNameDraft.dispose();
+    _usernameDraft.dispose();
+    _bioDraft.dispose();
     super.dispose();
   }
 
@@ -225,6 +281,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   void _onChanged() {
     if (!mounted || _isSaving || _synchronizing) return;
+    // Persist the in-progress draft so the next process death restores it.
+    if (_restored) {
+      _syncDrafts();
+    }
     final nextPhase = _isDirty ? ProfilePresentationPhase.dirty : ProfilePresentationPhase.idle;
     if (_phase != nextPhase) {
       setState(() => _phase = nextPhase);

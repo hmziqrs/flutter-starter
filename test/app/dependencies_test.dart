@@ -20,6 +20,10 @@ void main() {
       'onboarding.completed',
       'security.biometric_unlock_enabled',
       'appearance.haptics_enabled',
+      // Wave-6 pin-autolock persistence keys (autolock feature).
+      'security.passcode_enabled',
+      'security.auto_lock_delay_seconds',
+      'security.lock_on_background',
     });
     expect(
       SettingsRepository.persistedKeys,

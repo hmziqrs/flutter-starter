@@ -9,7 +9,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(139));
+    expect(cases, hasLength(156));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -46,6 +46,18 @@ void main() {
         'accessibility.comfortable',
         'accessibility.large',
         'accessibility.dyslexia',
+        // Wave-6 feature surfaces registered by their gallery contributors.
+        'searchPagination.field',
+        'searchPagination.paged',
+        'searchPagination.pagedNoBackend',
+        'passcode.entry.idle',
+        'passcode.entry.error',
+        'passcode.entry.lockedOut',
+        'passcode.setup.mismatch',
+        'feedback.drafting',
+        'feedback.submitting',
+        'feedback.failed',
+        'feedback.success',
       ]),
     );
     expect(

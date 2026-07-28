@@ -20,7 +20,11 @@
     "saving": "正在保存…",
     "notConnected": "此操作尚未连接。",
     "legalPlaceholderTitle": "信息预览",
-    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。"
+    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。",
+    "confirm": "确认",
+    "success": "成功",
+    "discard": "放弃",
+    "error": "错误"
   },
   "connectivity": {
     "online": "已连接",
@@ -149,6 +153,9 @@
     "terms": "条款预览",
     "privacy": "隐私预览",
     "enableBiometric": "使用生物识别解锁",
+    "passcode": "密码",
+    "autoLockDelay": "自动锁定延迟",
+    "lockOnBackground": "切到后台时锁定",
     "analytics": {
       "optInTitle": "分析",
       "optInBody": "通过发送匿名使用数据帮助改进应用。您可以随时关闭。",
@@ -303,6 +310,25 @@
       "unavailableTitle": "生物识别解锁不可用",
       "unavailableBody": "此设备不支持生物识别解锁。请改用您的设备凭据。",
       "useFallback": "使用设备凭据"
+    },
+    "passcode": {
+      "enterTitle": "输入密码",
+      "enterBody": "输入您的密码以解锁应用。",
+      "setupTitle": "设置密码",
+      "setupBody": "选择一个在生物识别不可用时可以使用的数字密码。",
+      "confirmTitle": "确认密码",
+      "reenter": "再次输入密码",
+      "mismatch": "两次输入的密码不一致，请重试。",
+      "incorrect(attempts)": {
+        "one": "密码错误。还剩 1 次尝试机会。",
+        "other": "密码错误。还剩 $attempts 次尝试机会。"
+      },
+      "lockedOut(seconds)": {
+        "zero": "尝试次数过多。请现在重试。",
+        "one": "尝试次数过多。请在 1 秒后重试。",
+        "other": "尝试次数过多。请在 $seconds 秒后重试。"
+      },
+      "disable": "停用密码"
     }
   },
   "forceUpdate": {
@@ -397,7 +423,11 @@
     "analytics": "分析",
     "analyticsNone": "未配置",
     "featureFlags": "功能开关",
-    "redactedNotice": "诊断信息不包含凭据或用户内容。"
+    "redactedNotice": "诊断信息不包含凭据或用户内容。",
+    "experiments": {
+      "title": "实验",
+      "source": "来源"
+    }
   },
   "devGallery": {
     "title": "生产页面图库",
@@ -551,7 +581,29 @@
     "casePermissionPermanentlyDenied": "永久拒绝",
     "screenLicense": "许可证",
     "screenShare": "分享面板",
-    "screenAppUpdate": "应用内更新"
+    "screenAppUpdate": "应用内更新",
+    "screenSearchPagination": "搜索与分页",
+    "caseSearchField": "搜索框",
+    "caseSearchPaged": "分页列表",
+    "caseSearchPagedNoBackend": "分页列表（无后端）",
+    "screenToastDialogs": "提示与对话框",
+    "caseToastSuccess": "成功提示",
+    "caseToastInfo": "信息提示",
+    "caseToastWarning": "警告提示",
+    "caseToastError": "错误提示",
+    "caseDialogConfirm": "确认对话框",
+    "caseDialogDestroy": "删除对话框",
+    "screenPasscodeEntry": "密码输入",
+    "screenPasscodeSetup": "密码设置",
+    "casePasscodeIdle": "空闲",
+    "casePasscodeError": "错误",
+    "casePasscodeLockedOut": "已锁定",
+    "casePasscodeSetupMismatch": "确认不匹配",
+    "screenFeedback": "反馈",
+    "caseFeedbackDrafting": "编写中",
+    "caseFeedbackSubmitting": "提交中",
+    "caseFeedbackFailed": "失败",
+    "caseFeedbackSuccess": "成功"
   },
   "notifications": {
     "enableTitle": "开启通知",
@@ -594,5 +646,25 @@
     "available": "有可用更新。",
     "notAvailable": "已是最新版本。",
     "required": "需要更新才能继续。"
+  },
+  "search": {
+    "title": "搜索",
+    "placeholder": "搜索…",
+    "emptyTitle": "暂无结果",
+    "emptyBody": "请尝试其他搜索词。",
+    "errorTitle": "搜索暂不可用"
+  },
+  "feedback": {
+    "title": "发送反馈",
+    "messageLabel": "内容",
+    "messageHint": "发生了什么，或有什么可以改进？",
+    "includeScreenshot": "附上截图",
+    "emailOptional": "回复邮箱",
+    "submit": "发送",
+    "cancel": "取消",
+    "successTitle": "谢谢！",
+    "successBody": "您的反馈已发送。",
+    "failedTitle": "暂时无法发送您的反馈。",
+    "shakeEnabled": "摇动以打开反馈"
   }
 }

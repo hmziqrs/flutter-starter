@@ -4,6 +4,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'routes/auth.dart' as auth;
 import 'routes/crashes.dart' as crashes;
 import 'routes/events.dart' as events;
+import 'routes/feedback.dart' as feedback;
 import 'routes/notifications.dart' as notifications;
 import 'routes/otp.dart' as otp;
 import 'routes/remote_config.dart' as remote_config;
@@ -24,6 +25,7 @@ final List<RouteRegistrar> _registrars = <RouteRegistrar>[
   auth.registerRoutes,
   crashes.registerRoutes,
   events.registerRoutes,
+  feedback.registerRoutes,
   notifications.registerRoutes,
   otp.registerRoutes,
   remote_config.registerRoutes,

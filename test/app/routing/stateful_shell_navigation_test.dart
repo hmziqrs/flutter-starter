@@ -397,7 +397,13 @@ void main() {
       await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
       await tester.tap(find.byKey(const ValueKey('settings-open-privacy-about')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('settings-open-terms')));
+      // The Wave-6 pin-autolock tile grew the privacy-about section past the
+      // 844-tall test viewport, so the Terms affordance sits below the fold.
+      // Scroll it into view before tapping so the press reaches the handler
+      // (mirrors tapVisible in integration_test_support.dart).
+      await tester.ensureVisible(find.byKey(const ValueKey('settings-open-terms')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('settings-open-terms')).hitTestable());
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
 

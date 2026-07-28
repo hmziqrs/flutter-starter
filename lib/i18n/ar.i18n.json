@@ -20,7 +20,11 @@
     "saving": "جارٍ الحفظ…",
     "notConnected": "هذا الإجراء غير متصل بعد.",
     "legalPlaceholderTitle": "معاينة المعلومات",
-    "legalPlaceholderBody": "يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج."
+    "legalPlaceholderBody": "يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.",
+    "confirm": "تأكيد",
+    "success": "تم بنجاح",
+    "discard": "تجاهل",
+    "error": "خطأ"
   },
   "connectivity": {
     "online": "متصل",
@@ -149,6 +153,9 @@
     "terms": "معاينة الشروط",
     "privacy": "معاينة الخصوصية",
     "enableBiometric": "إلغاء القفل بالقياس الحيوي",
+    "passcode": "رمز المرور",
+    "autoLockDelay": "تأخر القفل التلقائي",
+    "lockOnBackground": "القفل عند الانتقال للخلفية",
     "analytics": {
       "optInTitle": "التحليلات",
       "optInBody": "ساعدنا في تحسين التطبيق عبر إرسال بيانات استخدام مجهولة الهوية. يمكنك إيقاف ذلك في أي وقت.",
@@ -326,6 +333,25 @@
       "unavailableTitle": "إلغاء القفل بالقياس الحيوي غير متاح",
       "unavailableBody": "لا يتوفر إلغاء القفل بالقياس الحيوي على هذا الجهاز. استخدم بيانات اعتماد جهازك بدلًا من ذلك.",
       "useFallback": "استخدام بيانات الاعتماد"
+    },
+    "passcode": {
+      "enterTitle": "أدخل رمز المرور",
+      "enterBody": "أدخل رمز المرور لإلغاء قفل التطبيق.",
+      "setupTitle": "تعيين رمز مرور",
+      "setupBody": "اختر رمزًا رقميًا يمكنك استخدامه عندما لا تكون القياسات الحيوية متاحة.",
+      "confirmTitle": "تأكيد رمز المرور",
+      "reenter": "أعد إدخال رمز المرور",
+      "mismatch": "رمزا المرور غير متطابقين. حاول مرة أخرى.",
+      "incorrect(attempts)": {
+        "one": "رمز مرور غير صحيح. يتبقى محاولة واحدة.",
+        "other": "رمز مرور غير صحيح. يتبقى $attempts محاولات."
+      },
+      "lockedOut(seconds)": {
+        "zero": "محاولات كثيرة. أعد المحاولة الآن.",
+        "one": "محاولات كثيرة. أعد المحاولة خلال ثانية واحدة.",
+        "other": "محاولات كثيرة. أعد المحاولة خلال $seconds ثوانٍ."
+      },
+      "disable": "تعطيل رمز المرور"
     }
   },
   "forceUpdate": {
@@ -420,7 +446,11 @@
     "analytics": "التحليلات",
     "analyticsNone": "غير مُهيّأ",
     "featureFlags": "ميزات تجريبية",
-    "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم."
+    "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.",
+    "experiments": {
+      "title": "التجارب",
+      "source": "المصدر"
+    }
   },
   "devGallery": {
     "title": "معرض شاشات الإنتاج",
@@ -574,7 +604,29 @@
     "casePermissionPermanentlyDenied": "محظور نهائيًا",
     "screenLicense": "التراخيص",
     "screenShare": "ورقة المشاركة",
-    "screenAppUpdate": "التحديث داخل التطبيق"
+    "screenAppUpdate": "التحديث داخل التطبيق",
+    "screenSearchPagination": "بحث وترقيم صفحات",
+    "caseSearchField": "حقل البحث",
+    "caseSearchPaged": "قائمة مقسّمة",
+    "caseSearchPagedNoBackend": "قائمة مقسّمة (بلا خادم)",
+    "screenToastDialogs": "الإشعارات ومربعات الحوار",
+    "caseToastSuccess": "إشعار نجاح",
+    "caseToastInfo": "إشعار معلومات",
+    "caseToastWarning": "إشعار تحذير",
+    "caseToastError": "إشعار خطأ",
+    "caseDialogConfirm": "مربع تأكيد",
+    "caseDialogDestroy": "مربع حذف",
+    "screenPasscodeEntry": "إدخال رمز المرور",
+    "screenPasscodeSetup": "إعداد رمز المرور",
+    "casePasscodeIdle": "خامل",
+    "casePasscodeError": "غير صحيح",
+    "casePasscodeLockedOut": "مقفل",
+    "casePasscodeSetupMismatch": "عدم تطابق التأكيد",
+    "screenFeedback": "الملاحظات",
+    "caseFeedbackDrafting": "كتابة",
+    "caseFeedbackSubmitting": "إرسال",
+    "caseFeedbackFailed": "فشل",
+    "caseFeedbackSuccess": "نجاح"
   },
   "notifications": {
     "enableTitle": "تفعيل الإشعارات",
@@ -617,5 +669,25 @@
     "available": "يتوفر تحديث.",
     "notAvailable": "أنت على أحدث إصدار.",
     "required": "التحديث مطلوب للمتابعة."
+  },
+  "search": {
+    "title": "بحث",
+    "placeholder": "بحث…",
+    "emptyTitle": "لا توجد نتائج",
+    "emptyBody": "جرّب مصطلح بحث آخر.",
+    "errorTitle": "البحث غير متاح"
+  },
+  "feedback": {
+    "title": "إرسال ملاحظات",
+    "messageLabel": "الرسالة",
+    "messageHint": "ماذا حدث، أو ما الذي يمكن تحسينه؟",
+    "includeScreenshot": "إرفاق لقطة شاشة",
+    "emailOptional": "بريد الرد",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "successTitle": "شكراً لك!",
+    "successBody": "تم إرسال ملاحظاتك.",
+    "failedTitle": "تعذّر إرسال ملاحظاتك في الوقت الحالي.",
+    "shakeEnabled": "فتح الملاحظات عند الاهتزاز"
   }
 }

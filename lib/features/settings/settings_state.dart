@@ -17,6 +17,9 @@ final class SettingsState {
     this.hasCompletedOnboarding = false,
     this.biometricUnlockEnabled = false,
     this.hapticsEnabled = true,
+    this.passcodeEnabled = false,
+    this.autoLockDelaySeconds = 0,
+    this.lockOnBackground = false,
   });
 
   const SettingsState.defaults()
@@ -27,7 +30,10 @@ final class SettingsState {
       localeOverride = null,
       hasCompletedOnboarding = false,
       biometricUnlockEnabled = false,
-      hapticsEnabled = true;
+      hapticsEnabled = true,
+      passcodeEnabled = false,
+      autoLockDelaySeconds = 0,
+      lockOnBackground = false;
 
   static const minimumFontScale = 0.85;
   static const maximumFontScale = 1.6;
@@ -68,6 +74,23 @@ final class SettingsState {
   /// guard is load-bearing and applied per-consumer, never centrally).
   final bool hapticsEnabled;
 
+  /// Whether a passcode is configured and the passcode gate is armed. Read by
+  /// the C5 redirect (composition root) alongside PasscodeState to gate
+  /// protected shell-tab destinations to the passcode entry page. Default
+  /// false; persisted as a plaintext preference (the secret itself never
+  /// leaves SecureStore — only the salted hash does).
+  final bool passcodeEnabled;
+
+  /// Idle auto-lock delay in seconds. 0 means idle locking is off (the lock
+  /// only fires on background-return when [lockOnBackground] is true).
+  /// Persisted as a plaintext preference; the live value is read by the
+  /// AutoLockController through the `autoLockDelaySecondsProvider` seam.
+  final int autoLockDelaySeconds;
+
+  /// Whether the app re-locks when backgrounded. Only meaningful when
+  /// [passcodeEnabled] is true. Persisted as a plaintext preference.
+  final bool lockOnBackground;
+
   SettingsState copyWith({
     AppThemeMode? themeMode,
     AppAccent? accent,
@@ -77,6 +100,9 @@ final class SettingsState {
     bool? hasCompletedOnboarding,
     bool? biometricUnlockEnabled,
     bool? hapticsEnabled,
+    bool? passcodeEnabled,
+    int? autoLockDelaySeconds,
+    bool? lockOnBackground,
     bool followSystemLocale = false,
   }) {
     return SettingsState(
@@ -88,6 +114,9 @@ final class SettingsState {
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       biometricUnlockEnabled: biometricUnlockEnabled ?? this.biometricUnlockEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+      passcodeEnabled: passcodeEnabled ?? this.passcodeEnabled,
+      autoLockDelaySeconds: autoLockDelaySeconds ?? this.autoLockDelaySeconds,
+      lockOnBackground: lockOnBackground ?? this.lockOnBackground,
     );
   }
 
@@ -102,7 +131,10 @@ final class SettingsState {
             localeOverride == other.localeOverride &&
             hasCompletedOnboarding == other.hasCompletedOnboarding &&
             biometricUnlockEnabled == other.biometricUnlockEnabled &&
-            hapticsEnabled == other.hapticsEnabled;
+            hapticsEnabled == other.hapticsEnabled &&
+            passcodeEnabled == other.passcodeEnabled &&
+            autoLockDelaySeconds == other.autoLockDelaySeconds &&
+            lockOnBackground == other.lockOnBackground;
   }
 
   @override
@@ -115,5 +147,8 @@ final class SettingsState {
     hasCompletedOnboarding,
     biometricUnlockEnabled,
     hapticsEnabled,
+    passcodeEnabled,
+    autoLockDelaySeconds,
+    lockOnBackground,
   );
 }

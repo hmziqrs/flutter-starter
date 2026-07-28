@@ -3,9 +3,15 @@ import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/in_memory_otp_repository.dart';
 import 'package:starter/features/auth/otp_repository.dart';
+import 'package:starter/features/experiments/deterministic_experiment_source.dart';
+import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
+import 'package:starter/features/feedback/feedback_controller.dart';
+import 'package:starter/features/feedback/feedback_form_value.dart';
+import 'package:starter/features/feedback/feedback_transport.dart';
+import 'package:starter/features/feedback/noop_feedback_transport.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_store.dart';
@@ -27,6 +33,9 @@ import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/local_auth_authenticator.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
+import 'package:starter/infrastructure/cache/file_cache_store.dart';
+import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
@@ -88,6 +97,12 @@ final class AppDependencies {
     required this.shareService,
     required this.appUpdateService,
     required this.appLinkHandler,
+    required this.experimentSource,
+    required this.cacheStore,
+    required this.feedbackTransport,
+    required this.initialFeedbackDraft,
+    required this.initialFeedbackShakeEnabled,
+    required this.feedbackAppMetadata,
   });
 
   factory AppDependencies.inMemory({
@@ -169,6 +184,21 @@ final class AppDependencies {
       // service whose stream is empty and whose initial link is null. A test
       // that needs to drive links overrides the provider directly.
       appLinkHandler: const _NoOpDeepLinkService(),
+      // Wave-6 ports. Honest no-backend / real-local defaults so tests/goldens
+      // never fake a backend success (C2): the deterministic experiment source
+      // is a real local assignment over the in-memory settings store; the
+      // in-memory cache store starts empty; the Noop feedback transport
+      // surfaces unavailable. The feedback metadata carries test build info.
+      experimentSource: DeterministicExperimentSource(store: settingsStore),
+      cacheStore: InMemoryCacheStore(),
+      feedbackTransport: const NoopFeedbackTransport(),
+      initialFeedbackDraft: const FeedbackDraft.empty(),
+      initialFeedbackShakeEnabled: false,
+      feedbackAppMetadata: const FeedbackAppMetadata(
+        appVersion: '1.0.0+1',
+        platform: 'test',
+        locale: 'en',
+      ),
     );
   }
 
@@ -282,6 +312,37 @@ final class AppDependencies {
   /// `AllowedDeepLinkHosts`; tests use the no-op service (no inbound URIs).
   final DeepLinkService appLinkHandler;
 
+  /// A/B experiment source (ab-experiments). The deterministic local source is
+  /// the no-backend production default (a real assignment, NOT a Noop); a
+  /// consumer wires `RemoteConfigExperimentSource` only when a remote-config
+  /// endpoint is configured. The source MUST share the production
+  /// `settingsStore` so the stable device id stays consistent.
+  final ExperimentSource experimentSource;
+
+  /// Offline-first cache store (offline-cache). The file-per-key store is the
+  /// production default on non-web platforms; web falls back to in-memory
+  /// (path_provider is unsupported). `InMemoryCacheStore` is the hermetic test
+  /// default (never fakes a populated cache for a source that does not exist).
+  final CacheStore cacheStore;
+
+  /// Feedback transport port (feedback). `NoopFeedbackTransport` is the honest
+  /// no-backend default (returns `FeedbackResult.unavailable`, never accepts);
+  /// a consumer constructs an HTTP adapter only when an endpoint is configured.
+  final FeedbackTransport feedbackTransport;
+
+  /// Pre-loaded feedback draft (feedback) so the controller resolves
+  /// synchronously on the first frame. Tolerant decode of the three
+  /// SettingsStore keys; degrades to empty on a missing/malformed value.
+  final FeedbackDraft initialFeedbackDraft;
+
+  /// Pre-loaded shake-to-feedback opt-in (feedback). Default false; the toggle
+  /// is hidden on web/desktop (no accelerometer).
+  final bool initialFeedbackShakeEnabled;
+
+  /// Read-only app environment attached to every feedback submission (version /
+  /// platform / locale). Built once at the composition root; no PII.
+  final FeedbackAppMetadata feedbackAppMetadata;
+
   /// Returns a copy with the provided fields replaced. Used by
   /// `createApplication` to finalize the startup result's `localeApplied` flag
   /// once the locale apply has run (which happens after `AppDependencies.production`).
@@ -319,6 +380,12 @@ final class AppDependencies {
       shareService: shareService,
       appUpdateService: appUpdateService,
       appLinkHandler: appLinkHandler,
+      experimentSource: experimentSource,
+      cacheStore: cacheStore,
+      feedbackTransport: feedbackTransport,
+      initialFeedbackDraft: initialFeedbackDraft,
+      initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
+      feedbackAppMetadata: feedbackAppMetadata,
     );
   }
 
@@ -377,6 +444,51 @@ final class AppDependencies {
     final biometricAuthenticator = capabilities.isWeb
         ? const NoopBiometricAuthenticator()
         : LocalAuthAuthenticator();
+    // Pre-load the feedback draft + shake opt-in so the FeedbackController
+    // resolves synchronously on the first frame (mirrors the analytics opt-in
+    // pre-load). Tolerant of malformed/missing keys (degrades to empty draft /
+    // false). Never throws — a persistence failure must not strand startup.
+    var initialFeedbackDraft = const FeedbackDraft.empty();
+    var initialFeedbackShakeEnabled = false;
+    try {
+      final message = await settingsStore.readString(feedbackDraftMessageKey);
+      final email = await settingsStore.readString(feedbackDraftEmailKey);
+      final includeScreenshot = await settingsStore.readString(feedbackDraftIncludeScreenshotKey);
+      initialFeedbackDraft = FeedbackDraft(
+        message: message ?? '',
+        email: email == null || email.isEmpty ? null : email,
+        includeScreenshot: includeScreenshot == 'true',
+      );
+    } on Object {
+      initialFeedbackDraft = const FeedbackDraft.empty();
+    }
+    try {
+      initialFeedbackShakeEnabled =
+          await settingsStore.readString(feedbackShakeEnabledKey) == 'true';
+    } on Object {
+      initialFeedbackShakeEnabled = false;
+    }
+    // Offline-cache: the file-per-key store is the production default on non-web
+    // platforms; web falls back to in-memory (path_provider is unsupported). A
+    // directory-resolution failure degrades honestly to in-memory rather than
+    // stranding startup.
+    CacheStore cacheStore;
+    if (capabilities.isWeb) {
+      cacheStore = InMemoryCacheStore();
+    } else {
+      try {
+        final cacheDir = await FileCacheStore.resolveApplicationSupportDirectory();
+        cacheStore = FileCacheStore(cacheDir);
+      } on Object {
+        cacheStore = InMemoryCacheStore();
+      }
+    }
+    final effectiveBuildInfo = buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0');
+    final feedbackAppMetadata = FeedbackAppMetadata(
+      appVersion: '${effectiveBuildInfo.version}+${effectiveBuildInfo.buildNumber}',
+      platform: capabilities.platform,
+      locale: settings.localeOverride?.languageTag ?? 'en',
+    );
     return AppDependencies(
       settingsRepository: repository,
       settingsStore: settingsStore,
@@ -452,6 +564,19 @@ final class AppDependencies {
       appLinkHandler: AppLinksDeepLinkService(
         handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
       ),
+      // Wave-6 production defaults. The deterministic experiment source is the
+      // real-local no-backend default over the shared settings store (the stable
+      // device id is lazily minted+persisted on first assignment). The file
+      // cache store (or in-memory on web) is the production default. The Noop
+      // feedback transport surfaces unavailable (never fakes success); the draft
+      // + shake opt-in are pre-loaded above. A consumer wires a real experiment
+      // / feedback backend only when configured.
+      experimentSource: DeterministicExperimentSource(store: settingsStore),
+      cacheStore: cacheStore,
+      feedbackTransport: const NoopFeedbackTransport(),
+      initialFeedbackDraft: initialFeedbackDraft,
+      initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
+      feedbackAppMetadata: feedbackAppMetadata,
     );
   }
 

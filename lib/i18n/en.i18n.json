@@ -20,7 +20,11 @@
     "saving": "Saving…",
     "notConnected": "This action is not connected yet.",
     "legalPlaceholderTitle": "Information preview",
-    "legalPlaceholderBody": "This starter shows deterministic placeholder content until product-specific legal text is approved."
+    "legalPlaceholderBody": "This starter shows deterministic placeholder content until product-specific legal text is approved.",
+    "confirm": "Confirm",
+    "success": "Success",
+    "discard": "Discard",
+    "error": "Error"
   },
   "connectivity": {
     "online": "Online",
@@ -149,6 +153,9 @@
     "terms": "Terms preview",
     "privacy": "Privacy preview",
     "enableBiometric": "Unlock with biometrics",
+    "passcode": "Passcode",
+    "autoLockDelay": "Auto-lock delay",
+    "lockOnBackground": "Lock when backgrounded",
     "analytics": {
       "optInTitle": "Analytics",
       "optInBody": "Help improve the app by sending anonymous usage data. You can turn this off anytime.",
@@ -308,6 +315,25 @@
       "unavailableTitle": "Biometric unlock unavailable",
       "unavailableBody": "Biometric unlock is not available on this device. Use your device credentials instead.",
       "useFallback": "Use credentials"
+    },
+    "passcode": {
+      "enterTitle": "Enter passcode",
+      "enterBody": "Enter your passcode to unlock the app.",
+      "setupTitle": "Set a passcode",
+      "setupBody": "Choose a numeric passcode you can use when biometrics are unavailable.",
+      "confirmTitle": "Confirm passcode",
+      "reenter": "Re-enter passcode",
+      "mismatch": "The passcodes do not match. Try again.",
+      "incorrect(attempts)": {
+        "one": "Incorrect passcode. 1 attempt remaining.",
+        "other": "Incorrect passcode. $attempts attempts remaining."
+      },
+      "lockedOut(seconds)": {
+        "zero": "Too many attempts. Try again now.",
+        "one": "Too many attempts. Try again in 1 second.",
+        "other": "Too many attempts. Try again in $seconds seconds."
+      },
+      "disable": "Disable passcode"
     }
   },
   "forceUpdate": {
@@ -402,7 +428,11 @@
     "analytics": "Analytics",
     "analyticsNone": "Not configured",
     "featureFlags": "Feature flags",
-    "redactedNotice": "Diagnostics exclude credentials and user content."
+    "redactedNotice": "Diagnostics exclude credentials and user content.",
+    "experiments": {
+      "title": "Experiments",
+      "source": "Source"
+    }
   },
   "devGallery": {
     "title": "Production screen gallery",
@@ -556,7 +586,29 @@
     "casePermissionPermanentlyDenied": "Permanently denied",
     "screenLicense": "Licenses",
     "screenShare": "Share sheet",
-    "screenAppUpdate": "In-app update"
+    "screenAppUpdate": "In-app update",
+    "screenSearchPagination": "Search & pagination",
+    "caseSearchField": "Search field",
+    "caseSearchPaged": "Paged list",
+    "caseSearchPagedNoBackend": "Paged list (no backend)",
+    "screenToastDialogs": "Toasts & dialogs",
+    "caseToastSuccess": "Success toast",
+    "caseToastInfo": "Info toast",
+    "caseToastWarning": "Warning toast",
+    "caseToastError": "Error toast",
+    "caseDialogConfirm": "Confirm dialog",
+    "caseDialogDestroy": "Destroy dialog",
+    "screenPasscodeEntry": "Passcode entry",
+    "screenPasscodeSetup": "Passcode setup",
+    "casePasscodeIdle": "Idle",
+    "casePasscodeError": "Incorrect",
+    "casePasscodeLockedOut": "Locked out",
+    "casePasscodeSetupMismatch": "Confirm mismatch",
+    "screenFeedback": "Feedback",
+    "caseFeedbackDrafting": "Drafting",
+    "caseFeedbackSubmitting": "Submitting",
+    "caseFeedbackFailed": "Failed",
+    "caseFeedbackSuccess": "Success"
   },
   "notifications": {
     "enableTitle": "Turn on notifications",
@@ -599,5 +651,25 @@
     "available": "An update is available.",
     "notAvailable": "You're on the latest version.",
     "required": "An update is required to continue."
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search…",
+    "emptyTitle": "No results",
+    "emptyBody": "Try a different search term.",
+    "errorTitle": "Search is unavailable"
+  },
+  "feedback": {
+    "title": "Send feedback",
+    "messageLabel": "Message",
+    "messageHint": "What happened, or what could be better?",
+    "includeScreenshot": "Include a screenshot",
+    "emailOptional": "Reply-to email",
+    "submit": "Send",
+    "cancel": "Cancel",
+    "successTitle": "Thanks!",
+    "successBody": "Your feedback was sent.",
+    "failedTitle": "We couldn't send your feedback right now.",
+    "shakeEnabled": "Open feedback on shake"
   }
 }

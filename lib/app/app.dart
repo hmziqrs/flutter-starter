@@ -10,6 +10,7 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
+import 'package:starter/app/last_route.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
@@ -19,11 +20,17 @@ import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
+import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
+import 'package:starter/features/feedback/feedback_controller.dart';
+import 'package:starter/features/feedback/feedback_sheet.dart';
+import 'package:starter/features/feedback/feedback_transport.dart';
+import 'package:starter/features/feedback/shake_feedback_trigger.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_controller.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/security/auto_lock_controller.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
@@ -34,6 +41,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_route_observer.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
@@ -131,6 +139,29 @@ class App extends StatelessWidget {
         // platforms / tests); `_AppViewState` ref.listens the resolved stream
         // and dispatches inbound links via context.goNamed / pushNamed.
         appLinkHandlerProvider.overrideWithValue(dependencies.appLinkHandler),
+        // Wave-6 ports. Each is a peer of the existing port overrides; the
+        // composition root selected the honest no-backend / real-local default
+        // for every one of these (C2). A consumer swaps in a real adapter only
+        // when credentials / an endpoint / a platform capability is configured.
+        experimentSourceProvider.overrideWithValue(dependencies.experimentSource),
+        cacheStoreProvider.overrideWithValue(dependencies.cacheStore),
+        feedbackTransportProvider.overrideWithValue(dependencies.feedbackTransport),
+        initialFeedbackDraftProvider.overrideWithValue(dependencies.initialFeedbackDraft),
+        initialFeedbackShakeEnabledProvider.overrideWithValue(
+          dependencies.initialFeedbackShakeEnabled,
+        ),
+        feedbackAppMetadataProvider.overrideWithValue(dependencies.feedbackAppMetadata),
+        // pin-autolock seams: the auto-lock subsystem reads the idle delay +
+        // background toggle through these two providers (the feature file
+        // defaults both to 0/false so it is inert until wired here). Overridden
+        // to read the live settings state so the user's preferences drive the
+        // AutoLockController directly (single source of truth = SettingsState).
+        autoLockDelaySecondsProvider.overrideWith(
+          (ref) => ref.watch(settingsControllerProvider).autoLockDelaySeconds,
+        ),
+        lockOnBackgroundProvider.overrideWith(
+          (ref) => ref.watch(settingsControllerProvider).lockOnBackground,
+        ),
       ],
       child: TranslationProvider(
         child: _AppView(
@@ -170,7 +201,14 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     // zero per-page edits). The observer emits a ScreenView on every route
     // change; its track() call is fire-and-forget and never throws, so
     // navigation is never gated on analytics.
-    observers: [AnalyticsRouteObserver(client: ref.read(analyticsClientProvider))],
+    // The LastRouteObserver persists the latest restorable route path to
+    // SettingsStore (state-restoration) fire-and-forget — it never blocks
+    // navigation and never overrides the C5 redirect chain (the saved path is
+    // only a cold-start initialLocation fallback, weaker than every gate).
+    observers: [
+      AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
+      LastRouteObserver(store: ref.read(settingsStoreProvider)),
+    ],
   );
 
   @override
@@ -311,6 +349,12 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.t.app.name,
+      // State-restoration: a CONSTANT restoration scope id so the
+      // RestorationMixin pages (login/register/forgot/otp/reset/onboarding/
+      // update-profile) participate under one stable scope. This id MUST stay
+      // constant across releases — changing it invalidates every user's
+      // restorable draft state on upgrade (passwords are never restored).
+      restorationScopeId: 'app',
       routerConfig: _router,
       locale: localeData.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
@@ -374,7 +418,24 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                       // it. ConnectivityBanner stays topmost (offline wins over
                       // any announcement for the user's attention).
                       child: AnnouncementBanner(
-                        child: child ?? const SizedBox.shrink(),
+                        // Shake-to-feedback (feedback feature): mounts once above
+                        // the router so the listener is alive on every route.
+                        // Gated by the user's shake opt-in (default off) AND
+                        // !isWeb (web/desktop have no accelerometer -> the
+                        // sensors_plus factory throws and the trigger disables
+                        // honestly). onShake opens the modal feedback sheet; the
+                        // Builder captures a context below the Navigator so the
+                        // sheet's overlay resolves correctly.
+                        child: Builder(
+                          builder: (sheetContext) => ShakeFeedbackTrigger(
+                            enabled:
+                                ref.watch(feedbackShakeEnabledControllerProvider) &&
+                                !PlatformCapabilities.current().isWeb,
+                            onShake: ({required magnitude}) =>
+                                unawaited(showFeedbackSheet(context: sheetContext)),
+                            child: child ?? const SizedBox.shrink(),
+                          ),
+                        ),
                       ),
                     ),
                   ),

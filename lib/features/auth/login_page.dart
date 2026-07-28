@@ -59,14 +59,18 @@ class _LoginView extends ConsumerStatefulWidget {
   ConsumerState<_LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends ConsumerState<_LoginView> {
+class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
-  final _emailController = TextEditingController();
+  // The email draft is restorable across a simulated process death
+  // (state-restoration). The (secret) password deliberately has NO restorable
+  // counterpart: secrets never participate in restoration.
+  late final TextEditingController _emailController;
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'login.email');
   final _passwordFocus = FocusNode(debugLabel: 'login.password');
+  final RestorableString _emailDraft = RestorableString('');
   bool _callbackSubmitting = false;
   bool _rememberMe = false;
 
@@ -86,9 +90,37 @@ class _LoginViewState extends ConsumerState<_LoginView> {
   @override
   void initState() {
     super.initState();
+    // The controller starts empty; restoreState seeds it from [_emailDraft]
+    // once registration flushes the saved value. The [RestorableProperty.value]
+    // getter asserts isRegistered, so it is not read here before restoreState.
+    _emailController = TextEditingController()..addListener(_syncEmailDraft);
     _liveLockedSeconds = widget.presentation.lockedSeconds;
     _requestFixtureFocus();
     _startLockoutCountdownIfNeeded();
+  }
+
+  void _syncEmailDraft() {
+    // _emailDraft is registered by the time the user can type (restoreState ran
+    // during didChangeDependencies), so the value getter is safe here.
+    if (_emailController.text != _emailDraft.value) {
+      _emailDraft.value = _emailController.text;
+    }
+  }
+
+  @override
+  String get restorationId => 'login-view';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    // Restore ONLY the email draft (state-restoration contract). registerFor-
+    // Restoration flushes the saved value into [_emailDraft]; we then seed the
+    // controller so restartAndRestore lands the user back on their typed email.
+    // On a no-restoration build (goldens / disabled scope) restoreState is never
+    // called and the draft stays empty — the controller renders empty text.
+    registerForRestoration(_emailDraft, 'email_draft');
+    if (_emailController.text != _emailDraft.value) {
+      _emailController.text = _emailDraft.value;
+    }
   }
 
   @override
@@ -135,6 +167,7 @@ class _LoginViewState extends ConsumerState<_LoginView> {
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    _emailDraft.dispose();
     super.dispose();
   }
 

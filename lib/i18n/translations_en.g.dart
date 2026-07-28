@@ -67,6 +67,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$permission$en permission = Translations$permission$en.internal(_root);
 	late final Translations$share$en share = Translations$share$en.internal(_root);
 	late final Translations$update$en update = Translations$update$en.internal(_root);
+	late final Translations$search$en search = Translations$search$en.internal(_root);
+	late final Translations$feedback$en feedback = Translations$feedback$en.internal(_root);
 }
 
 // Path: app
@@ -142,6 +144,18 @@ class Translations$common$en {
 
 	/// en: 'This starter shows deterministic placeholder content until product-specific legal text is approved.'
 	String get legalPlaceholderBody => 'This starter shows deterministic placeholder content until product-specific legal text is approved.';
+
+	/// en: 'Confirm'
+	String get confirm => 'Confirm';
+
+	/// en: 'Success'
+	String get success => 'Success';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Error'
+	String get error => 'Error';
 }
 
 // Path: connectivity
@@ -496,6 +510,15 @@ class Translations$settings$en {
 	/// en: 'Unlock with biometrics'
 	String get enableBiometric => 'Unlock with biometrics';
 
+	/// en: 'Passcode'
+	String get passcode => 'Passcode';
+
+	/// en: 'Auto-lock delay'
+	String get autoLockDelay => 'Auto-lock delay';
+
+	/// en: 'Lock when backgrounded'
+	String get lockOnBackground => 'Lock when backgrounded';
+
 	late final Translations$settings$analytics$en analytics = Translations$settings$analytics$en.internal(_root);
 	late final Translations$settings$accessibility$en accessibility = Translations$settings$accessibility$en.internal(_root);
 	late final Translations$settings$haptics$en haptics = Translations$settings$haptics$en.internal(_root);
@@ -535,6 +558,7 @@ class Translations$security$en {
 
 	// Translations
 	late final Translations$security$biometric$en biometric = Translations$security$biometric$en.internal(_root);
+	late final Translations$security$passcode$en passcode = Translations$security$passcode$en.internal(_root);
 }
 
 // Path: forceUpdate
@@ -795,6 +819,8 @@ class Translations$diagnostics$en {
 
 	/// en: 'Diagnostics exclude credentials and user content.'
 	String get redactedNotice => 'Diagnostics exclude credentials and user content.';
+
+	late final Translations$diagnostics$experiments$en experiments = Translations$diagnostics$experiments$en.internal(_root);
 }
 
 // Path: devGallery
@@ -1260,6 +1286,72 @@ class Translations$devGallery$en {
 
 	/// en: 'In-app update'
 	String get screenAppUpdate => 'In-app update';
+
+	/// en: 'Search & pagination'
+	String get screenSearchPagination => 'Search & pagination';
+
+	/// en: 'Search field'
+	String get caseSearchField => 'Search field';
+
+	/// en: 'Paged list'
+	String get caseSearchPaged => 'Paged list';
+
+	/// en: 'Paged list (no backend)'
+	String get caseSearchPagedNoBackend => 'Paged list (no backend)';
+
+	/// en: 'Toasts & dialogs'
+	String get screenToastDialogs => 'Toasts & dialogs';
+
+	/// en: 'Success toast'
+	String get caseToastSuccess => 'Success toast';
+
+	/// en: 'Info toast'
+	String get caseToastInfo => 'Info toast';
+
+	/// en: 'Warning toast'
+	String get caseToastWarning => 'Warning toast';
+
+	/// en: 'Error toast'
+	String get caseToastError => 'Error toast';
+
+	/// en: 'Confirm dialog'
+	String get caseDialogConfirm => 'Confirm dialog';
+
+	/// en: 'Destroy dialog'
+	String get caseDialogDestroy => 'Destroy dialog';
+
+	/// en: 'Passcode entry'
+	String get screenPasscodeEntry => 'Passcode entry';
+
+	/// en: 'Passcode setup'
+	String get screenPasscodeSetup => 'Passcode setup';
+
+	/// en: 'Idle'
+	String get casePasscodeIdle => 'Idle';
+
+	/// en: 'Incorrect'
+	String get casePasscodeError => 'Incorrect';
+
+	/// en: 'Locked out'
+	String get casePasscodeLockedOut => 'Locked out';
+
+	/// en: 'Confirm mismatch'
+	String get casePasscodeSetupMismatch => 'Confirm mismatch';
+
+	/// en: 'Feedback'
+	String get screenFeedback => 'Feedback';
+
+	/// en: 'Drafting'
+	String get caseFeedbackDrafting => 'Drafting';
+
+	/// en: 'Submitting'
+	String get caseFeedbackSubmitting => 'Submitting';
+
+	/// en: 'Failed'
+	String get caseFeedbackFailed => 'Failed';
+
+	/// en: 'Success'
+	String get caseFeedbackSuccess => 'Success';
 }
 
 // Path: notifications
@@ -1368,6 +1460,72 @@ class Translations$update$en {
 
 	/// en: 'An update is required to continue.'
 	String get required => 'An update is required to continue.';
+}
+
+// Path: search
+class Translations$search$en {
+	Translations$search$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Search'
+	String get title => 'Search';
+
+	/// en: 'Search…'
+	String get placeholder => 'Search…';
+
+	/// en: 'No results'
+	String get emptyTitle => 'No results';
+
+	/// en: 'Try a different search term.'
+	String get emptyBody => 'Try a different search term.';
+
+	/// en: 'Search is unavailable'
+	String get errorTitle => 'Search is unavailable';
+}
+
+// Path: feedback
+class Translations$feedback$en {
+	Translations$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Send feedback'
+	String get title => 'Send feedback';
+
+	/// en: 'Message'
+	String get messageLabel => 'Message';
+
+	/// en: 'What happened, or what could be better?'
+	String get messageHint => 'What happened, or what could be better?';
+
+	/// en: 'Include a screenshot'
+	String get includeScreenshot => 'Include a screenshot';
+
+	/// en: 'Reply-to email'
+	String get emailOptional => 'Reply-to email';
+
+	/// en: 'Send'
+	String get submit => 'Send';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Thanks!'
+	String get successTitle => 'Thanks!';
+
+	/// en: 'Your feedback was sent.'
+	String get successBody => 'Your feedback was sent.';
+
+	/// en: 'We couldn't send your feedback right now.'
+	String get failedTitle => 'We couldn\'t send your feedback right now.';
+
+	/// en: 'Open feedback on shake'
+	String get shakeEnabled => 'Open feedback on shake';
 }
 
 // Path: pricing.plans
@@ -1866,6 +2024,52 @@ class Translations$security$biometric$en {
 	String get useFallback => 'Use credentials';
 }
 
+// Path: security.passcode
+class Translations$security$passcode$en {
+	Translations$security$passcode$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Enter passcode'
+	String get enterTitle => 'Enter passcode';
+
+	/// en: 'Enter your passcode to unlock the app.'
+	String get enterBody => 'Enter your passcode to unlock the app.';
+
+	/// en: 'Set a passcode'
+	String get setupTitle => 'Set a passcode';
+
+	/// en: 'Choose a numeric passcode you can use when biometrics are unavailable.'
+	String get setupBody => 'Choose a numeric passcode you can use when biometrics are unavailable.';
+
+	/// en: 'Confirm passcode'
+	String get confirmTitle => 'Confirm passcode';
+
+	/// en: 'Re-enter passcode'
+	String get reenter => 'Re-enter passcode';
+
+	/// en: 'The passcodes do not match. Try again.'
+	String get mismatch => 'The passcodes do not match. Try again.';
+
+	/// en: '(one) {Incorrect passcode. 1 attempt remaining.} (other) {Incorrect passcode. $attempts attempts remaining.}'
+	String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Incorrect passcode. 1 attempt remaining.',
+		other: 'Incorrect passcode. ${attempts} attempts remaining.',
+	);
+
+	/// en: '(zero) {Too many attempts. Try again now.} (one) {Too many attempts. Try again in 1 second.} (other) {Too many attempts. Try again in $seconds seconds.}'
+	String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		zero: 'Too many attempts. Try again now.',
+		one: 'Too many attempts. Try again in 1 second.',
+		other: 'Too many attempts. Try again in ${seconds} seconds.',
+	);
+
+	/// en: 'Disable passcode'
+	String get disable => 'Disable passcode';
+}
+
 // Path: announcements.fixtures
 class Translations$announcements$fixtures$en {
 	Translations$announcements$fixtures$en.internal(this._root);
@@ -1877,6 +2081,21 @@ class Translations$announcements$fixtures$en {
 	late final Translations$announcements$fixtures$changelog$en changelog = Translations$announcements$fixtures$changelog$en.internal(_root);
 	late final Translations$announcements$fixtures$deprecation$en deprecation = Translations$announcements$fixtures$deprecation$en.internal(_root);
 	late final Translations$announcements$fixtures$outage$en outage = Translations$announcements$fixtures$outage$en.internal(_root);
+}
+
+// Path: diagnostics.experiments
+class Translations$diagnostics$experiments$en {
+	Translations$diagnostics$experiments$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Experiments'
+	String get title => 'Experiments';
+
+	/// en: 'Source'
+	String get source => 'Source';
 }
 
 // Path: permission.camera
@@ -2038,6 +2257,10 @@ extension on Translations {
 			'common.notConnected' => 'This action is not connected yet.',
 			'common.legalPlaceholderTitle' => 'Information preview',
 			'common.legalPlaceholderBody' => 'This starter shows deterministic placeholder content until product-specific legal text is approved.',
+			'common.confirm' => 'Confirm',
+			'common.success' => 'Success',
+			'common.discard' => 'Discard',
+			'common.error' => 'Error',
 			'connectivity.online' => 'Online',
 			'connectivity.offline' => 'You are offline. Some actions may be unavailable.',
 			'connectivity.backOnline' => 'You are back online.',
@@ -2152,6 +2375,9 @@ extension on Translations {
 			'settings.terms' => 'Terms preview',
 			'settings.privacy' => 'Privacy preview',
 			'settings.enableBiometric' => 'Unlock with biometrics',
+			'settings.passcode' => 'Passcode',
+			'settings.autoLockDelay' => 'Auto-lock delay',
+			'settings.lockOnBackground' => 'Lock when backgrounded',
 			'settings.analytics.optInTitle' => 'Analytics',
 			'settings.analytics.optInBody' => 'Help improve the app by sending anonymous usage data. You can turn this off anytime.',
 			'settings.analytics.statusOn' => 'On',
@@ -2263,6 +2489,16 @@ extension on Translations {
 			'security.biometric.unavailableTitle' => 'Biometric unlock unavailable',
 			'security.biometric.unavailableBody' => 'Biometric unlock is not available on this device. Use your device credentials instead.',
 			'security.biometric.useFallback' => 'Use credentials',
+			'security.passcode.enterTitle' => 'Enter passcode',
+			'security.passcode.enterBody' => 'Enter your passcode to unlock the app.',
+			'security.passcode.setupTitle' => 'Set a passcode',
+			'security.passcode.setupBody' => 'Choose a numeric passcode you can use when biometrics are unavailable.',
+			'security.passcode.confirmTitle' => 'Confirm passcode',
+			'security.passcode.reenter' => 'Re-enter passcode',
+			'security.passcode.mismatch' => 'The passcodes do not match. Try again.',
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Incorrect passcode. 1 attempt remaining.', other: 'Incorrect passcode. ${attempts} attempts remaining.', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Too many attempts. Try again now.', one: 'Too many attempts. Try again in 1 second.', other: 'Too many attempts. Try again in ${seconds} seconds.', ), 
+			'security.passcode.disable' => 'Disable passcode',
 			'forceUpdate.title' => 'Update required',
 			'forceUpdate.body' => 'This version is no longer supported. Update to the latest version to continue.',
 			'forceUpdate.updateNow' => 'Update now',
@@ -2327,6 +2563,8 @@ extension on Translations {
 			'diagnostics.analyticsNone' => 'Not configured',
 			'diagnostics.featureFlags' => 'Feature flags',
 			'diagnostics.redactedNotice' => 'Diagnostics exclude credentials and user content.',
+			'diagnostics.experiments.title' => 'Experiments',
+			'diagnostics.experiments.source' => 'Source',
 			'devGallery.title' => 'Production screen gallery',
 			'devGallery.search' => 'Search cases',
 			'devGallery.screen' => 'Screen',
@@ -2479,6 +2717,28 @@ extension on Translations {
 			'devGallery.screenLicense' => 'Licenses',
 			'devGallery.screenShare' => 'Share sheet',
 			'devGallery.screenAppUpdate' => 'In-app update',
+			'devGallery.screenSearchPagination' => 'Search & pagination',
+			'devGallery.caseSearchField' => 'Search field',
+			'devGallery.caseSearchPaged' => 'Paged list',
+			'devGallery.caseSearchPagedNoBackend' => 'Paged list (no backend)',
+			'devGallery.screenToastDialogs' => 'Toasts & dialogs',
+			'devGallery.caseToastSuccess' => 'Success toast',
+			'devGallery.caseToastInfo' => 'Info toast',
+			'devGallery.caseToastWarning' => 'Warning toast',
+			'devGallery.caseToastError' => 'Error toast',
+			'devGallery.caseDialogConfirm' => 'Confirm dialog',
+			'devGallery.caseDialogDestroy' => 'Destroy dialog',
+			'devGallery.screenPasscodeEntry' => 'Passcode entry',
+			'devGallery.screenPasscodeSetup' => 'Passcode setup',
+			'devGallery.casePasscodeIdle' => 'Idle',
+			'devGallery.casePasscodeError' => 'Incorrect',
+			'devGallery.casePasscodeLockedOut' => 'Locked out',
+			'devGallery.casePasscodeSetupMismatch' => 'Confirm mismatch',
+			'devGallery.screenFeedback' => 'Feedback',
+			'devGallery.caseFeedbackDrafting' => 'Drafting',
+			'devGallery.caseFeedbackSubmitting' => 'Submitting',
+			'devGallery.caseFeedbackFailed' => 'Failed',
+			'devGallery.caseFeedbackSuccess' => 'Success',
 			'notifications.enableTitle' => 'Turn on notifications',
 			'notifications.enableBody' => 'Get timely updates about your account and activity. You can change this anytime.',
 			'notifications.deny' => 'Not now',
@@ -2490,6 +2750,8 @@ extension on Translations {
 			'permission.camera.title' => 'Camera access',
 			'permission.camera.rationale' => 'We use the camera to take a new profile photo. You can decline any time.',
 			'permission.photos.title' => 'Photo library access',
+			_ => null,
+		} ?? switch (path) {
 			'permission.photos.rationale' => 'We read your photo library so you can pick a profile photo. You can decline any time.',
 			'permission.location.title' => 'Location access',
 			'permission.location.rationale' => 'We use your location to personalize your experience. You can decline any time.',
@@ -2505,6 +2767,22 @@ extension on Translations {
 			'update.available' => 'An update is available.',
 			'update.notAvailable' => 'You\'re on the latest version.',
 			'update.required' => 'An update is required to continue.',
+			'search.title' => 'Search',
+			'search.placeholder' => 'Search…',
+			'search.emptyTitle' => 'No results',
+			'search.emptyBody' => 'Try a different search term.',
+			'search.errorTitle' => 'Search is unavailable',
+			'feedback.title' => 'Send feedback',
+			'feedback.messageLabel' => 'Message',
+			'feedback.messageHint' => 'What happened, or what could be better?',
+			'feedback.includeScreenshot' => 'Include a screenshot',
+			'feedback.emailOptional' => 'Reply-to email',
+			'feedback.submit' => 'Send',
+			'feedback.cancel' => 'Cancel',
+			'feedback.successTitle' => 'Thanks!',
+			'feedback.successBody' => 'Your feedback was sent.',
+			'feedback.failedTitle' => 'We couldn\'t send your feedback right now.',
+			'feedback.shakeEnabled' => 'Open feedback on shake',
 			_ => null,
 		};
 	}

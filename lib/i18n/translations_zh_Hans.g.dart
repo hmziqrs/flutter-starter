@@ -66,6 +66,8 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	@override late final _Translations$permission$zh_Hans permission = _Translations$permission$zh_Hans._(_root);
 	@override late final _Translations$share$zh_Hans share = _Translations$share$zh_Hans._(_root);
 	@override late final _Translations$update$zh_Hans update = _Translations$update$zh_Hans._(_root);
+	@override late final _Translations$search$zh_Hans search = _Translations$search$zh_Hans._(_root);
+	@override late final _Translations$feedback$zh_Hans feedback = _Translations$feedback$zh_Hans._(_root);
 }
 
 // Path: app
@@ -103,6 +105,10 @@ class _Translations$common$zh_Hans extends Translations$common$en {
 	@override String get notConnected => '此操作尚未连接。';
 	@override String get legalPlaceholderTitle => '信息预览';
 	@override String get legalPlaceholderBody => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。';
+	@override String get confirm => '确认';
+	@override String get success => '成功';
+	@override String get discard => '放弃';
+	@override String get error => '错误';
 }
 
 // Path: connectivity
@@ -257,6 +263,9 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get terms => '条款预览';
 	@override String get privacy => '隐私预览';
 	@override String get enableBiometric => '使用生物识别解锁';
+	@override String get passcode => '密码';
+	@override String get autoLockDelay => '自动锁定延迟';
+	@override String get lockOnBackground => '切到后台时锁定';
 	@override late final _Translations$settings$analytics$zh_Hans analytics = _Translations$settings$analytics$zh_Hans._(_root);
 	@override late final _Translations$settings$accessibility$zh_Hans accessibility = _Translations$settings$accessibility$zh_Hans._(_root);
 	@override late final _Translations$settings$haptics$zh_Hans haptics = _Translations$settings$haptics$zh_Hans._(_root);
@@ -296,6 +305,7 @@ class _Translations$security$zh_Hans extends Translations$security$en {
 
 	// Translations
 	@override late final _Translations$security$biometric$zh_Hans biometric = _Translations$security$biometric$zh_Hans._(_root);
+	@override late final _Translations$security$passcode$zh_Hans passcode = _Translations$security$passcode$zh_Hans._(_root);
 }
 
 // Path: forceUpdate
@@ -443,6 +453,7 @@ class _Translations$diagnostics$zh_Hans extends Translations$diagnostics$en {
 	@override String get analyticsNone => '未配置';
 	@override String get featureFlags => '功能开关';
 	@override String get redactedNotice => '诊断信息不包含凭据或用户内容。';
+	@override late final _Translations$diagnostics$experiments$zh_Hans experiments = _Translations$diagnostics$experiments$zh_Hans._(_root);
 }
 
 // Path: devGallery
@@ -604,6 +615,28 @@ class _Translations$devGallery$zh_Hans extends Translations$devGallery$en {
 	@override String get screenLicense => '许可证';
 	@override String get screenShare => '分享面板';
 	@override String get screenAppUpdate => '应用内更新';
+	@override String get screenSearchPagination => '搜索与分页';
+	@override String get caseSearchField => '搜索框';
+	@override String get caseSearchPaged => '分页列表';
+	@override String get caseSearchPagedNoBackend => '分页列表（无后端）';
+	@override String get screenToastDialogs => '提示与对话框';
+	@override String get caseToastSuccess => '成功提示';
+	@override String get caseToastInfo => '信息提示';
+	@override String get caseToastWarning => '警告提示';
+	@override String get caseToastError => '错误提示';
+	@override String get caseDialogConfirm => '确认对话框';
+	@override String get caseDialogDestroy => '删除对话框';
+	@override String get screenPasscodeEntry => '密码输入';
+	@override String get screenPasscodeSetup => '密码设置';
+	@override String get casePasscodeIdle => '空闲';
+	@override String get casePasscodeError => '错误';
+	@override String get casePasscodeLockedOut => '已锁定';
+	@override String get casePasscodeSetupMismatch => '确认不匹配';
+	@override String get screenFeedback => '反馈';
+	@override String get caseFeedbackDrafting => '编写中';
+	@override String get caseFeedbackSubmitting => '提交中';
+	@override String get caseFeedbackFailed => '失败';
+	@override String get caseFeedbackSuccess => '成功';
 }
 
 // Path: notifications
@@ -672,6 +705,40 @@ class _Translations$update$zh_Hans extends Translations$update$en {
 	@override String get available => '有可用更新。';
 	@override String get notAvailable => '已是最新版本。';
 	@override String get required => '需要更新才能继续。';
+}
+
+// Path: search
+class _Translations$search$zh_Hans extends Translations$search$en {
+	_Translations$search$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '搜索';
+	@override String get placeholder => '搜索…';
+	@override String get emptyTitle => '暂无结果';
+	@override String get emptyBody => '请尝试其他搜索词。';
+	@override String get errorTitle => '搜索暂不可用';
+}
+
+// Path: feedback
+class _Translations$feedback$zh_Hans extends Translations$feedback$en {
+	_Translations$feedback$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '发送反馈';
+	@override String get messageLabel => '内容';
+	@override String get messageHint => '发生了什么，或有什么可以改进？';
+	@override String get includeScreenshot => '附上截图';
+	@override String get emailOptional => '回复邮箱';
+	@override String get submit => '发送';
+	@override String get cancel => '取消';
+	@override String get successTitle => '谢谢！';
+	@override String get successBody => '您的反馈已发送。';
+	@override String get failedTitle => '暂时无法发送您的反馈。';
+	@override String get shakeEnabled => '摇动以打开反馈';
 }
 
 // Path: pricing.plans
@@ -924,6 +991,32 @@ class _Translations$security$biometric$zh_Hans extends Translations$security$bio
 	@override String get useFallback => '使用设备凭据';
 }
 
+// Path: security.passcode
+class _Translations$security$passcode$zh_Hans extends Translations$security$passcode$en {
+	_Translations$security$passcode$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get enterTitle => '输入密码';
+	@override String get enterBody => '输入您的密码以解锁应用。';
+	@override String get setupTitle => '设置密码';
+	@override String get setupBody => '选择一个在生物识别不可用时可以使用的数字密码。';
+	@override String get confirmTitle => '确认密码';
+	@override String get reenter => '再次输入密码';
+	@override String get mismatch => '两次输入的密码不一致，请重试。';
+	@override String incorrect({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		one: '密码错误。还剩 1 次尝试机会。',
+		other: '密码错误。还剩 ${attempts} 次尝试机会。',
+	);
+	@override String lockedOut({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
+		zero: '尝试次数过多。请现在重试。',
+		one: '尝试次数过多。请在 1 秒后重试。',
+		other: '尝试次数过多。请在 ${seconds} 秒后重试。',
+	);
+	@override String get disable => '停用密码';
+}
+
 // Path: announcements.fixtures
 class _Translations$announcements$fixtures$zh_Hans extends Translations$announcements$fixtures$en {
 	_Translations$announcements$fixtures$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
@@ -935,6 +1028,17 @@ class _Translations$announcements$fixtures$zh_Hans extends Translations$announce
 	@override late final _Translations$announcements$fixtures$changelog$zh_Hans changelog = _Translations$announcements$fixtures$changelog$zh_Hans._(_root);
 	@override late final _Translations$announcements$fixtures$deprecation$zh_Hans deprecation = _Translations$announcements$fixtures$deprecation$zh_Hans._(_root);
 	@override late final _Translations$announcements$fixtures$outage$zh_Hans outage = _Translations$announcements$fixtures$outage$zh_Hans._(_root);
+}
+
+// Path: diagnostics.experiments
+class _Translations$diagnostics$experiments$zh_Hans extends Translations$diagnostics$experiments$en {
+	_Translations$diagnostics$experiments$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '实验';
+	@override String get source => '来源';
 }
 
 // Path: permission.camera
@@ -1056,6 +1160,10 @@ extension on TranslationsZhHans {
 			'common.notConnected' => '此操作尚未连接。',
 			'common.legalPlaceholderTitle' => '信息预览',
 			'common.legalPlaceholderBody' => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。',
+			'common.confirm' => '确认',
+			'common.success' => '成功',
+			'common.discard' => '放弃',
+			'common.error' => '错误',
 			'connectivity.online' => '已连接',
 			'connectivity.offline' => '你已离线。部分操作可能不可用。',
 			'connectivity.backOnline' => '网络已恢复。',
@@ -1170,6 +1278,9 @@ extension on TranslationsZhHans {
 			'settings.terms' => '条款预览',
 			'settings.privacy' => '隐私预览',
 			'settings.enableBiometric' => '使用生物识别解锁',
+			'settings.passcode' => '密码',
+			'settings.autoLockDelay' => '自动锁定延迟',
+			'settings.lockOnBackground' => '切到后台时锁定',
 			'settings.analytics.optInTitle' => '分析',
 			'settings.analytics.optInBody' => '通过发送匿名使用数据帮助改进应用。您可以随时关闭。',
 			'settings.analytics.statusOn' => '已开启',
@@ -1281,6 +1392,16 @@ extension on TranslationsZhHans {
 			'security.biometric.unavailableTitle' => '生物识别解锁不可用',
 			'security.biometric.unavailableBody' => '此设备不支持生物识别解锁。请改用您的设备凭据。',
 			'security.biometric.useFallback' => '使用设备凭据',
+			'security.passcode.enterTitle' => '输入密码',
+			'security.passcode.enterBody' => '输入您的密码以解锁应用。',
+			'security.passcode.setupTitle' => '设置密码',
+			'security.passcode.setupBody' => '选择一个在生物识别不可用时可以使用的数字密码。',
+			'security.passcode.confirmTitle' => '确认密码',
+			'security.passcode.reenter' => '再次输入密码',
+			'security.passcode.mismatch' => '两次输入的密码不一致，请重试。',
+			'security.passcode.incorrect' => ({required num n, required Object attempts}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, one: '密码错误。还剩 1 次尝试机会。', other: '密码错误。还剩 ${attempts} 次尝试机会。', ), 
+			'security.passcode.lockedOut' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '尝试次数过多。请现在重试。', one: '尝试次数过多。请在 1 秒后重试。', other: '尝试次数过多。请在 ${seconds} 秒后重试。', ), 
+			'security.passcode.disable' => '停用密码',
 			'forceUpdate.title' => '需要更新',
 			'forceUpdate.body' => '此版本已不再受支持。请更新至最新版本以继续。',
 			'forceUpdate.updateNow' => '立即更新',
@@ -1345,6 +1466,8 @@ extension on TranslationsZhHans {
 			'diagnostics.analyticsNone' => '未配置',
 			'diagnostics.featureFlags' => '功能开关',
 			'diagnostics.redactedNotice' => '诊断信息不包含凭据或用户内容。',
+			'diagnostics.experiments.title' => '实验',
+			'diagnostics.experiments.source' => '来源',
 			'devGallery.title' => '生产页面图库',
 			'devGallery.search' => '搜索用例',
 			'devGallery.screen' => '页面',
@@ -1497,6 +1620,28 @@ extension on TranslationsZhHans {
 			'devGallery.screenLicense' => '许可证',
 			'devGallery.screenShare' => '分享面板',
 			'devGallery.screenAppUpdate' => '应用内更新',
+			'devGallery.screenSearchPagination' => '搜索与分页',
+			'devGallery.caseSearchField' => '搜索框',
+			'devGallery.caseSearchPaged' => '分页列表',
+			'devGallery.caseSearchPagedNoBackend' => '分页列表（无后端）',
+			'devGallery.screenToastDialogs' => '提示与对话框',
+			'devGallery.caseToastSuccess' => '成功提示',
+			'devGallery.caseToastInfo' => '信息提示',
+			'devGallery.caseToastWarning' => '警告提示',
+			'devGallery.caseToastError' => '错误提示',
+			'devGallery.caseDialogConfirm' => '确认对话框',
+			'devGallery.caseDialogDestroy' => '删除对话框',
+			'devGallery.screenPasscodeEntry' => '密码输入',
+			'devGallery.screenPasscodeSetup' => '密码设置',
+			'devGallery.casePasscodeIdle' => '空闲',
+			'devGallery.casePasscodeError' => '错误',
+			'devGallery.casePasscodeLockedOut' => '已锁定',
+			'devGallery.casePasscodeSetupMismatch' => '确认不匹配',
+			'devGallery.screenFeedback' => '反馈',
+			'devGallery.caseFeedbackDrafting' => '编写中',
+			'devGallery.caseFeedbackSubmitting' => '提交中',
+			'devGallery.caseFeedbackFailed' => '失败',
+			'devGallery.caseFeedbackSuccess' => '成功',
 			'notifications.enableTitle' => '开启通知',
 			'notifications.enableBody' => '及时获取账户和活动的更新。你可以随时更改此设置。',
 			'notifications.deny' => '暂不',
@@ -1508,6 +1653,8 @@ extension on TranslationsZhHans {
 			'permission.camera.title' => '相机访问',
 			'permission.camera.rationale' => '我们使用相机拍摄新的个人头像照片。您可以随时拒绝。',
 			'permission.photos.title' => '照片库访问',
+			_ => null,
+		} ?? switch (path) {
 			'permission.photos.rationale' => '我们读取您的照片库以便选择个人头像。您可以随时拒绝。',
 			'permission.location.title' => '位置访问',
 			'permission.location.rationale' => '我们使用您的位置来个性化您的体验。您可以随时拒绝。',
@@ -1523,6 +1670,22 @@ extension on TranslationsZhHans {
 			'update.available' => '有可用更新。',
 			'update.notAvailable' => '已是最新版本。',
 			'update.required' => '需要更新才能继续。',
+			'search.title' => '搜索',
+			'search.placeholder' => '搜索…',
+			'search.emptyTitle' => '暂无结果',
+			'search.emptyBody' => '请尝试其他搜索词。',
+			'search.errorTitle' => '搜索暂不可用',
+			'feedback.title' => '发送反馈',
+			'feedback.messageLabel' => '内容',
+			'feedback.messageHint' => '发生了什么，或有什么可以改进？',
+			'feedback.includeScreenshot' => '附上截图',
+			'feedback.emailOptional' => '回复邮箱',
+			'feedback.submit' => '发送',
+			'feedback.cancel' => '取消',
+			'feedback.successTitle' => '谢谢！',
+			'feedback.successBody' => '您的反馈已发送。',
+			'feedback.failedTitle' => '暂时无法发送您的反馈。',
+			'feedback.shakeEnabled' => '摇动以打开反馈',
 			_ => null,
 		};
 	}

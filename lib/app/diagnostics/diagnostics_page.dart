@@ -4,10 +4,13 @@ import 'package:forui/forui.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
+import 'package:starter/features/experiments/experiments_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
+import 'package:starter/infrastructure/cache/cache_diagnostics.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
@@ -110,6 +113,48 @@ class DiagnosticsPage extends ConsumerWidget {
                                 label: '${translations.diagnostics.featureFlags}.${flag.wireKey}',
                                 value: flags.isEnabled(flag).toString(),
                               ),
+                          // ab-experiments: dev-only assignment snapshot. Renders
+                          // honestly empty while the controller loads (the list
+                          // provider never fabricates an assignment). The
+                          // assignment is never logged with a deviceId in
+                          // production (C12/C13).
+                          if (config.developmentToolsEnabled)
+                            for (final assignment in ref.watch(experimentAssignmentsProvider))
+                              _DiagnosticTile(
+                                label:
+                                    '${translations.diagnostics.experiments.title}.${assignment.key.wireKey}',
+                                value: '${assignment.variant.wireName} (${assignment.source.name})',
+                              ),
+                          // offline-cache: dev-only per-key presence + age dump.
+                          // Uses CacheStore.age only (no key enumeration, no byte
+                          // size) so the per-key port discipline stays intact.
+                          // The helper never throws; a missing key reads absent.
+                          // A FutureBuilder is used because cacheDiagnosticsSnapshot
+                          // is async (CacheStore.age is a Future per-key read).
+                          if (config.developmentToolsEnabled)
+                            FutureBuilder<List<CacheDiagnosticRow>>(
+                              future: cacheDiagnosticsSnapshot(
+                                ref.read(cacheStoreProvider),
+                                // No consumer feature keys yet: the primitive is
+                                // available but no feature depends on it. The
+                                // default empty key set renders an empty list.
+                              ),
+                              builder: (context, snapshot) {
+                                final rows = snapshot.data ?? const <CacheDiagnosticRow>[];
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (final row in rows)
+                                      _DiagnosticTile(
+                                        label: row.key,
+                                        value: row.present
+                                            ? 'age: ${row.age?.inSeconds ?? 0}s'
+                                            : 'absent',
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
                         ],
                       ),
                     ),

@@ -42,6 +42,11 @@ abstract final class AppRoutes {
   static const biometricLock = 'biometric-lock';
   static const biometricLockPath = '/lock';
 
+  static const passcodeEntry = 'passcode-entry';
+  static const passcodeEntryPath = '/passcode';
+  static const passcodeSetup = 'passcode-setup';
+  static const passcodeSetupPath = '/settings/security/passcode';
+
   static const updateProfile = 'update-profile';
   static const updateProfilePath = '/profile/edit';
   static const pricing = 'pricing';
@@ -51,4 +56,7 @@ abstract final class AppRoutes {
   static const developmentScreensPath = '/dev/screens';
   static const diagnostics = 'diagnostics';
   static const diagnosticsPath = '/dev/diagnostics';
+
+  static const search = 'search';
+  static const searchPath = '/search';
 }

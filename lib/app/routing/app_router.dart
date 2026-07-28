@@ -33,8 +33,11 @@ import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/pricing/pricing_page.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
+import 'package:starter/features/search/search_page.dart';
 import 'package:starter/features/security/biometric_lock_page.dart';
 import 'package:starter/features/security/biometric_unlock_controller.dart';
+import 'package:starter/features/security/passcode_controller.dart';
+import 'package:starter/features/security/passcode_page.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
@@ -225,8 +228,54 @@ GoRouter buildAppRouter({
           // state a real escape: a device whose biometric disappeared post-
           // enable is not stranded (the redirect's live read sees
           // biometricUnlockEnabled flip to false on the same tick and stops
-          // gating). Once pin-autolock ships, this becomes the PIN handoff seam.
-          onUseFallback: () => _disableBiometricAndGoHome(context),
+          // gating). When a passcode is configured the fallback hands off to
+          // the passcode entry page instead (the biometric 'unavailable ->
+          // passcode' seam per the pin-autolock spec).
+          onUseFallback: () => _useBiometricFallback(context),
+        ),
+      ),
+      GoRoute(
+        name: AppRoutes.passcodeEntry,
+        path: AppRoutes.passcodeEntryPath,
+        // Top-level (outside the shell) like /lock and /force-update: a
+        // full-screen gate. The C5 redirect sends protected destinations here
+        // when passcode protection is enabled and the passcode requires a
+        // challenge (armed by AutoLockController on idle timeout / background
+        // return). The entry surface is a hard gate: it has no back/escape
+        // navigation until the passcode verifies (or the user disables).
+        builder: (context, state) => PasscodePage(
+          mode: PasscodePageMode.entry,
+          onUnlocked: () => context.goNamed(AppRoutes.home),
+          onDisable: () => _disablePasscodeAndGoHome(context),
+        ),
+      ),
+      GoRoute(
+        name: AppRoutes.passcodeSetup,
+        path: AppRoutes.passcodeSetupPath,
+        // Pushed from the settings security tile when the user turns passcode
+        // protection on. After set() the controller is disarmed in-session so
+        // onSetupComplete returns to settings.
+        builder: (context, state) => PasscodePage(
+          mode: PasscodePageMode.setup,
+          onUnlocked: () => context.goNamed(AppRoutes.home),
+          onSetupComplete: () => _finishPasscodeSetup(context),
+        ),
+      ),
+      GoRoute(
+        name: AppRoutes.search,
+        path: AppRoutes.searchPath,
+        // Top-level full-screen flow (outside the StatefulShellRoute), per
+        // architecture.md. No redirect: /search is not a shell-tab destination
+        // and not auth-required, so it falls through the C5 redirect cleanly.
+        builder: (context, state) => SearchPage(
+          onBack: () {
+            final router = GoRouter.of(context);
+            if (router.canPop()) {
+              router.pop();
+            } else {
+              context.goNamed(AppRoutes.home);
+            }
+          },
         ),
       ),
       GoRoute(
@@ -483,6 +532,23 @@ String? _redirectSettingsDeepLinks(
   if (_readLiveBiometricUnlockActive(context)) {
     return AppRoutes.biometricLockPath;
   }
+  // (5) PASSCODE gate (pin-autolock). The passcode is the LAST gate, placed
+  // AFTER biometric: a user with both enabled is sent to biometric first
+  // (block 4), and the biometric page's onUseFallback hands off to /passcode
+  // via _useBiometricFallback. AUTO-LOCK arms the passcode state through
+  // AutoLockController.arm (idle timeout / background return), which flips
+  // PasscodeState.enabled to true, so requiresChallenge becomes true and this
+  // block fires on the next redirect evaluation. requiresChallenge =
+  // isSet && enabled(armed) && lockedUntil == null. During an ACTIVE brute-
+  // force lockout lockedUntil != null so requiresChallenge is false, but the
+  // user is already on /passcode (a hard gate with no escape nav until
+  // verified), so this never creates an escape hatch. /passcode and
+  // /settings/security/passcode are not shell-tab destinations, so they
+  // already returned null above (no loop); the explicit _isPasscodeRoute
+  // guard is belt-and-suspenders.
+  if (!_isPasscodeRoute(path) && _readLivePasscodeRequiresChallenge(context)) {
+    return AppRoutes.passcodeEntryPath;
+  }
   return null;
 }
 
@@ -605,6 +671,71 @@ void _disableBiometricAndGoHome(BuildContext context) {
     container.read(settingsControllerProvider.notifier).setBiometricUnlockEnabled(enabled: false),
   );
   context.goNamed(AppRoutes.home);
+}
+
+/// True when a passcode is configured (settings.passcodeEnabled) AND the
+/// passcode subsystem requires a challenge ([PasscodeState.requiresChallenge]:
+/// isSet && armed && not in brute-force lockout). Returns false on the
+/// test-harness no-scope case so unwired tests never trigger the gate. This is
+/// the single predicate the C5 PASSCODE block reads; AUTO-LOCK arms the
+/// passcode state via AutoLockController.arm so requiresChallenge becomes true
+/// on idle timeout / background return.
+bool _readLivePasscodeRequiresChallenge(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    final enabled = container.read(settingsControllerProvider).passcodeEnabled;
+    if (!enabled) return false;
+    return container.read(passcodeControllerProvider).requiresChallenge;
+  } on Object {
+    return false;
+  }
+}
+
+/// True for the passcode entry + setup routes so the PASSCODE gate never loops
+/// (both are full-screen gates, not shell-tab destinations, so the shell-tab
+/// guard already short-circuits — this is belt-and-suspenders).
+bool _isPasscodeRoute(String path) =>
+    path == AppRoutes.passcodeEntryPath || path == AppRoutes.passcodeSetupPath;
+
+/// Disables the passcode (clears the hash + armed flag in SecureStore) and the
+/// settings toggle, then navigates to home. Wired to the entry surface's
+/// onDisable escape hatch. The optimistic `state =` writes run before the first
+/// await, so the redirect's live read sees requiresChallenge flip to false on
+/// the same tick as goNamed(home) and stops gating. Mirrors
+/// [_disableBiometricAndGoHome].
+void _disablePasscodeAndGoHome(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  unawaited(container.read(passcodeControllerProvider.notifier).disable());
+  unawaited(
+    container.read(settingsControllerProvider.notifier).setPasscodeEnabled(enabled: false),
+  );
+  context.goNamed(AppRoutes.home);
+}
+
+/// Called after the setup surface accepts a confirmed passcode. After set() the
+/// controller is disarmed in-session, so onSetupComplete returns to settings
+/// (where the user came from). Falls back to home if settings is unreachable.
+void _finishPasscodeSetup(BuildContext context) {
+  context.goNamed(AppRoutes.settings);
+}
+
+/// Biometric 'unavailable -> passcode' handoff seam. When biometrics are
+/// unavailable but a passcode is configured, navigate to the passcode entry
+/// page; otherwise fall back to disabling biometric and going home. This
+/// replaces the placeholder onUseFallback on the biometric lock page now that
+/// pin-autolock ships.
+void _useBiometricFallback(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  try {
+    final passcodeConfigured = container.read(settingsControllerProvider).passcodeEnabled;
+    if (passcodeConfigured) {
+      context.goNamed(AppRoutes.passcodeEntry);
+      return;
+    }
+  } on Object {
+    // No-scope test harness — fall through to the legacy disable path.
+  }
+  _disableBiometricAndGoHome(context);
 }
 
 /// Marks first-launch onboarding complete (optimistic in-memory write through

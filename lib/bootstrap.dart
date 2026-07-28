@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/last_route.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
@@ -110,10 +111,30 @@ Future<App> createApplication(
     coldStartInitialLocation = null;
   }
 
+  // State-restoration: best-effort read of the saved last restorable route so
+  // the user returns to where they left off. Precedence: explicit initialLocation
+  // param (tests/integration) > cold-start deep link > saved last-route. The
+  // saved route is intentionally WEAKER than the C5 redirect chain, which
+  // re-evaluates AFTER initialLocation is set so update/onboarding/session/
+  // biometric/passcode gates still win. A persistence failure degrades honestly
+  // to "no saved route" (the splash/default initial location is the fallback).
+  var effectiveInitialLocation = initialLocation ?? coldStartInitialLocation;
+  if (effectiveInitialLocation == null) {
+    try {
+      final saved = await dependenciesWithStartup.settingsStore.readString(lastRouteKey);
+      if (saved != null && saved.isNotEmpty) {
+        effectiveInitialLocation = saved;
+      }
+    } on Object {
+      // A persistence failure must never strand startup; boot to the default.
+      effectiveInitialLocation = null;
+    }
+  }
+
   return App(
     config: config,
     dependencies: dependenciesWithStartup,
-    initialLocation: initialLocation ?? coldStartInitialLocation,
+    initialLocation: effectiveInitialLocation,
   );
 }
 

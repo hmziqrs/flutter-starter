@@ -8,7 +8,10 @@ import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/in_memory_otp_repository.dart';
+import 'package:starter/features/experiments/deterministic_experiment_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
+import 'package:starter/features/feedback/feedback_form_value.dart';
+import 'package:starter/features/feedback/noop_feedback_transport.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/notifications/noop_notifications_repository.dart';
@@ -26,6 +29,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
+import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
@@ -273,6 +277,19 @@ AppDependencies _dependencies({
     shareService: const NoopShareService(),
     appUpdateService: const NoopAppUpdateService(),
     appLinkHandler: const _NoOpDeepLinkService(),
+    // Wave-6 no-backend test defaults: honest local/in-memory choices so the
+    // redirect path under test never fakes a backend success (C2). Mirrors
+    // AppDependencies.inMemory.
+    experimentSource: DeterministicExperimentSource(store: settingsStore),
+    cacheStore: InMemoryCacheStore(),
+    feedbackTransport: const NoopFeedbackTransport(),
+    initialFeedbackDraft: const FeedbackDraft.empty(),
+    initialFeedbackShakeEnabled: false,
+    feedbackAppMetadata: const FeedbackAppMetadata(
+      appVersion: '1.0.0+1',
+      platform: 'test',
+      locale: 'en',
+    ),
   );
 }
 

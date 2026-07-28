@@ -75,6 +75,29 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(biometricUnlockEnabled: enabled));
   }
 
+  /// Toggles the passcode opt-in. Read by the C5 PASSCODE redirect block
+  /// alongside PasscodeState. Turning this ON pushes the passcode-setup route
+  /// (the user must configure a passcode before the gate arms); turning it OFF
+  /// disables the passcode via the controller and clears the gate. Optimistic
+  /// update + rollback via [_replace].
+  Future<void> setPasscodeEnabled({required bool enabled}) {
+    return _replace(state.copyWith(passcodeEnabled: enabled));
+  }
+
+  /// Sets the idle auto-lock delay in seconds (0 = idle locking off). Negatives
+  /// are clamped to 0. Only meaningful when [SettingsState.passcodeEnabled] is
+  /// true. Optimistic update + rollback via [_replace].
+  Future<void> setAutoLockDelaySeconds(int seconds) {
+    return _replace(state.copyWith(autoLockDelaySeconds: seconds < 0 ? 0 : seconds));
+  }
+
+  /// Toggles whether the app re-locks when backgrounded. Only meaningful when
+  /// [SettingsState.passcodeEnabled] is true. Optimistic update + rollback via
+  /// [_replace].
+  Future<void> setLockOnBackground({required bool enabled}) {
+    return _replace(state.copyWith(lockOnBackground: enabled));
+  }
+
   Future<void> setLocale(AppLocale? locale) async {
     final previous = state;
     final next = locale == null

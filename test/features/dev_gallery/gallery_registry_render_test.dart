@@ -10,10 +10,14 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
 import 'package:starter/features/dev_gallery/gallery_registry.dart';
 import 'package:starter/features/dev_gallery/preview_frame.dart';
+import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
+import 'package:starter/features/feedback/feedback_controller.dart';
+import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
@@ -62,9 +66,21 @@ class _RegistryCaseHost extends StatelessWidget {
         settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
         // Mirror the production composition root (app.dart): the DiagnosticsPage
-        // gallery case reads featureFlagsControllerProvider, which throws until
-        // the source port is overridden. Seed the no-backend default.
+        // gallery case reads featureFlagsControllerProvider +
+        // experimentAssignmentsProvider + cacheStoreProvider, each of which
+        // throws until its port is overridden; the feedback gallery cases read
+        // feedbackControllerProvider (-> transport / metadata / draft). Seed the
+        // no-backend / real-local defaults from AppDependencies.inMemory so every
+        // registered case mounts without a composition-root gap.
         featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
+        experimentSourceProvider.overrideWithValue(dependencies.experimentSource),
+        cacheStoreProvider.overrideWithValue(dependencies.cacheStore),
+        feedbackTransportProvider.overrideWithValue(dependencies.feedbackTransport),
+        initialFeedbackDraftProvider.overrideWithValue(dependencies.initialFeedbackDraft),
+        initialFeedbackShakeEnabledProvider.overrideWithValue(
+          dependencies.initialFeedbackShakeEnabled,
+        ),
+        feedbackAppMetadataProvider.overrideWithValue(dependencies.feedbackAppMetadata),
       ],
       child: TranslationProvider(
         child: MaterialApp(

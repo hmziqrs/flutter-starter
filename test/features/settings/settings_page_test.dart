@@ -75,7 +75,12 @@ void main() {
 
     await tester.pumpWidget(_app(initialLocation: '/settings?section=privacy-about'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('settings-open-terms')));
+    // The Wave-6 pin-autolock tile grew the privacy-about section past the
+    // test viewport, so the Terms affordance sits below the fold. Scroll it
+    // into view so the tap reaches the handler (mirrors tapVisible).
+    await tester.ensureVisible(find.byKey(const ValueKey('settings-open-terms')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('settings-open-terms')).hitTestable());
     await tester.pumpAndSettle();
 
     expect(

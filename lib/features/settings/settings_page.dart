@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -440,6 +443,9 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 ),
               ),
               const _BiometricUnlockTile(),
+              const _PasscodeTile(),
+              const _LockOnBackgroundTile(),
+              const _AutoLockDelayTile(),
               const _AnalyticsOptInTile(),
               FTile(
                 key: const ValueKey('settings-open-terms'),
@@ -556,6 +562,152 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
       },
       saveFailed: _saveFailed,
     );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Passcode opt-in (pin-autolock). Toggling ON pushes the passcode-setup route
+/// so the user can configure a numeric passcode; the gate does not arm until a
+/// hash is actually stored ([PasscodeState.isSet]). Toggling OFF disables the
+/// passcode (clears the hash + armed flag) and clears the settings flag.
+/// Surfaces `common.notConnected` on persistence failure.
+class _PasscodeTile extends ConsumerStatefulWidget {
+  const _PasscodeTile();
+
+  @override
+  ConsumerState<_PasscodeTile> createState() => _PasscodeTileState();
+}
+
+class _PasscodeTileState extends ConsumerState<_PasscodeTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final enabled = ref.watch(settingsControllerProvider).passcodeEnabled;
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'passcode',
+      label: Text(translations.settings.passcode),
+      value: enabled,
+      onChange: (value) async {
+        if (value) {
+          // Reflect the intent immediately so the toggle shows ON, then push
+          // the setup route. The gate only arms once the setup surface stores
+          // a hash (isSet becomes true), so this intermediate state is safe.
+          await _run(() => controller.setPasscodeEnabled(enabled: true));
+          if (context.mounted) context.goNamed(AppRoutes.passcodeSetup);
+        } else {
+          await _run(() async {
+            await ref.read(passcodeControllerProvider.notifier).disable();
+            await controller.setPasscodeEnabled(enabled: false);
+          });
+        }
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Lock-when-backgrounded toggle (pin-autolock). Only meaningful when a
+/// passcode is configured; the tile is disabled (read-only) otherwise.
+class _LockOnBackgroundTile extends ConsumerStatefulWidget {
+  const _LockOnBackgroundTile();
+
+  @override
+  ConsumerState<_LockOnBackgroundTile> createState() => _LockOnBackgroundTileState();
+}
+
+class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile> {
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final state = ref.watch(settingsControllerProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'lock-on-background',
+      label: Text(translations.settings.lockOnBackground),
+      value: state.lockOnBackground,
+      // Refuse toggles when no passcode is configured: the auto-lock subsystem
+      // has nothing to re-lock to. The controlled toggle snaps back on rebuild.
+      onChange: (value) {
+        if (!state.passcodeEnabled) return;
+        unawaited(_run(() => controller.setLockOnBackground(enabled: value)));
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Idle auto-lock delay selector (pin-autolock). Cycles through a small fixed
+/// set of delays on tap: Off -> 30s -> 1m -> 5m -> Off. Only meaningful when a
+/// passcode is configured; the tile is inert otherwise.
+class _AutoLockDelayTile extends ConsumerStatefulWidget {
+  const _AutoLockDelayTile();
+
+  @override
+  ConsumerState<_AutoLockDelayTile> createState() => _AutoLockDelayTileState();
+}
+
+class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> {
+  static const _options = <int>[0, 30, 60, 300];
+  bool _saveFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final state = ref.watch(settingsControllerProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    return _ToggleCard(
+      keyName: 'auto-lock-delay',
+      label: Text(translations.settings.autoLockDelay),
+      status: _labelFor(translations, state.autoLockDelaySeconds),
+      value: state.autoLockDelaySeconds > 0,
+      // Rendered as a toggle-like card: tapping cycles to the next delay option.
+      // Only active when a passcode is configured.
+      onChange: (_) {
+        if (!state.passcodeEnabled) return;
+        final currentIndex = _options.indexOf(state.autoLockDelaySeconds);
+        final nextIndex = (currentIndex + 1) % _options.length;
+        unawaited(_run(() => controller.setAutoLockDelaySeconds(_options[nextIndex])));
+      },
+      saveFailed: _saveFailed,
+    );
+  }
+
+  String _labelFor(Translations translations, int seconds) {
+    if (seconds <= 0) return translations.settings.analytics.statusOff;
+    if (seconds < 60) return '${seconds}s';
+    final minutes = seconds ~/ 60;
+    return '${minutes}m';
   }
 
   Future<void> _run(Future<void> Function() operation) async {
