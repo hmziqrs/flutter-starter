@@ -273,6 +273,18 @@ void main() {
     final restoredState = _settingsState(tester);
     expect(restoredState, liveState);
     _log('settings restored after restart');
+    // The cold rebuild only gets pumpAppFrames (8 frames), which is not enough
+    // for the rebooted app to leave the splash (build-info load, persisted-locale
+    // apply, etc.). Pump a bounded number of additional frames until the home
+    // greeting renders — mirroring the test's bounded-pump style (no
+    // pumpAndSettle: a focused editable / platform animation can keep scheduling
+    // frames) — before asserting on it. ~100ms per step, up to ~4s.
+    for (var attempt = 0; attempt < 40; attempt += 1) {
+      if (find.byKey(const ValueKey('home-greeting')).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     expect(
       Theme.of(tester.element(find.byKey(const ValueKey('home-greeting')))).brightness,
       Brightness.dark,
