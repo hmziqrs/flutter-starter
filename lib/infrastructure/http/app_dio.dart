@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dio_request_inspector/dio_request_inspector.dart';
+import 'package:starter/infrastructure/firebase/firebase_performance_dio_interceptor.dart';
 
 /// Builds a configured [Dio] for one adapter's [baseUrl].
 ///
@@ -34,6 +35,14 @@ Dio buildAppDio(Uri baseUrl, {DioRequestInspector? inspector}) {
       validateStatus: (_) => true,
     ),
   );
+  // Firebase Performance Monitoring: reports every adapter HTTP round-trip as
+  // an HttpMetric. Added unconditionally and BEFORE the optional dev inspector
+  // so it envelopes the full round-trip (Dio runs request interceptors in
+  // insertion order, response interceptors in reverse). It self-no-ops on
+  // unsupported hosts (macOS / Linux / Windows) and wraps every Firebase call
+  // in try/on Object, so it never affects the validateStatus-all / error-mapping
+  // behavior or the desktop test / integration flows.
+  dio.interceptors.add(FirebasePerformanceDioInterceptor());
   if (inspector != null) {
     dio.interceptors.add(inspector.getDioRequestInterceptor());
   }

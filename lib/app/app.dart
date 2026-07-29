@@ -48,6 +48,7 @@ import 'package:starter/infrastructure/analytics/analytics_route_observer.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/firebase/firebase_performance_route_observer.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
@@ -227,6 +228,11 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     observers: [
       AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
       LastRouteObserver(store: ref.read(settingsStoreProvider)),
+      // Firebase Performance Monitoring: records a per-route Trace. Added
+      // unconditionally; it self-no-ops on unsupported hosts (macOS / Linux /
+      // Windows) and wraps every Firebase call in try/on Object, so it never
+      // affects navigation or the desktop test / integration flows.
+      FirebasePerformanceRouteObserver(),
       // Dev-only: attach the inspector's navigator observer so its dashboard can
       // push onto the router's navigator. Gated on the inspector being present
       // (development + dev tools + backend only) so dev tooling never ships in a
