@@ -8,6 +8,7 @@ final class AppConfig {
     required bool enableDevTools,
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
+    Uri? backendBaseUrl,
   }) {
     if (environment == AppEnvironment.production && (enableVerboseLogging || enableDevTools)) {
       throw const AppConfigException(
@@ -21,6 +22,7 @@ final class AppConfig {
       enableDevTools: enableDevTools,
       iosAppleId: iosAppleId,
       allowedDeepLinkHosts: allowedDeepLinkHosts,
+      backendBaseUrl: backendBaseUrl,
     );
   }
 
@@ -30,6 +32,7 @@ final class AppConfig {
     required this.enableDevTools,
     required this.iosAppleId,
     required this.allowedDeepLinkHosts,
+    required this.backendBaseUrl,
   });
 
   factory AppConfig.fromEnvironment() {
@@ -41,6 +44,7 @@ final class AppConfig {
       allowedDeepLinkHosts: AllowedDeepLinkHosts.parse(
         const String.fromEnvironment('ALLOWED_DEEP_LINK_HOSTS'),
       ),
+      backendBaseUrl: const String.fromEnvironment('BACKEND_BASE_URL'),
     );
   }
 
@@ -50,6 +54,7 @@ final class AppConfig {
     required String enableDevTools,
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
+    required String backendBaseUrl,
   }) {
     return AppConfig(
       environment: AppEnvironment.parse(appEnvironment),
@@ -61,6 +66,7 @@ final class AppConfig {
         key: 'ENABLE_DEV_TOOLS',
         value: enableDevTools,
       ),
+      backendBaseUrl: _parseBackendBaseUrl(backendBaseUrl),
       // iOS App Store Apple ID and the deep-link host allowlist are
       // compile-time `--dart-define-from-file` values (NOT secrets — the Apple
       // ID is public and ships in the binary either way; the host allowlist is
@@ -88,6 +94,13 @@ final class AppConfig {
   /// consumer configures `ALLOWED_DEEP_LINK_HOSTS`.
   final AllowedDeepLinkHosts allowedDeepLinkHosts;
 
+  /// Base URL of the optional backend (`tools/test_server`) used to exercise the
+  /// auth/OTP/register/profile flow end-to-end in integration tests. `null` (the
+  /// default — empty `BACKEND_BASE_URL` define) keeps the no-backend composition
+  /// (InMemory adapters degrade to `notConnected`); a non-null value wires the
+  /// HTTP adapters in `AppDependencies.production`. Never a secret.
+  final Uri? backendBaseUrl;
+
   bool get verboseLoggingEnabled =>
       environment == AppEnvironment.development && enableVerboseLogging;
 
@@ -99,6 +112,18 @@ final class AppConfig {
       'false' => false,
       _ => throw AppConfigException('$key must be either "true" or "false".'),
     };
+  }
+
+  static Uri? _parseBackendBaseUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    try {
+      return Uri.parse(trimmed);
+    } on FormatException {
+      throw const AppConfigException('BACKEND_BASE_URL must be a valid URI or empty.');
+    }
   }
 }
 

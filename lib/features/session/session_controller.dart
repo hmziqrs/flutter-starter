@@ -95,6 +95,16 @@ final class SessionController extends Notifier<AuthSession> {
     await _apply(session, previous: previous);
   }
 
+  /// Publishes an [AuthAuthenticated] session issued inline by a registration
+  /// OTP verify (the backend activates the account and returns tokens in the
+  /// verify response), persisting its refresh token. Reuses the optimistic
+  /// [_apply] shape: state flips first, then the token is written, rolling back
+  /// on a persistence failure. Distinct from [login] (no credential exchange —
+  /// the session already exists).
+  Future<void> establish(AuthAuthenticated session) async {
+    await _apply(session, previous: state);
+  }
+
   /// Re-validates the current session when its access token has expired.
   ///
   /// No-op for an anonymous session or a session whose access token is still

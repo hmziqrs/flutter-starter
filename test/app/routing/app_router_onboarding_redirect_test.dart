@@ -17,6 +17,7 @@ import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/notifications/noop_notifications_repository.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/profile/noop_profile_repository.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/in_memory_auth_repository.dart';
@@ -269,6 +270,9 @@ AppDependencies _dependencies({
     // fakes a grant / pick / share / update / token); the deep-link service
     // is a no-op so the redirect path under test is unaffected.
     otpRepository: const InMemoryOtpRepository(),
+    // Profile port: honest no-backend default mirrors AppDependencies.inMemory
+    // (surfaces notConnected; the route is auth-gated and unreachable here).
+    profileRepository: const NoopProfileRepository(),
     notificationsRepository: const NoopNotificationsRepository(),
     notificationsBackend: const NoopNotificationsBackend(),
     initialNotificationPermission: NotificationPermissionStatus.notRequested,

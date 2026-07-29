@@ -122,12 +122,39 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Resolve test_server dependencies
+        run: (cd tools/test_server && dart pub get)
+
+      - name: Start test_server (backend for the development smoke flow)
+        # The development smoke flow exercises register -> OTP -> profile over a
+        # real backend. Boot the in-repo test_server on an OS-chosen port and
+        # expose its URL so AppConfig.backendBaseUrl wires the HTTP adapters.
+        run: |
+          mkdir -p /tmp/test_server
+          (cd tools/test_server && dart run bin/server.dart --port 0) \
+            > /tmp/test_server/log 2>&1 &
+          echo $! > /tmp/test_server/pid
+          for i in $(seq 1 60); do
+            if grep -qoE 'LISTENING [0-9]+' /tmp/test_server/log; then break; fi
+            sleep 0.5
+          done
+          PORT="$(grep -m1 -oE 'LISTENING [0-9]+' /tmp/test_server/log | awk '{print $2}')"
+          if [ -z "$PORT" ]; then
+            echo 'test_server did not report a port. Log:'; cat /tmp/test_server/log; exit 1
+          fi
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:$PORT/healthz" >/dev/null; then break; fi
+            sleep 0.5
+          done
+          echo "BACKEND_URL=http://127.0.0.1:$PORT" >> "$GITHUB_ENV"
+
       - name: Run development smoke test under Xvfb
         run: >-
           xvfb-run -a
           flutter test integration_test/development_smoke_test.dart
           -d linux
           --dart-define-from-file=config/development.json
+          --dart-define=BACKEND_BASE_URL=${{ env.BACKEND_URL }}
 
       - name: Run production route policy test under Xvfb
         run: >-
@@ -142,6 +169,13 @@ jobs:
           flutter test integration_test/tv_remote_smoke_test.dart
           -d linux
           --dart-define-from-file=config/development.json
+
+      - name: Stop test_server
+        if: always()
+        run: |
+          if [ -f /tmp/test_server/pid ]; then
+            kill "$(cat /tmp/test_server/pid)" 2>/dev/null || true
+          fi
 
   ubuntu-release-builds:
     name: Ubuntu / Android and Linux release builds

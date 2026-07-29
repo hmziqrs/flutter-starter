@@ -19,6 +19,8 @@ import 'package:starter/features/force_update/version_gate_store.dart';
 import 'package:starter/features/notifications/noop_notifications_repository.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/profile/noop_profile_repository.dart';
+import 'package:starter/features/profile/profile_repository.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
@@ -31,6 +33,8 @@ import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
+import 'package:starter/infrastructure/auth/http_auth_client.dart';
+import 'package:starter/infrastructure/auth/http_otp_client.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/local_auth_authenticator.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
@@ -55,6 +59,7 @@ import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities_resolver.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
+import 'package:starter/infrastructure/profile/http_profile_repository.dart';
 import 'package:starter/infrastructure/secure_storage/flutter_secure_storage_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/sharing/noop_share_service.dart';
@@ -90,6 +95,7 @@ final class AppDependencies {
     required this.attemptTracker,
     required this.hapticService,
     required this.otpRepository,
+    required this.profileRepository,
     required this.notificationsRepository,
     required this.notificationsBackend,
     required this.initialNotificationPermission,
@@ -176,6 +182,12 @@ final class AppDependencies {
       // unavailable / noUpdate honestly. The real platform adapters are
       // selected by `AppDependencies.production` per PlatformCapabilities.
       otpRepository: const InMemoryOtpRepository(),
+      // Profile port. The in-memory harness defaults to an anonymous session
+      // (see initialSession above) and the profile route is auth-gated, so this
+      // route is unreachable in the no-backend harness; NoopProfileRepository
+      // is the honest default (surfaces notConnected rather than fabricating a
+      // profile) and never breaks the TV remote smoke test.
+      profileRepository: const NoopProfileRepository(),
       notificationsRepository: const NoopNotificationsRepository(),
       notificationsBackend: const NoopNotificationsBackend(),
       initialNotificationPermission: NotificationPermissionStatus.notRequested,
@@ -279,6 +291,13 @@ final class AppDependencies {
   /// the `tools/test_server/` OTP contract is a consumer override only.
   final OtpRepository otpRepository;
 
+  /// Profile repository port. The no-backend default
+  /// ([NoopProfileRepository]) surfaces `ProfileException.notConnected` and
+  /// never fakes a profile (the UI degrades to `ProfileDraft.defaults()`); the
+  /// optional real HTTP adapter ([HttpProfileRepository]) is constructed in
+  /// [AppDependencies.production] only when a backend URL is configured.
+  final ProfileRepository profileRepository;
+
   /// Push notifications port (push-notifications). The no-backend default
   /// ([NoopNotificationsRepository]) reports denied, publishes empty streams,
   /// and throws notConnected for the registration actions. The optional real
@@ -377,6 +396,7 @@ final class AppDependencies {
       attemptTracker: attemptTracker,
       hapticService: hapticService,
       otpRepository: otpRepository,
+      profileRepository: profileRepository,
       notificationsRepository: notificationsRepository,
       notificationsBackend: notificationsBackend,
       initialNotificationPermission: initialNotificationPermission,
@@ -400,6 +420,7 @@ final class AppDependencies {
     AppLogger logger, {
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
+    Uri? backendBaseUrl,
     AppBuildInfo? buildInfo,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
   }) async {
@@ -510,6 +531,23 @@ final class AppDependencies {
       platform: capabilities.platform,
       locale: settings.localeOverride?.languageTag ?? 'en',
     );
+    // Auth / OTP / profile ports. When a backend URL is configured the real HTTP
+    // adapters are constructed against it (C9); otherwise the honest no-backend
+    // defaults surface notConnected and never fake success (C2). This is the
+    // single composition-root seam that switches the three session-coupled
+    // ports together.
+    final AuthRepository authRepository;
+    final OtpRepository otpRepository;
+    final ProfileRepository profileRepository;
+    if (backendBaseUrl != null) {
+      authRepository = HttpAuthClient(baseUrl: backendBaseUrl);
+      otpRepository = HttpOtpClient(baseUrl: backendBaseUrl);
+      profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl);
+    } else {
+      authRepository = InMemoryAuthRepository();
+      otpRepository = const InMemoryOtpRepository();
+      profileRepository = const NoopProfileRepository();
+    }
     return AppDependencies(
       settingsRepository: repository,
       settingsStore: settingsStore,
@@ -538,10 +576,11 @@ final class AppDependencies {
       ),
       buildInfo: buildInfo,
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
-      // Wave-4 no-backend production defaults. Each is an override seam the
-      // consumer activates only when credentials/an endpoint are configured;
-      // every default degrades honestly and never fakes success (C2).
-      authRepository: InMemoryAuthRepository(),
+      // Wave-4 auth port. Selected above from `backendBaseUrl`: the real
+      // HttpAuthClient when a backend is configured, else the honest unseeded
+      // InMemoryAuthRepository default (C2). This is an override seam the
+      // consumer activates by setting BACKEND_BASE_URL.
+      authRepository: authRepository,
       sessionRepository: SessionRepository(secureStore),
       initialSession: const AuthAnonymous(),
       analyticsClient: NoopAnalyticsClient(logger: logger),
@@ -554,11 +593,13 @@ final class AppDependencies {
       // HapticFeedback — no credentials, no faking, C2). The reduce-motion guard
       // + hapticsEnabled setting are enforced at each call site, not here.
       hapticService: const DeviceHapticService(),
-      // Wave-5b no-backend production defaults. Each is a port override seam
-      // the consumer activates only when credentials / an endpoint are
-      // configured; every default degrades honestly and never fakes success
-      // (C2 / C13).
-      otpRepository: const InMemoryOtpRepository(),
+      // Wave-5b OTP + Wave profile ports. Selected above from `backendBaseUrl`:
+      // the real HTTP adapters when a backend is configured, else the honest
+      // no-backend defaults that surface notConnected and never fake success
+      // (C2 / C13). Each is a port override seam the consumer activates by
+      // setting BACKEND_BASE_URL.
+      otpRepository: otpRepository,
+      profileRepository: profileRepository,
       // Notifications: Noop is the platform-agnostic default. The optional
       // Firebase adapter is constructed by the consumer only on iOS / Android
       // with credentials (firebase_messaging has no desktop/web support). Web

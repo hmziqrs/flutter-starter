@@ -8,6 +8,7 @@ import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/features/auth/otp_repository.dart';
+import 'package:starter/features/session/auth_session.dart';
 
 /// Family key for [otpControllerProvider]. A record so two calls with the same
 /// `(purpose, identifier)` resolve to the same controller instance (Riverpod
@@ -37,6 +38,7 @@ final class OtpControllerState {
     this.remainingSeconds = 0,
     this.attemptsRemaining = 0,
     this.isExpired = false,
+    this.session,
   }) : assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.'),
        assert(attemptsRemaining >= 0, 'attemptsRemaining must not be negative.');
 
@@ -44,6 +46,12 @@ final class OtpControllerState {
   final int remainingSeconds;
   final int attemptsRemaining;
   final bool isExpired;
+
+  /// The session a registration-purpose verify issued inline (see
+  /// [OtpVerifyResult.session]); `null` for every other outcome / purpose. The
+  /// registration OTP page reads this on a valid verify and publishes it via
+  /// `SessionController.establish` before navigating home.
+  final AuthAuthenticated? session;
 
   /// `true` while the shared tracker has locked this identifier out. Mirrors
   /// the page's existing `_locked` guard so submit / resend stay disabled for
@@ -61,12 +69,14 @@ final class OtpControllerState {
     int? remainingSeconds,
     int? attemptsRemaining,
     bool? isExpired,
+    AuthAuthenticated? session,
   }) {
     return OtpControllerState(
       presentation: presentation ?? this.presentation,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       attemptsRemaining: attemptsRemaining ?? this.attemptsRemaining,
       isExpired: isExpired ?? this.isExpired,
+      session: session ?? this.session,
     );
   }
 
@@ -77,11 +87,13 @@ final class OtpControllerState {
             presentation == other.presentation &&
             remainingSeconds == other.remainingSeconds &&
             attemptsRemaining == other.attemptsRemaining &&
-            isExpired == other.isExpired;
+            isExpired == other.isExpired &&
+            session == other.session;
   }
 
   @override
-  int get hashCode => Object.hash(presentation, remainingSeconds, attemptsRemaining, isExpired);
+  int get hashCode =>
+      Object.hash(presentation, remainingSeconds, attemptsRemaining, isExpired, session);
 }
 
 /// Handwritten Riverpod family [NotifierProvider] over [OtpControllerState].
@@ -172,6 +184,7 @@ final class OtpController extends Notifier<OtpControllerState> {
             remainingSeconds: 0,
             attemptsRemaining: _freeAttemptsNow(),
             isExpired: false,
+            session: result.session,
           );
           return true;
         case OtpVerifyOutcome.invalid:

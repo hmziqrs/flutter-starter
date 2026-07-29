@@ -33,6 +33,7 @@ import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_controller.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/profile/profile_repository.dart';
 import 'package:starter/features/security/auto_lock_controller.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
@@ -124,6 +125,11 @@ class App extends StatelessWidget {
         // these. A consumer swaps in a real adapter only when credentials / an
         // endpoint / a platform capability is configured.
         otpRepositoryProvider.overrideWithValue(dependencies.otpRepository),
+        // Profile port (Wave). Peer of the auth/otp port overrides; the
+        // composition root selected the no-backend Noop default or the real
+        // HttpProfileRepository when a backend URL is configured. The provider
+        // throws StateError until this override is present (HARD RULE 2).
+        profileRepositoryProvider.overrideWithValue(dependencies.profileRepository),
         notificationsRepositoryProvider.overrideWithValue(
           dependencies.notificationsRepository,
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 
 /// Credentials submitted to [AuthRepository.login]. A handwritten typed value:
@@ -73,6 +74,18 @@ abstract interface class AuthRepository {
   /// carries the issued refresh token; the caller persists it via
   /// `SessionRepository`. Throws [AuthException] on any failure.
   Future<AuthSession> login(AuthCredentials credentials);
+
+  /// Creates a pending account for [credentials] + [displayName] and issues a
+  /// registration OTP, returning the OTP issue handle so the caller can
+  /// navigate to the OTP step and start its countdown. The account is activated
+  /// and a session issued when the registration OTP is verified (the session
+  /// arrives on [OtpVerifyResult.session]). Throws [AuthException] on any
+  /// failure: `notConnected` when no backend is reachable, `unauthorized` when
+  /// the email is already registered.
+  Future<OtpIssueResult> register({
+    required AuthCredentials credentials,
+    required String displayName,
+  });
 
   /// Rotates the refresh token carried by [session] and returns a new
   /// [AuthSession] with the new access + refresh tokens. The caller MUST

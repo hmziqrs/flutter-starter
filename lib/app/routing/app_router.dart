@@ -34,6 +34,7 @@ import 'package:starter/features/onboarding/onboarding_page.dart';
 import 'package:starter/features/pricing/paywall_page.dart';
 import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/pricing/pricing_page.dart';
+import 'package:starter/features/profile/profile_repository.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/search/search_page.dart';
@@ -299,11 +300,37 @@ GoRouter buildAppRouter({
           // the OTP step fires only when a consumer wires a real registration
           // endpoint; the dev-gallery exercises RegisterPage directly with its
           // own callbacks so the fixture flow stays intact.
-          onSubmit: (_) => _showInformationDialog(
-            context,
-            title: context.t.common.legalPlaceholderTitle,
-            body: context.t.common.notConnected,
-          ),
+          onSubmit: (value) async {
+            // Wire registration through the AuthRepository (C13 — never fake
+            // success). The no-backend default throws AuthException.notConnected
+            // and surfaces the dialog; with a backend configured it creates the
+            // pending account + issues the registration OTP, and we navigate to
+            // the OTP step threading the email as the identifier.
+            final container = ProviderScope.containerOf(context, listen: false);
+            try {
+              await container
+                  .read(authRepositoryProvider)
+                  .register(
+                    credentials: AuthCredentials(email: value.email, password: value.password),
+                    displayName: value.displayName,
+                  );
+              if (!context.mounted) return;
+              GoRouter.of(context).goNamed(
+                AppRoutes.otp,
+                pathParameters: <String, String>{
+                  'purpose': OtpPurpose.registration.pathSegment,
+                },
+                queryParameters: <String, String>{'identifier': value.email},
+              );
+            } on AuthException {
+              if (!context.mounted) return;
+              _showInformationDialog(
+                context,
+                title: context.t.common.legalPlaceholderTitle,
+                body: context.t.common.notConnected,
+              );
+            }
+          },
           onLogin: () => _returnToLogin(context),
           onOpenTerms: () => _showInformationDialog(
             context,
@@ -344,8 +371,9 @@ GoRouter buildAppRouter({
           // honestly under the no-backend default. Registration / password-
           // reset keep their existing fixture path so the dev-gallery stays
           // deterministic (C5: reuse the existing OTP route, no new redirect).
-          if (purpose == OtpPurpose.mfa) {
-            return _MfaOtpRoutePage(
+          if (purpose == OtpPurpose.mfa || purpose == OtpPurpose.registration) {
+            return _OtpRoutePage(
+              purpose: purpose,
               identifier: state.uri.queryParameters['identifier'] ?? '',
             );
           }
@@ -381,28 +409,11 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.updateProfile,
         path: AppRoutes.updateProfilePath,
-        builder: (context, state) => UpdateProfilePage(
-          initialDraft: const ProfileDraft.defaults(),
-          onSave: (_) => _showInformationDialog(
-            context,
-            title: context.t.common.legalPlaceholderTitle,
-            body: context.t.common.notConnected,
-          ),
-          // permissions-media avatar flow: the page runs the
-          // permission → rationale-sheet → MediaPicker orchestration and
-          // forwards the typed result here. A null result (denied / cancelled /
-          // no backend) surfaces the honest `avatarUnavailable` copy; a real
-          // pick would update the avatar in a consumer build.
-          onAvatarPicked: (media) {
-            if (media == null) {
-              _showInformationDialog(
-                context,
-                title: context.t.profile.update.changeAvatar,
-                body: context.t.profile.update.avatarUnavailable,
-              );
-            }
-          },
-        ),
+        // Auth-gated (see _isAuthRequiredDestination): a session is held when
+        // this route builds. The route page loads the profile draft from the
+        // backend over the access token and degrades to ProfileDraft.defaults()
+        // on any failure (graceful — never crashes the page).
+        builder: (context, state) => const _UpdateProfileRoutePage(),
       ),
       if (config.developmentToolsEnabled) ...[
         GoRoute(
@@ -1086,20 +1097,24 @@ RouteErrorPage _routeErrorPage(
 ///
 /// A successful verify navigates to home. Navigation never gates on animation
 /// (the page reads `state` and navigates on the success transition).
-class _MfaOtpRoutePage extends ConsumerStatefulWidget {
-  const _MfaOtpRoutePage({required this.identifier});
+class _OtpRoutePage extends ConsumerStatefulWidget {
+  const _OtpRoutePage({required this.purpose, required this.identifier});
 
-  /// The account identifier the MFA code was issued for. Today sourced from
-  /// the `identifier` query parameter (the login flow pushes the email here);
-  /// the no-backend default still surfaces `globalFailure` regardless of the
-  /// identifier's value because the repository throws before reading it.
+  /// Which OTP flow this page drives. `mfa` verifies and navigates home;
+  /// `registration` additionally publishes the session the backend issued
+  /// inline on a valid verify (the account is activated server-side and the
+  /// session arrives on `OtpControllerState.session`).
+  final OtpPurpose purpose;
+
+  /// The account identifier the code was issued for (email), sourced from the
+  /// `identifier` query parameter (the login / register flows push it here).
   final String identifier;
 
   @override
-  ConsumerState<_MfaOtpRoutePage> createState() => _MfaOtpRoutePageState();
+  ConsumerState<_OtpRoutePage> createState() => _OtpRoutePageState();
 }
 
-class _MfaOtpRoutePageState extends ConsumerState<_MfaOtpRoutePage> {
+class _OtpRoutePageState extends ConsumerState<_OtpRoutePage> {
   @override
   void initState() {
     super.initState();
@@ -1108,18 +1123,18 @@ class _MfaOtpRoutePageState extends ConsumerState<_MfaOtpRoutePage> {
     // outcome (success / globalFailure) through state.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final key = (purpose: OtpPurpose.mfa, identifier: widget.identifier);
+      final key = (purpose: widget.purpose, identifier: widget.identifier);
       unawaited(ref.read(otpControllerProvider(key).notifier).requestIssue());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final key = (purpose: OtpPurpose.mfa, identifier: widget.identifier);
+    final key = (purpose: widget.purpose, identifier: widget.identifier);
     final state = ref.watch(otpControllerProvider(key));
     final controller = ref.read(otpControllerProvider(key).notifier);
     return OtpPage(
-      purpose: OtpPurpose.mfa,
+      purpose: widget.purpose,
       // Merge the controller's live `remainingSeconds` into the static
       // presentation so the page's countdown + lockout rendering observes the
       // real values without the page reaching into the controller directly.
@@ -1129,6 +1144,17 @@ class _MfaOtpRoutePageState extends ConsumerState<_MfaOtpRoutePage> {
         if (!ok || !mounted) {
           return;
         }
+        // Registration: the backend activated the account and returned a
+        // session inline on the valid verify — publish it before navigating
+        // home so the auth-required gates (/profile/edit) pass. MFA carries no
+        // session (the user authenticated through login, not registration).
+        if (widget.purpose == OtpPurpose.registration) {
+          final session = ref.read(otpControllerProvider(key)).session;
+          if (session != null) {
+            await ref.read(sessionControllerProvider.notifier).establish(session);
+            if (!mounted) return;
+          }
+        }
         // Navigation never gates on animation; the controller's success
         // transition is observed synchronously, and `mounted` guards the
         // post-await context use.
@@ -1136,6 +1162,90 @@ class _MfaOtpRoutePageState extends ConsumerState<_MfaOtpRoutePage> {
         context.goNamed(AppRoutes.home);
       },
       onResend: controller.resend,
+    );
+  }
+}
+
+/// Auth-gated profile-edit route page.
+///
+/// Loads the editable profile draft from the backend over the authenticated
+/// session's access token and degrades to [ProfileDraft.defaults] on any
+/// failure (transport / unaccepted session / no backend) so the page never
+/// crashes. `onSave` persists the draft through the profile port and surfaces a
+/// typed success / notConnected dialog. The avatar-pick flow is preserved
+/// verbatim from the static phase.
+class _UpdateProfileRoutePage extends StatefulWidget {
+  const _UpdateProfileRoutePage();
+
+  @override
+  State<_UpdateProfileRoutePage> createState() => _UpdateProfileRoutePageState();
+}
+
+class _UpdateProfileRoutePageState extends State<_UpdateProfileRoutePage> {
+  late final Future<ProfileDraft> _initialDraftLoad;
+
+  @override
+  void initState() {
+    super.initState();
+    // The route is auth-gated so a session is held; read its access token and
+    // kick off the load once. `ProviderScope.containerOf(listen: false)` uses
+    // findAncestorWidgetOfExactType, which is safe to call in initState. Any
+    // failure resolves the future with an error and the FutureBuilder degrades
+    // to ProfileDraft.defaults() (graceful — never a half-built page).
+    final container = ProviderScope.containerOf(context, listen: false);
+    final session = container.read(sessionControllerProvider);
+    final accessToken = session is AuthAuthenticated ? session.accessToken : '';
+    _initialDraftLoad = container.read(profileRepositoryProvider).load(accessToken: accessToken);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<ProfileDraft>(
+      future: _initialDraftLoad,
+      builder: (context, snapshot) {
+        // Degrade to the local default on pending or error (transport / 401 /
+        // no backend) — never crash the page. With the no-backend default the
+        // load throws ProfileException.notConnected, so this is the path taken.
+        final draft = snapshot.hasData ? snapshot.data! : const ProfileDraft.defaults();
+        return UpdateProfilePage(
+          initialDraft: draft,
+          onSave: (draft) async {
+            final container = ProviderScope.containerOf(context, listen: false);
+            final session = container.read(sessionControllerProvider);
+            final accessToken = session is AuthAuthenticated ? session.accessToken : '';
+            try {
+              await container
+                  .read(profileRepositoryProvider)
+                  .save(accessToken: accessToken, draft: draft);
+              if (!context.mounted) return;
+              _showInformationDialog(
+                context,
+                title: context.t.common.success,
+                body: context.t.profile.update.saved,
+              );
+            } on ProfileException {
+              if (!context.mounted) return;
+              _showInformationDialog(
+                context,
+                title: context.t.common.legalPlaceholderTitle,
+                body: context.t.common.notConnected,
+              );
+            }
+          },
+          // permissions-media avatar flow: preserved verbatim from the static
+          // phase. A null result (denied / cancelled / no backend) surfaces the
+          // honest `avatarUnavailable` copy.
+          onAvatarPicked: (media) {
+            if (media == null) {
+              _showInformationDialog(
+                context,
+                title: context.t.profile.update.changeAvatar,
+                body: context.t.profile.update.avatarUnavailable,
+              );
+            }
+          },
+        );
+      },
     );
   }
 }

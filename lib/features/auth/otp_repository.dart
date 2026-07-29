@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/session/auth_session.dart';
 
 /// Delivery channel an issued OTP was sent over. Surfaced to the UI so the
 /// countdown screen can tell the user where to look ("code sent to your
@@ -101,20 +102,28 @@ enum OtpVerifyOutcome {
 /// switches on [outcome] (strict-analysis clean — no default arm).
 @immutable
 final class OtpVerifyResult {
-  const OtpVerifyResult.valid() : outcome = OtpVerifyOutcome.valid;
-  const OtpVerifyResult.invalid() : outcome = OtpVerifyOutcome.invalid;
-  const OtpVerifyResult.expired() : outcome = OtpVerifyOutcome.expired;
-  const OtpVerifyResult.locked() : outcome = OtpVerifyOutcome.locked;
+  const OtpVerifyResult.valid({this.session}) : outcome = OtpVerifyOutcome.valid;
+  const OtpVerifyResult.invalid() : outcome = OtpVerifyOutcome.invalid, session = null;
+  const OtpVerifyResult.expired() : outcome = OtpVerifyOutcome.expired, session = null;
+  const OtpVerifyResult.locked() : outcome = OtpVerifyOutcome.locked, session = null;
 
   final OtpVerifyOutcome outcome;
 
+  /// The session a backend issues when a **registration**-purpose verify
+  /// succeeds (it activates the pending account and returns tokens inline, so
+  /// the flow can log in without a separate credential round-trip). `null` for
+  /// every other outcome and every other purpose; the caller establishes the
+  /// session only when this is present. Never faked (C2).
+  final AuthAuthenticated? session;
+
   @override
   bool operator ==(Object other) {
-    return identical(this, other) || other is OtpVerifyResult && outcome == other.outcome;
+    return identical(this, other) ||
+        other is OtpVerifyResult && outcome == other.outcome && session == other.session;
   }
 
   @override
-  int get hashCode => outcome.hashCode;
+  int get hashCode => Object.hash(outcome, session);
 }
 
 /// The OTP delivery + verification port.

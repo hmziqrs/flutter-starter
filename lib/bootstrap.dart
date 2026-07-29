@@ -67,6 +67,10 @@ Future<App> createApplication(
     buildInfo: buildInfo,
     iosAppleId: config.iosAppleId,
     allowedDeepLinkHosts: config.allowedDeepLinkHosts,
+    // Forward the compile-time backend URL (parsed from BACKEND_BASE_URL, empty
+    // -> null). When null the three session-coupled ports keep their honest
+    // no-backend defaults; when set the real HTTP adapters are constructed.
+    backendBaseUrl: config.backendBaseUrl,
   );
   // Apply the persisted locale once. Guarded so a failure flips
   // AppStartupResult.localeApplied to false (surfaced on the splash) rather

@@ -34,6 +34,7 @@ void main() {
         enableDevTools: 'true',
         iosAppleId: '1234567890',
         allowedDeepLinkHosts: AllowedDeepLinkHosts.parse('app.example.com'),
+        backendBaseUrl: '',
       );
 
       expect(config.environment, AppEnvironment.development);
@@ -51,6 +52,7 @@ void main() {
         enableDevTools: 'true',
         iosAppleId: '',
         allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+        backendBaseUrl: '',
       );
 
       expect(config.enableVerboseLogging, isTrue);
@@ -67,6 +69,7 @@ void main() {
           enableDevTools: 'true',
           iosAppleId: '',
           allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+          backendBaseUrl: '',
         ),
         throwsA(isA<AppConfigException>()),
       );
@@ -80,6 +83,7 @@ void main() {
           enableDevTools: 'true',
           iosAppleId: '',
           allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+          backendBaseUrl: '',
         ),
         throwsA(isA<AppConfigException>()),
       );

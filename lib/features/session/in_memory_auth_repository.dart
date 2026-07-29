@@ -1,3 +1,4 @@
+import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 
@@ -37,6 +38,16 @@ final class InMemoryAuthRepository implements AuthRepository {
     // credentials; the contract — caller persists the returned refresh token —
     // is identical.
     return session;
+  }
+
+  @override
+  Future<OtpIssueResult> register({
+    required AuthCredentials credentials,
+    required String displayName,
+  }) async {
+    // No backend: the no-backend default cannot create an account — surface
+    // notConnected (C2) rather than fabricating an OTP issue handle.
+    throw const AuthException.notConnected();
   }
 
   @override
