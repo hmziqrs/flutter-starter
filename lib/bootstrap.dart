@@ -16,6 +16,7 @@ import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/system_ui_controller.dart';
+import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
 
@@ -43,10 +44,16 @@ Future<void> bootstrap(
 }
 
 /// Creates the same production dependency graph and root widget used by [bootstrap].
+///
+/// Pass an optional [secureStore] to override the production OS-keychain-backed
+/// store. Production builds omit it so the default FlutterSecureStorageStore is
+/// used; a headless integration test (no secret-service daemon) injects an
+/// in-memory store so the flow never touches libsecret.
 Future<App> createApplication(
   AppConfig config, {
   AppLogger? logger,
   String? initialLocation,
+  SecureStore? secureStore,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -71,6 +78,10 @@ Future<App> createApplication(
     // -> null). When null the three session-coupled ports keep their honest
     // no-backend defaults; when set the real HTTP adapters are constructed.
     backendBaseUrl: config.backendBaseUrl,
+    // Forward an optional injected SecureStore; null keeps the production
+    // FlutterSecureStorageStore default. Headless integration tests inject an
+    // in-memory store to avoid the libsecret dependency.
+    secureStore: secureStore,
   );
   // Apply the persisted locale once. Guarded so a failure flips
   // AppStartupResult.localeApplied to false (surfaced on the splash) rather

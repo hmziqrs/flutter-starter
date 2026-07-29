@@ -10,6 +10,7 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/bootstrap.dart';
+import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -99,7 +100,14 @@ void main() {
     _log(
       'building app graph + root widget (first run also compiles the macOS runner; this is the slow part)',
     );
-    await tester.pumpWidget(await createApplication(config));
+    // Inject a non-libsecret SecureStore so the headless Linux runner (no
+    // secret-service daemon) never touches FlutterSecureStorageStore/libsecret;
+    // a fresh in-memory store per createApplication is correct because the test
+    // asserts only settings persistence (SharedPreferencesStore, file-backed),
+    // not session survival across the rebuild.
+    await tester.pumpWidget(
+      await createApplication(config, secureStore: InMemorySecureStore()),
+    );
     await pumpAppFrames(tester);
     await _watchPause(tester);
     _log('app launched; expecting home greeting');
@@ -256,7 +264,10 @@ void main() {
     _log('tearing app down, then rebuilding to verify persistence across restart');
     await tester.pumpWidget(const SizedBox.shrink());
     await pumpAppFrames(tester);
-    await tester.pumpWidget(await createApplication(config));
+    // Same libsecret-free injection as the first pump (see comment above).
+    await tester.pumpWidget(
+      await createApplication(config, secureStore: InMemorySecureStore()),
+    );
     await pumpAppFrames(tester);
 
     final restoredState = _settingsState(tester);

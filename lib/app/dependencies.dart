@@ -422,6 +422,12 @@ final class AppDependencies {
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
     AppBuildInfo? buildInfo,
+    // Optional override of the OS-keychain-backed SecureStore. Production
+    // builds leave this null so FlutterSecureStorageStore (the default) is used.
+    // An integration test on a headless runner with no secret-service daemon
+    // (e.g. ubuntu-24.04 without gnome-keyring) injects an InMemorySecureStore
+    // so the flow never touches libsecret. Mirrors the `inMemory` factory seam.
+    SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
   }) async {
     PlatformCapabilities capabilities;
@@ -468,15 +474,17 @@ final class AppDependencies {
         ? const UpdateRequirementNone()
         : await versionGateStore.check(buildInfo);
     // Shared SecureStore reused by the session repository and the analytics
-    // opt-in pre-load so the keychain is opened once.
-    final secureStore = FlutterSecureStorageStore();
+    // opt-in pre-load so the keychain is opened once. An injected store (e.g.
+    // InMemorySecureStore for a headless integration test) wins over the
+    // production OS-keychain default; null leaves production behavior unchanged.
+    final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
     // Pre-load the analytics opt-in flag (a single SecureStore read) so the
     // AnalyticsOptInController resolves synchronously on the first frame. A
     // keychain failure degrades to "not opted in" rather than throwing
     // (guardrail 13: never risk an unexpected emit).
     var initialAnalyticsOptIn = false;
     try {
-      initialAnalyticsOptIn = await secureStore.read(analyticsOptInKey) == 'true';
+      initialAnalyticsOptIn = await effectiveSecureStore.read(analyticsOptInKey) == 'true';
     } on Object {
       initialAnalyticsOptIn = false;
     }
@@ -552,7 +560,7 @@ final class AppDependencies {
       settingsRepository: repository,
       settingsStore: settingsStore,
       initialSettings: settings,
-      secureStore: secureStore,
+      secureStore: effectiveSecureStore,
       // No-backend defaults. The optional remote SentryCrashReporter branch
       // activates only when a crash-reporting DSN is configured; until that
       // wiring lands, the app runs green with an honest no-op sink (C2).
@@ -581,7 +589,7 @@ final class AppDependencies {
       // InMemoryAuthRepository default (C2). This is an override seam the
       // consumer activates by setting BACKEND_BASE_URL.
       authRepository: authRepository,
-      sessionRepository: SessionRepository(secureStore),
+      sessionRepository: SessionRepository(effectiveSecureStore),
       initialSession: const AuthAnonymous(),
       analyticsClient: NoopAnalyticsClient(logger: logger),
       analyticsClientBackend: const NoopAnalyticsBackend(),
