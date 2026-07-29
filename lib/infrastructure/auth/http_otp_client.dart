@@ -1,24 +1,23 @@
 import 'dart:convert';
-import 'dart:io';
 
-// The private-field constructor with a public-named required parameter is the
-// mandated shape (mirrors `HttpNotificationsRegistrationClient`); initializing
-// formals would rename the public parameter. `comment_references` flags doc
-// cross-references to the sibling session/otp types; the references are
-// intentional.
-// ignore_for_file: prefer_initializing_formals, comment_references
+// `comment_references` flags doc cross-references to the sibling session/otp
+// types imported only via the feature package; the references are intentional.
+// ignore_for_file: comment_references
 
+import 'package:dio/dio.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 
 /// Real HTTP [OtpRepository] against the test-server OTP contract (C9).
 ///
 /// Constructed **only when a consumer provides an endpoint** (the no-backend
 /// rule, C2: the `InMemoryOtpRepository` default surfaces
 /// `OtpRepositoryException.notConnected` and never fakes an issue/verify).
-/// Mirrors `HttpNotificationsRegistrationClient` / `HttpAuthClient`: uses
-/// `dart:io` `HttpClient`, native-only.
+/// Mirrors `HttpNotificationsRegistrationClient` / `HttpAuthClient`: speaks to
+/// the backend through a shared injected [Dio] (built via [buildAppDio] when no
+/// instance is supplied), native-only.
 ///
 /// **Stateful**: the backend keys verify off an opaque `attempt_token` returned
 /// by `issue`, but the port presents verify/resend in terms of the user-facing
@@ -27,7 +26,8 @@ import 'package:starter/features/session/auth_session.dart';
 /// never handles a raw attempt token. The mapping is per-process and never
 /// persisted; a cold start must re-issue.
 ///
-/// Every interaction is wrapped in `try/on`. Transport failures surface
+/// Every interaction is wrapped in `try/on`. Transport failures (any
+/// [DioException] without a response) surface
 /// [OtpRepositoryException.notConnected]; an unknown attempt token (no prior
 /// `issue`) or any non-2xx/429-classified `4xx` surfaces
 /// [OtpRepositoryException.invalid]; verify maps `409 -> expired`, `429 ->
@@ -35,12 +35,9 @@ import 'package:starter/features/session/auth_session.dart';
 /// registration-purpose success) to the matching [OtpVerifyResult]. The client
 /// never fabricates a valid result (C2).
 final class HttpOtpClient implements OtpRepository {
-  HttpOtpClient({required Uri baseUrl, HttpClient? httpClient})
-    : _baseUrl = baseUrl,
-      _httpClient = httpClient ?? HttpClient();
+  HttpOtpClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
-  final Uri _baseUrl;
-  final HttpClient _httpClient;
+  final Dio _dio;
 
   /// identifier -> last issued attempt token. Seeded by `issue` / `resend`;
   /// consumed (removed) on a successful verify.
@@ -69,15 +66,15 @@ final class HttpOtpClient implements OtpRepository {
     );
     final status = result.status;
     final body = result.body;
-    if (status == HttpStatus.conflict) {
+    if (status == 409) {
       // The attempt token is unknown/expired server-side; drop our stale copy.
       _attemptTokens.remove(identifier);
       return const OtpVerifyResult.expired();
     }
-    if (status == HttpStatus.tooManyRequests) {
+    if (status == 429) {
       return const OtpVerifyResult.locked();
     }
-    if (status == HttpStatus.ok) {
+    if (status == 200) {
       final valid = body['valid'];
       if (valid is! bool || !valid) {
         return const OtpVerifyResult.invalid();
@@ -126,7 +123,7 @@ final class HttpOtpClient implements OtpRepository {
       path: path,
       body: <String, Object>{'purpose': purpose.pathSegment, 'identifier': identifier},
     );
-    if (result.status != HttpStatus.ok) {
+    if (result.status != 200) {
       _classifyStatus(result.status);
     }
     final envelope = _parseIssueEnvelope(result.body);
@@ -135,50 +132,33 @@ final class HttpOtpClient implements OtpRepository {
     return envelope;
   }
 
-  /// Opens, writes, closes, and reads a JSON POST. Returns the status and the
-  /// decoded body so callers (`verify`) can branch on status **and** inspect
-  /// the `{valid: ...}` payload. Always sends the `X-Api-Key: dev` header so
-  /// the dev path's fixed code (`123456`) is issued — this is the test / dev
-  /// adapter only.
+  /// Posts a JSON body and returns the status and the decoded body so callers
+  /// (`verify`) can branch on status **and** inspect the `{valid: ...}` payload.
+  /// Always sends the `X-Api-Key: dev` header so the dev path's fixed code
+  /// (`123456`) is issued — this is the test / dev adapter only.
   Future<({int status, Map<String, Object?> body})> _send({
     required String path,
     required Map<String, Object> body,
   }) async {
-    final uri = _resolve(path);
-    final request = await _openRequest('POST', uri);
-    request.headers.contentType = ContentType.json;
-    request.headers.add('X-Api-Key', 'dev');
-    request.write(jsonEncode(body));
-    final HttpClientResponse response;
-    String responseBody;
+    final Response<String> response;
     try {
-      response = await request.close();
-      responseBody = await response.transform(utf8.decoder).join();
-    } on SocketException {
-      throw const OtpRepositoryException.notConnected();
-    } on HttpException {
-      throw const OtpRepositoryException.notConnected();
-    } on Object {
+      response = await _dio.post<String>(
+        path,
+        data: jsonEncode(body),
+        options: Options(
+          responseType: ResponseType.plain,
+          contentType: Headers.jsonContentType,
+          headers: <String, String>{'X-Api-Key': 'dev'},
+        ),
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status != null) {
+        _classifyStatus(status);
+      }
       throw const OtpRepositoryException.notConnected();
     }
-    return (status: response.statusCode, body: _decodeBody(responseBody));
-  }
-
-  Uri _resolve(String path) {
-    final base = _baseUrl.replace(path: '${_baseUrl.path}$path'.replaceAll('//', '/'));
-    return base;
-  }
-
-  Future<HttpClientRequest> _openRequest(String method, Uri uri) async {
-    try {
-      return await _httpClient.openUrl(method, uri);
-    } on SocketException catch (_) {
-      throw const OtpRepositoryException.notConnected();
-    } on HttpException catch (_) {
-      throw const OtpRepositoryException.notConnected();
-    } on Object catch (_) {
-      throw const OtpRepositoryException.unknown();
-    }
+    return (status: response.statusCode!, body: _decodeBody(response.data ?? ''));
   }
 
   Never _classifyStatus(int status) {

@@ -17,6 +17,7 @@ import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/profile/http_profile_repository.dart';
 
 import '../test_server_handle.dart';
@@ -35,9 +36,12 @@ void main() {
 
     setUpAll(() async {
       server = await TestServerHandle.start();
-      authClient = HttpAuthClient(baseUrl: server.baseUri);
-      otpClient = HttpOtpClient(baseUrl: server.baseUri);
-      profileRepo = HttpProfileRepository(baseUrl: server.baseUri);
+      // A single shared Dio (the composition-root shape) is injected into all
+      // three adapters so the full auth -> OTP -> profile path runs over Dio.
+      final dio = buildAppDio(server.baseUri);
+      authClient = HttpAuthClient(baseUrl: server.baseUri, dio: dio);
+      otpClient = HttpOtpClient(baseUrl: server.baseUri, dio: dio);
+      profileRepo = HttpProfileRepository(baseUrl: server.baseUri, dio: dio);
     });
 
     tearDownAll(() => server.close());
@@ -121,7 +125,8 @@ void main() {
     });
 
     test('an unreachable server surfaces ProfileException.notConnected', () async {
-      final bad = HttpProfileRepository(baseUrl: await _deadAddress());
+      final dead = await _deadAddress();
+      final bad = HttpProfileRepository(baseUrl: dead, dio: buildAppDio(dead));
       await expectLater(
         bad.load(accessToken: 'anything'),
         throwsA(

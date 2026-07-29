@@ -1,3 +1,4 @@
+import 'package:dio_request_inspector/dio_request_inspector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
@@ -48,6 +49,7 @@ import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart'
 import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/media/image_picker_media_picker.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
@@ -112,6 +114,7 @@ final class AppDependencies {
     required this.initialFeedbackShakeEnabled,
     required this.feedbackAppMetadata,
     required this.platformCapabilities,
+    this.inspector,
   });
 
   factory AppDependencies.inMemory({
@@ -368,6 +371,16 @@ final class AppDependencies {
   /// platform / locale). Built once at the composition root; no PII.
   final FeedbackAppMetadata feedbackAppMetadata;
 
+  /// Optional Dio dev inspector (HTTP overlay). Non-null ONLY in development
+  /// builds with dev tools enabled AND a backend URL configured: a single
+  /// shared Dio is built via [buildAppDio] with this inspector's interceptor
+  /// attached, and the inspector is threaded to `bootstrap` (which wraps the app
+  /// in `DioRequestInspectorMain`) and to `App` (which attaches its navigator
+  /// observer). Null in production / release / no-dev-tools / no-backend builds
+  /// — the inspector is NEVER constructed when dev tools are off, so it cannot
+  /// ship in a release graph. See `AppDependencies.production`.
+  final DioRequestInspector? inspector;
+
   /// Returns a copy with the provided fields replaced. Used by
   /// `createApplication` to finalize the startup result's `localeApplied` flag
   /// once the locale apply has run (which happens after `AppDependencies.production`).
@@ -413,6 +426,7 @@ final class AppDependencies {
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
       platformCapabilities: platformCapabilities,
+      inspector: inspector,
     );
   }
 
@@ -429,6 +443,11 @@ final class AppDependencies {
     // so the flow never touches libsecret. Mirrors the `inMemory` factory seam.
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
+    // Forwarded from `AppConfig.developmentToolsEnabled` (itself gated to
+    // development + ENABLE_DEV_TOOLS). Drives whether the Dio dev inspector is
+    // constructed: false in every production / release graph, so the inspector
+    // can never ship. Default false so test call sites stay no-backend / no-inspector.
+    bool developmentToolsEnabled = false,
   }) async {
     PlatformCapabilities capabilities;
     try {
@@ -547,10 +566,24 @@ final class AppDependencies {
     final AuthRepository authRepository;
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
+    // The optional Dio dev inspector is constructed ONLY in development builds
+    // with dev tools enabled AND a backend configured — never in production /
+    // release / no-backend graphs (the inspector must not ship in release). It
+    // is a singleton (the package returns one shared instance); its interceptor
+    // is attached to the single shared Dio below so the dev overlay observes
+    // every session / OTP / profile round-trip.
+    final inspector = (backendBaseUrl != null && developmentToolsEnabled)
+        ? DioRequestInspector(isInspectorEnabled: true)
+        : null;
     if (backendBaseUrl != null) {
-      authRepository = HttpAuthClient(baseUrl: backendBaseUrl);
-      otpRepository = HttpOtpClient(baseUrl: backendBaseUrl);
-      profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl);
+      // One shared Dio for the base URL (connection pooling + a single dev
+      // overlay). The inspector interceptor is attached only when the inspector
+      // was constructed above (dev only); production / no-dev-tools pass null
+      // and get a plain Dio. All three session-coupled adapters share it.
+      final dio = buildAppDio(backendBaseUrl, inspector: inspector);
+      authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
+      otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
+      profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl, dio: dio);
     } else {
       authRepository = InMemoryAuthRepository();
       otpRepository = const InMemoryOtpRepository();
@@ -648,6 +681,10 @@ final class AppDependencies {
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
       platformCapabilities: capabilities,
+      // Dev-only HTTP inspector (null unless development + dev tools + backend).
+      // Threaded to bootstrap (DioRequestInspectorMain wrapper) and App
+      // (navigator observer) so the dev overlay is live in development only.
+      inspector: inspector,
     );
   }
 

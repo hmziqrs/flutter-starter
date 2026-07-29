@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio_request_inspector/dio_request_inspector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starter/app/app.dart';
@@ -40,7 +41,18 @@ Future<void> bootstrap(
     context: <String, Object?>{'environment': config.environment.name},
   );
 
-  runApplication(await createApplication(config, logger: appLogger));
+  // Dev-only HTTP inspector overlay: when the composition root constructed a
+  // DioRequestInspector (development + dev tools + backend configured), wrap the
+  // app so its long-press gesture opens the inspector dashboard. Production /
+  // release / no-dev-tools / no-backend builds keep the plain app — no inspector
+  // is ever constructed there, so the overlay can never ship in a release graph.
+  final app = await createApplication(config, logger: appLogger);
+  final inspector = app.dependencies.inspector;
+  if (inspector != null) {
+    runApplication(DioRequestInspectorMain(inspector: inspector, child: app));
+  } else {
+    runApplication(app);
+  }
 }
 
 /// Creates the same production dependency graph and root widget used by [bootstrap].
@@ -82,6 +94,9 @@ Future<App> createApplication(
     // FlutterSecureStorageStore default. Headless integration tests inject an
     // in-memory store to avoid the libsecret dependency.
     secureStore: secureStore,
+    // Forward the dev-tools flag so the composition root constructs the Dio
+    // dev inspector only in development + dev-tools builds (never production).
+    developmentToolsEnabled: config.developmentToolsEnabled,
   );
   // Apply the persisted locale once. Guarded so a failure flips
   // AppStartupResult.localeApplied to false (surfaced on the splash) rather

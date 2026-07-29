@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/http_notifications_registration_client.dart';
 
 /// Boots a tiny `dart:io` `HttpServer` that mimics the test-server push
@@ -43,7 +44,10 @@ void main() {
     test('registerToken succeeds against a 2xx endpoint', () async {
       final boot = await _bootServer();
       addTearDown(boot.tearDown);
-      final client = HttpNotificationsRegistrationClient(baseUrl: boot.baseUri);
+      final client = HttpNotificationsRegistrationClient(
+        baseUrl: boot.baseUri,
+        dio: buildAppDio(boot.baseUri),
+      );
       await expectLater(
         client.registerToken(token: 't', platform: 'ios', deviceId: 'd'),
         completes,
@@ -54,21 +58,30 @@ void main() {
     test('unregisterToken succeeds against a 2xx endpoint', () async {
       final boot = await _bootServer();
       addTearDown(boot.tearDown);
-      final client = HttpNotificationsRegistrationClient(baseUrl: boot.baseUri);
+      final client = HttpNotificationsRegistrationClient(
+        baseUrl: boot.baseUri,
+        dio: buildAppDio(boot.baseUri),
+      );
       await expectLater(client.unregisterToken('t'), completes);
     });
 
     test('reportPermissionRevoked succeeds against a 2xx endpoint', () async {
       final boot = await _bootServer();
       addTearDown(boot.tearDown);
-      final client = HttpNotificationsRegistrationClient(baseUrl: boot.baseUri);
+      final client = HttpNotificationsRegistrationClient(
+        baseUrl: boot.baseUri,
+        dio: buildAppDio(boot.baseUri),
+      );
       await expectLater(client.reportPermissionRevoked(deviceId: 'd'), completes);
     });
 
     test('a 4xx response surfaces NotificationsException.unknown', () async {
       final boot = await _bootServer(statusCode: 400);
       addTearDown(boot.tearDown);
-      final client = HttpNotificationsRegistrationClient(baseUrl: boot.baseUri);
+      final client = HttpNotificationsRegistrationClient(
+        baseUrl: boot.baseUri,
+        dio: buildAppDio(boot.baseUri),
+      );
       await expectLater(
         client.registerToken(token: 't', platform: 'ios', deviceId: 'd'),
         throwsA(
@@ -84,7 +97,10 @@ void main() {
     test('a 5xx response surfaces NotificationsException.notConnected', () async {
       final boot = await _bootServer(statusCode: 503);
       addTearDown(boot.tearDown);
-      final client = HttpNotificationsRegistrationClient(baseUrl: boot.baseUri);
+      final client = HttpNotificationsRegistrationClient(
+        baseUrl: boot.baseUri,
+        dio: buildAppDio(boot.baseUri),
+      );
       await expectLater(
         client.registerToken(token: 't', platform: 'ios', deviceId: 'd'),
         throwsA(
@@ -102,9 +118,8 @@ void main() {
       final sink = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       final port = sink.port;
       await sink.close();
-      final client = HttpNotificationsRegistrationClient(
-        baseUrl: Uri.parse('http://${InternetAddress.loopbackIPv4.address}:$port'),
-      );
+      final dead = Uri.parse('http://${InternetAddress.loopbackIPv4.address}:$port');
+      final client = HttpNotificationsRegistrationClient(baseUrl: dead, dio: buildAppDio(dead));
       await expectLater(
         client.registerToken(token: 't', platform: 'ios', deviceId: 'd'),
         throwsA(

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
 /// The decoded remote-config payload sliced into the typed surfaces that the
@@ -48,40 +50,61 @@ final class RemoteConfigPayload {
 /// [RemoteConfigPayload] slices. Each feature-owned typed port
 /// (`VersionGateStore`, the future `FeatureFlagsSource` and `ExperimentSource`)
 /// depends on this client and reads only its own slice — one backend, three
-/// typed surfaces, three `InMemory` defaults. No reader opens its own
-/// [HttpClient]; that is the port multiplication C4 exists to prevent.
+/// typed surfaces, three `InMemory` defaults. No reader opens its own HTTP
+/// client; all share the injected [Dio] (built via [buildAppDio] when no
+/// instance is supplied), which is the port multiplication C4 exists to
+/// prevent.
 ///
 /// Every interaction is wrapped in `try/on Object` and returns `null` on any
 /// failure (network, non-200 status, parse) so callers degrade to their
 /// no-backend default and never fabricate a result (C2: never fake success).
 final class RemoteConfigClient {
   RemoteConfigClient({
-    required this.baseUrl,
+    required Uri baseUrl,
     this.deviceId,
     this.timeout = const Duration(seconds: 5),
-  });
-
-  /// Base URL of the remote-config backend (no `/v1/remote-config` suffix).
-  final Uri baseUrl;
+    Dio? dio,
+  }) : _dio = dio ?? buildAppDio(baseUrl) {
+    // Only the internally-built instance gets the adapter's own timeouts; an
+    // injected Dio is owned by the composition root, which sets its own.
+    if (dio == null) {
+      _dio.options
+        ..connectTimeout = timeout
+        ..sendTimeout = timeout
+        ..receiveTimeout = timeout;
+    }
+  }
 
   /// Optional device identifier sent as the `deviceId` query hint.
   final String? deviceId;
 
-  /// Per-request connect / read timeout.
+  /// Per-request connect / send / read timeout (applied to the built Dio).
   final Duration timeout;
+
+  final Dio _dio;
 
   /// Fetches and decodes the remote-config payload, or `null` on any failure
   /// (network error, non-200 status, malformed body). Readers degrade to their
   /// no-backend default rather than fabricating a partial result (C2).
   Future<RemoteConfigPayload?> fetch(AppBuildInfo buildInfo) async {
-    final client = HttpClient();
+    final queryParameters = <String, String>{
+      'platform': Platform.operatingSystem,
+      'version': buildInfo.version,
+    };
+    final id = deviceId;
+    if (id != null) {
+      queryParameters['deviceId'] = id;
+    }
     try {
-      final request = await client.getUrl(_endpoint(buildInfo)).timeout(timeout);
-      final response = await request.close().timeout(timeout);
-      final body = await response.transform(utf8.decoder).join().timeout(timeout);
-      if (response.statusCode != HttpStatus.ok) {
+      final response = await _dio.get<String>(
+        '/v1/remote-config',
+        queryParameters: queryParameters,
+        options: Options(responseType: ResponseType.plain),
+      );
+      if (response.statusCode != 200) {
         return null;
       }
+      final body = response.data ?? '';
       final Object? decoded;
       try {
         decoded = jsonDecode(body);
@@ -94,25 +117,6 @@ final class RemoteConfigClient {
       return RemoteConfigPayload(decoded);
     } on Object {
       return null;
-    } finally {
-      client.close(force: true);
     }
-  }
-
-  Uri _endpoint(AppBuildInfo buildInfo) {
-    final basePath = baseUrl.path;
-    final prefix = basePath.isEmpty || basePath == '/' ? '' : basePath;
-    final query = <String, String>{
-      'platform': Platform.operatingSystem,
-      'version': buildInfo.version,
-    };
-    final id = deviceId;
-    if (id != null) {
-      query['deviceId'] = id;
-    }
-    return baseUrl.replace(
-      path: '$prefix/v1/remote-config',
-      queryParameters: query,
-    );
   }
 }

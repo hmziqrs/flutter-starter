@@ -13,6 +13,7 @@ import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 
 import '../test_server_handle.dart';
 
@@ -29,8 +30,11 @@ void main() {
 
     setUpAll(() async {
       server = await TestServerHandle.start();
-      authClient = HttpAuthClient(baseUrl: server.baseUri);
-      otpClient = HttpOtpClient(baseUrl: server.baseUri);
+      // A single shared Dio (the composition-root shape) is injected into both
+      // adapters so they exercise the real Dio <-> shelf loopback path.
+      final dio = buildAppDio(server.baseUri);
+      authClient = HttpAuthClient(baseUrl: server.baseUri, dio: dio);
+      otpClient = HttpOtpClient(baseUrl: server.baseUri, dio: dio);
     });
 
     tearDownAll(() => server.close());
@@ -139,7 +143,8 @@ void main() {
     });
 
     test('an unreachable server surfaces AuthException.notConnected', () async {
-      final bad = HttpAuthClient(baseUrl: await _deadAddress());
+      final dead = await _deadAddress();
+      final bad = HttpAuthClient(baseUrl: dead, dio: buildAppDio(dead));
       await expectLater(
         bad.login(const AuthCredentials(email: 'no@where.test', password: 'hunter2')),
         throwsA(
@@ -149,7 +154,8 @@ void main() {
     });
 
     test('an unreachable server surfaces OtpRepositoryException.notConnected', () async {
-      final bad = HttpOtpClient(baseUrl: await _deadAddress());
+      final dead = await _deadAddress();
+      final bad = HttpOtpClient(baseUrl: dead, dio: buildAppDio(dead));
       await expectLater(
         bad.issue(purpose: OtpPurpose.registration, identifier: 'no@where.test'),
         throwsA(

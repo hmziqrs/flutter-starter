@@ -1,27 +1,24 @@
 import 'dart:convert';
-import 'dart:io';
 
-// The private-field constructor with a public-named required parameter is the
-// mandated shape (mirrors `HttpNotificationsRegistrationClient`); initializing
-// formals would rename the public parameter.
-// ignore_for_file: prefer_initializing_formals
-
+import 'package:dio/dio.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 
 /// Real HTTP [AuthRepository] against the test-server session contract (C9).
 ///
 /// Constructed **only when a consumer provides an endpoint** (the no-backend
 /// rule, C2: the `InMemoryAuthRepository` default surfaces
-/// `AuthException.notConnected` and never fakes a session). Mirrors
-/// `HttpNotificationsRegistrationClient`: uses `dart:io` `HttpClient` (no extra
-/// package) because the test / dev graph runs on native only; web falls through
-/// to the in-memory default per `PlatformCapabilities`.
+/// `AuthException.notConnected` and never fakes a session). Speaks to the
+/// backend through a shared injected [Dio] (built via [buildAppDio] when no
+/// instance is supplied); the test / dev graph runs on native only, web falls
+/// through to the in-memory default per `PlatformCapabilities`.
 ///
 /// Every interaction is wrapped in `try/on` and mapped to a typed
-/// [AuthException] — transport failures surface [AuthException.notConnected],
-/// `401`/`409` surface [AuthException.unauthorized], any other `4xx` surfaces
+/// [AuthException] — transport failures (any [DioException] without a response)
+/// surface [AuthException.notConnected], `401`/`409` surface
+/// [AuthException.unauthorized], any other `4xx` surfaces
 /// [AuthException.unknown], and a `5xx`/unclassified response surfaces
 /// [AuthException.notConnected]. The client never fabricates a session (C2).
 ///
@@ -29,12 +26,9 @@ import 'package:starter/features/session/auth_session.dart';
 /// this class itself does not log token values (it surfaces only the typed
 /// outcome).
 final class HttpAuthClient implements AuthRepository {
-  HttpAuthClient({required Uri baseUrl, HttpClient? httpClient})
-    : _baseUrl = baseUrl,
-      _httpClient = httpClient ?? HttpClient();
+  HttpAuthClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
-  final Uri _baseUrl;
-  final HttpClient _httpClient;
+  final Dio _dio;
 
   @override
   Future<AuthSession> login(AuthCredentials credentials) async {
@@ -117,51 +111,40 @@ final class HttpAuthClient implements AuthRepository {
     required Map<String, Object> body,
     Map<String, String> extraHeaders = const <String, String>{},
   }) async {
-    final uri = _resolve(path);
-    final request = await _openRequest(method, uri);
-    request.headers.contentType = ContentType.json;
-    for (final entry in extraHeaders.entries) {
-      request.headers.add(entry.key, entry.value);
-    }
-    request.write(jsonEncode(body));
-    final HttpClientResponse response;
-    String responseBody;
+    final Response<String> response;
     try {
-      response = await request.close();
-      responseBody = await response.transform(utf8.decoder).join();
-    } on SocketException {
-      throw const AuthException.notConnected();
-    } on HttpException {
-      throw const AuthException.notConnected();
-    } on Object {
+      response = await _dio.request<String>(
+        path,
+        data: jsonEncode(body),
+        options: Options(
+          method: method,
+          responseType: ResponseType.plain,
+          contentType: Headers.jsonContentType,
+          headers: extraHeaders,
+        ),
+      );
+    } on DioException catch (e) {
+      // validateStatus accepts every code, so a response-bearing DioException
+      // is not expected; defensively classify by status when one is present.
+      final status = e.response?.statusCode;
+      if (status != null) {
+        _classifyStatus(status);
+      }
       throw const AuthException.notConnected();
     }
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    final status = response.statusCode!;
+    if (status >= 200 && status < 300) {
+      final responseBody = response.data ?? '';
       if (responseBody.isEmpty) return const <String, Object?>{};
       return _decodeJson(responseBody);
     }
-    _classifyStatus(response.statusCode);
-  }
-
-  Uri _resolve(String path) {
-    final base = _baseUrl.replace(path: '${_baseUrl.path}$path'.replaceAll('//', '/'));
-    return base;
-  }
-
-  Future<HttpClientRequest> _openRequest(String method, Uri uri) async {
-    try {
-      return await _httpClient.openUrl(method, uri);
-    } on SocketException catch (_) {
-      throw const AuthException.notConnected();
-    } on HttpException catch (_) {
-      throw const AuthException.notConnected();
-    } on Object catch (_) {
-      throw const AuthException.unknown();
-    }
+    _classifyStatus(status);
   }
 
   Never _classifyStatus(int status) {
-    if (status == HttpStatus.unauthorized || status == HttpStatus.conflict) {
+    // 401 (bad credentials) and 409 (register: account already exists) both
+    // surface as unauthorized.
+    if (status == 401 || status == 409) {
       throw const AuthException.unauthorized();
     }
     if (status >= 400 && status < 500) {

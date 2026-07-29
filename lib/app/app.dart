@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio_request_inspector/dio_request_inspector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -179,6 +180,7 @@ class App extends StatelessWidget {
           key: ValueKey((config.environment, config.developmentToolsEnabled, initialLocation)),
           config: config,
           initialLocation: initialLocation,
+          inspector: dependencies.inspector,
         ),
       ),
     );
@@ -186,10 +188,16 @@ class App extends StatelessWidget {
 }
 
 class _AppView extends ConsumerStatefulWidget {
-  const _AppView({required this.config, this.initialLocation, super.key});
+  const _AppView({required this.config, this.initialLocation, this.inspector, super.key});
 
   final AppConfig config;
   final String? initialLocation;
+
+  /// Dev-only HTTP inspector. Non-null only in development builds with dev
+  /// tools + a configured backend; its static navigator observer is attached to
+  /// the router so the inspector dashboard can push onto the navigator. Null in
+  /// production / release / no-backend (no observer attached, no dev tooling).
+  final DioRequestInspector? inspector;
 
   @override
   ConsumerState<_AppView> createState() => _AppViewState();
@@ -219,6 +227,12 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     observers: [
       AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
       LastRouteObserver(store: ref.read(settingsStoreProvider)),
+      // Dev-only: attach the inspector's navigator observer so its dashboard can
+      // push onto the router's navigator. Gated on the inspector being present
+      // (development + dev tools + backend only) so dev tooling never ships in a
+      // release graph. The static observer is a no-op when no inspector is
+      // attached; existing observers above are untouched.
+      if (widget.inspector != null) DioRequestInspector.navigatorObserver,
     ],
   );
 

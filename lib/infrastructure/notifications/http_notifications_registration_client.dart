@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 
 // `comment_references` flags doc cross-references to sibling-class names
 // (NotificationsException etc.) imported only via the feature package; the
-// references are intentional. The private-field constructor with a
-// public-named required parameter is the same shape as the firebase adapter.
-// ignore_for_file: prefer_initializing_formals, comment_references
+// references are intentional.
+// ignore_for_file: comment_references
 
+import 'package:dio/dio.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/notifications_registration.dart';
 
 /// Real HTTP [NotificationsRegistration] client against the test-server push
@@ -18,20 +18,18 @@ import 'package:starter/infrastructure/notifications/notifications_registration.
 /// local URL). It is never constructed in `AppDependencies.production` — the
 /// [NoopNotificationsRepository] is the production default, and the optional
 /// `FirebaseNotificationsRepository` wires its own registration client only
-/// when a consumer passes a configured endpoint. Uses `dart:io` `HttpClient`
-/// (no extra package) because the test / dev graph runs on native only; web
-/// falls through to the Noop default per `PlatformCapabilities`.
+/// when a consumer passes a configured endpoint. Speaks to the backend through
+/// a shared injected [Dio] (built via [buildAppDio] when no instance is
+/// supplied); web falls through to the Noop default per `PlatformCapabilities`.
 ///
 /// Token / deviceId values reach this class only after the
 /// `LogRedactor`-scrubbed logging path inside the Firebase adapter; this class
 /// itself does not log the values (it logs only the round-trip outcome).
 final class HttpNotificationsRegistrationClient implements NotificationsRegistration {
-  HttpNotificationsRegistrationClient({required Uri baseUrl, HttpClient? httpClient})
-    : _baseUrl = baseUrl,
-      _httpClient = httpClient ?? HttpClient();
+  HttpNotificationsRegistrationClient({required Uri baseUrl, Dio? dio})
+    : _dio = dio ?? buildAppDio(baseUrl);
 
-  final Uri _baseUrl;
-  final HttpClient _httpClient;
+  final Dio _dio;
 
   @override
   Future<void> registerToken({
@@ -63,49 +61,42 @@ final class HttpNotificationsRegistrationClient implements NotificationsRegistra
   }
 
   Future<void> _post({required String path, required Map<String, Object> body}) async {
-    final uri = _resolve(path);
-    final request = await _openRequest('POST', uri);
-    request.headers.contentType = ContentType.json;
-    request.write(jsonEncode(body));
-    await _roundTrip(request);
+    await _roundTrip(
+      () => _dio.post<String>(
+        path,
+        data: jsonEncode(body),
+        options: Options(responseType: ResponseType.plain, contentType: Headers.jsonContentType),
+      ),
+    );
   }
 
   Future<void> _delete(String path) async {
-    final uri = _resolve(path);
-    final request = await _openRequest('DELETE', uri);
-    await _roundTrip(request);
+    await _roundTrip(
+      () => _dio.delete<String>(path, options: Options(responseType: ResponseType.plain)),
+    );
   }
 
-  Uri _resolve(String path) {
-    final base = _baseUrl.replace(path: '${_baseUrl.path}$path'.replaceAll('//', '/'));
-    return base;
-  }
-
-  Future<HttpClientRequest> _openRequest(String method, Uri uri) async {
+  /// Sends the request and classifies the outcome. The body is unused (the
+  /// contract is 204 / 4xx — no payload to surface): 2xx succeeds, a 4xx
+  /// surfaces [NotificationsException.unknown], anything else (5xx / transport)
+  /// surfaces [NotificationsException.notConnected].
+  Future<void> _roundTrip(Future<Response<String>> Function() send) async {
+    final Response<String> response;
     try {
-      return await _httpClient.openUrl(method, uri);
-    } on SocketException catch (_) {
+      response = await send();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status != null) {
+        _ensureSuccess(status);
+      }
       throw const NotificationsException.notConnected();
-    } on HttpException catch (_) {
-      throw const NotificationsException.notConnected();
-    } on Object catch (_) {
-      throw const NotificationsException.unknown();
     }
+    _ensureSuccess(response.statusCode!);
   }
 
-  Future<void> _roundTrip(HttpClientRequest request) async {
-    final response = await request.close();
-    try {
-      // Drain so the socket can be reused; the body is unused (the contract
-      // is 204 / 4xx — no payload to surface).
-      await response.drain<void>();
-    } on Object {
-      // Drain failure does not change the outcome classification below.
-    }
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return;
-    }
-    if (response.statusCode >= 400 && response.statusCode < 500) {
+  void _ensureSuccess(int status) {
+    if (status >= 200 && status < 300) return;
+    if (status >= 400 && status < 500) {
       throw const NotificationsException.unknown();
     }
     throw const NotificationsException.notConnected();
