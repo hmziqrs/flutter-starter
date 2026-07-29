@@ -1,0 +1,17 @@
+// Machine-local signing overrides for the Runner target.
+//
+// Copy to `LocalSigning.xcconfig` (gitignored) and fill in your Apple
+// Development team ID. Required because the macOS entitlements include
+// `keychain-access-groups` (for flutter_secure_storage), a restricted
+// entitlement that cannot be signed ad-hoc.
+//
+// Find your team ID with:
+//   security find-identity -v -p codesigning
+// It is the value in parentheses, e.g. "Apple Development: Name (TEAMID1234)".
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+CODE_SIGN_IDENTITY = Apple Development
+
+// The committed placeholder `com.example.starter` cannot be registered on the
+// developer portal; override it with an ID your team owns.
+PRODUCT_BUNDLE_IDENTIFIER = com.yourorg.starter

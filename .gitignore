@@ -48,6 +48,9 @@ app.*.map.json
 # Golden test failure diffs (transient output from `flutter test --update-goldens` misses)
 test/goldens/failures/
 
+# Machine-local Apple signing overrides (see LocalSigning.xcconfig.example)
+macos/Runner/Configs/LocalSigning.xcconfig
+
 # Native build caches created when adding plugins with native deps (SPM, Kotlin)
 **/xcshareddata/swiftpm/
 android/.kotlin/

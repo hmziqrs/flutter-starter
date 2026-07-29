@@ -12,3 +12,7 @@ PRODUCT_BUNDLE_IDENTIFIER = com.example.starter
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+
+// Machine-local signing overrides (gitignored, optional).
+// See LocalSigning.xcconfig.example.
+#include? "LocalSigning.xcconfig"
