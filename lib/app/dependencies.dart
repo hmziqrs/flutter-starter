@@ -1,4 +1,3 @@
-import 'package:dio_request_inspector/dio_request_inspector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
@@ -44,6 +43,8 @@ import 'package:starter/infrastructure/cache/file_cache_store.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/infrastructure/devtools/inspector_host.dart';
+import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
@@ -114,7 +115,7 @@ final class AppDependencies {
     required this.initialFeedbackShakeEnabled,
     required this.feedbackAppMetadata,
     required this.platformCapabilities,
-    this.inspector,
+    this.inspectorHost = const StubInspectorHost(),
   });
 
   factory AppDependencies.inMemory({
@@ -371,15 +372,19 @@ final class AppDependencies {
   /// platform / locale). Built once at the composition root; no PII.
   final FeedbackAppMetadata feedbackAppMetadata;
 
-  /// Optional Dio dev inspector (HTTP overlay). Non-null ONLY in development
-  /// builds with dev tools enabled AND a backend URL configured: a single
-  /// shared Dio is built via [buildAppDio] with this inspector's interceptor
-  /// attached, and the inspector is threaded to `bootstrap` (which wraps the app
-  /// in `DioRequestInspectorMain`) and to `App` (which attaches its navigator
-  /// observer). Null in production / release / no-dev-tools / no-backend builds
-  /// — the inspector is NEVER constructed when dev tools are off, so it cannot
-  /// ship in a release graph. See `AppDependencies.production`.
-  final DioRequestInspector? inspector;
+  /// Dev-only HTTP inspector host (HTTP overlay). The concrete implementation
+  /// is chosen by the build ENTRYPOINT: the production entrypoint wires a
+  /// [StubInspectorHost] (no `dio_request_inspector` import, so the package is
+  /// absent from release AOT and the flutter/flutter#188060 snapshotter crash
+  /// cannot occur), and the development entrypoint wires a `RealInspectorHost`
+  /// that is active only when dev tools are enabled AND a backend URL is
+  /// configured. The host is threaded to `bootstrap` (which wraps the app in the
+  /// inspector overlay when active), to [buildAppDio] (which attaches the host's
+  /// interceptor to the shared Dio), and to `App` (which adds the host's
+  /// navigator observers). The stub is inert everywhere it is used (tests,
+  /// production, no-backend dev), so no dev tooling ever ships in a release
+  /// graph. See `AppDependencies.production`.
+  final InspectorHost inspectorHost;
 
   /// Returns a copy with the provided fields replaced. Used by
   /// `createApplication` to finalize the startup result's `localeApplied` flag
@@ -426,7 +431,7 @@ final class AppDependencies {
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
       platformCapabilities: platformCapabilities,
-      inspector: inspector,
+      inspectorHost: inspectorHost,
     );
   }
 
@@ -443,11 +448,14 @@ final class AppDependencies {
     // so the flow never touches libsecret. Mirrors the `inMemory` factory seam.
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
-    // Forwarded from `AppConfig.developmentToolsEnabled` (itself gated to
-    // development + ENABLE_DEV_TOOLS). Drives whether the Dio dev inspector is
-    // constructed: false in every production / release graph, so the inspector
-    // can never ship. Default false so test call sites stay no-backend / no-inspector.
-    bool developmentToolsEnabled = false,
+    // Dev-only HTTP inspector host, selected by the build entrypoint. Defaults
+    // to the no-op [StubInspectorHost] so production / release graphs and test
+    // call sites compile no dio_request_inspector code (avoiding the
+    // flutter/flutter#188060 release-AOT snapshotter crash). The development
+    // entrypoint overrides this with a `RealInspectorHost`, whose own runtime
+    // gate (development tools enabled AND a backend configured) keeps it inert
+    // for no-backend / no-dev-tools launches — identical to the prior behavior.
+    InspectorHost inspectorHost = const StubInspectorHost(),
   }) async {
     PlatformCapabilities capabilities;
     try {
@@ -566,21 +574,13 @@ final class AppDependencies {
     final AuthRepository authRepository;
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
-    // The optional Dio dev inspector is constructed ONLY in development builds
-    // with dev tools enabled AND a backend configured — never in production /
-    // release / no-backend graphs (the inspector must not ship in release). It
-    // is a singleton (the package returns one shared instance); its interceptor
-    // is attached to the single shared Dio below so the dev overlay observes
-    // every session / OTP / profile round-trip.
-    final inspector = (backendBaseUrl != null && developmentToolsEnabled)
-        ? DioRequestInspector(isInspectorEnabled: true)
-        : null;
     if (backendBaseUrl != null) {
       // One shared Dio for the base URL (connection pooling + a single dev
-      // overlay). The inspector interceptor is attached only when the inspector
-      // was constructed above (dev only); production / no-dev-tools pass null
-      // and get a plain Dio. All three session-coupled adapters share it.
-      final dio = buildAppDio(backendBaseUrl, inspector: inspector);
+      // overlay). The inspector host attaches its interceptor only when active
+      // (development + dev tools + backend); the stub host is a no-op, so
+      // production / release get a plain Dio with no inspector code reachable.
+      // All three session-coupled adapters share this Dio.
+      final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
       profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl, dio: dio);
@@ -681,10 +681,11 @@ final class AppDependencies {
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
       platformCapabilities: capabilities,
-      // Dev-only HTTP inspector (null unless development + dev tools + backend).
-      // Threaded to bootstrap (DioRequestInspectorMain wrapper) and App
-      // (navigator observer) so the dev overlay is live in development only.
-      inspector: inspector,
+      // Dev-only HTTP inspector host (stub unless the development entrypoint
+      // injected the real one). Threaded to bootstrap (overlay wrapper), App
+      // (navigator observers), and the shared Dio (interceptor) so the dev
+      // overlay is live in development only and entirely absent in release.
+      inspectorHost: inspectorHost,
     );
   }
 

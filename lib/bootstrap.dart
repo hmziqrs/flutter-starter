@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio_request_inspector/dio_request_inspector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starter/app/app.dart';
@@ -11,6 +10,8 @@ import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/devtools/inspector_host.dart';
+import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
@@ -25,6 +26,14 @@ Future<void> bootstrap(
   AppConfig config, {
   AppLogger? logger,
   ApplicationRunner runApplication = runApp,
+  // Dev-only HTTP inspector host. Defaults to the no-op [StubInspectorHost] so
+  // the production entrypoint (lib/main.dart) — which calls `bootstrap(config)`
+  // without overriding this — compiles NO dio_request_inspector code. The
+  // development entrypoint (lib/main_dev.dart) overrides this with a
+  // [RealInspectorHost] to keep the inspector fully functional in dev. The same
+  // instance is threaded into the dependency graph so the Dio interceptor and
+  // navigator observer stay in sync with the overlay wrapper.
+  InspectorHost inspectorHost = const StubInspectorHost(),
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -41,18 +50,13 @@ Future<void> bootstrap(
     context: <String, Object?>{'environment': config.environment.name},
   );
 
-  // Dev-only HTTP inspector overlay: when the composition root constructed a
-  // DioRequestInspector (development + dev tools + backend configured), wrap the
-  // app so its long-press gesture opens the inspector dashboard. Production /
-  // release / no-dev-tools / no-backend builds keep the plain app — no inspector
-  // is ever constructed there, so the overlay can never ship in a release graph.
-  final app = await createApplication(config, logger: appLogger);
-  final inspector = app.dependencies.inspector;
-  if (inspector != null) {
-    runApplication(DioRequestInspectorMain(inspector: inspector, child: app));
-  } else {
-    runApplication(app);
-  }
+  // The inspector host wraps the app: a no-op pass-through for the stub
+  // (production / release / tests), or the DioRequestInspectorMain overlay for
+  // an active real host (development + dev tools + backend). The host owns the
+  // active/inactive decision, so this single call covers every build flavor —
+  // and no inspector widget is ever constructed in a release graph.
+  final app = await createApplication(config, logger: appLogger, inspectorHost: inspectorHost);
+  runApplication(inspectorHost.wrap(app));
 }
 
 /// Creates the same production dependency graph and root widget used by [bootstrap].
@@ -66,6 +70,11 @@ Future<App> createApplication(
   AppLogger? logger,
   String? initialLocation,
   SecureStore? secureStore,
+  // Threaded straight through to AppDependencies so the Dio interceptor and the
+  // App's navigator observers use the same host bootstrap wraps the app with.
+  // Defaults to the no-op stub; the dev entrypoint overrides it with the real
+  // host. See [bootstrap].
+  InspectorHost inspectorHost = const StubInspectorHost(),
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -94,9 +103,10 @@ Future<App> createApplication(
     // FlutterSecureStorageStore default. Headless integration tests inject an
     // in-memory store to avoid the libsecret dependency.
     secureStore: secureStore,
-    // Forward the dev-tools flag so the composition root constructs the Dio
-    // dev inspector only in development + dev-tools builds (never production).
-    developmentToolsEnabled: config.developmentToolsEnabled,
+    // Forward the inspector host selected by the entrypoint (stub for
+    // production / tests; real for development). The host owns the runtime
+    // dev-only gate, so the factory no longer needs developmentToolsEnabled.
+    inspectorHost: inspectorHost,
   );
   // Apply the persisted locale once. Guarded so a failure flips
   // AppStartupResult.localeApplied to false (surfaced on the splash) rather

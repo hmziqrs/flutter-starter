@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:dio_request_inspector/dio_request_inspector.dart';
+import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/firebase/firebase_performance_dio_interceptor.dart';
 
 /// Builds a configured [Dio] for one adapter's [baseUrl].
@@ -14,14 +14,17 @@ import 'package:starter/infrastructure/firebase/firebase_performance_dio_interce
 /// [ResponseType.plain] per-request by adapters that decode the body themselves
 /// to preserve their exact parse semantics).
 ///
-/// When [inspector] is supplied its interceptor is attached so the dev shell
-/// (`DioRequestInspectorMain`) can observe every round-trip. The inspector is
-/// optional; production / test graphs pass `null`.
+/// When [inspectorHost] is supplied its interceptor is attached so the dev
+/// shell (the inspector overlay) can observe every round-trip. The host is a
+/// no-op in production / test graphs (the `StubInspectorHost`), so no inspector
+/// code is reached there.
 ///
 /// This is the single seam the composition root uses to share one [Dio] (and
-/// one inspector) across every adapter; the adapters themselves never construct
-/// a `dart:io` `HttpClient`.
-Dio buildAppDio(Uri baseUrl, {DioRequestInspector? inspector}) {
+/// one inspector host) across every adapter; the adapters themselves never
+/// construct a `dart:io` `HttpClient`. The host abstraction keeps this file
+/// free of any `package:dio_request_inspector` import, so it compiles cleanly
+/// in release graphs where the inspector package is entirely absent.
+Dio buildAppDio(Uri baseUrl, {InspectorHost? inspectorHost}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl.toString(),
@@ -43,8 +46,9 @@ Dio buildAppDio(Uri baseUrl, {DioRequestInspector? inspector}) {
   // in try/on Object, so it never affects the validateStatus-all / error-mapping
   // behavior or the desktop test / integration flows.
   dio.interceptors.add(FirebasePerformanceDioInterceptor());
-  if (inspector != null) {
-    dio.interceptors.add(inspector.getDioRequestInterceptor());
-  }
+  // Dev-only HTTP inspector: no-op for the stub (production / tests), attaches
+  // the inspector interceptor for the real host (development). The host owns
+  // the gating, so this single call works for every build flavor.
+  inspectorHost?.attachInterceptor(dio);
   return dio;
 }

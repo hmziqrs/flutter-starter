@@ -90,7 +90,7 @@ run dev='macos':
         fi
     fi
 
-    exec {{flutter}} run -d "$device" --dart-define-from-file={{dev_config}}
+    exec {{flutter}} run -d "$device" --target=lib/main_dev.dart --dart-define-from-file={{dev_config}}
 
 # --- tests --------------------------------------------------------------------
 # All non-golden unit + widget tests (the CI quality job).
