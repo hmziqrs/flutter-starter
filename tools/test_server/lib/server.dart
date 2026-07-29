@@ -8,6 +8,7 @@ import 'routes/events.dart' as events;
 import 'routes/feedback.dart' as feedback;
 import 'routes/notifications.dart' as notifications;
 import 'routes/otp.dart' as otp;
+import 'routes/profile.dart' as profile;
 import 'routes/remote_config.dart' as remote_config;
 
 /// A function that mounts one route group onto the server [Router].
@@ -30,6 +31,7 @@ final List<RouteRegistrar> _registrars = <RouteRegistrar>[
   feedback.registerRoutes,
   notifications.registerRoutes,
   otp.registerRoutes,
+  profile.registerRoutes,
   remote_config.registerRoutes,
 ];
 

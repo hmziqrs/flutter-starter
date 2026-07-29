@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import '../accounts.dart';
+
 const Map<String, String> _jsonHeaders = <String, String>{
   'content-type': 'application/json; charset=utf-8',
 };
@@ -21,6 +23,11 @@ const int _freeAttemptsBeforeLockout = 2;
 /// first non-zero cooldown so a `429 locked` from the server matches the
 /// client tracker's `lockedSeconds`.
 const Duration _lockedTtl = Duration(seconds: 30);
+
+/// The literal code issued for development requests (`X-Api-Key: dev`) so an
+/// integration test can enter a fixed value instead of reading `dev_code`.
+/// Non-dev requests get a pseudo-random code from [_generateCode].
+const String _devCode = '123456';
 
 /// In-memory table of outstanding OTP issues: `attempt_token -> _IssuedOtp`.
 ///
@@ -43,8 +50,9 @@ DateTime _now() => DateTime.now().toUtc();
 
 /// Mounts the OTP contract (C9) onto [router]:
 /// - `POST /v1/otp/issue`   `{purpose, identifier}` -> `{attempt_token, expires_at, channel, dev_code?}`.
-/// - `POST /v1/otp/verify`  `{attempt_token, code}` -> `{valid: true}` or `409 expired` or `429 locked`.
-/// - `POST /v1/otp/resend`  `{identifier, purpose}` -> `{attempt_token, expires_at, channel}`.
+/// - `POST /v1/otp/verify`  `{attempt_token, code}` -> `{valid: true}` (or `{valid: true, access_token,
+///   refresh_token, expires_at, user_id}` for a registration success), `{valid: false}`, `409 expired`, or `429 locked`.
+/// - `POST /v1/otp/resend`  `{identifier, purpose}` -> `{attempt_token, expires_at, channel, dev_code?}`.
 ///
 /// `dev_code` is a test affordance: returned **only** when the request carries
 /// the development API key (the `X-Api-Key: dev` header, matching the rest of
@@ -55,6 +63,45 @@ void registerRoutes(Router router) {
   router.post('/v1/otp/issue', _issue);
   router.post('/v1/otp/verify', _verify);
   router.post('/v1/otp/resend', _resend);
+}
+
+/// Issues an OTP for [identifier] / [purpose] and returns the snake_case
+/// envelope the issue and resend handlers (and `/v1/auth/register`) emit.
+///
+/// [isDev] controls two things together: the generated code is the literal
+/// [_devCode] (so a test entering "123456" succeeds), and `dev_code` is
+/// included in the returned envelope. Keeping the two coupled means a non-dev
+/// caller never learns the code from this call.
+///
+/// This is the single source of truth for issuing an OTP — `/v1/auth/register`
+/// reuses it so registration and standalone issue share attempt-token, code,
+/// and dev_code behavior.
+Map<String, Object> issueOtpEnvelope({
+  required String purpose,
+  required String identifier,
+  required bool isDev,
+}) {
+  final code = _generateCode(isDev);
+  final attemptToken = _issueToken();
+  final expiresAt = _now().add(_codeTtl);
+  _issues[attemptToken] = _IssuedOtp(
+    attemptToken: attemptToken,
+    identifier: identifier,
+    purpose: purpose,
+    code: code,
+    expiresAt: expiresAt,
+    failedAttempts: 0,
+  );
+  // Remove any prior outstanding issue for this identifier — a fresh issue
+  // supersedes the previous one so the client never verifies a stale code.
+  _removeByIdentifier(identifier, keep: attemptToken);
+
+  return <String, Object>{
+    'attempt_token': attemptToken,
+    'expires_at': expiresAt.toIso8601String(),
+    'channel': 'sms',
+    if (isDev) 'dev_code': code,
+  };
 }
 
 Future<Response> _issue(Request request) async {
@@ -76,28 +123,12 @@ Future<Response> _issue(Request request) async {
   if (existing != null && existing.isLockedAt(_now())) {
     return _lockedResponse(existing.lockedUntil!);
   }
-  final code = _generateCode();
-  final attemptToken = _issueToken();
-  final expiresAt = _now().add(_codeTtl);
-  _issues[attemptToken] = _IssuedOtp(
-    attemptToken: attemptToken,
-    identifier: identifier,
+  final envelope = issueOtpEnvelope(
     purpose: purpose,
-    code: code,
-    expiresAt: expiresAt,
-    failedAttempts: 0,
+    identifier: identifier,
+    isDev: _isDevRequest(request),
   );
-  // Remove any prior outstanding issue for this identifier — a fresh issue
-  // supersedes the previous one so the client never verifies a stale code.
-  _removeByIdentifier(identifier, keep: attemptToken);
-
-  final body = <String, Object>{
-    'attempt_token': attemptToken,
-    'expires_at': expiresAt.toIso8601String(),
-    'channel': 'sms',
-    if (_isDevRequest(request)) 'dev_code': code,
-  };
-  return Response.ok(jsonEncode(body), headers: _jsonHeaders);
+  return Response.ok(jsonEncode(envelope), headers: _jsonHeaders);
 }
 
 Future<Response> _verify(Request request) async {
@@ -138,6 +169,25 @@ Future<Response> _verify(Request request) async {
   }
   // Success: consume the attempt token so a replay yields expired (409).
   _issues.remove(attemptToken);
+  // A registration verify also activates the pending account and mints a
+  // session so the client can call authenticated routes immediately. Other
+  // purposes (mfa, password-reset) return the plain {valid: true} envelope.
+  if (issued.purpose == 'registration') {
+    final account = findAccountByEmail(issued.identifier);
+    if (account != null && account.status == AccountStatus.pending) {
+      activateAccount(account);
+      return Response.ok(
+        jsonEncode(<String, Object>{
+          'valid': true,
+          'access_token': issueAccessToken(account.userId),
+          'refresh_token': issueRefreshToken(account.userId),
+          'expires_at': _now().add(accessTtl).toIso8601String(),
+          'user_id': account.userId,
+        }),
+        headers: _jsonHeaders,
+      );
+    }
+  }
   return Response.ok(jsonEncode(<String, Object>{'valid': true}), headers: _jsonHeaders);
 }
 
@@ -159,25 +209,12 @@ Future<Response> _resend(Request request) async {
   if (existing != null && existing.isLockedAt(_now())) {
     return _lockedResponse(existing.lockedUntil!);
   }
-  final code = _generateCode();
-  final attemptToken = _issueToken();
-  final expiresAt = _now().add(_codeTtl);
-  _issues[attemptToken] = _IssuedOtp(
-    attemptToken: attemptToken,
-    identifier: identifier,
+  final envelope = issueOtpEnvelope(
     purpose: purpose,
-    code: code,
-    expiresAt: expiresAt,
-    failedAttempts: 0,
+    identifier: identifier,
+    isDev: _isDevRequest(request),
   );
-  _removeByIdentifier(identifier, keep: attemptToken);
-  final body = <String, Object>{
-    'attempt_token': attemptToken,
-    'expires_at': expiresAt.toIso8601String(),
-    'channel': 'sms',
-    if (_isDevRequest(request)) 'dev_code': code,
-  };
-  return Response.ok(jsonEncode(body), headers: _jsonHeaders);
+  return Response.ok(jsonEncode(envelope), headers: _jsonHeaders);
 }
 
 bool _isKnownPurpose(String purpose) {
@@ -187,10 +224,15 @@ bool _isKnownPurpose(String purpose) {
   };
 }
 
-/// Generates a 6-digit code as a zero-padded string. Pseudo-random is fine —
-/// the test server is single-process and the code is only delivered via the
-/// `dev_code` affordance, never via a real channel.
-String _generateCode() {
+/// Generates a 6-digit code as a zero-padded string. Development requests get
+/// the fixed literal [_devCode] so an integration test entering "123456"
+/// verifies successfully; everyone else gets a pseudo-random code (the test
+/// server is single-process and the code is only delivered via the `dev_code`
+/// affordance, never via a real channel).
+String _generateCode(bool isDev) {
+  if (isDev) {
+    return _devCode;
+  }
   final value = DateTime.now().microsecondsSinceEpoch % 1000000;
   return value.toString().padLeft(6, '0');
 }
@@ -214,9 +256,7 @@ void _removeByIdentifier(String identifier, {required String keep}) {
   }
 }
 
-bool _isDevRequest(Request request) {
-  return request.headers['X-Api-Key'] == 'dev';
-}
+bool _isDevRequest(Request request) => request.headers['x-api-key'] == 'dev';
 
 Response _invalid() => Response(
   400,

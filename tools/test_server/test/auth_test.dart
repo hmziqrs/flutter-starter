@@ -152,6 +152,111 @@ void main() {
       expect(response.statusCode, 204);
     });
   });
+
+  group('POST /v1/auth/register', () {
+    test('creates a pending account and returns the registration OTP envelope', () async {
+      final response = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: jsonEncode(<String, Object>{
+            'email': 'reg-happy@example.com',
+            'password': 'pw',
+            'displayName': 'Happy User',
+          }),
+          headers: <String, String>{'content-type': 'application/json', 'X-Api-Key': 'dev'},
+        ),
+      );
+      expect(response.statusCode, 200);
+      final body = jsonDecode(await response.readAsString()) as Map<String, dynamic>;
+      // The register response IS the OTP issue envelope (snake_case).
+      expect(body, containsPair('attempt_token', isA<String>()));
+      expect(body, containsPair('expires_at', isA<String>()));
+      expect(body, containsPair('channel', 'sms'));
+      // Dev code is the fixed literal so an integration test can enter it.
+      expect(body, containsPair('dev_code', '123456'));
+    });
+
+    test('does not leak dev_code without the dev API key', () async {
+      final response = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: jsonEncode(<String, Object>{
+            'email': 'reg-no-dev@example.com',
+            'password': 'pw',
+            'displayName': 'No Dev',
+          }),
+          headers: <String, String>{'content-type': 'application/json'},
+        ),
+      );
+      expect(response.statusCode, 200);
+      final body = jsonDecode(await response.readAsString()) as Map<String, dynamic>;
+      expect(body, isNot(contains('dev_code')));
+    });
+
+    test('returns 409 {error: conflict} when the email is already registered', () async {
+      final email = 'reg-conflict@example.com';
+      final first = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: jsonEncode(<String, Object>{
+            'email': email,
+            'password': 'pw',
+            'displayName': 'Dup',
+          }),
+          headers: <String, String>{'content-type': 'application/json', 'X-Api-Key': 'dev'},
+        ),
+      );
+      expect(first.statusCode, 200);
+
+      // Second registration — the pending account from the first still exists.
+      final second = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: jsonEncode(<String, Object>{
+            'email': email,
+            'password': 'pw',
+            'displayName': 'Dup',
+          }),
+          headers: <String, String>{'content-type': 'application/json', 'X-Api-Key': 'dev'},
+        ),
+      );
+      expect(second.statusCode, 409);
+      final body = jsonDecode(await second.readAsString()) as Map<String, dynamic>;
+      expect(body, containsPair('error', 'conflict'));
+    });
+
+    test('returns 400 when a required field is missing', () async {
+      final response = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: jsonEncode(<String, Object>{
+            'email': 'reg-missing@example.com',
+            'password': 'pw',
+            // displayName omitted
+          }),
+          headers: <String, String>{'content-type': 'application/json'},
+        ),
+      );
+      expect(response.statusCode, 400);
+    });
+
+    test('returns 400 for malformed JSON', () async {
+      final response = await handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/v1/auth/register'),
+          body: 'not json',
+          headers: <String, String>{'content-type': 'application/json'},
+        ),
+      );
+      expect(response.statusCode, 400);
+    });
+  });
 }
 
 Future<Map<String, dynamic>> _issue(Handler handler, {required String email}) async {

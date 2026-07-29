@@ -3,49 +3,29 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import '../accounts.dart';
+import 'otp.dart' as otp;
+
 const Map<String, String> _jsonHeaders = <String, String>{
   'content-type': 'application/json; charset=utf-8',
 };
 
-/// Lifetime of an issued access token, mirrored from a typical backend policy.
-/// Long enough to exercise foreground-refresh tests, short enough to make the
-/// "expired while backgrounded" path deterministic.
-const Duration _accessTtl = Duration(hours: 1);
-
-/// Monotonic counter combined with a microsecond timestamp so refresh tokens
-/// never collide within a single server process (the in-memory token table
-/// keys on the literal string).
-int _counter = 0;
-
-String _issueToken(String prefix) {
-  _counter += 1;
-  return '$prefix-${DateTime.now().toUtc().microsecondsSinceEpoch}-$_counter';
-}
-
-/// In-memory table of valid refresh tokens: token -> user id.
-///
-/// Rotated on `/v1/auth/refresh`: the presented token is removed and a fresh
-/// one is issued against the same user id, so presenting the old token a
-/// second time yields `401` (the issue -> refresh -> logout contract relies on
-/// this — returning only an access token on refresh would lose the rotated
-/// refresh and strand the client).
-final Map<String, String> _refreshTokens = <String, String>{};
-
-/// Derives a stable user id from the submitted email so `/refresh` inherits
-/// the same identity from the rotated token (the contract: `userId` seeds
-/// `AuthSession.userId`, and `/refresh` does not re-send it).
-String _userIdFor(String email) {
-  return 'user-${email.hashCode.toRadixString(36)}';
-}
-
 DateTime _now() => DateTime.now().toUtc();
 
+bool _isDevRequest(Request request) => request.headers['x-api-key'] == 'dev';
+
 /// Mounts the session auth contract (C9) onto [router]:
-/// - `POST /v1/auth/issue`   `{email, password}` -> `{accessToken, refreshToken, expiresAt, userId}` or `401`.
-/// - `POST /v1/auth/refresh` `{refreshToken}`    -> `{accessToken, refreshToken, expiresAt}` (rotated) or `401`.
-/// - `POST /v1/auth/logout`  `{refreshToken?}`   -> `204`.
+/// - `POST /v1/auth/issue`    `{email, password}` -> `{accessToken, refreshToken, expiresAt, userId}` or `401`.
+/// - `POST /v1/auth/register` `{email, password, displayName}` -> registration OTP envelope
+///   (`{attempt_token, expires_at, channel, dev_code?}`) or `409 {error:'conflict'}`.
+/// - `POST /v1/auth/refresh`  `{refreshToken}` -> `{accessToken, refreshToken, expiresAt}` (rotated) or `401`.
+/// - `POST /v1/auth/logout`   `{refreshToken?}` -> `204`.
+///
+/// The refresh-token table and access-token table live in `accounts.dart` so
+/// the OTP verify path (registration success) and `profile` can share them.
 void registerRoutes(Router router) {
   router.post('/v1/auth/issue', _issue);
+  router.post('/v1/auth/register', _register);
   router.post('/v1/auth/refresh', _refresh);
   router.post('/v1/auth/logout', _logout);
 }
@@ -60,18 +40,52 @@ Future<Response> _issue(Request request) async {
   if (email is! String || email.isEmpty || password is! String || password.isEmpty) {
     return _unauthorized();
   }
-  final userId = _userIdFor(email);
-  final refreshToken = _issueToken('rt');
-  _refreshTokens[refreshToken] = userId;
+  final userId = userIdForEmail(email);
   return Response.ok(
     jsonEncode(<String, Object>{
-      'accessToken': _issueToken('at'),
-      'refreshToken': refreshToken,
-      'expiresAt': _now().add(_accessTtl).toIso8601String(),
+      'accessToken': issueAccessToken(userId),
+      'refreshToken': issueRefreshToken(userId),
+      'expiresAt': _now().add(accessTtl).toIso8601String(),
       'userId': userId,
     }),
     headers: _jsonHeaders,
   );
+}
+
+Future<Response> _register(Request request) async {
+  final decoded = await _decode(request);
+  if (decoded == null) {
+    return _invalid();
+  }
+  final email = decoded['email'];
+  final password = decoded['password'];
+  final displayName = decoded['displayName'];
+  if (email is! String ||
+      email.isEmpty ||
+      password is! String ||
+      password.isEmpty ||
+      displayName is! String ||
+      displayName.isEmpty) {
+    return _invalid();
+  }
+  // A pending (unverified) OR active account for this email blocks a fresh
+  // registration — the client must verify or recover instead.
+  if (accountExists(email)) {
+    return Response(
+      409,
+      body: jsonEncode(<String, String>{'error': 'conflict'}),
+      headers: _jsonHeaders,
+    );
+  }
+  createPendingAccount(email: email, password: password, displayName: displayName);
+  // Hand the OTP issue to the OTP module so there is one source of truth for
+  // attempt tokens, code generation, and the dev_code affordance.
+  final envelope = otp.issueOtpEnvelope(
+    purpose: 'registration',
+    identifier: email,
+    isDev: _isDevRequest(request),
+  );
+  return Response.ok(jsonEncode(envelope), headers: _jsonHeaders);
 }
 
 Future<Response> _refresh(Request request) async {
@@ -84,17 +98,15 @@ Future<Response> _refresh(Request request) async {
     return _unauthorized();
   }
   // ROTATE: remove the presented token first so a replay yields 401.
-  final userId = _refreshTokens.remove(presented);
-  if (userId == null) {
+  final rotated = rotateRefreshToken(presented);
+  if (rotated == null) {
     return _unauthorized();
   }
-  final rotated = _issueToken('rt');
-  _refreshTokens[rotated] = userId;
   return Response.ok(
     jsonEncode(<String, Object>{
-      'accessToken': _issueToken('at'),
-      'refreshToken': rotated,
-      'expiresAt': _now().add(_accessTtl).toIso8601String(),
+      'accessToken': issueAccessToken(rotated.userId),
+      'refreshToken': rotated.refreshToken,
+      'expiresAt': _now().add(accessTtl).toIso8601String(),
     }),
     headers: _jsonHeaders,
   );
@@ -106,7 +118,7 @@ Future<Response> _logout(Request request) async {
   if (decoded != null) {
     final presented = decoded['refreshToken'];
     if (presented is String) {
-      _refreshTokens.remove(presented);
+      revokeRefreshToken(presented);
     }
   }
   return Response(204);
