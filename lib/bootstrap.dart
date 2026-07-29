@@ -12,7 +12,9 @@ import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
+import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/firebase_crashlytics_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
@@ -38,12 +40,22 @@ Future<void> bootstrap(
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  // No-backend default. The optional SentryCrashReporter is constructed here
-  // (and SentryFlutter.init run once) only once a crash-reporting DSN field
-  // is added to AppConfig; until then the honest no-op sink is used (C2).
-  // This runs before createApplication / the ProviderScope exists, so the
-  // reporter is a direct parameter — never read via a provider here.
-  const CrashReporter crashReporter = NoopCrashReporter();
+  // The global error sinks (FlutterError.onError + PlatformDispatcher.onError,
+  // wired by [installErrorHandlers] below) fan out to [existing backend,
+  // Firebase Crashlytics]. The existing arm is the honest no-op sink today (the
+  // optional SentryCrashReporter is constructed here once a crash-reporting DSN
+  // field is added to AppConfig); FirebaseCrashlyticsCrashReporter self-disables
+  // on web / Linux / Windows and when Firebase is not initialized, so this
+  // composite never breaks the error path it observes and runs green with zero
+  // backend wiring (C2). This is the Firebase Crashlytics FlutterError.onError
+  // / PlatformDispatcher.onError integration, installed alongside the existing
+  // crash-redaction / error-handling here. This runs before createApplication /
+  // the ProviderScope exists, so the reporter is a direct parameter — never
+  // read via a provider here.
+  final CrashReporter crashReporter = CompositeCrashReporter(<CrashReporter>[
+    const NoopCrashReporter(),
+    FirebaseCrashlyticsCrashReporter(verbose: config.verboseLoggingEnabled),
+  ]);
   installErrorHandlers(appLogger, crashReporter);
   appLogger.info(
     'Starting application',

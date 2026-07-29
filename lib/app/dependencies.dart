@@ -32,6 +32,8 @@ import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
+import 'package:starter/infrastructure/analytics/composite_analytics_client.dart';
+import 'package:starter/infrastructure/analytics/firebase_analytics_client.dart';
 import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
 import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
@@ -45,7 +47,9 @@ import 'package:starter/infrastructure/connectivity/connectivity_plus_service.da
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
+import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/firebase_crashlytics_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
@@ -594,10 +598,19 @@ final class AppDependencies {
       settingsStore: settingsStore,
       initialSettings: settings,
       secureStore: effectiveSecureStore,
-      // No-backend defaults. The optional remote SentryCrashReporter branch
-      // activates only when a crash-reporting DSN is configured; until that
-      // wiring lands, the app runs green with an honest no-op sink (C2).
-      crashReporter: const NoopCrashReporter(),
+      // Crash reporting fans out to [existing backend, Firebase Crashlytics].
+      // The existing arm is the honest no-op sink today (the optional
+      // SentryCrashReporter activates here once a crash-reporting DSN is
+      // configured); FirebaseCrashlyticsCrashReporter is constructed
+      // unconditionally and self-disables on web / Linux / Windows and when
+      // Firebase is not initialized, so this composite never breaks the error
+      // path it observes and runs green with zero backend wiring (C2). On
+      // Linux / Windows the Firebase arm no-ops, so the composite effectively
+      // runs only the existing backend.
+      crashReporter: CompositeCrashReporter(<CrashReporter>[
+        const NoopCrashReporter(),
+        FirebaseCrashlyticsCrashReporter(verbose: false),
+      ]),
       crashReporterBackend: const NoopCrashReporterBackend(),
       versionGateStore: versionGateStore,
       versionCheck: versionCheck,
@@ -624,7 +637,19 @@ final class AppDependencies {
       authRepository: authRepository,
       sessionRepository: SessionRepository(effectiveSecureStore),
       initialSession: const AuthAnonymous(),
-      analyticsClient: NoopAnalyticsClient(logger: logger),
+      // Analytics fans out to [existing backend, Firebase Analytics]. The
+      // existing arm is the honest no-op sink today (the optional
+      // PosthogAnalyticsClient activates here once PostHog credentials +
+      // opt-in are wired); FirebaseAnalyticsClient is constructed
+      // unconditionally and self-disables on Linux / Windows and when Firebase
+      // is not initialized, so this composite never breaks the UX it measures
+      // and runs green with zero backend wiring (C2). On Linux / Windows the
+      // Firebase arm no-ops, so the composite effectively runs only the
+      // existing backend.
+      analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
+        NoopAnalyticsClient(logger: logger),
+        FirebaseAnalyticsClient(),
+      ]),
       analyticsClientBackend: const NoopAnalyticsBackend(),
       initialAnalyticsOptIn: initialAnalyticsOptIn,
       featureFlagsSource: InMemoryFeatureFlagsSource(),
