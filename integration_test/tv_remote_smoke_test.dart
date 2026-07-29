@@ -6,6 +6,7 @@ import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
@@ -34,6 +35,12 @@ void main() {
             platform: 'android',
             isWeb: false,
             tvPlatform: AppTvPlatform.androidTv,
+          ),
+          initialSession: AuthAuthenticated(
+            accessToken: 'test-access-token',
+            refreshToken: 'test-refresh-token',
+            expiresAt: DateTime.now().add(const Duration(hours: 1)),
+            userId: 'test-user',
           ),
         ),
       ),
