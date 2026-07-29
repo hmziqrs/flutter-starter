@@ -104,6 +104,8 @@ jobs:
           sudo apt-get install -y \
             clang \
             cmake \
+            dbus-x11 \
+            gnome-keyring \
             libcurl4-openssl-dev \
             libgtk-3-dev \
             libsecret-1-dev \
@@ -149,12 +151,18 @@ jobs:
           echo "BACKEND_URL=http://127.0.0.1:$PORT" >> "$GITHUB_ENV"
 
       - name: Run development smoke test under Xvfb
-        run: >-
-          xvfb-run -a
-          flutter test integration_test/development_smoke_test.dart
-          -d linux
-          --dart-define-from-file=config/development.json
-          --dart-define=BACKEND_BASE_URL=${{ env.BACKEND_URL }}
+        env:
+          BACKEND_URL: ${{ env.BACKEND_URL }}
+        run: |
+          # The smoke flow registers + persists a session refresh token via
+          # flutter_secure_storage (libsecret). The headless runner has no
+          # secret-service daemon, so boot one inside a D-Bus session with an
+          # unlocked blank keyring, then run the flow under Xvfb.
+          dbus-run-session -- bash -c '
+            set -euo pipefail
+            printf "" | gnome-keyring-daemon --unlock >/dev/null 2>&1 || true
+            xvfb-run -a flutter test integration_test/development_smoke_test.dart -d linux --dart-define-from-file=config/development.json --dart-define=BACKEND_BASE_URL="$BACKEND_URL"
+          '
 
       - name: Run production route policy test under Xvfb
         run: >-
