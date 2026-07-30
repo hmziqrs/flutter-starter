@@ -1,8 +1,8 @@
 /**
- * Contract tests for the dummy Hono server. Each test asserts the status code
- * AND JSON shape that `tools/test_server` (the authoritative Dart contract)
- * emits, so this JS server stays a faithful mirror for cross-framework Flutter
- * HTTP verification.
+ * Contract tests for the in-repo dummy Hono backend. Each test asserts the
+ * status code AND JSON shape of the app's canonical `/v1/*` API contract
+ * (plans/feature_roadmap/contracts.md C9), so the server stays a faithful
+ * implementation for Flutter HTTP client verification.
  *
  * Tests drive the app in-memory via `app.request(...)` — no socket is bound.
  */

@@ -51,7 +51,7 @@ port so goldens/integration stay hermetic.
 ## Backend & test surface
 Backend-free. Production default = `Device*` impls (real hardware). Goldens/integration override with
 the `Noop*` impls, which return **denied / unavailable** honestly and never fake a grant or a picked
-image — the no-faked-success rule is load-bearing here. No `tools/test_server/` contract. No Mocktail;
+image — the no-faked-success rule is load-bearing here. No `tools/hono_server/` contract. No Mocktail;
 the noop impls ARE the fakes.
 
 ## Tests

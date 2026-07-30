@@ -34,7 +34,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 - **Noop/InMemory production default:** `InMemoryOtpRepository` is constructed in [`AppDependencies.production`](../../../lib/app/dependencies.dart) and overridden at the `ProviderScope`. It runs green with **zero backend**; `issue`/`verify`/`resend` all surface `common.notConnected` via `OtpRepositoryException` and **never fake success** — the OTP screen stays a faithful static demo until a consumer wires a real impl.
 - **Optional real impl:** `HttpOtpRepository` (a consumer-owned adapter in `lib/infrastructure/auth/`) is an **override** constructed only when a consumer wires credentials. It is never constructed by default; the starter ships without it.
-- **`tools/test_server/` contract** ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)): the minimal Dart server implements the OTP route group:
+- **`tools/hono_server/` contract** ([C3](../contracts.md#c3--minimal-in-repo-test-server)): the minimal Hono server implements the OTP route group:
   - `POST /v1/otp/issue` — body `{purpose: "mfa"|"registration"|"password-reset", identifier}` → `{attempt_token, expires_at, channel}` (channel is `"sms"`/`"email"`/`"authenticator"`; for tests the server also returns the code in a `dev_code` field **only** when the request carries the development API key).
   - `POST /v1/otp/verify` — body `{attempt_token, code}` → `{valid: bool}` or `409 {error: "expired"}` or `429 {error: "locked", retry_after_seconds}`.
   - `POST /v1/otp/resend` — body `{identifier, purpose}` → `{attempt_token, expires_at}` (rate-limited server-side).
@@ -44,7 +44,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 ## Tests
 
 - **Unit/widget:** `in_memory_otp_repository_test.dart` asserts every method throws `OtpRepositoryException` (the no-backend honest-unavailable contract). `otp_controller_test.dart` uses `FakeAsync` to assert the countdown reaches 0 → emits `expired`, that `verify(invalid)` surfaces the field error, and that `locked` state gates the submit button exactly like the existing `_submitting` guard. Widget test renders the countdown and locked-out states in the localized harness.
-- **Integration:** reuse `createApplication`; `pumpAppFrames`, **never** `pumpAndSettle`. A `mfa-otp` integration test starts the `tools/test_server/` on a random port, overrides `otpRepositoryProvider` with `HttpOtpRepository` pointed at it, and drives issue → enter code → verify → home.
+- **Integration:** reuse `createApplication`; `pumpAppFrames`, **never** `pumpAndSettle`. A `mfa-otp` integration test starts the `tools/hono_server/` on a random port, overrides `otpRepositoryProvider` with `HttpOtpRepository` pointed at it, and drives issue → enter code → verify → home.
 - **Golden impact:** **yes** — the OTP canonical matrix case in [`canonical_matrix_golden_test.dart`](../../../test/goldens/canonical_matrix_golden_test.dart) gains a `mfa` purpose variant and a real-countdown state; requires a **re-baseline on the pinned macOS runner** via `--update-goldens`. Inspect the changed baseline (countdown text changes per second — pin a fixed `FakeAsync` value in the golden fixture so it is deterministic).
 - **Dev-gallery fixture:** extend the existing OTP case set in [`production_gallery_cases.dart`](../../../lib/features/dev_gallery/cases/production_gallery_cases.dart) with `mfa` purpose and `locked` / countdown variants, gated behind `developmentToolsEnabled`.
 
@@ -55,7 +55,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: port + `InMemoryOtpRepository` default (surfaces `common.notConnected`, never fakes success) + optional `HttpOtpRepository` override + concrete `tools/test_server/` OTP contract.
+- [x] No-backend honored as a port — **pass**: port + `InMemoryOtpRepository` default (surfaces `common.notConnected`, never fakes success) + optional `HttpOtpRepository` override + concrete `tools/hono_server/` OTP contract.
 - [x] Feature-first ownership; no `core/` / `utils/` — **pass**: port + state under `lib/features/auth/`; real impl under `lib/infrastructure/auth/`.
 - [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses existing `OtpPage` + `AuthPageScaffold`; no new shared widget.
 - [x] Motion guarded — **warn**: the countdown ring / progress and the success → navigate transition must be guarded by `MediaQuery.disableAnimationsOf(context)` with a fallback that still completes navigation (`context.goNamed`) when motion is disabled.

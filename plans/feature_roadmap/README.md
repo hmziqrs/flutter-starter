@@ -23,7 +23,7 @@ fully-featured cross-platform product. This directory is the **intake + tracking
 ## Scope
 
 Comprehensive (~35 features) per [C1](contracts.md#c1--scope-is-comprehensive). Backend-dependent
-features are real but optional — port + Noop production default + a [`tools/test_server/`](contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+features are real but optional — port + Noop production default + a [`tools/hono_server/`](contracts.md#c3--minimal-in-repo-test-server)
 contract — so the starter runs green with zero backend.
 
 ## Status table
@@ -76,7 +76,7 @@ test-server contract together, with the real impl as the final optional step.
 
 1. **P0 foundation** — [`lifecycle-observer`](features/lifecycle-observer.md),
    [`secure-store`](features/secure-store.md), [`crash-reporting`](features/crash-reporting.md).
-   No UI, no golden impact. Stand up [`tools/test_server/`](contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+   No UI, no golden impact. Stand up [`tools/hono_server/`](contracts.md#c3--minimal-in-repo-test-server)
    here so every later `server` feature has a target.
 2. **The headline three + their ports** — [`connectivity`](features/connectivity.md)
    (`ConnectivityService`), [`update-blocker`](features/update-blocker.md) (`VersionGateStore`

@@ -1,15 +1,12 @@
 # starter_hono_server
 
 A dummy static [Hono](https://hono.dev/) (TypeScript) server that implements the
-**same `/v1/*` API contract** as the in-repo Dart shelf test server at
-[`../test_server`](../test_server). It exists so the Flutter app's real HTTP
-clients can be verified against a **JavaScript** backend in addition to the
-Dart one — a cross-framework contract check.
+app's `/v1/*` API contract, so the Flutter app's real HTTP clients can be
+exercised against a live backend in dev and tests.
 
-> Like `tools/test_server`, this server is **never compiled into the app**. It
-> is a dev/test fixture only. The app ships zero-backend by default (C2); this
-> server gives the optional "real impl" adapters a second, framework-distinct
-> live endpoint to exercise.
+> This server is **never compiled into the app** — it is a dev/test fixture
+> only. The app ships zero-backend by default (C2); this server is the optional
+> live endpoint the "real impl" adapters point at when a backend is configured.
 
 ## Run
 
@@ -18,23 +15,22 @@ Node via `tsx` through `@hono/node-server`:
 
 ```sh
 # Bun (preferred)
-bun run src/index.ts --port 8787
+bun run src/index.ts --port 8080
 
 # Node / tsx
-npx tsx src/index.ts --port 8787
+npx tsx src/index.ts --port 8080
 
-# Or via the npm scripts (Bun, default port 8787)
+# Or via the npm scripts (Bun, default port 8080)
 bun run dev
 ```
 
 The port resolves from `--port` (preferred), then the `PORT` env var, then the
-default `8787`. The server binds to loopback (`127.0.0.1`) and prints
-`LISTENING <port>` once bound — the same readiness line `tools/test_server`
-emits, so the same harness can detect either.
+default `8080`. The server binds to loopback (`127.0.0.1`) and prints
+`LISTENING <port>` once bound — the readiness line the test harness pairs with a
+`GET /healthz` poll to detect when it is ready.
 
-> The justfile exposes this as `just hono-server` (see the root `justfile`);
-> `just hono-server 9000` overrides the port. `just test-server` runs the Dart
-> mirror on port 8080.
+> The justfile exposes this as `just backend` (see the root `justfile`);
+> `just backend 9000` overrides the port.
 
 ## Route table
 
@@ -47,6 +43,8 @@ emits, so the same harness can detect either.
 | POST   | `/v1/auth/register`                         | `200 {attempt_token, expires_at, channel, dev_code}` \| `409`        | `{email,password,displayName}` -> registration OTP envelope (creates a `pending` account); duplicate email -> `409 {error:'conflict'}`. |
 | POST   | `/v1/auth/refresh`                          | `200 {accessToken, refreshToken, expiresAt}`                         | `{refreshToken}` -> **rotated** token; replay of the old one -> `401`. |
 | POST   | `/v1/auth/logout`                           | `204`                                                                | Idempotent; `{refreshToken?}`. |
+| GET    | `/v1/profile`                               | `200 {displayName, username, email, bio}` \| `401`                   | Bearer auth; `username` is the email local-part; email read-only. |
+| PUT    | `/v1/profile`                               | `200 {displayName, username, email, bio}` \| `401`                   | `{displayName?, bio?}`; `bio` may be cleared to `''`; email ignored. |
 | GET    | `/v1/remote-config`                         | `200 {flags, versionPolicy, experiments, revision}` + `ETag: "1"`    | `If-None-Match: "1"` / `?rev=1` / `*` -> `304`. |
 | POST   | `/v1/otp/issue`                             | `200 {attempt_token, expires_at, channel, dev_code}`                 | `{purpose, identifier}`; `purpose` ∈ {registration, password-reset, mfa}. |
 | POST   | `/v1/otp/verify`                            | `200 {valid}` \| `200 {valid,access_token,refresh_token,expires_at,user_id}` \| `409 {error:'expired'}` \| `429 {error:'locked'}` | `{attempt_token, code}`; a **registration** verify activates the pending account and mints a session inline; unknown/expired token -> 409; too many wrong codes -> 429. |
@@ -58,9 +56,8 @@ emits, so the same harness can detect either.
 | DELETE | `/v1/notifications/register-token/:token`   | `204`                                                                | Idempotent. |
 | POST   | `/v1/notifications/permission-revoked`      | `204`                                                                | `{deviceId}`. |
 
-`/v1/` is the uniform versioning prefix for every app-facing route, matching
-`tools/test_server` (contract C9 in
-[`plans/feature_roadmap/contracts.md`](../../plans/feature_roadmap/contracts.md)).
+`/v1/` is the uniform versioning prefix for every app-facing route (contract C9
+in [`plans/feature_roadmap/contracts.md`](../../plans/feature_roadmap/contracts.md)).
 
 ### In-memory state
 
@@ -114,7 +111,7 @@ a `304 Not Modified`.
 cd tools/hono_server
 bun install        # resolve deps
 bun test           # run the contract tests (in-memory via app.request)
-bun run src/index.ts --port 8787   # run the server
+bun run src/index.ts --port 8080   # run the server
 ```
 
 ## Testing seam

@@ -34,15 +34,7 @@ jobs:
           cache: true
 
       - name: Resolve dependencies
-        run: |
-          flutter pub get
-          # `dart format .` recurses into the standalone tools/test_server
-          # package. Resolve it too, otherwise the formatter cannot read its
-          # analysis_options.yaml (`include: package:lints/recommended.yaml`,
-          # `formatter: page_width: 100`) and silently falls back to the default
-          # 80-column width — flagging the correctly 100-column-formatted files
-          # as changed.
-          (cd tools/test_server && dart pub get)
+        run: flutter pub get
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
@@ -122,25 +114,32 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
-      - name: Resolve test_server dependencies
-        run: (cd tools/test_server && dart pub get)
+      - name: Set up Bun
+        # The dummy backend (tools/hono_server) boots a live JS server for the
+        # development smoke flow. Install bun so it runs (and passes) instead of
+        # falling back to a dependency-less `npx tsx` that cannot resolve hono.
+        uses: oven-sh/setup-bun@v2
 
-      - name: Start test_server (backend for the development smoke flow)
+      - name: Install backend dependencies
+        working-directory: tools/hono_server
+        run: bun install
+
+      - name: Start backend (Hono) for the development smoke flow
         # The development smoke flow exercises register -> OTP -> profile over a
-        # real backend. Boot the in-repo test_server on an OS-chosen port and
+        # real backend. Boot the in-repo Hono server on an OS-chosen port and
         # expose its URL so AppConfig.backendBaseUrl wires the HTTP adapters.
         run: |
-          mkdir -p /tmp/test_server
-          (cd tools/test_server && dart run bin/server.dart --port 0) \
-            > /tmp/test_server/log 2>&1 &
-          echo $! > /tmp/test_server/pid
+          mkdir -p /tmp/backend
+          (cd tools/hono_server && bun run src/index.ts --port 0) \
+            > /tmp/backend/log 2>&1 &
+          echo $! > /tmp/backend/pid
           for i in $(seq 1 60); do
-            if grep -qoE 'LISTENING [0-9]+' /tmp/test_server/log; then break; fi
+            if grep -qoE 'LISTENING [0-9]+' /tmp/backend/log; then break; fi
             sleep 0.5
           done
-          PORT="$(grep -m1 -oE 'LISTENING [0-9]+' /tmp/test_server/log | awk '{print $2}')"
+          PORT="$(grep -m1 -oE 'LISTENING [0-9]+' /tmp/backend/log | awk '{print $2}')"
           if [ -z "$PORT" ]; then
-            echo 'test_server did not report a port. Log:'; cat /tmp/test_server/log; exit 1
+            echo 'backend did not report a port. Log:'; cat /tmp/backend/log; exit 1
           fi
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:$PORT/healthz" >/dev/null; then break; fi
@@ -170,11 +169,11 @@ jobs:
           -d linux
           --dart-define-from-file=config/development.json
 
-      - name: Stop test_server
+      - name: Stop backend
         if: always()
         run: |
-          if [ -f /tmp/test_server/pid ]; then
-            kill "$(cat /tmp/test_server/pid)" 2>/dev/null || true
+          if [ -f /tmp/backend/pid ]; then
+            kill "$(cat /tmp/backend/pid)" 2>/dev/null || true
           fi
 
   ubuntu-release-builds:

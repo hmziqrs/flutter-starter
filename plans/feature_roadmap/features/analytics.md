@@ -68,8 +68,8 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 - **Optional real impl** — `PosthogAnalyticsClient` (or Amplitude/Firebase/Mixpanel) constructed
   in `AppDependencies.production` only when (a) the consumer wires credentials AND (b) the user
   has opted in via `analyticsOptIn`. The override is the single seam.
-- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
-  — `tools/test_server/` exposes `POST /v1/events` accepting a batch
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server))**
+  — `tools/hono_server/` exposes `POST /v1/events` accepting a batch
   `{ "events": [ { "type": "screen_view"|"tap"|"funnel_step", "name": string,
   "props": object, "ts": iso8601 } ], "userId": string? }` and returning `204`. The
   integration test starts the server on a random port, points the real impl at it, navigates
@@ -83,7 +83,7 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   `GoRouter` route change, assert `track(ScreenView(...))` fired once with the right
   `routeName`. `noop_analytics_client_test.dart` — no-op, never throws, routes through
   `AppLogger` when verbose.
-- **Integration:** start `tools/test_server/`, override `analyticsClientProvider` with the
+- **Integration:** start `tools/hono_server/`, override `analyticsClientProvider` with the
   real impl pointed at it, navigate via `context.goNamed`, assert the server recorded a
   `screen_view` per navigation. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
 - **Golden impact:** `settings_800x1000_zh_light_language` shifts — re-baseline on the pinned

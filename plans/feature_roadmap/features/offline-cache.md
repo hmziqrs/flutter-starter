@@ -75,7 +75,7 @@ and "no backend" means no remote data source is wired — features that try to r
   typed `fetch: Future<T> Function()`; without a real network source that fetch surfaces
   `common.notConnected` and the cache serves stale (or `absent`). Never fake a populated cache
   for a source that does not exist.
-- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+- **Test-server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   implements a generic cacheable data-source route group so the offline-aware read primitive is
   exercised against real network paths:
   - `GET /v1/cache/{key}` -> `200 {data, etag, ttlSeconds}` or `304` (when `If-None-Match` matches)
@@ -95,7 +95,7 @@ and "no backend" means no remote data source is wired — features that try to r
   wrapping on I/O failure, **no** `clearAll` on the interface. `cached_future_provider` test:
   serves fresh without fetch, serves stale then refreshes when online, surfaces `notConnected`
   when offline **and** absent.
-- **Integration:** reuse `createApplication`; drive the cache against `tools/test_server` with
+- **Integration:** reuse `createApplication`; drive the cache against `tools/hono_server` with
   `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`. Assert offline stale-serve +
   online refresh + `etag`-based `304` short-circuit.
 - **Golden impact:** none directly — the cache is infra. A consuming feature that renders a

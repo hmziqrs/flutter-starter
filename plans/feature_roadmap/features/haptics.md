@@ -40,7 +40,7 @@ the reduce-motion guardrail and a user opt-out.
 
 ## Backend & test surface
 Backend-free. Production default = `DeviceHapticService` (the real device). Tests/goldens override
-with `NoopHapticService` for hermeticity — no `tools/test_server/` contract, no Mocktail. The noop
+with `NoopHapticService` for hermeticity — no `tools/hono_server/` contract, no Mocktail. The noop
 does not surface "unavailable" feedback (haptics are fire-and-forget; there is no user-facing success
 to fake).
 

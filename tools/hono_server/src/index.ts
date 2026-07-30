@@ -1,7 +1,7 @@
 /**
- * Dummy static Hono server mirroring the in-repo Dart test server's `/v1/*`
- * contract (`tools/test_server`), so the Flutter app's real HTTP clients can be
- * verified against a JS server in addition to the shelf one.
+ * The in-repo dummy backend: a static [Hono](https://hono.dev/) (TypeScript)
+ * server that implements the app's `/v1/*` API contract, so the Flutter app's
+ * real HTTP clients can be exercised against a live backend in dev and tests.
  *
  * Every route returns a canned, contract-faithful response. Minimal in-memory
  * state is kept only where the contract needs a round-trip:
@@ -11,8 +11,9 @@
  *     accepts that fixed valid code, returns 409 expired / 429 locked per the
  *     OTP contract.
  *
- * The server prints `LISTENING <port>` once bound (the same readiness line the
- * Dart server emits) so a test harness can detect when it is ready.
+ * The server prints `LISTENING <port>` once bound — the readiness line the test
+ * harness pairs with a `GET /healthz` poll to detect when it is ready. A dev/
+ * test fixture only; never compiled into the app.
  */
 
 import { Hono, type Context } from 'hono';
@@ -39,7 +40,7 @@ const REMOTE_CONFIG_PAYLOAD = {
   revision: REMOTE_CONFIG_REVISION,
 };
 
-// --- otp: lifetimes agree with `tools/test_server/lib/routes/otp.dart`.
+// --- otp: lifetimes agree with the OTP contract (plans/feature_roadmap C9).
 const OTP_CODE_TTL_MS = 90_000;
 const OTP_FREE_ATTEMPTS_BEFORE_LOCKOUT = 2;
 const OTP_LOCKED_TTL_MS = 30_000;
@@ -49,7 +50,7 @@ const KNOWN_OTP_PURPOSES = new Set(['registration', 'password-reset', 'mfa']);
 const KNOWN_IMAGE_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const ACCESS_TTL_MS = 60 * 60 * 1000;
 const MAX_SCREENSHOT_BASE64 = 2 * 1024 * 1024;
-const DEFAULT_PORT = 8787;
+const DEFAULT_PORT = 8080;
 
 /**
  * Build a Hono app over `state` (a fresh state is created when omitted). Each
@@ -100,7 +101,7 @@ export function buildApp(state: ServerState = createState()): Hono {
     state.refreshTokens.set(refreshToken, userId);
     return c.json(
       {
-        accessToken: issueToken(state, 'at'),
+        accessToken: issueAccessToken(state, userId),
         refreshToken,
         expiresAt: new Date(Date.now() + ACCESS_TTL_MS).toISOString(),
         userId,
@@ -160,7 +161,7 @@ export function buildApp(state: ServerState = createState()): Hono {
     state.refreshTokens.set(rotated, userId);
     return c.json(
       {
-        accessToken: issueToken(state, 'at'),
+        accessToken: issueAccessToken(state, userId),
         refreshToken: rotated,
         expiresAt: new Date(Date.now() + ACCESS_TTL_MS).toISOString(),
       },
@@ -176,6 +177,32 @@ export function buildApp(state: ServerState = createState()): Hono {
       state.refreshTokens.delete(decoded['refreshToken']);
     }
     return new Response(null, { status: 204 });
+  });
+
+  // --- profile: Bearer-authed GET/PUT. email is read-only; username is the
+  // email local-part; bio starts empty and is mutated by PUT (contract C9).
+  app.get('/v1/profile', (c) => {
+    const account = authenticateProfile(c, state);
+    if (account === undefined) return jsonError(c, 401, 'unauthorized');
+    return c.json(profileShape(account), 200, JSON_HEADERS);
+  });
+
+  app.put('/v1/profile', async (c) => {
+    const account = authenticateProfile(c, state);
+    if (account === undefined) return jsonError(c, 401, 'unauthorized');
+    const decoded = await parseJsonObjectTolerant(c);
+    if (decoded === null) return jsonError(c, 400, 'invalid json');
+    const displayName = decoded['displayName'];
+    if (typeof displayName === 'string' && displayName.length > 0) {
+      account.displayName = displayName;
+    }
+    const bio = decoded['bio'];
+    // bio may be explicitly cleared to empty, so accept any string (including '').
+    if (typeof bio === 'string') {
+      account.bio = bio;
+    }
+    // email is read-only — deliberately ignored if the client sends it.
+    return c.json(profileShape(account), 200, JSON_HEADERS);
   });
 
   // ---------------- remote-config ----------------
@@ -262,7 +289,7 @@ export function buildApp(state: ServerState = createState()): Hono {
         return c.json(
           {
             valid: true,
-            access_token: issueToken(state, 'at'),
+            access_token: issueAccessToken(state, account.userId),
             refresh_token: refreshToken,
             expires_at: new Date(Date.now() + ACCESS_TTL_MS).toISOString(),
             user_id: account.userId,
@@ -464,6 +491,46 @@ function userIdFor(email: string): string {
   return `user-${(h >>> 0).toString(36)}`;
 }
 
+/** Mints an access token AND records the token -> userId mapping (profile auth). */
+function issueAccessToken(state: ServerState, userId: string): string {
+  const token = issueToken(state, 'at');
+  state.accessTokens.set(token, userId);
+  return token;
+}
+
+/** First account whose userId matches, or undefined (a token may map to a user
+ * with no account record, e.g. a magic /v1/auth/issue login). */
+function findAccountByUserId(state: ServerState, userId: string): Account | undefined {
+  for (const account of state.accountsByEmail.values()) {
+    if (account.userId === userId) return account;
+  }
+  return undefined;
+}
+
+/** camelCase profile shape. username is the email's local-part. */
+function profileShape(account: Account): Record<string, string> {
+  const at = account.email.indexOf('@');
+  const username = at > 0 ? account.email.substring(0, at) : account.email;
+  return {
+    displayName: account.displayName,
+    username,
+    email: account.email,
+    bio: account.bio,
+  };
+}
+
+/** Resolves the Bearer token on [c] to the authenticated account, or undefined
+ * when the header is missing/malformed/unknown or maps to no account. */
+function authenticateProfile(c: Context, state: ServerState): Account | undefined {
+  const header = c.req.header('authorization');
+  if (typeof header !== 'string') return undefined;
+  const parts = header.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') return undefined;
+  const userId = state.accessTokens.get(parts[1]);
+  if (userId === undefined) return undefined;
+  return findAccountByUserId(state, userId);
+}
+
 function isExpiredAt(o: IssuedOtp, now: number): boolean {
   return now >= o.expiresAt;
 }
@@ -492,8 +559,7 @@ function storeOtp(state: ServerState, otp: IssuedOtp): void {
 /**
  * Single source of truth for issuing an OTP envelope (snake_case). Stores the
  * issued otp (dropping any prior outstanding issue for the identifier) and is
- * reused by `/v1/otp/issue`, `/v1/otp/resend`, and `/v1/auth/register` —
- * mirroring `tools/test_server/lib/routes/otp.dart`'s `issueOtpEnvelope`.
+ * reused by `/v1/otp/issue`, `/v1/otp/resend`, and `/v1/auth/register`.
  */
 function issueOtpEnvelope(
   state: ServerState,
@@ -517,7 +583,7 @@ function issueOtpEnvelope(
     channel: 'sms',
     // Dummy affordance: always surface the fixed code so a test/E2E driver can
     // read it without a real channel (mirrors the Dart `dev_code` affordance
-    // under X-Api-Key: dev, simplified for the cross-framework dummy).
+    // under X-Api-Key: dev, simplified for this dummy).
     dev_code: FIXED_VALID_CODE,
   };
 }
@@ -545,7 +611,7 @@ export const app = buildApp();
 
 /**
  * Resolve the listen port from `--port` (preferred), then `PORT` env, then the
- * default. Mirrors `tools/test_server/bin/server.dart`'s `_resolvePort`.
+ * default (`DEFAULT_PORT`, 8080).
  */
 export function resolvePort(
   argv: readonly string[] = process.argv,
@@ -572,15 +638,23 @@ export function resolvePort(
 }
 
 async function main(): Promise<void> {
-  const port = resolvePort();
+  const requestedPort = resolvePort();
   const server = buildApp();
+  // Print the ACTUAL bound port (not the requested one): `--port 0` asks the OS
+  // for a free port, and the test/CI harness reads this line to discover it.
+  let actualPort = requestedPort;
   if (typeof Bun !== 'undefined') {
-    Bun.serve({ port, hostname: '127.0.0.1', fetch: server.fetch });
+    const http = Bun.serve({ port: requestedPort, hostname: '127.0.0.1', fetch: server.fetch });
+    actualPort = http.port;
   } else {
     const { serve } = await import('@hono/node-server');
-    serve({ fetch: server.fetch, port, hostname: '127.0.0.1' });
+    const http = serve({ fetch: server.fetch, port: requestedPort, hostname: '127.0.0.1' });
+    const addr = http.address();
+    if (addr !== null && typeof addr !== 'string') {
+      actualPort = addr.port;
+    }
   }
-  console.log(`LISTENING ${port}`);
+  console.log(`LISTENING ${actualPort}`);
 }
 
 // Run only when this file is the entry point (so tests can import buildApp

@@ -5,10 +5,9 @@
  * everywhere EXCEPT where the contract itself needs a round-trip between two
  * calls (auth refresh-token rotation, feedback POST -> status, otp issue ->
  * verify). Those live here so `buildApp(state?)` can hand a fresh state to each
- * test, mirroring the in-memory tables in `tools/test_server/lib/routes/*`.
+ * test.
  *
- * Single-process only — no persistence across restarts, exactly like the Dart
- * test server.
+ * Single-process only — no persistence across restarts.
  */
 
 export interface IssuedOtp {
@@ -38,7 +37,7 @@ export interface FeedbackRecord {
 
 /** Status of an account in the registration lifecycle. A freshly registered
  * account is `pending` until the registration OTP verifies; verify flips it to
- * `active`. Mirrors `tools/test_server/lib/accounts.dart`'s `AccountStatus`. */
+ * `active` (contract C9). */
 export type AccountStatus = 'pending' | 'active';
 
 /** In-memory account record. `/v1/auth/register` creates a `pending` account;
@@ -55,6 +54,8 @@ export interface Account {
 export interface ServerState {
   /** refresh-token -> userId (rotated on /v1/auth/refresh). */
   refreshTokens: Map<string, string>;
+  /** access-token -> userId (resolved by /v1/profile Bearer auth). */
+  accessTokens: Map<string, string>;
   /** feedback id -> record (POST -> /status round-trip). */
   feedback: Map<string, FeedbackRecord>;
   /** attempt_token -> issued otp (issue -> verify round-trip). */
@@ -69,12 +70,12 @@ export interface ServerState {
 
 /**
  * Build a fresh state. The canonical `welcome` cache fixture is restored so a
- * freshly started server serves at least one known key without priming —
- * mirrors `tools/test_server/lib/routes/cache.dart`.
+ * freshly started server serves at least one known key without priming.
  */
 export function createState(): ServerState {
   return {
     refreshTokens: new Map(),
+    accessTokens: new Map(),
     feedback: new Map(),
     otpIssues: new Map(),
     accountsByEmail: new Map(),

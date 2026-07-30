@@ -28,7 +28,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 - **Port** — `VersionGateStore` as above.
 - **Noop/InMemory production default** — `InMemoryVersionGateStore` returns `UpdateRequirement.none`, constructed in [`AppDependencies.production`](../../lib/app/dependencies.dart). The app runs green with **zero backend**; it never fakes a hard/soft block (that would be faking success — a real `none` is honest when there is no policy source).
 - **Optional real impl** — a remote-config-backed `RemoteConfigVersionGateStore` is an **override** a consumer constructs only when they wire the backend. It shares the remote-config source family ([C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)) with [feature-flags](feature-flags.md) and [ab-experiments](ab-experiments.md) — three readers, one optional backend.
-- **Test server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server) exposes the shared `GET /v1/remote-config?deviceId=&platform=&version=` endpoint ([C9](../contracts.md#c9--test-server-route-conventions)) whose `versionPolicy` slice is `{minVersion, latestVersion, hardBlockBelow, softBlockBelow, storeUrl, message}` (the same response serves flags + experiments). The real impl maps that slice to `UpdateRequirement` via `pub_semver` compare against [`AppBuildInfo.version`](../../lib/infrastructure/platform/app_build_info.dart) (+`buildNumber`).
+- **Test server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server) exposes the shared `GET /v1/remote-config?deviceId=&platform=&version=` endpoint ([C9](../contracts.md#c9--test-server-route-conventions)) whose `versionPolicy` slice is `{minVersion, latestVersion, hardBlockBelow, softBlockBelow, storeUrl, message}` (the same response serves flags + experiments). The real impl maps that slice to `UpdateRequirement` via `pub_semver` compare against [`AppBuildInfo.version`](../../lib/infrastructure/platform/app_build_info.dart) (+`buildNumber`).
 - **Fakes** — `InMemoryVersionGateStore` for unit tests/dev-gallery (returns `none`/`soft`/`hard` per fixture). **No Mocktail.**
 
 ## Tests
@@ -45,7 +45,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: port + `InMemory` `none` default + optional real override + `tools/test_server` shared `/v1/remote-config` contract (versionPolicy slice, [C9](../contracts.md#c9--test-server-route-conventions)).
+- [x] No-backend honored as a port — **pass**: port + `InMemory` `none` default + optional real override + `tools/hono_server` shared `/v1/remote-config` contract (versionPolicy slice, [C9](../contracts.md#c9--test-server-route-conventions)).
 - [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state + pages + in-memory default.
 - [x] shared/widgets extraction only if >=3 consumers — **pass**: soft dialog **reuses** the existing [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) + the [`_showInformationDialog`](../../lib/app/routing/app_router.dart) `FDialog` pattern rather than extracting anything new.
 - [x] Motion guarded — **n/a**: pages are static.

@@ -47,7 +47,7 @@ per-platform native association config.
 Backend-free. The receiver is local; the default impl is the real `AppLinks`, owned by the
 `DeepLinkService` behind `appLinkHandlerProvider`. The feature only *matters* once a server
 **issues** links (magic-link auth via [mfa-otp](./mfa-otp.md) / [session](./session.md), or a
-referral server) — but receiving needs no backend, so no `tools/test_server/` contract belongs here
+referral server) — but receiving needs no backend, so no `tools/hono_server/` contract belongs here
 (issuance is owned by those server features). Tests override `appLinkHandlerProvider` with a fake
 driven by a `StreamController<Uri>` — no Mocktail.
 

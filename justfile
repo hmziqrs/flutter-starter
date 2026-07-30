@@ -92,23 +92,15 @@ run dev='macos':
 
     exec {{flutter}} run -d "$device" --target=lib/main_dev.dart --dart-define-from-file={{dev_config}}
 
-# Run the app wired to the in-repo test server (start it first with `just
-# test-server`). Uses config/development_backend.json, which sets
-# BACKEND_BASE_URL to http://127.0.0.1:8080 (works for macOS / iOS Simulator /
-# web). For the Android emulator, edit that file's BACKEND_BASE_URL to
-# http://10.0.2.2:8080 (the emulator's alias for host loopback).
-run-backend dev='macos':
+# Run the app wired to the in-repo dummy backend (start it first with
+# `just backend`). BACKEND_BASE_URL is injected via --dart-define over the
+# zero-backend development.json (the same merge CI's smoke flow uses), so no
+# separate config file is needed. host defaults to loopback; pass 10.0.2.2 for
+# the Android emulator (its alias for host loopback).
+run-backend dev='macos' host='127.0.0.1':
     {{flutter}} run -d {{dev}} --target=lib/main_dev.dart \
-        --dart-define-from-file=config/development_backend.json
-
-# Run the app wired to the in-repo Hono server (start it first with
-# `just hono-server`). Uses config/development_hono.json, which sets
-# BACKEND_BASE_URL to http://127.0.0.1:8787 (the Hono server's default port).
-# For the Android emulator, edit that file's BACKEND_BASE_URL to
-# http://10.0.2.2:8787.
-run-hono dev='macos':
-    {{flutter}} run -d {{dev}} --target=lib/main_dev.dart \
-        --dart-define-from-file=config/development_hono.json
+        --dart-define-from-file={{dev_config}} \
+        --dart-define=BACKEND_BASE_URL=http://{{host}}:8080
 
 # --- tests --------------------------------------------------------------------
 # All non-golden unit + widget tests (the CI quality job).
@@ -198,17 +190,11 @@ build target:
 build-ios:
     {{flutter}} build ios --release --no-codesign --dart-define-from-file={{prod_config}}
 
-# --- in-repo test servers (C3) ------------------------------------------------
-# Start the standalone shelf test server on a configurable port (default 8080).
-# Never compiled into the app — runs via `dart run` from tools/test_server.
-test-server port='8080':
-    dart run tools/test_server/bin/server.dart --port {{port}}
-
-# Start the standalone Hono (TypeScript) server — a second, framework-distinct
-# mirror of the same /v1/* API contract, for cross-framework HTTP client checks.
-# Uses Bun when available, otherwise Node via tsx. Default port 8787 (distinct
-# from test-server, so both can run at once). Never compiled into the app.
-hono-server port='8787':
+# --- in-repo dummy backend (C3) ----------------------------------------------
+# Start the standalone Hono (TypeScript) dummy backend on a configurable port
+# (default 8080). Implements the app's /v1/* API contract; never compiled into
+# the app. Uses Bun when available, otherwise Node via tsx.
+backend port='8080':
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -219,7 +205,7 @@ hono-server port='8787':
         elif command -v npm >/dev/null 2>&1; then
             npm install
         else
-            echo 'Install Bun (preferred) or Node/npm to run the Hono server.' >&2
+            echo 'Install Bun (preferred) or Node/npm to run the backend.' >&2
             exit 1
         fi
     fi
@@ -229,6 +215,6 @@ hono-server port='8787':
     elif command -v npx >/dev/null 2>&1; then
         exec npx tsx src/index.ts --port '{{port}}'
     else
-        echo 'Install Bun (preferred) or Node to run the Hono server.' >&2
+        echo 'Install Bun (preferred) or Node to run the backend.' >&2
         exit 1
     fi

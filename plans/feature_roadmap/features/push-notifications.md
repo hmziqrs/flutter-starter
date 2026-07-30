@@ -61,9 +61,9 @@ fakes success.
   `flutter_local_notifications`; a consumer constructs it (with platform credentials) and
   overrides `notificationsRepositoryProvider`. It is never constructed by default.
 - **Test-server contract** — FCM/APNs cannot be meaningfully mocked by a plain HTTP server (see
-  [C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server) known limitation). The
-  [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
-  Dart server therefore implements **only the token-registration/permission path**:
+  [C3](../contracts.md#c3--minimal-in-repo-test-server) known limitation). The
+  [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
+  Hono server therefore implements **only the token-registration/permission path**:
   - `POST /v1/notifications/register-token` `{token, platform, deviceId}` -> `204` (idempotent store)
   - `DELETE /v1/notifications/register-token/{token}` -> `204`
   - `POST /v1/notifications/permission-revoked` `{deviceId}` -> `204`
@@ -81,7 +81,7 @@ fakes success.
   ordering, cold-start tap replayed after router mount, Noop surfaces `notConnected` and never
   reports a granted token. Value-object equality on `NotificationTap`.
 - **Integration:** reuse `createApplication`; drive the registration client against the
-  `tools/test_server` with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`.
+  `tools/hono_server` with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`.
   Verify a foreground tap issues `context.pushNamed` to the existing route, not a raw URI.
 - **Golden impact:** none — no persistent UI surface (the foreground banner is transient and
   rendered by the OS). A dev-gallery fixture renders the in-app permission rationale only.

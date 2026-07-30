@@ -57,7 +57,7 @@ diagnostics-page dev triggers and the `AppBuildInfo`/settings touchpoints.
 
 ## Backend & test surface
 Backend-free. License = local Flutter registry. Share = OS sheet. Updates = OS store API (Android
-Play / iOS App Store). No `tools/test_server/` contract. Production defaults: `SharePlusShareService`
+Play / iOS App Store). No `tools/hono_server/` contract. Production defaults: `SharePlusShareService`
 + platform `AppUpdateService`; goldens/integration override with the `Noop*` impls, which return
 `unavailable` / `noUpdate` **honestly** and never fake a successful share or an available update. No
 Mocktail — the noop impls are the fakes.

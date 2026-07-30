@@ -53,7 +53,7 @@ parallel remote sources ([C4](../contracts.md#c4--port-reuse-do-not-multiply-bac
   GrowthBook / LaunchDarkly, constructed in `AppDependencies.production` only when the
   consumer wires credentials. Refresh under `config.verboseLoggingEnabled` or
   `developmentToolsEnabled` only; production builds fetch once and cache.
-- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server),
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server),
   [C9](../contracts.md#c9--test-server-route-conventions))** — the shared
   `GET /v1/remote-config?deviceId=&platform=&version=` endpoint returns one combined
   `{ "flags": {...}, "versionPolicy": {...}, "experiments": {...}, "revision": int }` response;
@@ -70,7 +70,7 @@ parallel remote sources ([C4](../contracts.md#c4--port-reuse-do-not-multiply-bac
   `FeatureFlags.defaults()`; controller emits on `changes()` stream; getter accessors return
   typed values. `in_memory_feature_flags_source_test.dart` — `StreamController`-backed fake
   emits on demand.
-- **Integration:** start `tools/test_server/`, override `featureFlagsSourceProvider` with the
+- **Integration:** start `tools/hono_server/`, override `featureFlagsSourceProvider` with the
   real impl pointed at it, flip a flag, assert a downstream widget reacts. Use `pumpAppFrames`
   (8 frames), never `pumpAndSettle`.
 - **Golden impact:** none for this feature itself; a gated UI change downstream may force a

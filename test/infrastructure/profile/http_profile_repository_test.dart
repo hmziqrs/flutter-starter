@@ -1,10 +1,11 @@
 // End-to-end coverage for the real HTTP profile adapter
-// (`HttpProfileRepository`) against the LIVE in-repo Dart test server
-// (`tools/test_server`). No client is stubbed: the adapter speaks to a real
-// shelf backend over a loopback socket. The authenticated access token is
+// (`HttpProfileRepository`) against the LIVE in-repo Hono server
+// (`tools/hono_server`). No client is stubbed: the adapter speaks to a real
+// Hono backend over a loopback socket. The authenticated access token is
 // obtained by driving the real registration -> verify flow through the auth +
 // OTP HTTP adapters, so the whole path (auth -> OTP -> profile) is exercised
-// against one booted server.
+// against one booted server. Shares `HonoServerHandle` with the auth + e2e
+// tests. The whole group is SKIPPED (not failed) on hosts without a JS runtime.
 
 import 'dart:io';
 
@@ -20,11 +21,21 @@ import 'package:starter/infrastructure/auth/http_otp_client.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/profile/http_profile_repository.dart';
 
-import '../test_server_handle.dart';
+import '../hono_server_handle.dart';
 
 void main() {
-  group('HttpProfileRepository (real dart:io <-> live shelf)', () {
-    late TestServerHandle server;
+  final runtime = JsRuntime.resolve();
+  if (runtime == null) {
+    test(
+      'skipped: no JS runtime (bun or npx tsx) available',
+      () {},
+      skip: 'no JS runtime (bun or npx tsx) available on PATH',
+    );
+    return;
+  }
+
+  group('HttpProfileRepository (real dart:io <-> live Hono)', () {
+    late HonoServerHandle server;
     late HttpAuthClient authClient;
     late HttpOtpClient otpClient;
     late HttpProfileRepository profileRepo;
@@ -35,7 +46,7 @@ void main() {
     String uniqueEmail() => 'profile-${emailSeq++}@e2e.test';
 
     setUpAll(() async {
-      server = await TestServerHandle.start();
+      server = await HonoServerHandle.start(runtime: runtime);
       // A single shared Dio (the composition-root shape) is injected into all
       // three adapters so the full auth -> OTP -> profile path runs over Dio.
       final dio = buildAppDio(server.baseUri);

@@ -58,7 +58,7 @@ fakes success.
 - **Optional real override** — `HttpFeedbackTransport` posts to the backend; a consumer
   constructs it (with endpoint + auth headers) and overrides `feedbackTransportProvider`. Never
   constructed by default.
-- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+- **Test-server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   implements the feedback ingest route group:
   - `POST /v1/feedback` `{message, email?, screenshotMime?, screenshotBase64?, appMetadata:{version,platform,locale}}`
     -> `201 {id}` or `422` (validation) or `413` (payload too large)
@@ -77,7 +77,7 @@ fakes success.
   `InMemoryFeedbackTransport` returning `accepted` flips state to `success` and clears the draft.
   Widget test: `FSheet` opens/closes, Escape dismisses without submitting, screenshot toggle
   reachable, motion guard renders the static fallback.
-- **Integration:** reuse `createApplication`; start `tools/test_server` on a random port and
+- **Integration:** reuse `createApplication`; start `tools/hono_server` on a random port and
   override `feedbackTransportProvider` with `HttpFeedbackTransport` pointed at it. Submit a real
   payload with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`; assert the server
   received the POST and the UI reached `success`.

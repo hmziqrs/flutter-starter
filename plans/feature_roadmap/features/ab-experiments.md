@@ -66,7 +66,7 @@ local assignment, not faked remote data.
   `experimentSourceProvider`. Never constructed by default; the remote source must degrade to the
   deterministic table when offline (read [`ConnectivityService`](connectivity.md)) rather than
   throwing.
-- **Test-server contract** — [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+- **Test-server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   implements the shared remote-config endpoint ([C9](../contracts.md#c9--test-server-route-conventions)):
   - `GET /v1/remote-config?deviceId=<stableId>&platform=<>&version=<>`
     -> `200 {experiments: {<key>: {variant, payload, sticky}}, flags: {...}, versionPolicy: {...}, revision: int}`
@@ -85,7 +85,7 @@ local assignment, not faked remote data.
   a large synthetic id set (statistical sanity, not a hard assertion); adding a new
   `ExperimentKey` does not re-bucket existing keys; remote-source failure degrades to the
   deterministic table without surfacing an error to the UI.
-- **Integration:** reuse `createApplication`; point the remote source at `tools/test_server` and
+- **Integration:** reuse `createApplication`; point the remote source at `tools/hono_server` and
   assert stickiness across a cold restart with `pumpAppFrames` (8 bounded frames), **never**
   `pumpAndSettle`.
 - **Golden impact:** **warn** — experiments have no UI of their own, but a variant that changes

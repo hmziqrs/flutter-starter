@@ -62,8 +62,8 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 - **Optional real impl** — constructed in `AppDependencies.production` only when the consumer
   provides an endpoint; never by default. Same override shape as the optional real
   [`CrashReporter`](crash-reporting.md).
-- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
-  — `tools/test_server/` exposes the auth route group:
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server))**
+  — `tools/hono_server/` exposes the auth route group:
   - `POST /v1/auth/issue` — `{ email, password }` -> `{ accessToken, refreshToken, expiresAt, userId }`
     or `401` (`userId` seeds `AuthSession.userId`; `/refresh` inherits the same identity from the
     rotated token).
@@ -84,7 +84,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   reading the refresh-token key back via the fake's per-key `readString`); access token never
   persisted. `in_memory_auth_repository_test.dart` — surfaces `AuthException.notConnected`
   when unseeded.
-- **Integration:** start `tools/test_server/`, override `authRepositoryProvider` with the real
+- **Integration:** start `tools/hono_server/`, override `authRepositoryProvider` with the real
   impl pointed at it, drive login via the existing `LoginPage` callback chain, assert the
   redirect lets the user through. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
 - **Golden impact:** none directly; downstream auth-flow screens may shift copy if a session

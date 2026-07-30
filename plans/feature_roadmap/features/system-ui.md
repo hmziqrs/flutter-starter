@@ -35,7 +35,7 @@ devices. Pure presentation/config — no backend, no new dependency (built-in `S
 
 ## Backend & test surface
 Backend-free. The default and only impl is the real device (`SystemChrome`). No test-server
-contract, no `tools/test_server/` route. Tests assert the pure style construction and the
+contract, no `tools/hono_server/` route. Tests assert the pure style construction and the
 PlatformCapabilities gating; they do not touch real chrome (hermetic).
 
 ## Tests

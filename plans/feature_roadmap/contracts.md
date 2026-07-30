@@ -29,20 +29,21 @@ feature is built **for real** behind a four-part contract:
 3. **Optional real impl** — the production adapter (Sentry, Firebase, a real HTTP client) is an
    **override** a consumer constructs only when they wire credentials. It is never constructed
    by default.
-4. **Minimal test/dev server** at [`tools/test_server/`](#c3--minimal-in-repo-test-server-tools-test_server) — a Dart server that implements the
-   real contract so integration tests and the `development` config exercise actual network
-   paths against a live (local) endpoint.
+4. **Minimal test/dev server** at [`tools/hono_server/`](#c3--minimal-in-repo-test-server) — a TypeScript (Hono) server that
+   implements the real contract so integration tests and `just run-backend` exercise actual
+   network paths against a live (local) endpoint.
 
-## C3 — Minimal in-repo test server (`tools/test_server/`)
+## C3 — Minimal in-repo test server
 
-A small Dart server (shelf or dart_frog) lives under `tools/test_server/` and implements the
-real backend contracts for dev runs and integration tests. It is **never compiled into release
-builds** — it has no path into `lib/`, is not a Flutter dependency, and is excluded from
-production targets.
+A small TypeScript ([Hono](https://hono.dev/)) server lives under `tools/hono_server/` and
+implements the real backend contracts for dev runs and integration tests. It is **never compiled
+into release builds** — it has no path into `lib/`, is not a Flutter dependency, and is excluded
+from production targets. It runs under Bun (preferred) or Node via `tsx`; the live-server tests
+skip gracefully on hosts without a JS runtime.
 
-- **Run:** a `just test-server` recipe starts it on a configurable port.
+- **Run:** a `just backend` recipe starts it on a configurable port (default 8080).
 - **Wire:** integration tests start it on a random port and point the feature **real impls** at
-  it via override; the `development` config may point at a fixed local URL.
+  it via override; `just run-backend [host]` points the app at a fixed local URL.
 - **Contracts implemented** (one route group per backend feature): version policy
   (min/latest + store URL) → [update-blocker](features/update-blocker.md); crash ingest →
   [crash-reporting](features/crash-reporting.md); auth issue/refresh/logout →
@@ -126,7 +127,7 @@ so the table is the single live view of progress.
 
 ## C9 — Test-server route conventions
 
-The `tools/test_server/` ([C3](#c3--minimal-in-repo-test-server-tools-test_server)) exposes a
+The `tools/hono_server/` ([C3](#c3--minimal-in-repo-test-server)) exposes a
 stable, documented route table so every `server` feature's real impl points at a known endpoint
 and integration tests are deterministic.
 
@@ -146,7 +147,7 @@ and integration tests are deterministic.
   (FCM/APNs cannot be mocked by a plain HTTP server) — only the token-registration/permission
   path: `POST /v1/notifications/register-token`, `DELETE /v1/notifications/register-token/{token}`,
   `POST /v1/notifications/permission-revoked`. Message delivery is tested via
-  `flutter_local_notifications` + a fake messaging repo ([C3](#c3--minimal-in-repo-test-server-tools-test_server) limitation).
+  `flutter_local_notifications` + a fake messaging repo ([C3](#c3--minimal-in-repo-test-server) limitation).
 - **Never** compiled into release builds; integration runs bind a random port.
 
 
@@ -160,7 +161,7 @@ Every feature doc and implementation must satisfy these guardrails. Re-run the l
 
 Backend-dependent features ship **all four** parts of [C2](#c2--backend-stance-port--noop-production-default--optional-real-impl--test-server):
 port, Noop/InMemory production default (runs green, surfaces `common.notConnected`, never fakes
-success), optional real override, and a `tools/test_server/` contract. Verify no widget calls a
+success), optional real override, and a `tools/hono_server/` contract. Verify no widget calls a
 plugin directly — every side effect goes through a port. Verify the Noop default does **not**
 return success for an action that has no backend.
 

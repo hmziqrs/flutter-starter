@@ -6,9 +6,8 @@ plugins:
 analyzer:
   exclude:
     - "**/*.g.dart"
-    # `tools/test_server` is a standalone Dart package with its own
-    # pubspec/analysis_options; it is analyzed and tested separately via
-    # `cd tools/test_server && dart analyze && dart test`.
+    # `tools/hono_server` is a standalone TypeScript package (Bun/Hono),
+    # validated via `cd tools/hono_server && bun test` — not Dart-analyzed.
     - "tools/**"
   language:
     strict-casts: true

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Dummy static Hono server mirroring tools/test_server's /v1/* API contract for cross-framework Flutter HTTP client verification.",
+  "description": "The in-repo dummy backend: a static Hono (TypeScript) server implementing the app's /v1/* API contract for Flutter HTTP client dev and testing.",
   "scripts": {
     "dev": "bun run src/index.ts",
     "start": "bun run src/index.ts",

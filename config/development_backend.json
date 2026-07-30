@@ -1,8 +1,0 @@
-{
-  "APP_ENV": "development",
-  "ENABLE_VERBOSE_LOGGING": "true",
-  "ENABLE_DEV_TOOLS": "true",
-  "IOS_APPLE_ID": "",
-  "ALLOWED_DEEP_LINK_HOSTS": "",
-  "BACKEND_BASE_URL": "http://127.0.0.1:8080"
-}

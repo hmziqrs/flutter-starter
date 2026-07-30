@@ -55,8 +55,8 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 - **Optional real impl** — `SentryCrashReporter` (or `FirebaseCrashReporter`) constructed in
   `AppDependencies.production` **only** when `AppConfig` exposes a DSN. The consumer flips one
   override; the default path never depends on a backend.
-- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server))**
-  — `tools/test_server/` exposes `POST /v1/crashes` accepting
+- **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server))**
+  — `tools/hono_server/` exposes `POST /v1/crashes` accepting
   `{ "message": string, "stack": string?, "context": object, "platform": string,
   "appVersion": string }`, returning `204 No Content`. It stores the last N crashes in memory
   for inspection. The real-impl integration test starts the server on a random port, points
@@ -72,7 +72,7 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   calls BOTH `logger.error` and `reporter.recordError`. Invoke `_installErrorHandlers` directly
   with fakes (`createApplication` does not install error handlers today), then drive a synthetic
   `FlutterError`/platform error.
-- **Integration:** start `tools/test_server/`, override `crashReporterProvider` with
+- **Integration:** start `tools/hono_server/`, override `crashReporterProvider` with
   `SentryCrashReporter` pointed at it, drive a synthetic throw via `createApplication`, assert
   the server recorded it. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
 - **Golden impact:** none.
@@ -120,5 +120,5 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   path) and read via `crashReporterProvider` only by the `DiagnosticsPage` (widget path).
 - **Sequencing:** ship in the P0 foundation bundle alongside
   [`secure-store`](secure-store.md) and the lifecycle observer — no UI, no golden impact, and
-  it is the natural place to stand up [`tools/test_server/`](../contracts.md#c3--minimal-in-repo-test-server-tools-test_server)
+  it is the natural place to stand up [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   so every later `server` feature has a target.

@@ -1,8 +1,10 @@
 // End-to-end coverage for the real HTTP auth + OTP adapters
-// (`HttpAuthClient`, `HttpOtpClient`) against the LIVE in-repo Dart test server
-// (`tools/test_server`). No client is stubbed: the adapters speak to a real
-// shelf backend over a loopback socket. Mirrors
-// `test/e2e/hono_server_e2e_test.dart`'s subprocess harness.
+// (`HttpAuthClient`, `HttpOtpClient`) against the LIVE in-repo Hono server
+// (`tools/hono_server`). No client is stubbed: the adapters speak to a real
+// Hono backend over a loopback socket. Shares `HonoServerHandle` with
+// `test/e2e/hono_server_e2e_test.dart`. The whole group is SKIPPED (not failed)
+// on hosts without a JS runtime so a host lacking bun/Node does not go red; it
+// runs and must pass wherever bun is installed, which the repo documents.
 
 import 'dart:io';
 
@@ -15,11 +17,21 @@ import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-import '../test_server_handle.dart';
+import '../hono_server_handle.dart';
 
 void main() {
-  group('HttpAuthClient + HttpOtpClient (real dart:io <-> live shelf)', () {
-    late TestServerHandle server;
+  final runtime = JsRuntime.resolve();
+  if (runtime == null) {
+    test(
+      'skipped: no JS runtime (bun or npx tsx) available',
+      () {},
+      skip: 'no JS runtime (bun or npx tsx) available on PATH',
+    );
+    return;
+  }
+
+  group('HttpAuthClient + HttpOtpClient (real dart:io <-> live Hono)', () {
+    late HonoServerHandle server;
     late HttpAuthClient authClient;
     late HttpOtpClient otpClient;
 
@@ -29,7 +41,7 @@ void main() {
     String uniqueEmail() => 'auth-${emailSeq++}@e2e.test';
 
     setUpAll(() async {
-      server = await TestServerHandle.start();
+      server = await HonoServerHandle.start(runtime: runtime);
       // A single shared Dio (the composition-root shape) is injected into both
       // adapters so they exercise the real Dio <-> shelf loopback path.
       final dio = buildAppDio(server.baseUri);

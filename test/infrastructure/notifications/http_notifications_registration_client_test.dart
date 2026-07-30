@@ -6,9 +6,9 @@ import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/http_notifications_registration_client.dart';
 
-/// Boots a tiny `dart:io` `HttpServer` that mimics the test-server push
+/// Boots a tiny `dart:io` `HttpServer` that mimics the backend's push
 /// contract (C9) for the registration / unregister / permission-revoked path.
-/// Lives entirely inside this test (no `package:shelf` / `package:test_server`
+/// Lives entirely inside this test (no `package:shelf` / in-repo backend
 /// dependency on the app) so the production dependency tree stays clean. The
 /// client under test exercises the real HTTP path against a live endpoint.
 Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})> _bootServer({
