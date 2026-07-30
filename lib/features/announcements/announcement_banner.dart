@@ -131,10 +131,11 @@ class _AnnouncementBannerSlot extends StatelessWidget {
 /// dev-gallery fixture (a fixed announcement with no-op callbacks), so the
 /// preview is fully deterministic.
 ///
-/// Uses [FAlert] for the status card (its `Directionality`-aware layout flips
-/// the icon/title edge in RTL) plus trailing action + dismiss controls in a
-/// [Row] — the row honors `Directionality`, so the CTA and dismiss button flip
-/// to the leading edge in Arabic without manual mirroring.
+/// Uses [FAlert] for the status card. [FAlert] exposes no trailing/actions slot,
+/// so the dismiss and action controls are embedded in its `title` row — this
+/// keeps them INSIDE the alert's bordered card instead of floating beside it.
+/// The title [Row] honors `Directionality`, so the controls flip to the leading
+/// edge in Arabic with no manual mirroring.
 class AnnouncementBannerView extends StatelessWidget {
   const AnnouncementBannerView({
     required this.announcement,
@@ -166,49 +167,62 @@ class AnnouncementBannerView extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.sm,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: FAlert(
-                    variant: presentation.variant,
-                    icon: Icon(
-                      presentation.icon,
-                      size: 18,
-                      semanticLabel: presentation.severityLabel,
-                    ),
-                    title: Text(
-                      announcement.title(translations),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      announcement.message(translations),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+            // Full width so [FAlert]'s internal title/subtitle rows wrap against
+            // the screen edge regardless of the parent's cross-axis alignment
+            // (production: Positioned left/right = 0; gallery: a centered
+            // Column). Without this, a centered parent would let the alert
+            // shrink-to-fit and the title text would overflow.
+            child: SizedBox(
+              width: double.infinity,
+              child: FAlert(
+                variant: presentation.variant,
+                icon: Icon(
+                  presentation.icon,
+                  size: 18,
+                  semanticLabel: presentation.severityLabel,
                 ),
-                if (actionRoute != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  FButton(
-                    variant: .outline,
-                    size: .sm,
-                    onPress: onAction,
-                    child: Text(translations.announcements.actionLearnMore),
-                  ),
-                ],
-                if (announcement.dismissible) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  FButton.icon(
-                    variant: .ghost,
-                    size: .sm,
-                    semanticsLabel: translations.announcements.dismiss,
-                    onPress: onDismiss,
-                    child: const Icon(FLucideIcons.x, size: 16),
-                  ),
-                ],
-              ],
+                // [FAlert] has no trailing/actions slot, so the dismiss and
+                // action controls live in its title row. This renders them
+                // INSIDE the alert's bordered card (the previous layout floated
+                // them beside it). The Row honors Directionality: in RTL the
+                // controls flip to the leading edge with no manual mirroring.
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        announcement.title(translations),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (actionRoute != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      FButton(
+                        variant: .outline,
+                        size: .sm,
+                        onPress: onAction,
+                        child: Text(translations.announcements.actionLearnMore),
+                      ),
+                    ],
+                    if (announcement.dismissible) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      FButton.icon(
+                        variant: .ghost,
+                        size: .sm,
+                        semanticsLabel: translations.announcements.dismiss,
+                        onPress: onDismiss,
+                        child: const Icon(FLucideIcons.x, size: 16),
+                      ),
+                    ],
+                  ],
+                ),
+                subtitle: Text(
+                  announcement.message(translations),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ),
         ),
