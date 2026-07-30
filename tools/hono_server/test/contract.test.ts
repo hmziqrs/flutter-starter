@@ -149,6 +149,105 @@ describe('POST /v1/auth/{issue,refresh,logout}', () => {
   });
 });
 
+describe('POST /v1/auth/register + registration OTP verify', () => {
+  it('register -> 200 with the OTP issue envelope (snake_case)', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/auth/register', {
+      method: 'POST',
+      body: { email: 'sam@example.com', password: 'Password1', displayName: 'Sam Rivera' },
+      headers: { 'x-api-key': 'dev' },
+    });
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(typeof body['attempt_token']).toBe('string');
+    expect(typeof body['expires_at']).toBe('string');
+    expect(body['channel']).toBe('sms');
+    expect(body['dev_code']).toBe('123456');
+  });
+
+  it('register -> 400 when a required field is missing', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/auth/register', {
+      method: 'POST',
+      body: { email: 'sam@example.com', password: 'Password1' },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('register -> 409 conflict when the email is already registered', async () => {
+    const app = buildApp();
+    await call(app, '/v1/auth/register', {
+      method: 'POST',
+      body: { email: 'sam@example.com', password: 'Password1', displayName: 'Sam Rivera' },
+    });
+    const dup = await call(app, '/v1/auth/register', {
+      method: 'POST',
+      body: { email: 'sam@example.com', password: 'Password1', displayName: 'Sam Rivera' },
+    });
+    expect(dup.status).toBe(409);
+    expect((await json(dup))['error']).toBe('conflict');
+  });
+
+  it('register -> verify activates the account, mints a session, and the refresh token rotates', async () => {
+    const app = buildApp();
+    const issued = await call(app, '/v1/auth/register', {
+      method: 'POST',
+      body: { email: 'alex@example.com', password: 'Password1', displayName: 'Alex' },
+      headers: { 'x-api-key': 'dev' },
+    });
+    const envelope = await json(issued);
+
+    const verify = await call(app, '/v1/otp/verify', {
+      method: 'POST',
+      body: { attempt_token: envelope['attempt_token'], code: envelope['dev_code'] },
+    });
+    expect(verify.status).toBe(200);
+    const v = await json(verify);
+    expect(v['valid']).toBe(true);
+    expect(typeof v['access_token']).toBe('string');
+    expect(typeof v['refresh_token']).toBe('string');
+    expect(typeof v['expires_at']).toBe('string');
+    expect(typeof v['user_id']).toBe('string');
+
+    // The refresh token minted at verify is usable and rotates on refresh.
+    const refresh = await call(app, '/v1/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken: v['refresh_token'] },
+    });
+    expect(refresh.status).toBe(200);
+
+    // Replay of the now-rotated token -> 401.
+    const replay = await call(app, '/v1/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken: v['refresh_token'] },
+    });
+    expect(replay.status).toBe(401);
+
+    // A replayed verify of the consumed attempt token -> 409 expired.
+    const reverify = await call(app, '/v1/otp/verify', {
+      method: 'POST',
+      body: { attempt_token: envelope['attempt_token'], code: envelope['dev_code'] },
+    });
+    expect(reverify.status).toBe(409);
+  });
+
+  it('verify -> {valid:true} with no tokens when the purpose is not registration', async () => {
+    const app = buildApp();
+    const issued = await call(app, '/v1/otp/issue', {
+      method: 'POST',
+      body: { purpose: 'mfa', identifier: 'mfa@example.com' },
+    });
+    const envelope = await json(issued);
+    const verify = await call(app, '/v1/otp/verify', {
+      method: 'POST',
+      body: { attempt_token: envelope['attempt_token'], code: envelope['dev_code'] },
+    });
+    const v = await json(verify);
+    expect(v['valid']).toBe(true);
+    expect(v['access_token']).toBeUndefined();
+  });
+});
+
 describe('GET /v1/remote-config', () => {
   it('returns 200 with all slices + revision + etag header', async () => {
     const app = buildApp();

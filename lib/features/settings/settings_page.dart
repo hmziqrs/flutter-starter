@@ -8,6 +8,7 @@ import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/feedback/feedback_sheet.dart';
 import 'package:starter/features/security/passcode_controller.dart';
+import 'package:starter/features/settings/accessibility_settings_page.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -23,6 +24,7 @@ import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
 enum SettingsSection {
   appearance('appearance'),
   language('language'),
+  accessibility('accessibility'),
   account('account'),
   subscription('subscription'),
   privacyAbout('privacy-about');
@@ -35,6 +37,7 @@ enum SettingsSection {
     return switch (value) {
       'appearance' => SettingsSection.appearance,
       'language' => SettingsSection.language,
+      'accessibility' => SettingsSection.accessibility,
       'account' => SettingsSection.account,
       'subscription' => SettingsSection.subscription,
       'privacy-about' => SettingsSection.privacyAbout,
@@ -86,6 +89,7 @@ class SettingsPage extends ConsumerWidget {
         ? switch (section) {
             SettingsSection.appearance => const _AppearanceSettingsContent(),
             SettingsSection.language => const _LanguageSettingsContent(),
+            SettingsSection.accessibility => const _AccessibilitySettingsContent(),
             SettingsSection.account => _AccountSettingsContent(
               onOpenProfile: onOpenProfile,
               onOpenLogin: onOpenLogin,
@@ -273,6 +277,7 @@ class _SettingsWideLayout extends StatelessWidget {
                       ),
                       FSidebarItem(
                         key: const ValueKey('settings-wide-accessibility'),
+                        selected: section == SettingsSection.accessibility,
                         icon: const Icon(FLucideIcons.accessibility),
                         label: Text(translations.settings.accessibility.title),
                         onPress: onOpenAccessibility,
@@ -314,6 +319,7 @@ class _SettingsWideLayout extends StatelessWidget {
           child: switch (section) {
             SettingsSection.appearance => const _AppearanceSettingsContent(),
             SettingsSection.language => const _LanguageSettingsContent(),
+            SettingsSection.accessibility => const _AccessibilitySettingsContent(),
             SettingsSection.account => _AccountSettingsContent(
               onOpenProfile: onOpenProfile,
               onOpenLogin: onOpenLogin,
@@ -1196,6 +1202,20 @@ class _LocaleTile extends StatelessWidget {
       selected: selected,
       suffix: Icon(selected ? FLucideIcons.circleCheck : FLucideIcons.circle),
       onPress: onPress,
+    );
+  }
+}
+
+class _AccessibilitySettingsContent extends StatelessWidget {
+  const _AccessibilitySettingsContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsScrollFrame(
+      title: context.t.settings.accessibility.title,
+      // Shared with the standalone AccessibilitySettingsPage so the preset UI is
+      // identical in-pane (wide/desktop) and standalone (gallery/tests).
+      child: const AccessibilityPresetSelector(),
     );
   }
 }

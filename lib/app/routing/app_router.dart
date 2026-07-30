@@ -45,7 +45,6 @@ import 'package:starter/features/security/passcode_page.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
-import 'package:starter/features/settings/accessibility_settings_page.dart';
 import 'package:starter/features/settings/license_page.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
@@ -141,7 +140,10 @@ GoRouter buildAppRouter({
               GoRoute(
                 name: AppRoutes.accessibilitySettings,
                 path: AppRoutes.accessibilitySettingsPath,
-                builder: (context, state) => const AccessibilitySettingsPage(),
+                // Routed through SettingsPage (like appearance/language) so the
+                // wide two-pane sidebar stays put on desktop; accessibility is a
+                // first-class SettingsSection pane, not a standalone page.
+                builder: (context, state) => _settingsPage(context, SettingsSection.accessibility),
               ),
               GoRoute(
                 name: AppRoutes.aboutLicense,
@@ -963,7 +965,7 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
     section: section,
     onOpenAppearance: () => _openSettingsSection(context, SettingsSection.appearance),
     onOpenLanguage: () => _openSettingsSection(context, SettingsSection.language),
-    onOpenAccessibility: () => context.pushNamed(AppRoutes.accessibilitySettings),
+    onOpenAccessibility: () => _openSettingsSection(context, SettingsSection.accessibility),
     onOpenAccount: () => _openSettingsSection(context, SettingsSection.account),
     onOpenSubscription: () => _openSettingsSection(context, SettingsSection.subscription),
     onOpenPrivacyAbout: () => _openSettingsSection(context, SettingsSection.privacyAbout),

@@ -48,14 +48,22 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
     side: FLayout.btt,
     draggable: false,
     useSafeArea: true,
-    builder: (sheetContext) => EscapeDismissibleOverlay(
-      child: PermissionRationaleBody(
-        permission: permission,
-        permanentlyDenied: permanentlyDenied,
-        onContinue: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.continueRequest),
-        onOpenSettings: () =>
-            Navigator.of(sheetContext).pop(PermissionRationaleResult.openSettings),
-        onDismiss: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.dismiss),
+    builder: (sheetContext) => ColoredBox(
+      // ForUI's FSheet paints no surface of its own (the route barrier only
+      // dims the app behind via an image filter). Give the sheet an opaque
+      // background so the rationale reads cleanly instead of showing through to
+      // the dimmed app. Mirrors showFeedbackSheet.
+      color: sheetContext.theme.colors.background,
+      child: EscapeDismissibleOverlay(
+        child: PermissionRationaleBody(
+          permission: permission,
+          permanentlyDenied: permanentlyDenied,
+          onContinue: () =>
+              Navigator.of(sheetContext).pop(PermissionRationaleResult.continueRequest),
+          onOpenSettings: () =>
+              Navigator.of(sheetContext).pop(PermissionRationaleResult.openSettings),
+          onDismiss: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.dismiss),
+        ),
       ),
     ),
   );

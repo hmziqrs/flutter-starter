@@ -36,6 +36,22 @@ export interface FeedbackRecord {
   acceptedAt: number;
 }
 
+/** Status of an account in the registration lifecycle. A freshly registered
+ * account is `pending` until the registration OTP verifies; verify flips it to
+ * `active`. Mirrors `tools/test_server/lib/accounts.dart`'s `AccountStatus`. */
+export type AccountStatus = 'pending' | 'active';
+
+/** In-memory account record. `/v1/auth/register` creates a `pending` account;
+ * `/v1/otp/verify` (registration) activates it and mints a session inline. */
+export interface Account {
+  userId: string;
+  email: string;
+  password: string;
+  displayName: string;
+  bio: string;
+  status: AccountStatus;
+}
+
 export interface ServerState {
   /** refresh-token -> userId (rotated on /v1/auth/refresh). */
   refreshTokens: Map<string, string>;
@@ -43,6 +59,8 @@ export interface ServerState {
   feedback: Map<string, FeedbackRecord>;
   /** attempt_token -> issued otp (issue -> verify round-trip). */
   otpIssues: Map<string, IssuedOtp>;
+  /** email -> account (register creates pending; verify activates). */
+  accountsByEmail: Map<string, Account>;
   /** Primed cacheable entries (canonical `welcome` fixture included). */
   cacheEntries: Map<string, CacheRecord>;
   /** Monotonic counters so issued tokens/ids never collide in one process. */
@@ -59,6 +77,7 @@ export function createState(): ServerState {
     refreshTokens: new Map(),
     feedback: new Map(),
     otpIssues: new Map(),
+    accountsByEmail: new Map(),
     cacheEntries: new Map<string, CacheRecord>([
       [
         'welcome',

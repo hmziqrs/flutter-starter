@@ -27,10 +27,17 @@ Future<bool> showFeedbackSheet({required BuildContext context}) async {
     context: context,
     side: FLayout.btt,
     useSafeArea: true,
-    builder: (sheetContext) => EscapeDismissibleOverlay(
-      child: FeedbackSheetBody(
-        onDismiss: () => Navigator.of(sheetContext).maybePop(false),
-        onAccepted: () => Navigator.of(sheetContext).maybePop(true),
+    builder: (sheetContext) => ColoredBox(
+      // ForUI's FSheet paints no surface of its own (the route barrier only
+      // dims the app behind via an image filter). Give the sheet an opaque
+      // background so the form reads cleanly instead of showing through to the
+      // dimmed app. Mirrors showPermissionRationaleSheet.
+      color: sheetContext.theme.colors.background,
+      child: EscapeDismissibleOverlay(
+        child: FeedbackSheetBody(
+          onDismiss: () => Navigator.of(sheetContext).maybePop(false),
+          onAccepted: () => Navigator.of(sheetContext).maybePop(true),
+        ),
       ),
     ),
   );

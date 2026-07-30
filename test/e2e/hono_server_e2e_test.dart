@@ -13,13 +13,20 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/experiments/deterministic_experiment_source.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/force_update/remote_config_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
+import 'package:starter/features/session/auth_repository.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
+import 'package:starter/infrastructure/auth/http_auth_client.dart';
+import 'package:starter/infrastructure/auth/http_otp_client.dart';
+import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/http_notifications_registration_client.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/remote_config/remote_config_client.dart';
@@ -161,6 +168,10 @@ void main() {
     // by the time any test body reads it. Kept as a top-level group local so the
     // failure-path test can still reference a deliberately wrong URL.
     late final Uri baseUri;
+    // Real auth/OTP adapters over a shared Dio (the composition-root shape) so
+    // the auth tests exercise the live dart:io <-> JS Hono loopback socket.
+    late HttpAuthClient authClient;
+    late HttpOtpClient otpClient;
 
     setUpAll(() async {
       final handle = await _HonoServerHandle.start(
@@ -170,6 +181,9 @@ void main() {
       );
       server = handle;
       baseUri = Uri.parse('http://127.0.0.1:${handle.port}');
+      final dio = buildAppDio(baseUri);
+      authClient = HttpAuthClient(baseUrl: baseUri, dio: dio);
+      otpClient = HttpOtpClient(baseUrl: baseUri, dio: dio);
     });
 
     tearDownAll(() async {
@@ -246,6 +260,81 @@ void main() {
         );
       },
     );
+
+    // Auth (register -> OTP verify -> login -> refresh -> logout) driving the
+    // REAL HttpAuthClient / HttpOtpClient against the live Hono server. This is
+    // the cross-framework session/OTP contract check: a JS backend must satisfy
+    // the same C9 contract the Dart shelf server does. Mirrors
+    // test/infrastructure/auth/http_auth_client_test.dart. Each test mutates
+    // server-side account/token state, so unique emails keep them independent.
+    var authEmailSeq = 0;
+    String authEmail() => 'hono-e2e-${authEmailSeq++}@example.com';
+
+    test('register returns an OtpIssueResult with attemptToken + sms channel', () async {
+      final result = await authClient.register(
+        credentials: AuthCredentials(email: authEmail(), password: 'Password1'),
+        displayName: 'Sam Rivera',
+      );
+      expect(result.attemptToken, isNotEmpty);
+      expect(result.channel, OtpDeliveryChannel.sms);
+      expect(result.expiresAt.isAfter(DateTime.now().toUtc()), isTrue);
+    });
+
+    test('login exchanges credentials for an authenticated session', () async {
+      final session = await authClient.login(
+        AuthCredentials(email: authEmail(), password: 'Password1'),
+      );
+      expect(session, isA<AuthAuthenticated>());
+      final auth = session as AuthAuthenticated;
+      expect(auth.accessToken, isNotEmpty);
+      expect(auth.refreshToken, isNotEmpty);
+      expect(auth.userId, isNotEmpty);
+      expect(auth.expiresAt.isAfter(DateTime.now().toUtc()), isTrue);
+    });
+
+    test('registration verify with the dev code returns a valid, non-null session', () async {
+      final email = authEmail();
+      // register creates the pending account; the OTP client then issues a fresh
+      // code it can verify (the register + OTP clients hold their own
+      // attempt-token state, exactly as the app's register -> OTP pages do).
+      await authClient.register(
+        credentials: AuthCredentials(email: email, password: 'Password1'),
+        displayName: 'Sam Rivera',
+      );
+      await otpClient.issue(purpose: OtpPurpose.registration, identifier: email);
+      final result = await otpClient.verify(identifier: email, code: '123456');
+      expect(result.outcome, OtpVerifyOutcome.valid);
+      expect(result.session, isA<AuthAuthenticated>());
+      expect(result.session!.accessToken, isNotEmpty);
+      expect(result.session!.refreshToken, isNotEmpty);
+      expect(result.session!.userId, isNotEmpty);
+    });
+
+    test('a non-registration verify returns valid with a null session', () async {
+      final email = authEmail();
+      await otpClient.issue(purpose: OtpPurpose.mfa, identifier: email);
+      final result = await otpClient.verify(identifier: email, code: '123456');
+      expect(result.outcome, OtpVerifyOutcome.valid);
+      expect(result.session, isNull, reason: 'mfa purpose issues no session tokens');
+    });
+
+    test('refresh rotates the token and inherits userId', () async {
+      final email = authEmail();
+      final session = await authClient.login(AuthCredentials(email: email, password: 'Password1'));
+      final refreshed = await authClient.refresh(session);
+      expect(refreshed, isA<AuthAuthenticated>());
+      final auth = refreshed as AuthAuthenticated;
+      final prior = session as AuthAuthenticated;
+      expect(auth.accessToken, isNotEmpty);
+      expect(auth.refreshToken, isNot(prior.refreshToken));
+      expect(auth.userId, prior.userId, reason: 'userId is inherited across rotations');
+    });
+
+    test('logout returns anonymous', () async {
+      final email = authEmail();
+      final session = await authClient.login(AuthCredentials(email: email, password: 'Password1'));
+      expect(await authClient.logout(session), isA<AuthAnonymous>());
+    });
 
     test('honest-degradation: an unreachable backend yields null, never throws', () async {
       final badClient = RemoteConfigClient(

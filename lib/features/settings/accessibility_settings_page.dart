@@ -7,28 +7,48 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Standalone accessibility-settings surface, mounted at
-/// `/settings/accessibility` (a sibling of `/settings/appearance` and
-/// `/settings/language`). Renders the named text-preset selector
-/// (comfortable / large / dyslexia); selecting a preset calls
-/// `SettingsController.setTextPreset`, which optimistically updates
-/// `SettingsState.textPreset` (and the derived `fontScale` / `fontFamily`) and
-/// persists via the per-key `SettingsStore`. Save failures surface
-/// `common.notConnected` honestly — never a fake success.
+/// Standalone accessibility-settings surface, reused by the dev gallery and
+/// tests. The live app renders the same selector in-pane as the
+/// `SettingsSection.accessibility` pane of `SettingsPage` (so the wide
+/// two-pane sidebar stays put on desktop); this standalone page wraps the
+/// shared [AccessibilityPresetSelector] in its own scroll frame for contexts
+/// that mount it directly (no surrounding settings master-detail).
 ///
 /// The page is feature-owned (settings) and keeps its own scroll frame rather
 /// than reaching into `SettingsPage`'s private helpers; once ≥3 settings
 /// surfaces share the same labeled-control + scroll-frame shape, those can be
 /// promoted to `lib/shared/widgets/` under the ≥3-consumer rule (today they do
 /// not qualify — see feature spec Audit §3).
-class AccessibilitySettingsPage extends ConsumerStatefulWidget {
+class AccessibilitySettingsPage extends StatelessWidget {
   const AccessibilitySettingsPage({super.key});
 
   @override
-  ConsumerState<AccessibilitySettingsPage> createState() => _AccessibilitySettingsPageState();
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: _AccessibilityScrollFrame(
+        title: context.t.settings.accessibility.title,
+        child: const AccessibilityPresetSelector(),
+      ),
+    );
+  }
 }
 
-class _AccessibilitySettingsPageState extends ConsumerState<AccessibilitySettingsPage> {
+/// The named text-preset selector (comfortable / large / dyslexia), shared by
+/// [AccessibilitySettingsPage] (gallery / tests / compact) and the in-pane
+/// accessibility section of `SettingsPage` (wide / desktop). Selecting a preset
+/// calls `SettingsController.setTextPreset`, which optimistically updates
+/// `SettingsState.textPreset` (and the derived `fontScale` / `fontFamily`) and
+/// persists via the per-key `SettingsStore`. Save failures surface
+/// `common.notConnected` honestly — never a fake success.
+class AccessibilityPresetSelector extends ConsumerStatefulWidget {
+  const AccessibilityPresetSelector({super.key});
+
+  @override
+  ConsumerState<AccessibilityPresetSelector> createState() => _AccessibilityPresetSelectorState();
+}
+
+class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPresetSelector> {
   bool _saveFailed = false;
 
   @override
@@ -38,39 +58,33 @@ class _AccessibilitySettingsPageState extends ConsumerState<AccessibilitySetting
     final controller = ref.read(settingsControllerProvider.notifier);
     final selected = settings.textPreset;
 
-    return SafeArea(
-      bottom: false,
-      child: _AccessibilityScrollFrame(
-        title: translations.settings.accessibility.title,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _AccessibilityCard(
-              title: translations.settings.accessibility.title,
-              child: _SpacedTiles(
-                children: [
-                  for (final preset in AppTextPreset.values)
-                    _PresetTile(
-                      preset: preset,
-                      selected: preset == selected,
-                      onPress: () => _run(() => controller.setTextPreset(preset)),
-                    ),
-                ],
-              ),
-            ),
-            if (_saveFailed) ...[
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                translations.common.notConnected,
-                key: const ValueKey('a11y-preset-save-error'),
-                style: context.theme.typography.body.sm.copyWith(
-                  color: context.theme.colors.error,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AccessibilityCard(
+          title: translations.settings.accessibility.title,
+          child: _SpacedTiles(
+            children: [
+              for (final preset in AppTextPreset.values)
+                _PresetTile(
+                  preset: preset,
+                  selected: preset == selected,
+                  onPress: () => _run(() => controller.setTextPreset(preset)),
                 ),
-              ),
             ],
-          ],
+          ),
         ),
-      ),
+        if (_saveFailed) ...[
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            translations.common.notConnected,
+            key: const ValueKey('a11y-preset-save-error'),
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.error,
+            ),
+          ),
+        ],
+      ],
     );
   }
 

@@ -18,7 +18,7 @@
 import { Hono, type Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { pathToFileURL } from 'node:url';
-import { createState, type IssuedOtp, type ServerState } from './state.js';
+import { createState, type Account, type IssuedOtp, type ServerState } from './state.js';
 
 const JSON_HEADERS: Record<string, string> = { 'content-type': 'application/json; charset=utf-8' };
 
@@ -110,6 +110,43 @@ export function buildApp(state: ServerState = createState()): Hono {
     );
   });
 
+  app.post('/v1/auth/register', async (c) => {
+    const decoded = await parseJsonObjectTolerant(c);
+    if (decoded === null) return jsonError(c, 400, 'invalid json');
+    const email = decoded['email'];
+    const password = decoded['password'];
+    const displayName = decoded['displayName'];
+    if (
+      typeof email !== 'string' ||
+      email.length === 0 ||
+      typeof password !== 'string' ||
+      password.length === 0 ||
+      typeof displayName !== 'string' ||
+      displayName.length === 0
+    ) {
+      return jsonError(c, 400, 'invalid json');
+    }
+    // A pending OR active account for this email blocks a fresh registration —
+    // the client must verify or recover instead (mirrors the Dart 409 conflict).
+    if (state.accountsByEmail.has(email)) {
+      return jsonError(c, 409, 'conflict');
+    }
+    const userId = userIdFor(email);
+    const account: Account = {
+      userId,
+      email,
+      password,
+      displayName,
+      bio: '',
+      status: 'pending',
+    };
+    state.accountsByEmail.set(email, account);
+    // Hand the OTP issue to the shared envelope helper so register and the
+    // standalone otp routes share attempt-token / dev_code behavior (single
+    // source of truth, mirroring `otp.dart`'s `issueOtpEnvelope`).
+    return c.json(issueOtpEnvelope(state, 'registration', email), 200, JSON_HEADERS);
+  });
+
   app.post('/v1/auth/refresh', async (c) => {
     const decoded = await parseJsonObjectTolerant(c);
     if (decoded === null) return jsonError(c, 400, 'invalid json');
@@ -174,31 +211,7 @@ export function buildApp(state: ServerState = createState()): Hono {
     if (existing !== undefined && isLockedAt(existing, Date.now())) {
       return lockedResponse(c, existing.lockedUntil as number);
     }
-    const attemptToken = issueOtpToken(state);
-    const expiresAt = Date.now() + OTP_CODE_TTL_MS;
-    storeOtp(state, {
-      attemptToken,
-      identifier,
-      purpose,
-      code: FIXED_VALID_CODE,
-      expiresAt,
-      failedAttempts: 0,
-      lockedUntil: null,
-    });
-    return c.json(
-      {
-        attempt_token: attemptToken,
-        expires_at: new Date(expiresAt).toISOString(),
-        channel: 'sms',
-        // Dummy affordance: always surface the fixed code so a test/E2E driver
-        // can read it without a real channel (mirrors the Dart `dev_code`
-        // affordance under X-Api-Key: dev, simplified for the cross-framework
-        // dummy).
-        dev_code: FIXED_VALID_CODE,
-      },
-      200,
-      JSON_HEADERS,
-    );
+    return c.json(issueOtpEnvelope(state, purpose, identifier), 200, JSON_HEADERS);
   });
 
   app.post('/v1/otp/verify', async (c) => {
@@ -237,6 +250,28 @@ export function buildApp(state: ServerState = createState()): Hono {
     }
     // Success: consume the token so a replay yields 409 expired.
     state.otpIssues.delete(attemptToken);
+    // A registration verify also activates the pending account and mints a
+    // session so the client can call authenticated routes immediately. Other
+    // purposes (mfa, password-reset) return the plain {valid: true} envelope.
+    if (issued.purpose === 'registration') {
+      const account = state.accountsByEmail.get(issued.identifier);
+      if (account !== undefined && account.status === 'pending') {
+        account.status = 'active';
+        const refreshToken = issueToken(state, 'rt');
+        state.refreshTokens.set(refreshToken, account.userId);
+        return c.json(
+          {
+            valid: true,
+            access_token: issueToken(state, 'at'),
+            refresh_token: refreshToken,
+            expires_at: new Date(Date.now() + ACCESS_TTL_MS).toISOString(),
+            user_id: account.userId,
+          },
+          200,
+          JSON_HEADERS,
+        );
+      }
+    }
     return c.json({ valid: true }, 200, JSON_HEADERS);
   });
 
@@ -258,27 +293,7 @@ export function buildApp(state: ServerState = createState()): Hono {
     if (existing !== undefined && isLockedAt(existing, Date.now())) {
       return lockedResponse(c, existing.lockedUntil as number);
     }
-    const attemptToken = issueOtpToken(state);
-    const expiresAt = Date.now() + OTP_CODE_TTL_MS;
-    storeOtp(state, {
-      attemptToken,
-      identifier,
-      purpose,
-      code: FIXED_VALID_CODE,
-      expiresAt,
-      failedAttempts: 0,
-      lockedUntil: null,
-    });
-    return c.json(
-      {
-        attempt_token: attemptToken,
-        expires_at: new Date(expiresAt).toISOString(),
-        channel: 'sms',
-        dev_code: FIXED_VALID_CODE,
-      },
-      200,
-      JSON_HEADERS,
-    );
+    return c.json(issueOtpEnvelope(state, purpose, identifier), 200, JSON_HEADERS);
   });
 
   // ---------------- feedback ----------------
@@ -472,6 +487,39 @@ function storeOtp(state: ServerState, otp: IssuedOtp): void {
     }
   }
   state.otpIssues.set(otp.attemptToken, otp);
+}
+
+/**
+ * Single source of truth for issuing an OTP envelope (snake_case). Stores the
+ * issued otp (dropping any prior outstanding issue for the identifier) and is
+ * reused by `/v1/otp/issue`, `/v1/otp/resend`, and `/v1/auth/register` —
+ * mirroring `tools/test_server/lib/routes/otp.dart`'s `issueOtpEnvelope`.
+ */
+function issueOtpEnvelope(
+  state: ServerState,
+  purpose: string,
+  identifier: string,
+): { attempt_token: string; expires_at: string; channel: string; dev_code: string } {
+  const attemptToken = issueOtpToken(state);
+  const expiresAt = Date.now() + OTP_CODE_TTL_MS;
+  storeOtp(state, {
+    attemptToken,
+    identifier,
+    purpose,
+    code: FIXED_VALID_CODE,
+    expiresAt,
+    failedAttempts: 0,
+    lockedUntil: null,
+  });
+  return {
+    attempt_token: attemptToken,
+    expires_at: new Date(expiresAt).toISOString(),
+    channel: 'sms',
+    // Dummy affordance: always surface the fixed code so a test/E2E driver can
+    // read it without a real channel (mirrors the Dart `dev_code` affordance
+    // under X-Api-Key: dev, simplified for the cross-framework dummy).
+    dev_code: FIXED_VALID_CODE,
+  };
 }
 
 function expiredResponse(c: Context): Response {

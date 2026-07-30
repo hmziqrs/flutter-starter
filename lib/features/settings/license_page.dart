@@ -36,30 +36,27 @@ class _AboutLicensePageState extends State<AboutLicensePage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(translations.settings.about.license),
-        // The license list scrolls; keep the app bar elevated off the scroll
-        // content for a clear header on every platform.
-        scrolledUnderElevation: 0,
-      ),
-      body: FutureBuilder<AppBuildInfo>(
-        future: _buildInfo,
-        builder: (context, snapshot) {
-          // Degrade to a dash when PackageInfo is unavailable (test harness
-          // without a mock, or a degenerate empty version) so the page never
-          // throws into the list and never shows a fabricated version string
-          // (honest — C13).
-          final version = _resolveVersion(snapshot.data);
-          return LicensePage(
-            applicationName: widget.applicationName ?? translations.app.name,
-            applicationVersion: version,
-            // applicationIcon omitted: AppBuildInfo carries no icon (spec). An
-            // empty_legalese keeps the Material widget's default body neutral.
-            applicationLegalese: '',
-          );
-        },
-      ),
+    // Flutter's LicensePage renders its own Scaffold + AppBar (a back button +
+    // the conventional "Licenses" header). It must NOT be wrapped in another
+    // Scaffold/AppBar — doing so stacks two headers and two back buttons. The
+    // route is pushed in-shell, so LicensePage's built-in header is the single
+    // header; applicationName/version are forwarded for the legalese block.
+    return FutureBuilder<AppBuildInfo>(
+      future: _buildInfo,
+      builder: (context, snapshot) {
+        // Degrade to a dash when PackageInfo is unavailable (test harness
+        // without a mock, or a degenerate empty version) so the page never
+        // throws into the list and never shows a fabricated version string
+        // (honest — C13).
+        final version = _resolveVersion(snapshot.data);
+        return LicensePage(
+          applicationName: widget.applicationName ?? translations.app.name,
+          applicationVersion: version,
+          // applicationIcon omitted: AppBuildInfo carries no icon (spec). An
+          // empty_legalese keeps the Material widget's default body neutral.
+          applicationLegalese: '',
+        );
+      },
     );
   }
 

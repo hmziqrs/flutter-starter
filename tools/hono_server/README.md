@@ -32,6 +32,10 @@ default `8787`. The server binds to loopback (`127.0.0.1`) and prints
 `LISTENING <port>` once bound — the same readiness line `tools/test_server`
 emits, so the same harness can detect either.
 
+> The justfile exposes this as `just hono-server` (see the root `justfile`);
+> `just hono-server 9000` overrides the port. `just test-server` runs the Dart
+> mirror on port 8080.
+
 ## Route table
 
 | Method | Path                                        | Status / Shape                                                       | Notes |
@@ -40,11 +44,12 @@ emits, so the same harness can detect either.
 | POST   | `/v1/crashes`                               | `204`                                                                | `{message, stack?, context, platform, appVersion}` -> 204; malformed -> `400 {error:'invalid json'}`. |
 | POST   | `/v1/events`                                | `204`                                                                | Batched `{events:[...]}` -> 204; empty body / missing `events` -> `400`. |
 | POST   | `/v1/auth/issue`                            | `200 {accessToken, refreshToken, expiresAt, userId}`                 | `{email,password}` -> tokens; bad creds -> `401`. |
+| POST   | `/v1/auth/register`                         | `200 {attempt_token, expires_at, channel, dev_code}` \| `409`        | `{email,password,displayName}` -> registration OTP envelope (creates a `pending` account); duplicate email -> `409 {error:'conflict'}`. |
 | POST   | `/v1/auth/refresh`                          | `200 {accessToken, refreshToken, expiresAt}`                         | `{refreshToken}` -> **rotated** token; replay of the old one -> `401`. |
 | POST   | `/v1/auth/logout`                           | `204`                                                                | Idempotent; `{refreshToken?}`. |
 | GET    | `/v1/remote-config`                         | `200 {flags, versionPolicy, experiments, revision}` + `ETag: "1"`    | `If-None-Match: "1"` / `?rev=1` / `*` -> `304`. |
 | POST   | `/v1/otp/issue`                             | `200 {attempt_token, expires_at, channel, dev_code}`                 | `{purpose, identifier}`; `purpose` ∈ {registration, password-reset, mfa}. |
-| POST   | `/v1/otp/verify`                            | `200 {valid}` \| `409 {error:'expired'}` \| `429 {error:'locked'}`   | `{attempt_token, code}`; unknown/expired token -> 409; too many wrong codes -> 429. |
+| POST   | `/v1/otp/verify`                            | `200 {valid}` \| `200 {valid,access_token,refresh_token,expires_at,user_id}` \| `409 {error:'expired'}` \| `429 {error:'locked'}` | `{attempt_token, code}`; a **registration** verify activates the pending account and mints a session inline; unknown/expired token -> 409; too many wrong codes -> 429. |
 | POST   | `/v1/otp/resend`                            | `200 {attempt_token, expires_at, channel, dev_code}`                 | `{identifier, purpose}`. |
 | POST   | `/v1/feedback`                              | `200 {id}`                                                           | `{message, email?, screenshotMime?, screenshotBase64?, appMetadata?}`; invalid -> `422`; screenshot too large -> `413`. |
 | GET    | `/v1/feedback/:id/status`                   | `200 {state}` \| `404`                                               | Known id -> `{state:'queued'}`; unknown -> 404. |
@@ -72,6 +77,12 @@ except where the contract itself needs a round-trip between two calls:
   unknown/consumed token, and `429 locked` after the wrong-code allowance is
   exceeded (2 free attempts, then the 3rd locks — agreeing with the client
   cooldown).
+- **account registration** — `POST /v1/auth/register` creates a `pending`
+  account keyed by email; a successful `registration`-purpose `/v1/otp/verify`
+  flips it to `active` and mints a session (`access_token`/`refresh_token`) in
+  the same response, so the client is authenticated immediately. `/v1/auth/issue`
+  mints tokens directly against the email-derived user id without checking the
+  account (the dev login shortcut).
 
 State lives in `src/state.ts` and is per-process; nothing persists across
 restarts, exactly like the Dart test server.
