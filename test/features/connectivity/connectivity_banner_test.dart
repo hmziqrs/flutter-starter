@@ -44,8 +44,19 @@ Widget _harness({
               data: theme,
               child: FToaster(
                 child: FTooltipGroup(
-                  child: ConnectivityBanner(
-                    child: routerChild ?? const SizedBox.shrink(),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Router content (home) is the overlay base; the banner floats
+                      // over its top edge. Mirrors the production mount in app.dart.
+                      Positioned.fill(child: routerChild ?? const SizedBox.shrink()),
+                      const Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: ConnectivityBanner(),
+                      ),
+                    ],
                   ),
                 ),
               ),

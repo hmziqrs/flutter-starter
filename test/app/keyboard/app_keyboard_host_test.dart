@@ -9,6 +9,7 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -231,6 +232,10 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
       dependencies: AppDependencies.inMemory(
         platformCapabilities: capabilities,
+        // The floating announcement banner overlaps the top of the home page;
+        // dismiss the whole feed so it never occludes the navigation targets
+        // these keyboard cases tap. Banner behavior has its own coverage.
+        dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
       ),
     ),
   );

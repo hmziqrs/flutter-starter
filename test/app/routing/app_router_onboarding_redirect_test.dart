@@ -6,6 +6,7 @@ import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/in_memory_otp_repository.dart';
 import 'package:starter/features/experiments/deterministic_experiment_source.dart';
@@ -257,15 +258,16 @@ AppDependencies _dependencies({
     // platform channel). Mirrors AppDependencies.inMemory.
     hapticService: NoopHapticService(),
     // Splash seed mirrors AppDependencies.inMemory: a resolved success so the
-    // onboarding-redirect path under test boots without re-running init, and
-    // no dismissed announcements so the banner feed is unaffected.
+    // onboarding-redirect path under test boots without re-running init.
     appStartupResult: const AppStartupResult(
       buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
       settingsLoaded: true,
       localeApplied: true,
     ),
     buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-    initialDismissedAnnouncementIds: const <String>{},
+    // The floating announcement banner overlaps the top of the screen; dismiss
+    // the whole feed so it never occludes the routing targets these cases tap.
+    initialDismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
     // Wave-5b no-backend test defaults: each port degrades honestly (never
     // fakes a grant / pick / share / update / token); the deep-link service
     // is a no-op so the redirect path under test is unaffected.

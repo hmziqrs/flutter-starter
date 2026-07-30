@@ -8,6 +8,7 @@ import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 
@@ -256,7 +257,12 @@ Future<void> _pumpApp(
   await tester.pumpWidget(
     App(
       config: _productionConfig,
-      dependencies: AppDependencies.inMemory(initialSession: initialSession),
+      dependencies: AppDependencies.inMemory(
+        initialSession: initialSession,
+        // The floating announcement banner overlaps the top of the screen; dismiss
+        // the whole feed so it never occludes the routing targets these cases tap.
+        dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
+      ),
       initialLocation: initialLocation,
     ),
   );

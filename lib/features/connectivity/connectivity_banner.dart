@@ -9,19 +9,19 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// A persistent connectivity banner mounted above the router child in
-/// `MaterialApp.router`'s `builder:`.
+/// A floating connectivity banner composed in the top `Column` of the overlay
+/// `Stack` in `MaterialApp.router`'s `builder:` (see `app.dart`). Floating — it
+/// overlaps the router content's top edge instead of reserving layout space.
 ///
 /// Surfaces a full-width row for degraded states ([ConnectivityState.offline] /
 /// [ConnectivityState.limited]) and fires a transient "back online" toast on the
 /// recovery edge (degraded → [ConnectivityState.online]). Auth and onboarding
-/// are top-level routes outside `AppShell`; mounting here keeps the signal alive
-/// across every route. No widget reads `connectivity_plus` directly — the banner
-/// watches [connectivityStatusProvider], which reads the port.
+/// are top-level routes outside `AppShell`; composing it in the global overlay
+/// keeps the signal alive across every route. No widget reads `connectivity_plus`
+/// directly — the banner watches [connectivityStatusProvider], which reads the
+/// port.
 class ConnectivityBanner extends ConsumerStatefulWidget {
-  const ConnectivityBanner({required this.child, super.key});
-
-  final Widget child;
+  const ConnectivityBanner({super.key});
 
   @override
   ConsumerState<ConnectivityBanner> createState() => _ConnectivityBannerState();
@@ -68,25 +68,10 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   Widget build(BuildContext context) {
     final state = ref.watch(connectivityStatusProvider).value;
     final showBanner = state != null && state.isDegraded;
-    final mediaQuery = MediaQuery.of(context);
-    // The banner row consumes the top safe-area inset via its own SafeArea;
-    // zero it for the router child so its Scaffold does not double-pad below the
-    // banner. When the banner is hidden the inset passes through unchanged.
-    final childMediaQuery = showBanner
-        ? mediaQuery.copyWith(padding: mediaQuery.padding.copyWith(top: 0))
-        : mediaQuery;
-
-    return Column(
-      children: [
-        _BannerSlot(state: showBanner ? state : null),
-        Expanded(
-          child: MediaQuery(
-            data: childMediaQuery,
-            child: widget.child,
-          ),
-        ),
-      ],
-    );
+    // Childless: renders only its own animated row. The overlay `Stack` in
+    // `app.dart` pins it at the top and lets the router content fill the screen
+    // behind it, so the banner floats over content instead of reserving space.
+    return _BannerSlot(state: showBanner ? state : null);
   }
 }
 

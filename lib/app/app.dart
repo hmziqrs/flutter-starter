@@ -475,45 +475,63 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                         },
                         child: FToaster(
                           child: FTooltipGroup(
-                            child: ConnectivityBanner(
-                              // AnnouncementBanner mounts ONCE above the router child so
-                              // auth/onboarding top-level routes (outside AppShell) see
-                              // it. ConnectivityBanner stays topmost (offline wins over
-                              // any announcement for the user's attention).
-                              child: AnnouncementBanner(
-                                // Shake-to-feedback (feedback feature): mounts once above
-                                // the router so the listener is alive on every route.
-                                // Gated by the user's shake opt-in (default off) AND
-                                // !isWeb (web/desktop have no accelerometer -> the
-                                // sensors_plus factory throws and the trigger disables
-                                // honestly). onShake opens the modal feedback sheet; the
-                                // Builder captures a context below the Navigator so the
-                                // sheet's overlay resolves correctly.
-                                child: Builder(
-                                  builder: (sheetContext) => ShakeFeedbackTrigger(
-                                    enabled:
-                                        ref.watch(feedbackShakeEnabledControllerProvider) &&
-                                        !PlatformCapabilities.current().isWeb,
-                                    onShake: ({required magnitude}) =>
-                                        unawaited(showFeedbackSheet(context: sheetContext)),
-                                    // Idle auto-lock (pin-autolock) is inactivity-based.
-                                    // Any pointer activity (tap / drag / scroll) on the
-                                    // router's page content postpones the lockout by
-                                    // restarting the idle timer via extend(). Gated on a
-                                    // positive delay so the no-op default (idle locking
-                                    // disabled) never builds a timer; extend() is itself
-                                    // a no-op for delay <= 0, this guard keeps the read
-                                    // inert when the feature is off.
-                                    child: Listener(
-                                      behavior: HitTestBehavior.translucent,
-                                      onPointerDown: (_) => _maybeExtendAutoLock(),
-                                      onPointerMove: (_) => _maybeExtendAutoLock(),
-                                      onPointerSignal: (_) => _maybeExtendAutoLock(),
-                                      child: child ?? const SizedBox.shrink(),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Router content is the overlay base — it gets the real
+                                // MediaQuery, so each page's own SafeArea clears the status
+                                // bar normally. The banners below float over its top edge:
+                                // no space reserved, no double-padding.
+                                Positioned.fill(
+                                  child: Builder(
+                                    builder: (sheetContext) => ShakeFeedbackTrigger(
+                                      // Shake-to-feedback (feedback feature): the listener is
+                                      // alive on every route. Gated by the user's shake opt-in
+                                      // (default off) AND !isWeb (web/desktop have no
+                                      // accelerometer -> the sensors_plus factory throws and
+                                      // the trigger disables honestly). onShake opens the modal
+                                      // feedback sheet; the Builder captures a context below the
+                                      // Navigator so the sheet's overlay resolves correctly.
+                                      enabled:
+                                          ref.watch(feedbackShakeEnabledControllerProvider) &&
+                                          !PlatformCapabilities.current().isWeb,
+                                      onShake: ({required magnitude}) =>
+                                          unawaited(showFeedbackSheet(context: sheetContext)),
+                                      // Idle auto-lock (pin-autolock) is inactivity-based.
+                                      // Any pointer activity (tap / drag / scroll) on the
+                                      // router's page content postpones the lockout by
+                                      // restarting the idle timer via extend(). Gated on a
+                                      // positive delay so the no-op default (idle locking
+                                      // disabled) never builds a timer; extend() is itself
+                                      // a no-op for delay <= 0, this guard keeps the read
+                                      // inert when the feature is off.
+                                      child: Listener(
+                                        behavior: HitTestBehavior.translucent,
+                                        onPointerDown: (_) => _maybeExtendAutoLock(),
+                                        onPointerMove: (_) => _maybeExtendAutoLock(),
+                                        onPointerSignal: (_) => _maybeExtendAutoLock(),
+                                        child: child ?? const SizedBox.shrink(),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
+                                // Floating banners, stacked top-to-bottom. Connectivity is
+                                // first => topmost ("offline wins over any announcement").
+                                // Both are childless rows that animate their own height via
+                                // AnimatedSize, so the Column collapses any hidden banner.
+                                const Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ConnectivityBanner(),
+                                      AnnouncementBanner(),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

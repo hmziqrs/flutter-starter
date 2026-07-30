@@ -8,10 +8,12 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// A persistent announcements banner mounted ONCE above the router child in
-/// `MaterialApp.router`'s `builder:` (see the feature spec: auth and onboarding
-/// are top-level routes, so mounting inside `AppShell` would hide outage / ToS
-/// banners exactly where user setup happens).
+/// A floating announcements banner composed in the top `Column` of the overlay
+/// `Stack` in `MaterialApp.router`'s `builder:` (see `app.dart`). Floating — it
+/// overlaps the router content's top edge instead of reserving layout space, so
+/// it never pushes a page's content down. Auth/onboarding are top-level routes
+/// outside `AppShell`; composing it in the global overlay keeps the banner
+/// visible across every route.
 ///
 /// Watches [announcementsControllerProvider] and renders the active
 /// [Announcement] via [AnnouncementBannerView]. Enter/exit motion is sourced
@@ -19,9 +21,7 @@ import 'package:starter/shared/theme/app_spacing.dart';
 /// non-animated fallback that still toggles visibility. No widget calls a plugin
 /// directly — the controller reads the settings store for dismiss persistence.
 class AnnouncementBanner extends ConsumerStatefulWidget {
-  const AnnouncementBanner({required this.child, super.key});
-
-  final Widget child;
+  const AnnouncementBanner({super.key});
 
   @override
   ConsumerState<AnnouncementBanner> createState() => _AnnouncementBannerState();
@@ -68,33 +68,17 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   @override
   Widget build(BuildContext context) {
     final active = ref.watch(announcementsControllerProvider).active;
-    final showBanner = active != null;
-    final mediaQuery = MediaQuery.of(context);
-    // The banner row consumes the top safe-area inset via its own SafeArea;
-    // zero it for the router child so its Scaffold does not double-pad below the
-    // banner. When the banner is hidden the inset passes through unchanged.
-    final childMediaQuery = showBanner
-        ? mediaQuery.copyWith(padding: mediaQuery.padding.copyWith(top: 0))
-        : mediaQuery;
-
-    return Column(
-      children: [
-        _AnnouncementBannerSlot(
-          active: active,
-          onDismiss: active == null
-              ? null
-              : () => ref.read(announcementsControllerProvider.notifier).dismiss(active.id),
-          onAction: active == null || active.actionRoute == null
-              ? null
-              : () => _goAction(context, active.actionRoute!),
-        ),
-        Expanded(
-          child: MediaQuery(
-            data: childMediaQuery,
-            child: widget.child,
-          ),
-        ),
-      ],
+    // Childless: renders only its own animated row. The overlay `Stack` in
+    // `app.dart` pins it at the top and lets the router content fill the screen
+    // behind it, so the banner floats over content instead of reserving space.
+    return _AnnouncementBannerSlot(
+      active: active,
+      onDismiss: active == null
+          ? null
+          : () => ref.read(announcementsControllerProvider.notifier).dismiss(active.id),
+      onAction: active == null || active.actionRoute == null
+          ? null
+          : () => _goAction(context, active.actionRoute!),
     );
   }
 

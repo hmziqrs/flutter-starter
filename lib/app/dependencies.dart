@@ -127,6 +127,7 @@ final class AppDependencies {
     SecureStore? secureStore,
     AuthSession? initialSession,
     PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
+    Set<String> dismissedAnnouncementIds = const <String>{},
   }) {
     final settingsStore = InMemorySettingsStore();
     // No-backend default: the in-memory version gate always returns none, so
@@ -162,9 +163,11 @@ final class AppDependencies {
         localeApplied: true,
       ),
       buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-      // No dismissed announcements in the test harness — the default feed
-      // surfaces its first fixture.
-      initialDismissedAnnouncementIds: const <String>{},
+      // Test-harness default: no dismissed announcements, so the default feed
+      // surfaces its first fixture (keeps the floating banner exercised in the
+      // full-app pump). Harnesses that tap top-of-screen targets pass a non-empty
+      // set to keep the floating banner from occluding those targets.
+      initialDismissedAnnouncementIds: dismissedAnnouncementIds,
       // Wave-4 ports. All no-backend defaults so tests never trigger a real
       // adapter (C2): the unseeded InMemoryAuthRepository surfaces notConnected
       // rather than faking a session, NoopAnalyticsClient routes through the

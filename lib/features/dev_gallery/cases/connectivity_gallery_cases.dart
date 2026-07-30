@@ -55,17 +55,29 @@ class _ConnectivityPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     // The PreviewFrame already provides a ProviderScope (interactionPolicy);
     // nest one that pins connectivity to the preview state. appLifecyclePhaseProvider
-    // resolves to its resumed default, so no lifecycle override is required.
+    // resolves to its resumed default, so no lifecycle override is required. Mirrors
+    // production: the banner floats over a placeholder body inside an overlay Stack
+    // (online state renders nothing, leaving just the body).
     return ProviderScope(
       overrides: [
         connectivityServiceProvider.overrideWithValue(_FixedConnectivityService(state.state)),
       ],
-      child: ConnectivityBanner(
-        child: Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Text(context.t.devGallery.preview),
-        ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Text(context.t.devGallery.preview),
+            ),
+          ),
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ConnectivityBanner(),
+          ),
+        ],
       ),
     );
   }

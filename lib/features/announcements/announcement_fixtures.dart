@@ -38,14 +38,14 @@ abstract final class AnnouncementFixtures {
     message: (t) => t.announcements.fixtures.deprecation.message,
   );
 
-  /// Ongoing outage (critical). Pinned with `dismissible: false` to demonstrate
-  /// the must-read broadcast path.
+  /// Ongoing outage (critical). Dismissible like every other broadcast so the
+  /// banner can be cleared (the controller persists the dismissal under the
+  /// dismissed-id set).
   static final Announcement outage = Announcement(
     id: 'outage',
     severity: AnnouncementSeverity.critical,
     title: (t) => t.announcements.fixtures.outage.title,
     message: (t) => t.announcements.fixtures.outage.message,
-    dismissible: false,
   );
 
   /// Returns the named fixture for [severity]. Exhaustive over
@@ -63,8 +63,8 @@ abstract final class AnnouncementFixtures {
   /// Production default feed. Ordered least-alarming first so
   /// [resolveActiveAnnouncement] surfaces a friendly banner on first launch and
   /// cycles through severities as the user dismisses each. The critical
-  /// `outage` is last and non-dismissible, so it appears only after the first
-  /// three are dismissed.
+  /// `outage` is last and dismissible, so it appears only after the first three
+  /// are dismissed — and can itself be cleared.
   static final List<Announcement> standard = [
     welcome,
     changelog,
