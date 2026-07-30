@@ -3,24 +3,14 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
-/// Cold-start seed for the analytics opt-in flag. Pre-loaded in
-/// `AppDependencies.production` (a single [SecureStore] read of
-/// [analyticsOptInKey]) and overridden at the [ProviderScope] — mirrors
-/// `initialSettingsProvider`. Pre-loading lets the controller resolve
-/// synchronously to the persisted value on the first frame.
+/// Cold-start seed for the analytics opt-in flag, pre-loaded from
+/// [SecureStore] and overridden at the [ProviderScope]; mirrors
+/// `initialSettingsProvider`.
 final initialAnalyticsOptInProvider = Provider<bool>((ref) => false);
 
-/// Handwritten Riverpod `Notifier<bool>` for the analytics opt-in toggle.
-///
-/// Backed by a thin [SecureStore] wrapper over the single [analyticsOptInKey]
-/// (C4: SecureStore owns every secret / sensitive preference). This is **not**
-/// a field on `SettingsState` — `SettingsState` keys are 1:1 with the plaintext
-/// `SettingsStore` via `SettingsRepository`, and a SecureStore-persisted,
-/// sensitive preference must stay off that surface (the settings boundary).
-///
-/// The SettingsPage renders the toggle by watching this controller, not
-/// `settingsControllerProvider`. The real [AnalyticsClient] consults the same
-/// key on every emit; the Noop default ignores it. No codegen.
+/// Analytics opt-in toggle. Backed by [SecureStore] (not `SettingsState`,
+/// which is plaintext-only) since this is a sensitive preference; the real
+/// [AnalyticsClient] consults the same key on every emit.
 final analyticsOptInControllerProvider = NotifierProvider<AnalyticsOptInController, bool>(
   AnalyticsOptInController.new,
 );
@@ -31,10 +21,8 @@ final class AnalyticsOptInController extends Notifier<bool> {
   @override
   bool build() => ref.watch(initialAnalyticsOptInProvider);
 
-  /// Optimistically persists [value] and updates live state. On persistence
-  /// failure the state rolls back to its previous value and the error rethrows
-  /// so the SettingsPage can surface `common.notConnected` honestly (guardrail
-  /// 13: never fake success). Mirrors `SettingsController._replace`.
+  /// Optimistic write with rollback + rethrow on failure, so the caller can
+  /// surface `common.notConnected` honestly.
   Future<void> setOptIn({required bool value}) async {
     final previous = state;
     state = value;
@@ -50,7 +38,5 @@ final class AnalyticsOptInController extends Notifier<bool> {
     }
   }
 
-  /// Flips the current opt-in. Fire-and-forget at the call site; the toggle UI
-  /// surfaces failure via [setOptIn]'s rethrow path.
   Future<void> toggle() => setOptIn(value: !state);
 }

@@ -81,14 +81,11 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   bool _callbackSubmitting = false;
   String _savedCode = '';
 
-  // state-restoration: the typed OTP code draft survives a simulated process
-  // death. The code is a transient auth token (not a long-lived secret), so
-  // restoring it is the data-loss-prevention this feature exists for; a fresh
-  // restoration build (empty draft) keeps the fixture code below.
+  // The typed OTP code (a transient token, not a long-lived secret) survives
+  // process death; a fresh restoration build keeps the fixture code below.
   final RestorableString _codeDraft = RestorableString('');
 
-  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
-  // decremented by a 1s Timer.periodic; submit and resend are OR-ed with _locked.
+  // Live lockout countdown, decremented by a 1s Timer.periodic.
   Timer? _countdownTimer;
   int _liveLockedSeconds = 0;
 
@@ -109,8 +106,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
     registerForRestoration(_codeDraft, 'code_draft');
-    // Only override the fixture when a real user draft exists, so a fresh
-    // restoration build keeps the dev-gallery/fixture code.
+    // Only override the fixture when a real user draft exists.
     if (_codeDraft.value.isNotEmpty) {
       _otpController.value = TextEditingValue(
         text: _codeDraft.value,
@@ -332,11 +328,9 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     );
   }
 
-  /// Live expiry countdown notice. Rendered while the issued code has not yet
-  /// expired (`remainingSeconds > 0`) and no terminal status is active. The
-  /// `expiresIn(seconds:)` plural key drives the localized text; the numeric
-  /// value flows LTR per the feature spec's RTL note. The gallery pins a fixed
-  /// `remainingSeconds` so the golden stays wall-clock-stable.
+  /// Live expiry countdown notice, rendered while the code has not yet
+  /// expired and no terminal status is active. Numeric value flows LTR per
+  /// the feature spec's RTL note.
   Widget? _countdownAlert(BuildContext context) {
     final remaining = widget.presentation.remainingSeconds;
     if (remaining <= 0) {
@@ -407,8 +401,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     };
   }
 
-  /// Non-destructive "attempts remaining" notice, shown while the user still
-  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// Non-destructive "attempts remaining" notice; suppressed once locked (the
   /// destructive [_feedbackAlert] carries the countdown instead).
   Widget? _attemptsRemainingAlert(BuildContext context) {
     final remaining = widget.presentation.attemptsRemaining;

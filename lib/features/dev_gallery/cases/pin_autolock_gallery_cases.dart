@@ -3,22 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/security/passcode_controller.dart';
-import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/features/security/passcode_page.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
 /// Builds the passcode + auto-lock gallery cases: the entry surface in its
 /// three runtime states (idle, error, locked-out) and the setup surface with a
-/// confirm-mismatch.
-///
-/// All fixtures are deterministic — no SecureStore plugin call, no navigation,
-/// no timer. The controllers are pinned through nested gallery-only overrides
-/// (mirrors the biometric gallery pattern). A deterministic in-memory
-/// [SecureStore] backs the controller so a stray submit degrades honestly
-/// rather than reaching the keychain. The passcode dots + countdown are
-/// timing-sensitive, so (per spec) no canonical golden matrix case is added —
-/// only these PreviewFrame fixtures.
+/// confirm-mismatch. The controller is pinned via a gallery-only override
+/// backed by an in-memory [SecureStore], so a stray submit never reaches the
+/// keychain.
 List<GalleryCase> buildPinAutolockGalleryCases() {
   return [
     TypedGalleryCase<_PasscodeFixture>(
@@ -66,9 +59,7 @@ final class _PasscodeFixture {
 }
 
 /// Pins [PasscodePage] inside a nested [ProviderScope] so the preview never
-/// reaches the OS keychain and never navigates. The passcode controller returns
-/// a fixed state (idle / locked-out) via a gallery-only subclass; the hasher is
-/// the real [CryptoPasscodeHasher] (pure-Dart, nothing to fake).
+/// reaches the OS keychain and never navigates.
 class _PasscodePreview extends StatelessWidget {
   const _PasscodePreview({required this.state, this.lockedOut = false, this.setup = false});
 
@@ -87,8 +78,6 @@ class _PasscodePreview extends StatelessWidget {
       ],
       child: PasscodePage(
         mode: setup ? PasscodePageMode.setup : PasscodePageMode.entry,
-        // Gallery callbacks are deterministic no-ops: the preview never
-        // navigates and never fakes a successful unlock.
         onUnlocked: () {},
         onSetupComplete: () {},
         onDisable: () {},
@@ -97,10 +86,8 @@ class _PasscodePreview extends StatelessWidget {
   }
 }
 
-/// Gallery-only `PasscodeController` that returns a fixed state and never reads
-/// the keychain. For the locked-out fixture it reports a future `lockedUntil`
-/// so the countdown surface renders; otherwise it reports an armed, set,
-/// unlocked gate (the idle entry state).
+/// Gallery-only `PasscodeController` that returns a fixed state and never
+/// reads the keychain.
 class _PinnedPasscodeController extends PasscodeController {
   _PinnedPasscodeController({required this.lockedOut});
 
@@ -128,9 +115,7 @@ class _PinnedPasscodeController extends PasscodeController {
   Future<PasscodeVerifyResult> verify(String pin) async => PasscodeVerifyResult.incorrect;
 }
 
-/// In-memory [SecureStore] whose reads return nothing. The pinned controller
-/// never calls it; this is the belt-and-suspenders backstop so the gallery
-/// never reaches the platform keychain.
+/// In-memory [SecureStore] whose reads always return nothing.
 final class _EmptySecureStore implements SecureStore {
   @override
   Future<String?> read(String key) async => null;

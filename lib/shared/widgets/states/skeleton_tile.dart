@@ -6,13 +6,9 @@ import 'package:starter/shared/widgets/states/skeleton_view.dart';
 /// A skeleton bone mirroring an [FTile] / [FCard] row: a leading circular
 /// avatar, a primary line, and an optional secondary line.
 ///
-/// Built entirely from bone primitives ([SkeletonCircle], [SkeletonLine]) so it
-/// inherits the ancestor [SkeletonView] shimmer (or the static reduce-motion
-/// fill) with no extra wiring. The shape tracks a typical list tile so a column
-/// of these mirrors a loading list (e.g. home recent activity, search results,
-/// cached feeds) — keep the mirrored layout in sync with the production tile.
-///
-/// Pure presentational: no state, no plugin calls, no side effects.
+/// Built entirely from bone primitives ([SkeletonCircle], [SkeletonLine]) so
+/// it inherits the ancestor [SkeletonView] shimmer (or the static
+/// reduce-motion fill) with no extra wiring.
 class SkeletonTile extends StatelessWidget {
   /// Creates a [SkeletonTile].
   const SkeletonTile({
@@ -45,7 +41,6 @@ class SkeletonTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FCard(
-      // Stable identity for widget/integration tests and gallery previews.
       key: const ValueKey('skeleton-tile'),
       child: Padding(
         padding: padding,
@@ -74,10 +69,7 @@ class SkeletonTile extends StatelessWidget {
 }
 
 /// A skeleton bone mirroring a content [FCard]: a leading icon box, a title
-/// line, and one or more body lines.
-///
-/// Grids of these mirror status-card layouts (e.g. the home status section) and
-/// feature-card grids while data loads. Like [SkeletonTile], it composes bone
+/// line, and one or more body lines. Like [SkeletonTile], it composes bone
 /// primitives and inherits the ancestor [SkeletonView] shimmer or the static
 /// reduce-motion fill.
 class SkeletonCard extends StatelessWidget {
@@ -105,7 +97,6 @@ class SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FCard(
-      // Stable identity for widget/integration tests and gallery previews.
       key: const ValueKey('skeleton-card'),
       child: Padding(
         padding: padding,

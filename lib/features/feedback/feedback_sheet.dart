@@ -13,25 +13,17 @@ import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 /// Opens the feedback sheet as a bottom modal (`FSheet`).
 ///
-/// The sheet wraps [FeedbackSheetBody] in [EscapeDismissibleOverlay] so Escape
-/// / barrier tap dismiss without submitting (the draft is already persisted,
-/// so dismissing does not lose text). The slide animation is ForUI-built-in
-/// (driven by `FThemeMotion`); navigation never gates on its completion —
-/// `Navigator.maybePop` returns immediately and the success-close path calls
-/// it without awaiting an animation (guardrail #5).
-///
-/// Returns `true` when a submission was accepted (the caller may use it to
-/// surface a toast); `false` / `null` otherwise.
+/// Wraps [FeedbackSheetBody] in [EscapeDismissibleOverlay] so Escape / barrier
+/// tap dismiss without submitting (the draft is already persisted). Returns
+/// `true` when a submission was accepted; `false` / `null` otherwise.
 Future<bool> showFeedbackSheet({required BuildContext context}) async {
   final accepted = await showFSheet<bool>(
     context: context,
     side: FLayout.btt,
     useSafeArea: true,
     builder: (sheetContext) => ColoredBox(
-      // ForUI's FSheet paints no surface of its own (the route barrier only
-      // dims the app behind via an image filter). Give the sheet an opaque
-      // background so the form reads cleanly instead of showing through to the
-      // dimmed app. Mirrors showPermissionRationaleSheet.
+      // FSheet paints no surface of its own; give it an opaque background so
+      // the form doesn't show through the dimmed app behind it.
       color: sheetContext.theme.colors.background,
       child: EscapeDismissibleOverlay(
         child: FeedbackSheetBody(
@@ -44,15 +36,10 @@ Future<bool> showFeedbackSheet({required BuildContext context}) async {
   return accepted ?? false;
 }
 
-/// The form body of the feedback sheet.
-///
-/// Extracted from the modal so the dev-gallery `PreviewFrame` fixture can
-/// render the same content deterministically (sheets are modal, so the gallery
-/// embeds this body directly in a card rather than triggering a real sheet —
-/// mirrors `PermissionRationaleBody`). A `ProviderScope` above supplies the
-/// controller + transport overrides; the gallery pins the presentation state
-/// via [FeedbackSheetBody.presentation] (when non-null the body renders that
-/// fixture state and the live controller is not driven).
+/// The form body of the feedback sheet, extracted from the modal so the
+/// dev-gallery can render it deterministically in a card. When
+/// [FeedbackSheetBody.presentation] is non-null the body renders that fixture
+/// state and the live controller is not driven.
 class FeedbackSheetBody extends ConsumerStatefulWidget {
   const FeedbackSheetBody({
     required this.onDismiss,
@@ -65,18 +52,16 @@ class FeedbackSheetBody extends ConsumerStatefulWidget {
   /// Invoked when the user dismisses the sheet (Cancel / Escape / barrier).
   final VoidCallback onDismiss;
 
-  /// Invoked when the transport accepts the submission. The sheet swaps to the
-  /// success copy first, then the caller pops the modal (navigation never
-  /// gates on the swap).
+  /// Invoked when the transport accepts the submission.
   final VoidCallback onAccepted;
 
   /// Optional fixture presentation state for the dev-gallery. When non-null,
   /// the body renders this state directly and the live controller is not
-  /// driven (the gallery exercises the deterministic rendering path only).
+  /// driven.
   final FeedbackPresentationState? presentation;
 
   /// Initial include-screenshot toggle value for the fixture / gallery path.
-  /// Ignored when [presentation] is null (the live controller owns the value).
+  /// Ignored when [presentation] is null.
   final bool includeScreenshot;
 
   @override
@@ -104,9 +89,8 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     _applySeedIfNeeded();
   }
 
-  /// Seeds the local controllers from the controller draft once (and only
-  /// once) so the user's persisted half-written report is visible on open.
-  /// Subsequent edits flow controller-ward via `_pushMessage` / `_pushEmail`.
+  /// Seeds the local controllers from the draft once so the persisted
+  /// half-written report is visible on open.
   void _applySeedIfNeeded() {
     if (_seedsApplied) return;
     if (widget.presentation != null) {
@@ -138,8 +122,6 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     final presentation = widget.presentation ?? live.presentation;
     final isFixture = widget.presentation != null;
     final busy = presentation.isBusy;
-    // The toggle reads the live draft (so re-renders from the controller keep
-    // it in sync) unless the gallery pinned a fixture presentation.
     final includeScreenshot = isFixture ? _includeScreenshot : live.draft.includeScreenshot;
 
     return Semantics(
@@ -279,9 +261,6 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
       FeedbackPresentationStatus.failed => FAlert(
         key: const ValueKey('feedback-failed'),
         variant: .destructive,
-        // Honest no-backend copy: failed maps to common.notConnected (the
-        // feedback.failedTitle key is reserved for a future backend-rejected
-        // copy that distinguishes network-down from rejected-by-server).
         title: Text(translations.common.notConnected),
         subtitle: Text(translations.feedback.failedTitle),
       ),
@@ -303,8 +282,6 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
   Future<void> _submit(FeedbackPresentationState presentation, bool isFixture) async {
     if (presentation.isBusy) return;
     if (isFixture) {
-      // Gallery preview: no controller behind the fixture. Notify accepted so
-      // the preview is interactive without a transport round-trip.
       widget.onAccepted();
       return;
     }
@@ -317,9 +294,6 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     form.save();
     final accepted = await ref.read(feedbackControllerProvider.notifier).submit();
     if (!mounted) return;
-    // Navigation never gates on animation: the success-close calls maybePop
-    // directly. A failed submit leaves the sheet open with the retained draft
-    // + the failed alert so the user can retry.
     if (accepted) {
       widget.onAccepted();
     }

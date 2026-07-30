@@ -28,30 +28,15 @@ Future<void> bootstrap(
   AppConfig config, {
   AppLogger? logger,
   ApplicationRunner runApplication = runApp,
-  // Dev-only HTTP inspector host. Defaults to the no-op [StubInspectorHost] so
-  // the production entrypoint (lib/main.dart) — which calls `bootstrap(config)`
-  // without overriding this — compiles NO dio_request_inspector code. The
-  // development entrypoint (lib/main_dev.dart) overrides this with a
-  // [RealInspectorHost] to keep the inspector fully functional in dev. The same
-  // instance is threaded into the dependency graph so the Dio interceptor and
-  // navigator observer stay in sync with the overlay wrapper.
+  // Defaults to the no-op stub so the production entrypoint compiles no
+  // dio_request_inspector code; lib/main_dev.dart overrides with the real host.
   InspectorHost inspectorHost = const StubInspectorHost(),
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  // The global error sinks (FlutterError.onError + PlatformDispatcher.onError,
-  // wired by [installErrorHandlers] below) fan out to [existing backend,
-  // Firebase Crashlytics]. The existing arm is the honest no-op sink today (the
-  // optional SentryCrashReporter is constructed here once a crash-reporting DSN
-  // field is added to AppConfig); FirebaseCrashlyticsCrashReporter self-disables
-  // on web / Linux / Windows and when Firebase is not initialized, so this
-  // composite never breaks the error path it observes and runs green with zero
-  // backend wiring (C2). This is the Firebase Crashlytics FlutterError.onError
-  // / PlatformDispatcher.onError integration, installed alongside the existing
-  // crash-redaction / error-handling here. This runs before createApplication /
-  // the ProviderScope exists, so the reporter is a direct parameter — never
-  // read via a provider here.
+  // FirebaseCrashlyticsCrashReporter self-disables on web/Linux/Windows and
+  // when Firebase is not initialized, so the composite is safe with no backend.
   final CrashReporter crashReporter = CompositeCrashReporter(<CrashReporter>[
     const NoopCrashReporter(),
     FirebaseCrashlyticsCrashReporter(verbose: config.verboseLoggingEnabled),
@@ -62,67 +47,42 @@ Future<void> bootstrap(
     context: <String, Object?>{'environment': config.environment.name},
   );
 
-  // The inspector host wraps the app: a no-op pass-through for the stub
-  // (production / release / tests), or the DioRequestInspectorMain overlay for
-  // an active real host (development + dev tools + backend). The host owns the
-  // active/inactive decision, so this single call covers every build flavor —
-  // and no inspector widget is ever constructed in a release graph.
   final app = await createApplication(config, logger: appLogger, inspectorHost: inspectorHost);
   runApplication(inspectorHost.wrap(app));
 }
 
 /// Creates the same production dependency graph and root widget used by [bootstrap].
 ///
-/// Pass an optional [secureStore] to override the production OS-keychain-backed
-/// store. Production builds omit it so the default FlutterSecureStorageStore is
-/// used; a headless integration test (no secret-service daemon) injects an
-/// in-memory store so the flow never touches libsecret.
+/// [secureStore] overrides the production OS-keychain-backed store; a headless
+/// integration test injects an in-memory store to avoid the libsecret dependency.
 Future<App> createApplication(
   AppConfig config, {
   AppLogger? logger,
   String? initialLocation,
   SecureStore? secureStore,
-  // Threaded straight through to AppDependencies so the Dio interceptor and the
-  // App's navigator observers use the same host bootstrap wraps the app with.
-  // Defaults to the no-op stub; the dev entrypoint overrides it with the real
-  // host. See [bootstrap].
   InspectorHost inspectorHost = const StubInspectorHost(),
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Android 15 (API 35) enforces edge-to-edge; opt into transparent system
-  // bars once after binding init so the first frame renders behind them
-  // (system-ui feature). Idempotent; desktop/web short-circuit inside the
-  // controller. Runs before AppBuildInfo.load / AppDependencies.production so
-  // the posture is in place before any frame is constructed.
+  // Android 15 enforces edge-to-edge; opt in before the first frame so it
+  // doesn't render with an opaque system bar flash. Desktop/web no-op inside.
   await SystemUiController.applyEdgeToEdge(capabilities: PlatformCapabilities.current());
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  // Load AppBuildInfo ONCE and run the version check once in the composition
-  // root (C5: never in a widget build). The result is carried on
-  // AppDependencies.versionCheck and read by the redirect / force-update route.
+  // Loaded once here (never inside a widget build) and carried on
+  // AppDependencies.versionCheck for the redirect / force-update route.
   final buildInfo = await AppBuildInfo.load();
   final dependencies = await AppDependencies.production(
     appLogger,
     buildInfo: buildInfo,
     iosAppleId: config.iosAppleId,
     allowedDeepLinkHosts: config.allowedDeepLinkHosts,
-    // Forward the compile-time backend URL (parsed from BACKEND_BASE_URL, empty
-    // -> null). When null the three session-coupled ports keep their honest
-    // no-backend defaults; when set the real HTTP adapters are constructed.
     backendBaseUrl: config.backendBaseUrl,
-    // Forward an optional injected SecureStore; null keeps the production
-    // FlutterSecureStorageStore default. Headless integration tests inject an
-    // in-memory store to avoid the libsecret dependency.
     secureStore: secureStore,
-    // Forward the inspector host selected by the entrypoint (stub for
-    // production / tests; real for development). The host owns the runtime
-    // dev-only gate, so the factory no longer needs developmentToolsEnabled.
     inspectorHost: inspectorHost,
   );
-  // Apply the persisted locale once. Guarded so a failure flips
-  // AppStartupResult.localeApplied to false (surfaced on the splash) rather
-  // than tearing down startup; the device locale is the honest fallback.
+  // Guarded so a failure flips AppStartupResult.localeApplied to false
+  // (surfaced on the splash) instead of tearing down startup.
   var localeApplied = true;
   if (dependencies.initialSettings.localeOverride case final locale?) {
     try {
@@ -137,20 +97,16 @@ Future<App> createApplication(
       localeApplied = false;
     }
   }
-  // Finalize the startup result now that the locale apply outcome is known.
-  // AppDependencies.production sets localeApplied=true optimistically because
-  // the apply runs after the factory returns; correct it here when it failed.
+  // AppDependencies.production sets localeApplied=true optimistically since the
+  // apply runs after it returns; correct it here when the apply failed.
   final dependenciesWithStartup = localeApplied
       ? dependencies
       : dependencies.copyWith(
           appStartupResult: dependencies.appStartupResult.copyWith(localeApplied: localeApplied),
         );
 
-  // Deep linking (deep-linking spec): capture the cold-start initial link
-  // BEFORE the router builds so the deep link is not lost on first launch.
-  // A plugin failure degrades honestly to "no initial link" so the app boots
-  // to its normal initial location. The foreground link stream is wired in
-  // `_AppViewState.ref.listen` (see lib/app/app.dart).
+  // Captured before the router builds so a cold-start deep link isn't lost.
+  // The foreground link stream is wired in `_AppViewState.ref.listen`.
   String? coldStartInitialLocation;
   try {
     final initialLink = await dependencies.appLinkHandler.getInitialLink();
@@ -158,18 +114,13 @@ Future<App> createApplication(
       coldStartInitialLocation = _initialLocationFromResolvedLink(initialLink);
     }
   } on Object {
-    // A plugin failure must never strand startup. The app boots to its normal
-    // initial location; foreground links still flow once the router mounts.
     coldStartInitialLocation = null;
   }
 
-  // State-restoration: best-effort read of the saved last restorable route so
-  // the user returns to where they left off. Precedence: explicit initialLocation
-  // param (tests/integration) > cold-start deep link > saved last-route. The
-  // saved route is intentionally WEAKER than the C5 redirect chain, which
-  // re-evaluates AFTER initialLocation is set so update/onboarding/session/
-  // biometric/passcode gates still win. A persistence failure degrades honestly
-  // to "no saved route" (the splash/default initial location is the fallback).
+  // Precedence: explicit initialLocation (tests/integration) > cold-start deep
+  // link > saved last-route. Deliberately weaker than the redirect chain, which
+  // re-evaluates after initialLocation is set so update/onboarding/session/
+  // biometric/passcode gates still win.
   var effectiveInitialLocation = initialLocation ?? coldStartInitialLocation;
   if (effectiveInitialLocation == null) {
     try {
@@ -178,7 +129,6 @@ Future<App> createApplication(
         effectiveInitialLocation = saved;
       }
     } on Object {
-      // A persistence failure must never strand startup; boot to the default.
       effectiveInitialLocation = null;
     }
   }
@@ -249,20 +199,8 @@ Future<void> showStartupFailure({
   );
 }
 
-/// Wires the global error sinks so field failures reach triage.
-///
-/// Both [FlutterError.onError] (framework errors) and
-/// `PlatformDispatcher.instance.onError` (uncaught async / platform errors) are
-/// funneled to [AppLogger.error] for local dev visibility AND to [reporter]
-/// (`recordFlutterError` / `recordError`) for remote ingest. Each capture is
-/// fire-and-forget ([unawaited]) because the handler is synchronous and must
-/// never block the framework error path; the platform handler returns `true` so
-/// the error is treated as handled and never re-propagated.
-///
-/// Exposed for test access (annotated `@visibleForTesting`) so a regression that
-/// drops the reporter call, drops the `return true` swallow, or re-awaits the
-/// capture is caught by `test/bootstrap_test.dart` — the crash-reporting spec
-/// requires this install site to be under test.
+/// Wires [FlutterError.onError] and `PlatformDispatcher.instance.onError` to
+/// [AppLogger.error] and [reporter].
 @visibleForTesting
 void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
   FlutterError.onError = (details) {
@@ -272,7 +210,7 @@ void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
       stackTrace: details.stack,
     );
     // Fire-and-forget: the handler is synchronous and must never block the
-    // framework error path. [unawaited] documents the intent.
+    // framework error path.
     unawaited(reporter.recordFlutterError(details));
   };
 
@@ -289,6 +227,6 @@ void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
         context: <String, Object?>{'source': 'platform'},
       ),
     );
-    return true;
+    return true; // Marks the error handled so it isn't re-propagated.
   };
 }

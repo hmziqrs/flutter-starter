@@ -3,21 +3,14 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// Optional remote [AnalyticsClient] backed by the PostHog SDK.
+/// Optional remote [AnalyticsClient] backed by the PostHog SDK. Constructed
+/// at the composition root only when the consumer wires PostHog credentials.
+/// Every SDK call is wrapped in `try/on Object` and any failure is dropped.
 ///
-/// Constructed at the composition root only when the consumer wires PostHog
-/// credentials (the consumer runs `Posthog().init(...)` once in `bootstrap`
-/// with those credentials); it is the single override seam for
-/// [analyticsClientProvider]. Every SDK call is wrapped in `try/on Object` and
-/// any failure is dropped — analytics must never break the UX it measures.
-///
-/// Opt-in gate (C4): every emit first reads the persisted [analyticsOptInKey]
-/// from [secureStore]. When the user has not opted in (the stored value is
-/// absent or not `'true'`), the event is dropped silently and PostHog is never
-/// called — toggling opt-in off in Settings takes effect on the next emit. The
-/// no-backend NoopAnalyticsClient default ignores this key (it drops everything
-/// regardless). Treats a store read failure as "not opted in" so a keychain
-/// error never leaks an unexpected event.
+/// Every emit first reads the persisted [analyticsOptInKey] from
+/// [secureStore]; when not opted in, the event is dropped and PostHog is
+/// never called — toggling opt-in off in Settings takes effect on the next
+/// emit. A store read failure is treated as "not opted in".
 final class PosthogAnalyticsClient implements AnalyticsClient {
   PosthogAnalyticsClient({required this.secureStore});
 
@@ -82,8 +75,6 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
     try {
       return await secureStore.read(analyticsOptInKey) == 'true';
     } on Object {
-      // A keychain read failure degrades to "not opted in" rather than risking
-      // an unexpected emit (C2: never fake consent).
       return false;
     }
   }

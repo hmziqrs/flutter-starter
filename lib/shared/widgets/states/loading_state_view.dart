@@ -6,20 +6,9 @@ import 'package:starter/shared/widgets/busy_indicator.dart';
 /// A themed loading-state card for async lists that are still in flight.
 ///
 /// Renders a centered stack inside an [FCard] built around the shared
-/// [BusyIndicator] primitive (Wave 2) — it does not fork a new spinner. The
-/// stack exposes no action affordance (the loading view never offers a retry).
-/// It is fully centered, so it is direction-neutral for Arabic (audit checklist
-/// #6).
-///
-/// Motion is guarded (audit checklist #5): the indeterminate [BusyIndicator]
-/// spinner is shown only when [MediaQuery.disableAnimationsOf] is false; under
-/// reduce-motion a static localized [title] label replaces the spinner. The
-/// underlying affordance (none here) is unaffected either way — the view never
-/// gates anything on the animation, so it composes safely under tests using
-/// bounded frame pumps.
-///
-/// Pure presentational widget: typed [title] string, reads only
-/// `BuildContext.theme`, no state, no plugin calls, no side effects.
+/// [BusyIndicator] primitive. The indeterminate spinner is shown only when
+/// [MediaQuery.disableAnimationsOf] is false; under reduce-motion a static
+/// localized [title] label replaces it.
 class LoadingStateView extends StatelessWidget {
   /// Creates a [LoadingStateView].
   const LoadingStateView({
@@ -47,9 +36,6 @@ class LoadingStateView extends StatelessWidget {
 
     final Widget content;
     if (reduceMotion) {
-      // Reduce-motion: a static localized label replaces the animated spinner
-      // (mirrors BusyOverlay). The view still completes — it never gates an
-      // action on the animation.
       content = Text(
         title,
         key: const ValueKey('loading-state-view-title'),
@@ -73,7 +59,6 @@ class LoadingStateView extends StatelessWidget {
     }
 
     return FCard(
-      // Stable identity for widget/integration tests and gallery previews.
       key: const ValueKey('loading-state-view'),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),

@@ -10,16 +10,14 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 /// A floating connectivity banner composed in the top `Column` of the overlay
-/// `Stack` in `MaterialApp.router`'s `builder:` (see `app.dart`). Floating — it
-/// overlaps the router content's top edge instead of reserving layout space.
+/// `Stack` in `MaterialApp.router`'s `builder:`. Floating — it overlaps the
+/// router content's top edge instead of reserving layout space.
 ///
-/// Surfaces a full-width row for degraded states ([ConnectivityState.offline] /
-/// [ConnectivityState.limited]) and fires a transient "back online" toast on the
-/// recovery edge (degraded → [ConnectivityState.online]). Auth and onboarding
-/// are top-level routes outside `AppShell`; composing it in the global overlay
-/// keeps the signal alive across every route. No widget reads `connectivity_plus`
-/// directly — the banner watches [connectivityStatusProvider], which reads the
-/// port.
+/// Surfaces a full-width row for degraded states ([ConnectivityState.offline]
+/// / [ConnectivityState.limited]) and fires a transient "back online" toast
+/// on the recovery edge (degraded → [ConnectivityState.online]). Composing it
+/// in the global overlay keeps the signal alive across every route,
+/// including the top-level auth/onboarding routes outside `AppShell`.
 class ConnectivityBanner extends ConsumerStatefulWidget {
   const ConnectivityBanner({super.key});
 
@@ -31,8 +29,8 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   @override
   void initState() {
     super.initState();
-    // Detect the degraded → online recovery edge and fire the transient toast.
-    // Not in build: build must stay free of side effects.
+    // Detect the degraded → online recovery edge and fire the transient
+    // toast. Not in build: build must stay free of side effects.
     ref.listenManual<AsyncValue<ConnectivityState>>(
       connectivityStatusProvider,
       (previous, next) {
@@ -68,9 +66,6 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   Widget build(BuildContext context) {
     final state = ref.watch(connectivityStatusProvider).value;
     final showBanner = state != null && state.isDegraded;
-    // Childless: renders only its own animated row. The overlay `Stack` in
-    // `app.dart` pins it at the top and lets the router content fill the screen
-    // behind it, so the banner floats over content instead of reserving space.
     return _BannerSlot(state: showBanner ? state : null);
   }
 }
@@ -124,9 +119,9 @@ class _ConnectivityBannerContent extends StatelessWidget {
         FLucideIcons.wifiLow,
         translations.connectivity.limited,
       ),
+      // Unreachable: the banner only renders for degraded states. Kept to
+      // stay exhaustive over ConnectivityState.
       ConnectivityState.online => (
-        // Unreachable: the banner only renders for degraded states. The
-        // case keeps the switch exhaustive over [ConnectivityState].
         context.theme.colors.background,
         context.theme.colors.foreground,
         FLucideIcons.wifi,
@@ -216,10 +211,7 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
     super.didChangeDependencies();
     // Drive the pulse from the lifecycle, not build(): TickerMode / MediaQuery
     // changes re-run this callback, so enable/disable stays in sync without
-    // mutating the _running field or starting/stopping the ticker during build.
-    // Performing that side effect in build() is a fragile anti-pattern that a
-    // future refactor could turn into a setState/markNeedsBuild-during-build
-    // assertion. The static fallback value is unchanged.
+    // starting/stopping the ticker during build.
     _sync(!MediaQuery.disableAnimationsOf(context));
   }
 

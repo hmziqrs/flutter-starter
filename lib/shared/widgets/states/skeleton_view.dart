@@ -5,14 +5,9 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 
-/// Typed visual style for skeleton bones.
-///
-/// Derives its colors from the surrounding ForUI theme so bones match the
-/// active brightness (light/dark). The [baseColor] fills a bone; the
-/// [highlightColor] is the shimmer sweep and is always perceptually lighter
-/// than [baseColor] so the sweep reads in both themes. Immutable value object:
-/// typed fields only, no `dynamic`, value-equality for cheap
-/// [InheritedWidget] comparisons.
+/// Visual style for skeleton bones, derived from the active ForUI theme so
+/// bones match the active brightness. [highlightColor] is always perceptually
+/// lighter than [baseColor] so the shimmer sweep reads in both themes.
 @immutable
 class SkeletonStyle {
   /// Creates a [SkeletonStyle].
@@ -23,11 +18,6 @@ class SkeletonStyle {
   });
 
   /// Builds a style from the active ForUI theme colors.
-  ///
-  /// The bone base is a faint tint of the theme foreground on the theme
-  /// background (a neutral gray in both light and dark); the highlight is the
-  /// base lifted toward white so the sweep is always brighter than the bone
-  /// and stays visible under either brightness.
   factory SkeletonStyle.of(BuildContext context) {
     final colors = context.theme.colors;
     final base = _lerp(colors.background, colors.foreground, 0.10);
@@ -44,8 +34,6 @@ class SkeletonStyle {
   /// Default bone corner radius.
   final BorderRadius borderRadius;
 
-  /// Lerps [a] toward [b] by [t], never returning `null` (strict analysis:
-  /// [Color.lerp] is nullable).
   static Color _lerp(Color a, Color b, double t) => Color.lerp(a, b, t) ?? a;
 
   @override
@@ -61,10 +49,8 @@ class SkeletonStyle {
 }
 
 /// An inherited scope exposing the active shimmer animation and style to
-/// descendant bones.
-///
-/// When [animation] is `null` (reduce-motion, goldens, or standalone bone use)
-/// the bones paint their static base fill only — the deterministic path.
+/// descendant bones. When [animation] is `null` (reduce-motion, goldens, or
+/// standalone bone use) the bones paint their static base fill only.
 class _SkeletonShimmerScope extends InheritedWidget {
   const _SkeletonShimmerScope({
     required this.style,
@@ -88,26 +74,16 @@ class _SkeletonShimmerScope extends InheritedWidget {
       context.dependOnInheritedWidgetOfExactType<_SkeletonShimmerScope>();
 }
 
-/// Wraps a laid-out subtree of skeleton bones and drives the shared shimmer.
+/// Wraps a laid-out subtree of skeleton bones ([SkeletonBox], [SkeletonLine],
+/// [SkeletonCircle], and the SkeletonTile/SkeletonCard composites in
+/// `skeleton_tile.dart`) and drives the shared shimmer.
 ///
-/// The [child] is a mirrored skeleton layout built from bone primitives
-/// ([SkeletonBox], [SkeletonLine], [SkeletonCircle], plus the SkeletonTile /
-/// SkeletonCard composites in `skeleton_tile.dart`). This widget sources the
-/// shimmer duration/curve from [AppMotion] tokens and is motion-guarded (audit
-/// checklist #5): when
-/// `MediaQuery.disableAnimationsOf(context)` is true (reduce-motion or a golden
-/// harness) no ticker runs and the bones paint their static base fill — the
-/// subtree still lays out and is measurable, but never animates. Critical: the
-/// shimmer is named explicitly by the motion checklist.
+/// When `MediaQuery.disableAnimationsOf(context)` is true (reduce-motion or a
+/// golden harness) no ticker runs and the bones paint their static base fill;
+/// the subtree still lays out but never animates.
 ///
-/// Backend-free (no port): the skeleton renders whenever a feature's
-/// `*_presentation_state.isLoading` is true; no plugin, no network call, no
-/// side effect. The skeleton itself carries no copy — the accessible loading
-/// label reuses `states.loadingTitle` (state-views bucket) and can be
-/// overridden via [semanticsLabel].
-///
-/// Tests must use bounded frame pumps (8 frames), never `pumpAndSettle` — the
-/// repeating shimmer would otherwise hang the harness.
+/// Tests must use bounded frame pumps, never `pumpAndSettle` — the repeating
+/// shimmer would otherwise hang the harness.
 class SkeletonView extends StatefulWidget {
   /// Creates a [SkeletonView].
   const SkeletonView({
@@ -150,13 +126,10 @@ class _SkeletonViewState extends State<SkeletonView> with SingleTickerProviderSt
     if (_controller == null) {
       final controller = AnimationController(
         vsync: this,
-        // AppMotion-derived: a deliberate ~1.1s sweep period.
         duration: AppMotion.deliberate * 3,
       );
       unawaited(controller.repeat());
       _controller = controller;
-      // emphasizedCurve is ease-in-out (symmetric) so the loop is seamless:
-      // both endpoints settle with the highlight band off-edge.
       _animation = controller.drive(CurveTween(curve: AppMotion.emphasizedCurve));
     }
   }
@@ -194,10 +167,8 @@ class _SkeletonViewState extends State<SkeletonView> with SingleTickerProviderSt
 /// A rounded-rect skeleton bone.
 ///
 /// Fills with [SkeletonStyle.baseColor] and, when an ancestor [SkeletonView]
-/// is driving a shimmer animation, overlays the moving highlight sweep. With no
-/// ancestor scope (standalone use) or under reduce-motion it paints the static
-/// base fill only — fully deterministic for goldens. Reads colors from
-/// `context.theme` (audit checklist: colors derive from theme).
+/// is driving a shimmer animation, overlays the moving highlight sweep.
+/// Otherwise paints the static base fill only.
 class SkeletonBox extends StatelessWidget {
   /// Creates a [SkeletonBox].
   const SkeletonBox({
@@ -237,11 +208,8 @@ class SkeletonBox extends StatelessWidget {
   }
 }
 
-/// A skeleton bone shaped like a single line of text.
-///
-/// Renders a [SkeletonBox] whose width is a [widthFraction] of the available
-/// width (start-aligned, RTL-aware), or a [fixedWidth] when provided. Stacks of
-/// [SkeletonLine] mirror paragraph text while data loads.
+/// A skeleton bone shaped like a single line of text: a [SkeletonBox] whose
+/// width is a [widthFraction] of the available width, or a [fixedWidth].
 class SkeletonLine extends StatelessWidget {
   /// Creates a [SkeletonLine].
   const SkeletonLine({
@@ -275,8 +243,6 @@ class SkeletonLine extends StatelessWidget {
         borderRadius: borderRadius,
       );
     }
-    // Manual clamp avoids the `num` widening that `double.clamp` can trigger
-    // under strict analysis (mirrors BusyIndicator).
     var fraction = widthFraction;
     if (fraction < 0) fraction = 0;
     if (fraction > 1) fraction = 1;
@@ -288,10 +254,8 @@ class SkeletonLine extends StatelessWidget {
   }
 }
 
-/// A circular skeleton bone (avatar / leading icon placeholder).
-///
-/// Equivalent to a [SkeletonBox] with equal width/height and a fully rounded
-/// radius; inherits the ancestor shimmer or the static reduce-motion fill.
+/// A circular skeleton bone (avatar / leading icon placeholder): a
+/// [SkeletonBox] with equal width/height and a fully rounded radius.
 class SkeletonCircle extends StatelessWidget {
   /// Creates a [SkeletonCircle].
   const SkeletonCircle({this.size = 32.0, super.key});
@@ -330,17 +294,15 @@ class _BonePainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect);
 
-    // Static base fill — always present (reduce-motion / golden path).
     canvas.drawRRect(rrect, Paint()..color = style.baseColor);
 
     final progress = animation?.value;
-    if (progress == null) return; // Static path stops here.
+    if (progress == null) return;
 
     final w = rect.width;
     if (w <= 0 || rect.height <= 0) return;
-    // Virtual rect 3x as wide; the bright band sits in its middle third. The
-    // virtual rect slides from fully-left (band off the left edge) at t=0 to
-    // fully-right (band off the right edge) at t=1, so the sweep is seamless.
+    // Virtual rect 3x as wide, sliding fully-left to fully-right, so the
+    // highlight band enters and exits the edges seamlessly.
     final virtual = Rect.fromLTWH(
       rect.left - 2 * w + progress * 2 * w,
       rect.top,

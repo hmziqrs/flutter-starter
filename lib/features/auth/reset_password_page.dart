@@ -79,11 +79,8 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    // This page participates in the restoration tree (state-restoration
-    // contract) but registers NO restorable properties: both fields are new
-    // passwords, and secrets never participate in restoration (mirrors the
-    // login_page rule). The user re-types a new password after a process death
-    // rather than having a credential draft persisted.
+    // No restorable properties: both fields are new passwords, and secrets
+    // never participate in restoration.
   }
 
   @override

@@ -67,9 +67,8 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
   final _submitFocus = FocusNode(debugLabel: 'forgotPassword.submit');
   bool _callbackSubmitting = false;
 
-  // state-restoration: the email draft survives a simulated process death
-  // (state-restoration). No secret is entered on this page, so the single draft
-  // is the whole restorable surface.
+  // No secret is entered on this page, so the email draft is the whole
+  // restorable surface.
   final RestorableString _emailDraft = RestorableString('');
 
   bool get _submitting =>

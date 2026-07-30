@@ -6,25 +6,15 @@ import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [AuthRepository] against the test-server session contract (C9).
+/// Real HTTP [AuthRepository] against the test-server session contract.
+/// Constructed only when a consumer provides an endpoint; the
+/// `InMemoryAuthRepository` default surfaces `AuthException.notConnected`
+/// instead.
 ///
-/// Constructed **only when a consumer provides an endpoint** (the no-backend
-/// rule, C2: the `InMemoryAuthRepository` default surfaces
-/// `AuthException.notConnected` and never fakes a session). Speaks to the
-/// backend through a shared injected [Dio] (built via [buildAppDio] when no
-/// instance is supplied); the test / dev graph runs on native only, web falls
-/// through to the in-memory default per `PlatformCapabilities`.
-///
-/// Every interaction is wrapped in `try/on` and mapped to a typed
-/// [AuthException] — transport failures (any [DioException] without a response)
-/// surface [AuthException.notConnected], `401`/`409` surface
-/// [AuthException.unauthorized], any other `4xx` surfaces
-/// [AuthException.unknown], and a `5xx`/unclassified response surfaces
-/// [AuthException.notConnected]. The client never fabricates a session (C2).
-///
-/// Tokens reach this class only after the `LogRedactor`-scrubbed logging path;
-/// this class itself does not log token values (it surfaces only the typed
-/// outcome).
+/// Transport failures (a [DioException] without a response) surface
+/// [AuthException.notConnected]; `401`/`409` surface
+/// [AuthException.unauthorized]; other `4xx` surfaces [AuthException.unknown];
+/// `5xx`/unclassified surfaces [AuthException.notConnected].
 final class HttpAuthClient implements AuthRepository {
   HttpAuthClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
@@ -64,8 +54,7 @@ final class HttpAuthClient implements AuthRepository {
   @override
   Future<AuthSession> refresh(AuthSession session) async {
     if (session is! AuthAuthenticated) {
-      // An anonymous session carries no refresh token to present; the caller
-      // treats this like any other unauthorized refresh outcome.
+      // Anonymous session carries no refresh token to present.
       throw const AuthException.unauthorized();
     }
     final body = await _request(
@@ -79,8 +68,8 @@ final class HttpAuthClient implements AuthRepository {
     if (accessToken == null || refreshToken == null || expiresAt == null) {
       throw const AuthException.unknown();
     }
-    // The refresh response omits `userId`; the identity is inherited across
-    // token rotations (see AuthAuthenticated docs).
+    // The refresh response omits `userId`; identity is inherited across
+    // token rotations.
     return AuthAuthenticated(
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -92,9 +81,8 @@ final class HttpAuthClient implements AuthRepository {
   @override
   Future<AuthSession> logout(AuthSession session) async {
     final refreshToken = session is AuthAuthenticated ? session.refreshToken : null;
-    // Logout is idempotent and best-effort: a transport failure surfaces as
-    // AuthException.notConnected, but the caller clears local state regardless
-    // (a failed logout must not strand the user in an authenticated shell).
+    // Idempotent and best-effort: the caller clears local state regardless of
+    // a transport failure here.
     final body = <String, Object>{};
     if (refreshToken != null) {
       body['refreshToken'] = refreshToken;
@@ -102,8 +90,6 @@ final class HttpAuthClient implements AuthRepository {
     await _request(method: 'POST', path: '/v1/auth/logout', body: body);
     return const AuthAnonymous();
   }
-
-  // --------------------------- HTTP plumbing ----------------------------
 
   Future<Map<String, Object?>> _request({
     required String method,
@@ -124,8 +110,6 @@ final class HttpAuthClient implements AuthRepository {
         ),
       );
     } on DioException catch (e) {
-      // validateStatus accepts every code, so a response-bearing DioException
-      // is not expected; defensively classify by status when one is present.
       final status = e.response?.statusCode;
       if (status != null) {
         _classifyStatus(status);
@@ -142,8 +126,7 @@ final class HttpAuthClient implements AuthRepository {
   }
 
   Never _classifyStatus(int status) {
-    // 401 (bad credentials) and 409 (register: account already exists) both
-    // surface as unauthorized.
+    // 401 (bad credentials) and 409 (account already exists) both map here.
     if (status == 401 || status == 409) {
       throw const AuthException.unauthorized();
     }

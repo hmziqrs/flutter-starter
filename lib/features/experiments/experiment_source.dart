@@ -3,24 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 
-/// Where an [ExperimentAssignment] was resolved.
-///
-/// - [local]: the deterministic local table bucketed it (the no-backend
-///   default, or the offline degrade of the remote source).
-/// - [remote]: the optional remote-config reader resolved it from the
-///   `experiments` slice of the shared backend response.
-///
-/// Surfaced on the diagnostics snapshot so a developer can see at a glance
-/// whether a given assignment is the honest local fallback or a real remote
-/// resolution.
+/// Where an [ExperimentAssignment] was resolved: [local] is the deterministic
+/// table (no-backend default, or the offline degrade of the remote source);
+/// [remote] is the optional remote-config reader. Surfaced on the
+/// diagnostics snapshot.
 enum ExperimentAssignmentSource { local, remote }
 
-/// A single resolved `(key, variant, sticky, source)` tuple.
-///
-/// `sticky` is `true` when the assignment is stable for the stable device id
-/// across launches (always `true` for the deterministic local source; carried
-/// from the backend `sticky` field for the remote source). Value equality over
-/// every field so the controller's snapshot diff detects real changes only.
+/// A single resolved `(key, variant, sticky, source)` tuple. `sticky` is
+/// `true` when the assignment is stable across launches for this device
+/// (always `true` for the deterministic local source; carried from the
+/// backend for the remote source). Value equality over every field.
 @immutable
 final class ExperimentAssignment {
   /// Constructs an assignment.
@@ -62,38 +54,29 @@ final class ExperimentAssignment {
 }
 
 /// Typed source of experiment assignments — the ab-experiments reader on the
-/// shared remote-config family (C4).
+/// shared remote-config family. Lives with its feature; the optional
+/// production adapter reading a remote-config backend lives under
+/// `lib/infrastructure/remote_config/`.
 ///
-/// The port lives **with its feature** (`lib/features/experiments/`, mirroring
-/// the `SettingsStore` / `FeatureFlagsSource` exemplars); only the optional
-/// production adapter that reads a remote-config backend lives under
-/// `lib/infrastructure/remote_config/`. It is one of three peer typed ports —
-/// alongside `FeatureFlagsSource` (feature-flags) and `VersionGateStore`
-/// (update-blocker) — that each own their own default and read a distinct slice
-/// from the single shared backend wrapper. No reader opens its own backend
-/// connection.
-///
-/// Implementations wrap their backing source in `try/on Object` and degrade to
-/// the deterministic local table on any backend failure: a source that cannot
-/// be read must never fabricate a remote assignment (C2). The deterministic
-/// default is a **real** local assignment (stable, reproducible, no network),
-/// not a Noop — see `DeterministicExperimentSource`.
+/// Implementations wrap their backing source in `try/on Object` and degrade
+/// to the deterministic local table on any backend failure. The
+/// deterministic default is a real local assignment (stable, reproducible,
+/// no network), not a Noop — see `DeterministicExperimentSource`.
 abstract interface class ExperimentSource {
   /// Returns the resolved [ExperimentAssignment] for [key]. Never throws for
-  /// backend failures — the remote reader degrades to the deterministic local
-  /// table instead, and the deterministic source is always local.
+  /// backend failures — the remote reader degrades to the deterministic
+  /// local table instead.
   Future<ExperimentAssignment> assignmentFor(ExperimentKey key);
 
   /// Live updates to the full assignment snapshot, for sources that can push
-  /// (the in-memory fake in tests). Poll-backed sources (the deterministic
-  /// default, the optional remote reader) emit nothing here and refresh through
-  /// [assignmentFor] on the controller's resume-driven refresh.
+  /// (the in-memory fake in tests). Poll-backed sources emit nothing here and
+  /// refresh through [assignmentFor] on the controller's resume-driven
+  /// refresh.
   Stream<List<ExperimentAssignment>> changes();
 }
 
 /// Thrown by [ExperimentSource] implementations only for programmer errors
 /// (never for backend failures, which degrade to the deterministic table).
-/// Mirrors the peer `FeatureFlagsException` / `VersionGateException`.
 final class ExperimentSourceException implements Exception {
   /// Constructs an exception describing the failing [operation].
   const ExperimentSourceException({required this.operation});
@@ -105,14 +88,10 @@ final class ExperimentSourceException implements Exception {
   String toString() => 'ExperimentSourceException: $operation failed';
 }
 
-/// Handwritten Riverpod handle for the [ExperimentSource] port.
-///
-/// Mirrors `settingsStoreProvider` / `featureFlagsSourceProvider` /
-/// `versionGateStoreProvider`: it throws a [StateError] until the composition
-/// root overrides it with a concrete adapter. The no-backend default
-/// (`DeterministicExperimentSource` — a real local assignment, not a Noop) is
-/// constructed in `AppDependencies.production` and wired in `lib/app/app.dart`
-/// as a peer of the other port overrides. No codegen.
+/// Handwritten Riverpod handle for the [ExperimentSource] port; throws a
+/// [StateError] until the composition root overrides it. The no-backend
+/// default (`DeterministicExperimentSource` — a real local assignment, not a
+/// Noop) is constructed in `AppDependencies.production`.
 final experimentSourceProvider = Provider<ExperimentSource>(
   (ref) => throw StateError('ExperimentSource must be overridden at the composition root.'),
 );

@@ -3,20 +3,13 @@ import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/cache_store_exception.dart';
 
-/// Deterministic in-memory [CacheStore].
+/// Deterministic in-memory [CacheStore]: the hermetic default for tests and
+/// dev-gallery isolation. Stores each entry as its canonical
+/// [CacheEntryJson] map so it round-trips through the codec exactly like
+/// `FileCacheStore` — the two adapters are behaviorally identical.
 ///
-/// The hermetic default for tests and `PreviewFrame` / dev-gallery isolation,
-/// and the no-backend default constructed by `AppDependencies.inMemory`. Stores
-/// each entry as its canonical [CacheEntryJson] map so it round-trips through
-/// the codec exactly like `FileCacheStore` — the two adapters are
-/// behaviorally identical, only the backing differs.
-///
-/// Mirrors [`InMemorySettingsStore`](../../features/settings/in_memory_settings_store.dart):
 /// [failReads] / [failWrites] toggles let tests assert [CacheStoreException]
-/// wrapping without Mocktail. Production never constructs this class except as
-/// the in-memory factory default; it never fakes a populated cache for a source
-/// that does not exist (C2 / C13) — entries only appear because a feature wrote
-/// them.
+/// wrapping without a mocking library.
 final class InMemoryCacheStore implements CacheStore {
   InMemoryCacheStore({Map<String, CacheEntryJson>? seed}) : _entries = {...?seed};
 

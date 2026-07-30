@@ -44,51 +44,28 @@ final class SettingsState {
   final double fontScale;
   final AppTextPreset textPreset;
 
-  /// The optional Latin-only font family derived from the active [textPreset]
-  /// (null for comfortable/large; the dyslexia family for the dyslexia preset).
-  /// Kept as a computed getter rather than a denormalized field so it can never
-  /// drift from [textPreset] — switching dyslexia -> comfortable clears it
-  /// without a copyWith clearability workaround. Persisted indirectly via
-  /// [textPreset] (no separate key); non-Latin locales keep their bundled
-  /// `Noto Sans Arabic` / `Noto Sans SC` fallback through `fontFamilyFallback`.
+  /// Derived from [textPreset] so it never drifts (null unless dyslexia).
   String? get fontFamily => textPreset.toSettings().fontFamily;
 
   final AppLocale? localeOverride;
 
-  /// Whether the first-launch onboarding flow has been completed. Seeded
-  /// synchronously from persisted settings at cold start and toggled by the
-  /// settings controller's mark-onboarding-complete action. The onboarding
-  /// redirect reads the live controller state (not a captured bool) so the
-  /// in-session Skip transition reaches home on the same tick.
   final bool hasCompletedOnboarding;
 
-  /// Whether the user has opted into biometric unlock. Read by the C5 redirect
-  /// (composition root) alongside the biometric lock state to gate protected
-  /// shell-tab destinations to the lock page. Default false; persisted through
-  /// the settings repository like every other plaintext preference.
   final bool biometricUnlockEnabled;
 
-  /// Whether haptic feedback is enabled on key actions. Default true; only the
-  /// opt-out is persisted so a missing key reads as enabled. Each call site
-  /// additionally gates on `MediaQuery.disableAnimationsOf` (the reduce-motion
-  /// guard is load-bearing and applied per-consumer, never centrally).
+  /// Default true; only the opt-out is persisted. Reduce-motion is gated
+  /// per-consumer via `MediaQuery.disableAnimationsOf`, not centrally.
   final bool hapticsEnabled;
 
-  /// Whether a passcode is configured and the passcode gate is armed. Read by
-  /// the C5 redirect (composition root) alongside PasscodeState to gate
-  /// protected shell-tab destinations to the passcode entry page. Default
-  /// false; persisted as a plaintext preference (the secret itself never
-  /// leaves SecureStore — only the salted hash does).
+  /// Whether a passcode is configured and armed; the secret itself lives only
+  /// as a salted hash in SecureStore.
   final bool passcodeEnabled;
 
-  /// Idle auto-lock delay in seconds. 0 means idle locking is off (the lock
-  /// only fires on background-return when [lockOnBackground] is true).
-  /// Persisted as a plaintext preference; the live value is read by the
-  /// AutoLockController through the `autoLockDelaySecondsProvider` seam.
+  /// Idle auto-lock delay in seconds; 0 = off.
   final int autoLockDelaySeconds;
 
-  /// Whether the app re-locks when backgrounded. Only meaningful when
-  /// [passcodeEnabled] is true. Persisted as a plaintext preference.
+  /// Whether the app re-locks when backgrounded; meaningful only with
+  /// [passcodeEnabled].
   final bool lockOnBackground;
 
   SettingsState copyWith({

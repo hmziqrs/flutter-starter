@@ -7,16 +7,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// The dismissible soft-deprecation nudge for deprecated builds.
-///
-/// Reuses [EscapeDismissibleOverlay] + [FDialog] (mirroring the router's
-/// `_showInformationDialog`) rather than extracting any new shared widget (C3:
-/// shared extraction needs >=3 concrete consumers). The dialog body is the
-/// reusable [SoftUpdateCard], also rendered directly by the dev-gallery fixture
-/// so the soft state is deterministically previewable. The dialog performs no
-/// side effects and calls no plugin: [onUpdate] / [onLater] are supplied by the
-/// composition root (store deep-link + snooze persistence respectively).
-
 /// Shows the soft-update [FDialog]. Dismissible via Escape / barrier; the
 /// caller's [onUpdate] / [onLater] callbacks run after the dialog is dismissed.
 Future<void> showSoftUpdateDialog(
@@ -57,8 +47,7 @@ Future<void> showSoftUpdateDialog(
 }
 
 /// The soft-update dialog body: title, body (or server message), and the
-/// "Update" / "Later" actions. Rendered both inside [showSoftUpdateDialog] and
-/// directly by the dev-gallery soft fixture.
+/// "Update" / "Later" actions.
 class SoftUpdateCard extends StatelessWidget {
   const SoftUpdateCard({
     required this.state,
@@ -119,12 +108,8 @@ class SoftUpdateCard extends StatelessWidget {
   }
 }
 
-/// Pure, side-effect-free helpers for the soft-update snooze timestamp.
-///
-/// The feature owns the encoding/decoding math; the composition root owns the
-/// actual `SettingsStore` read/write (the feature must not import another
-/// feature's port). Snoozing persists `update.snoozed_until` so a dismissed soft
-/// prompt does not re-appear every launch — otherwise it becomes a UX nuisance.
+/// Pure helpers for the soft-update snooze timestamp; the composition root
+/// owns the actual `SettingsStore` read/write.
 abstract final class SoftUpdateSnooze {
   /// Settings key holding the snooze deadline (UTC ISO-8601).
   static const String key = 'update.snoozed_until';

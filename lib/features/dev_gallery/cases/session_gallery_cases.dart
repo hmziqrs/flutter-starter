@@ -4,11 +4,7 @@ import 'package:starter/features/session/session_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Immutable, deterministic preview state for the session gallery cases. Two
-/// states — logged out vs logged in — so the C5 auth-required redirect is
-/// deterministically previewable. No timers, no repository, no persistence
-/// (C2: the gallery never fakes a backend action — the case just renders a
-/// stable summary).
+/// Preview state for the session gallery cases: logged out vs logged in.
 final class SessionGalleryState {
   const SessionGalleryState._(this.viewData, this.labelBuilder);
 
@@ -27,9 +23,7 @@ final class SessionGalleryState {
   static final values = <SessionGalleryState>[loggedOut, loggedIn];
 }
 
-/// Builds the session gallery cases: logged out vs logged in. Each case mounts
-/// a deterministic summary so the redirect's auth-required predicate is
-/// previewable without touching a real `AuthRepository`.
+/// Builds the session gallery cases: logged out vs logged in.
 List<GalleryCase> buildSessionGalleryCases() {
   return [
     for (final entry in SessionGalleryState.values)
@@ -44,10 +38,6 @@ List<GalleryCase> buildSessionGalleryCases() {
   ];
 }
 
-/// Renders the session summary derived from [SessionGalleryState] so the
-/// preview exercises the production view-data mapping (`AuthSession` ->
-/// `SessionViewData`). The body uses the shared gallery preview placeholder so
-/// no extra per-feature copy is introduced for the scaffold.
 class _SessionPreview extends StatelessWidget {
   const _SessionPreview({required this.state});
 

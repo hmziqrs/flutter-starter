@@ -14,34 +14,20 @@ import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 import 'package:starter/shared/widgets/lists/paged_list_view.dart';
 import 'package:starter/shared/widgets/search/search_field.dart';
 
-/// The local corpus the search field filters. Backend-free by design (the
-/// feature spec: "search matches local data"); the default is the starter
-/// fixture corpus — a real-local deterministic source (C2 note 2), NOT a faked
-/// backend. A consumer with a real source overrides this at the composition
-/// root; until then the app runs green with zero backend.
+/// The local corpus the search field filters. A consumer with a real source
+/// can override this at the composition root.
 final searchCorpusProvider = Provider<List<SearchResultViewData>>(
   (ref) => SearchViewData.defaults().results,
 );
 
-/// Hand-written Riverpod [NotifierProvider] over the shared
-/// [PagedStateNotifierBase]. Its [PageFetcher] filters [searchCorpusProvider]
-/// by the live debounced query ([debouncedQueryProvider]) and slices the
-/// matches into fixed-size pages — a real-local fetcher, not a faked source.
-///
-/// The fetcher is the C2 port for this paged surface. The no-backend default
-/// ([noopPageFetcher]) surfaces `common.notConnected` and never synthesizes a
-/// page; this controller wires a real-local fetcher so search demonstrates
-/// pagination against the local corpus. A consumer with a server search
-/// endpoint swaps the fetcher body for an HTTP call against the
-/// `tools/test_server/` contract (audit #1).
+/// Filters [searchCorpusProvider] by the live debounced query
+/// ([debouncedQueryProvider]) and slices matches into fixed-size pages.
 final searchResultsControllerProvider =
     NotifierProvider<SearchResultsController, PagedState<SearchResultViewData>>(
       SearchResultsController.new,
     );
 
-/// The page size the local fetcher slices the corpus into. Small enough that
-/// the fixture corpus paginates (so [PagedListView]'s scroll-triggered
-/// `loadNext` is exercised), large enough that the first page reads as a list.
+/// Page size the local fetcher slices the corpus into.
 const searchPageSize = 8;
 
 final class SearchResultsController extends PagedStateNotifierBase<SearchResultViewData> {
@@ -54,8 +40,6 @@ final class SearchResultsController extends PagedStateNotifierBase<SearchResultV
   @override
   PagedState<SearchResultViewData> build() {
     // Re-fetch page one whenever the debounced query settles to a new value.
-    // The list-side refresh fires only on a real change, so a no-op rebuild
-    // never churns the paged state.
     ref.listen<String>(debouncedQueryProvider, (previous, next) {
       if (previous != next) {
         unawaited(refresh());
@@ -78,16 +62,9 @@ final class SearchResultsController extends PagedStateNotifierBase<SearchResultV
 
 /// Full-screen in-app search route (top-level `GoRoute`, outside the shell).
 ///
-/// Composes [SearchField] (debounced via [debouncedQueryProvider]),
-/// [PagedListView] (driven by [searchResultsControllerProvider]), and the
-/// shared state-views (empty / error / loading). The page owns its
-/// [TextEditingController] and requests field focus on mount; Escape dismisses
-/// the route via [EscapeDismissibleOverlay] (full-screen flow, audit #5).
-///
-/// Receives navigation callbacks (never calls `go_router` directly, per the root
-/// contract). The corpus is local typed view-data (backend-free matching); a
-/// consumer with a server search endpoint overrides [searchCorpusProvider] and
-/// the fetcher body.
+/// Composes [SearchField] (debounced via [debouncedQueryProvider]) and
+/// [PagedListView] (driven by [searchResultsControllerProvider]). Escape
+/// dismisses the route via [EscapeDismissibleOverlay].
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({
     required this.onBack,
@@ -98,9 +75,7 @@ class SearchPage extends ConsumerStatefulWidget {
   /// Dismisses the search route. The router wires this to `context.pop()`.
   final VoidCallback onBack;
 
-  /// Whether to focus the search field on mount. Defaults to true (the expected
-  /// UX for a search route); the dev-gallery fixture passes false so the
-  /// preview does not steal focus.
+  /// Whether to focus the search field on mount.
   final bool autofocus;
 
   @override
@@ -118,9 +93,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // Kick off the first page so the list is not stuck on the idle seed. The
-      // controller surfaces loading → ready through state; navigation never
-      // gates on it (audit #5).
       unawaited(ref.read(searchResultsControllerProvider.notifier).refresh());
       if (widget.autofocus) {
         _focusNode.requestFocus();
@@ -227,8 +199,6 @@ class _SearchHeader extends StatelessWidget {
             semanticsLabel: context.t.common.back,
             onPress: onBack,
             // RTL: 'back' points toward the start edge, which is right in RTL.
-            // Mirrors the _DirectionalChevron pattern in settings_page.dart so
-            // the Arabic layout does not show a left-pointing back arrow.
             child: Icon(
               Directionality.of(context) == TextDirection.rtl
                   ? FLucideIcons.arrowRight

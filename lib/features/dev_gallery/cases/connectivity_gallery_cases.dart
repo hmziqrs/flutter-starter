@@ -8,39 +8,22 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Immutable, deterministic preview state for the connectivity banner gallery
-/// cases. One per [ConnectivityState]; no timers, no plugin, no persistence.
-final class ConnectivityGalleryState {
-  const ConnectivityGalleryState._(this.state, this.labelBuilder);
-  final ConnectivityState state;
-  final String Function(Translations translations) labelBuilder;
-
-  static final online = ConnectivityGalleryState._(
-    ConnectivityState.online,
-    (t) => t.connectivity.online,
-  );
-  static final offline = ConnectivityGalleryState._(
-    ConnectivityState.offline,
-    (t) => t.connectivity.offline,
-  );
-  static final limited = ConnectivityGalleryState._(
-    ConnectivityState.limited,
-    (t) => t.connectivity.limited,
-  );
-
-  static final values = <ConnectivityGalleryState>[online, offline, limited];
-}
+String _caseLabel(Translations t, ConnectivityState state) => switch (state) {
+  ConnectivityState.online => t.connectivity.online,
+  ConnectivityState.offline => t.connectivity.offline,
+  ConnectivityState.limited => t.connectivity.limited,
+};
 
 /// Builds the connectivity banner gallery cases (online / offline / limited).
 List<GalleryCase> buildConnectivityGalleryCases() {
   return [
-    for (final entry in ConnectivityGalleryState.values)
-      TypedGalleryCase<ConnectivityGalleryState>(
-        id: 'connectivity.${entry.state.name}',
+    for (final state in ConnectivityState.values)
+      TypedGalleryCase<ConnectivityState>(
+        id: 'connectivity.${state.name}',
         screenId: 'connectivity',
         screenLabelBuilder: (translations) => translations.devGallery.screenConnectivity,
-        caseLabelBuilder: entry.labelBuilder,
-        stateFactory: (_) => entry,
+        caseLabelBuilder: (translations) => _caseLabel(translations, state),
+        stateFactory: (_) => state,
         pageFactory: (context, state) => _ConnectivityPreview(state: state),
       ),
   ];
@@ -49,18 +32,13 @@ List<GalleryCase> buildConnectivityGalleryCases() {
 class _ConnectivityPreview extends StatelessWidget {
   const _ConnectivityPreview({required this.state});
 
-  final ConnectivityGalleryState state;
+  final ConnectivityState state;
 
   @override
   Widget build(BuildContext context) {
-    // The PreviewFrame already provides a ProviderScope (interactionPolicy);
-    // nest one that pins connectivity to the preview state. appLifecyclePhaseProvider
-    // resolves to its resumed default, so no lifecycle override is required. Mirrors
-    // production: the banner floats over a placeholder body inside an overlay Stack
-    // (online state renders nothing, leaving just the body).
     return ProviderScope(
       overrides: [
-        connectivityServiceProvider.overrideWithValue(_FixedConnectivityService(state.state)),
+        connectivityServiceProvider.overrideWithValue(_FixedConnectivityService(state)),
       ],
       child: Stack(
         children: [

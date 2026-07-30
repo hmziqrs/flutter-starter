@@ -8,12 +8,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/feedback/app_confirmation_dialog.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
 
-/// The deterministic kind of toast / dialog rendered by the gallery fixture.
-///
-/// One variant per `ToastSeverity` plus one per `ConfirmationIntent`. The
-/// fixture never fakes a backend action (audit #13): every case surfaces
-/// `common.notConnected` (or the cancel side of a confirm) and never claims
-/// success for an operation that did not run.
 enum ToastDialogGalleryKind {
   toastSuccess,
   toastInfo,
@@ -23,16 +17,9 @@ enum ToastDialogGalleryKind {
   dialogDestroy,
 }
 
-/// Builds the toast + confirmation-dialog gallery cases.
-///
-/// Each case mounts a single trigger button; pressing it routes through the
-/// production [AppToast] / [AppConfirmationDialog] wrappers, which find the
-/// `FToaster` ancestor provided by `PreviewFrame` (and the `Navigator` likewise
-/// mounted in `PreviewFrame`). The triggers carry stable keys so golden
-/// capture + widget tests can drive them deterministically.
-///
-/// The gallery is wired in `gallery_registry.dart` by the integrator — the case
-/// builder is feature-owned and registered alongside the other Wave-6 surfaces.
+/// Builds the toast + confirmation-dialog gallery cases. Each case mounts a
+/// single trigger button; pressing it routes through the production
+/// [AppToast] / [AppConfirmationDialog] wrappers.
 List<GalleryCase> buildToastDialogsGalleryCases() {
   return ToastDialogGalleryKind.values
       .map(
@@ -92,8 +79,6 @@ class _ToastDialogPreview extends StatelessWidget {
           message: translations.common.notConnected,
         );
       case ToastDialogGalleryKind.toastError:
-        // Persistent (`duration: null`) — the no-backend error surface must not
-        // be hidden by a transient timeout in the deterministic preview.
         AppToast.show(
           context,
           severity: ToastSeverity.error,

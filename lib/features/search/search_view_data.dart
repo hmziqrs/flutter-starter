@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// A single typed search result. Backend-free by default: the search feature
-/// matches over a feature-supplied corpus of these (no network, no port), so a
-/// result is plain local view-data, not a repository model (audit #2).
+/// A single typed search result matched over a local, feature-supplied corpus.
 @immutable
 final class SearchResultViewData {
   const SearchResultViewData({
@@ -14,17 +12,11 @@ final class SearchResultViewData {
   /// Stable identifier used as the list `ValueKey` seed.
   final String id;
 
-  /// Primary match label (the field the matcher weights first).
   final String title;
-
-  /// Optional secondary copy.
   final String subtitle;
 
   /// Case-insensitive, trimmed substring match over [title] and [subtitle]. An
-  /// empty/whitespace query matches every item (the "show all" default while
-  /// the user has not typed yet). The matcher is intentionally simple — search
-  /// is backend-free local filtering; a consumer needing fuzzy/server matching
-  /// overrides the corpus provider.
+  /// empty/whitespace query matches every item.
   bool matches(String query) {
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) return true;
@@ -47,22 +39,16 @@ final class SearchResultViewData {
   String toString() => 'SearchResultViewData(id: $id, title: $title)';
 }
 
-/// The page-level view-data: the local corpus the search field filters. The
-/// corpus is typed view-data (audit #2); a consumer with a real source overrides
-/// `searchCorpusProvider` at the composition root — the default fixture corpus
-/// is the spec-mandated backend-free local data ("search matches local data"),
-/// not a faked backend (C2 note 2: a real-local deterministic source).
+/// The page-level view-data: the local corpus the search field filters.
 @immutable
 final class SearchViewData {
   SearchViewData({required Iterable<SearchResultViewData> results})
     : results = List<SearchResultViewData>.unmodifiable(results);
 
-  /// A backend-free fixture corpus sized to demonstrate pagination (more items
-  /// than one page) and matching (overlapping keywords). Real consumers override
-  /// `searchCorpusProvider`; this default keeps the app green with zero backend.
+  /// Fixture corpus sized to demonstrate pagination and matching. Real
+  /// consumers override `searchCorpusProvider`.
   factory SearchViewData.defaults() => SearchViewData(results: _fixtureResults);
 
-  /// The corpus entries.
   final List<SearchResultViewData> results;
 
   static const _fixtureResults = <SearchResultViewData>[

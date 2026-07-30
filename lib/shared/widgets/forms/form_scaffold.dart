@@ -12,16 +12,9 @@ import 'package:starter/shared/widgets/busy_overlay.dart';
 ///
 /// The caller owns the [Form] state (via [formKey]), the typed field values,
 /// validation, and the first-invalid reveal; this widget only standardizes the
-/// chrome and the submit/busy affordance so future forms (billing,
-/// settings-entry, feedback) stay consistent without re-implementing it. The
-/// submit callback ([onSubmit]) is feature-supplied and performs the
-/// `validate()` → reveal → `save()` → async submit sequence from the feature's
-/// own presentation state.
-///
-/// Submit is never gated on animation: [BusyOverlay] only blocks duplicate
-/// presses while the in-flight callback runs, and [onSubmit] always runs to
-/// completion (audit checklist #5). A form with no backend surfaces
-/// `common.notConnected` from [onSubmit] rather than faking success.
+/// chrome and the submit/busy affordance. The submit callback ([onSubmit]) is
+/// feature-supplied and performs the `validate()` → reveal → `save()` → async
+/// submit sequence from the feature's own presentation state.
 class FormScaffold extends StatelessWidget {
   /// Creates a [FormScaffold].
   const FormScaffold({
@@ -39,10 +32,8 @@ class FormScaffold extends StatelessWidget {
     super.key,
   });
 
-  /// The key of the [Form] that parents [fields].
-  ///
-  /// [FormScaffold] mounts the [Form] with this key so the caller can reach it
-  /// from [onSubmit] via `formKey.currentState` to `validate()` / `save()`.
+  /// The key of the [Form] that parents [fields]; reach it from [onSubmit] via
+  /// `formKey.currentState` to `validate()` / `save()`.
   final GlobalKey<FormState> formKey;
 
   /// The form-field widgets placed inside the mounted [Form].
@@ -119,10 +110,6 @@ class FormScaffold extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         FButton(
           key: submitKey,
-          // onSubmit returns FutureOr<void>; the result is discarded and the
-          // optional async work is tracked by [isSubmitting] / [BusyOverlay]
-          // rather than awaited here, so the submit never gates on animation and
-          // the press returns immediately.
           onPress: enabled ? onSubmit : null,
           builder: (_, _, _, _, _, child) => Flexible(child: child!),
           child: Text(

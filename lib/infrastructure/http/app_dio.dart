@@ -4,51 +4,31 @@ import 'package:starter/infrastructure/firebase/firebase_performance_dio_interce
 
 /// Builds a configured [Dio] for one adapter's [baseUrl].
 ///
-/// The HTTP adapters classify response status themselves (401, 409, 429, 4xx,
-/// 5xx each map to a different typed exception), so [BaseOptions.validateStatus]
-/// accepts **every** status code: Dio never throws on a non-2xx response — the
-/// adapter inspects `response.statusCode` and raises its own typed exception.
-/// Transport failures (connection refused, timeouts, bad certificate, ...) still
-/// surface as a [DioException]; each adapter maps that to its `notConnected`
-/// kind. `responseType` defaults to [ResponseType.json] (overridden to
-/// [ResponseType.plain] per-request by adapters that decode the body themselves
-/// to preserve their exact parse semantics).
+/// Adapters classify response status themselves (401, 409, 429, 4xx, 5xx map
+/// to distinct typed exceptions), so [BaseOptions.validateStatus] accepts
+/// every status code — Dio never throws on non-2xx. Transport failures still
+/// surface as [DioException]; each adapter maps that to `notConnected`.
 ///
 /// When [inspectorHost] is supplied its interceptor is attached so the dev
-/// shell (the inspector overlay) can observe every round-trip. The host is a
-/// no-op in production / test graphs (the `StubInspectorHost`), so no inspector
-/// code is reached there.
+/// inspector overlay can observe every round-trip; it no-ops in production /
+/// test graphs (`StubInspectorHost`).
 ///
-/// This is the single seam the composition root uses to share one [Dio] (and
-/// one inspector host) across every adapter; the adapters themselves never
-/// construct a `dart:io` `HttpClient`. The host abstraction keeps this file
-/// free of any `package:dio_request_inspector` import, so it compiles cleanly
-/// in release graphs where the inspector package is entirely absent.
+/// The single seam the composition root uses to share one [Dio] across every
+/// adapter — adapters never construct their own `dart:io` `HttpClient`.
 Dio buildAppDio(Uri baseUrl, {InspectorHost? inspectorHost}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl.toString(),
-      // Explicit even though `ResponseType.json` is the Dio default: documents
-      // the contract (Dio decodes JSON bodies) relied on by callers that do not
-      // override it per-request.
+      // Explicit for documentation despite matching the Dio default.
       // ignore: avoid_redundant_argument_values
       responseType: ResponseType.json,
-      // Adapters own status -> typed-exception mapping; Dio must not throw on
-      // 4xx/409/429/5xx so the adapter can inspect the status itself.
       validateStatus: (_) => true,
     ),
   );
-  // Firebase Performance Monitoring: reports every adapter HTTP round-trip as
-  // an HttpMetric. Added unconditionally and BEFORE the optional dev inspector
-  // so it envelopes the full round-trip (Dio runs request interceptors in
-  // insertion order, response interceptors in reverse). It self-no-ops on
-  // unsupported hosts (macOS / Linux / Windows) and wraps every Firebase call
-  // in try/on Object, so it never affects the validateStatus-all / error-mapping
-  // behavior or the desktop test / integration flows.
+  // Added before the optional dev inspector so it envelopes the full
+  // round-trip (Dio runs response interceptors in reverse insertion order).
+  // Self-no-ops on unsupported hosts (macOS / Linux / Windows).
   dio.interceptors.add(FirebasePerformanceDioInterceptor());
-  // Dev-only HTTP inspector: no-op for the stub (production / tests), attaches
-  // the inspector interceptor for the real host (development). The host owns
-  // the gating, so this single call works for every build flavor.
   inspectorHost?.attachInterceptor(dio);
   return dio;
 }

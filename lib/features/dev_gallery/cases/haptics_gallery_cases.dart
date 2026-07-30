@@ -11,15 +11,9 @@ import 'package:starter/shared/theme/app_spacing.dart';
 /// is a button row that triggers each [HapticKind].
 ///
 /// The preview inherits `hapticServiceProvider` from the surrounding app scope
-/// rather than nesting its own override: the production app supplies
-/// `DeviceHapticService` (so a dev feels the buzz), while the inMemory test/golden
-/// harness supplies `NoopHapticService` (so a tap never reaches the platform
-/// channel during capture). The canonical call-site gating contract runs here
-/// verbatim — fire only when the user opt-in
-/// (`settingsControllerProvider.hapticsEnabled`) is on AND reduce-motion
-/// (`MediaQuery.disableAnimationsOf`) is off. This is the single load-bearing
-/// guardrail for the feature (see the haptics spec audit); it lives at the call
-/// site, not inside the port, so every consumer stays auditable.
+/// (device service in production, no-op in tests/goldens) rather than nesting
+/// its own override, so every consumer goes through the same gate: fire only
+/// when haptics opt-in is on and reduce-motion is off.
 List<GalleryCase> buildHapticsGalleryCases() {
   return [
     TypedGalleryCase<List<HapticKind>>(
@@ -60,11 +54,6 @@ class _HapticsPreview extends ConsumerWidget {
     );
   }
 
-  /// Canonical call-site gating contract: fire only when the user opt-in is on
-  /// and reduce-motion is off. Haptics are fire-and-forget — any platform error
-  /// is swallowed via `Future.ignore` so a failed buzz never gates a user
-  /// action. With the inMemory `NoopHapticService` override nothing fires on
-  /// the device; the gate runs regardless to keep the contract auditable.
   void _trigger(BuildContext context, WidgetRef ref, HapticKind kind) {
     if (MediaQuery.disableAnimationsOf(context)) {
       return;

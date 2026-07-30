@@ -13,22 +13,10 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// Full-screen biometric lock gate.
-///
-/// Rendered by the top-level `biometricLock` route (outside the shell, like the
-/// auth routes) whenever the C5 redirect sees `BiometricLockLocked` on a
-/// protected destination with biometric unlock enabled. It consumes the shared
-/// [AuthPageScaffold] (the adaptive auth shell) and [EscapeDismissibleOverlay]
-/// (keyboard focus + Escape handling). The page is a gate, but Escape dismissal
-/// is harmless: the redirect re-sends any protected destination straight back
-/// to the lock path while the state stays [BiometricLockLocked], so there is no
-/// escape hatch — the redirect is the enforcer, not a per-route trap.
-///
-/// The page performs no side effects and calls no plugin. Every action goes
-/// through a callback ([onUnlocked] navigation, [onUseFallback] PIN handoff
-/// seam) or the [BiometricUnlockController] port — never `go_router` or
-/// `local_auth` directly. Navigation fires immediately on a successful unlock
-/// and never gates on the entrance animation (motion rule 5).
+/// Full-screen biometric lock gate, rendered whenever the composition-root
+/// redirect sees `BiometricLockLocked` on a protected destination. Escape
+/// dismissal is harmless: the redirect re-sends the destination back here
+/// while the state stays locked.
 class BiometricLockPage extends ConsumerWidget {
   const BiometricLockPage({
     required this.onUnlocked,
@@ -36,13 +24,9 @@ class BiometricLockPage extends ConsumerWidget {
     super.key,
   });
 
-  /// Invoked the moment the controller reports a successful unlock. The
-  /// composition root wires this to `context.goNamed(home)`.
   final VoidCallback onUnlocked;
 
-  /// PIN / device-credential handoff seam. Wired by the composition root to the
-  /// PIN entry flow once [pin-autolock] lands; until then it is a placeholder
-  /// that never fakes an unlock.
+  /// PIN / device-credential handoff seam.
   final VoidCallback onUseFallback;
 
   @override
@@ -136,15 +120,9 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
             onPress: _unlocking ? null : () => unawaited(_unlock()),
             child: Text(_unlocking ? translations.unlocking : translations.unlock),
           ),
-        // NOTE: a "Use fallback" affordance is intentionally rendered ONLY when
-        // biometric is unavailable (the primary button above). In the locked+
-        // available case a ghost fallback button was a C5 no-trap/no-loop
-        // violation: tapping it routed to /passcode-entry, but
-        // PasscodeController.verify never clears the biometric lock state (only
-        // BiometricUnlockController.authenticate does), so the C5 redirect's
-        // block 4 bounced /home straight back to /lock. The passcode seam is the
-        // documented 'unavailable -> passcode' handoff (app_router.dart
-        // onUseFallback), not a locked-state escape.
+        // Fallback is shown only when unavailable: in the locked+available case
+        // it would route to /passcode-entry without clearing the biometric lock
+        // state, bouncing the redirect straight back to /lock.
       ],
     );
   }
@@ -161,9 +139,6 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
       final ok = await controller.authenticate(localizedReason: reason);
       if (!mounted) return;
       if (ok) {
-        // Navigate immediately — never gate on animation. The controller is now
-        // BiometricLockUnlocked, so the redirect lets the protected destination
-        // through; onUnlocked performs the actual go_router call.
         widget.onUnlocked();
       } else {
         setState(() => _lastAttemptFailed = true);
@@ -179,9 +154,7 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
 final _motionScale = MovieTweenProperty<double>();
 final _motionOpacity = MovieTweenProperty<double>();
 
-/// Guarded entrance for the lock icon. When the platform requests reduced
-/// motion (`MediaQuery.disableAnimationsOf`) the icon is shown statically; the
-/// entrance never blocks the unlock action or navigation (rule 5).
+/// Lock icon with a guarded entrance; shown statically under reduce-motion.
 class _BiometricLockIcon extends StatelessWidget {
   const _BiometricLockIcon({required this.unavailable});
 

@@ -5,16 +5,12 @@ import 'package:starter/features/feedback/feedback_transport.dart';
 /// Deterministic in-memory [FeedbackTransport] for controller / widget tests
 /// and the dev-gallery's live accept path.
 ///
-/// Mirrors `InMemorySettingsStore`'s toggle style: a configurable [result] +
-/// a recorded [submissions] list. Reassign [result] to drive the controller's
-/// success / rejected / unavailable branches without a network; [throwException]
-/// forces the controller's typed-exception path. The default returns `accepted`
-/// so a test exercising the happy path reads cleanly; flip to `unavailable` to
-/// assert the honest no-backend copy.
+/// A configurable [result] + a recorded [submissions] list. Reassign [result]
+/// to drive the controller's success / rejected / unavailable branches
+/// without a network; [throwException] forces the typed-exception path.
 ///
-/// Test-only (C2 / C13): never constructed by `AppDependencies.production`,
-/// never reaches a release build. Production paths use `NoopFeedbackTransport`
-/// (honest unavailable) or the consumer's real HTTP adapter.
+/// Test-only: never constructed by `AppDependencies.production`. Production
+/// paths use `NoopFeedbackTransport` or the consumer's real HTTP adapter.
 final class InMemoryFeedbackTransport implements FeedbackTransport {
   InMemoryFeedbackTransport({
     this.result = const FeedbackResult.accepted('test-id'),
@@ -28,19 +24,17 @@ final class InMemoryFeedbackTransport implements FeedbackTransport {
   FeedbackResult result;
 
   /// When non-null, [submit] throws this exception instead of returning
-  /// [result] so the controller's typed-exception path can be exercised.
+  /// [result].
   FeedbackTransportException? throwException;
 
   /// Result returned from [status] for any id. Defaults to `queued`.
   FeedbackTriageState statusResult;
 
   /// Optional delay applied before [submit] resolves so a test can assert the
-  /// `submitting` busy state. `Duration.zero` by default (tests rarely need it;
-  /// the controller flips to `submitting` synchronously before the await).
+  /// `submitting` busy state.
   final Duration delay;
 
-  /// Recorded submissions in arrival order. Read-only snapshot; tests assert
-  /// `first.message` / `first.email` / `first.appMetadata` after a submit.
+  /// Recorded submissions in arrival order.
   final List<FeedbackSubmission> _submissions = <FeedbackSubmission>[];
   List<FeedbackSubmission> get submissions => List.unmodifiable(_submissions);
 

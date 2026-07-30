@@ -5,20 +5,14 @@ import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 
-/// Controllable [ExperimentSource] for unit tests and the dev-gallery.
+/// Controllable [ExperimentSource] for unit tests and the dev-gallery. Holds
+/// a per-key assignment map that tests drive through [assign], and publishes
+/// the full snapshot on [changes]. A key with no seeded assignment resolves
+/// to a local control variant.
 ///
-/// Genuinely test-scoped (mirrors `InMemorySettingsStore` /
-/// `InMemoryFeatureFlagsSource`): it holds a per-key assignment map that tests
-/// drive through [assign], and publishes the full snapshot on [changes] so the
-/// controller's live-update path is exercisable deterministically. A key with
-/// no seeded assignment resolves to a local control variant — the honest
-/// "nothing configured" baseline, never a fabricated remote result.
-///
-/// Not the production default (that is `DeterministicExperimentSource`, a real
-/// local hashing source). Constructed in test harnesses and overridden at the
-/// `ProviderScope`; never constructed in `AppDependencies.production`.
+/// Not the production default (that is `DeterministicExperimentSource`).
+/// Never constructed in `AppDependencies.production`.
 final class InMemoryExperimentSource implements ExperimentSource {
-  /// Constructs an in-memory source optionally seeded with [initial].
   InMemoryExperimentSource({
     Map<ExperimentKey, ExperimentAssignment>? initial,
   }) : _current = <ExperimentKey, ExperimentAssignment>{
@@ -54,8 +48,8 @@ final class InMemoryExperimentSource implements ExperimentSource {
   @override
   Stream<List<ExperimentAssignment>> changes() => _controller.stream;
 
-  /// Sets the assignment for [key] to [variant] and emits the full snapshot on
-  /// [changes] (tests / dev-gallery only).
+  /// Sets the assignment for [key] to [variant] and emits the full snapshot
+  /// on [changes].
   @visibleForTesting
   void assign(
     ExperimentKey key,

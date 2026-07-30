@@ -36,19 +36,10 @@ class ResponsiveGridColumns {
   }
 }
 
-/// A lazily-building grid whose cross-axis count tracks [AppLayoutClass].
-///
-/// Generalizes `HomePage`'s 1 / 2 / 3 column switch into a reusable primitive:
-/// compact layouts render a single column (a vertical list), medium two,
-/// expanded three — overridable via [crossAxisCounts]. Built on
-/// `GridView.builder` so only visible cells materialize (virtualization), and
-/// each cell keeps a stable `ValueKey` derived from [keyOf].
-///
-/// Pure presentational widget: typed items + builder, reads only the layout
-/// provider + theme spacing, no state, no plugin, no side effects. The first
-/// concrete consumer is `HomePage._StatusSection`; the designated deferred
-/// consumers are pricing cards and search-result grids per the feature spec
-/// (audit #3).
+/// A lazily-building grid whose cross-axis count tracks [AppLayoutClass]:
+/// compact renders a single column, medium two, expanded three — overridable
+/// via [crossAxisCounts]. Built on `GridView.builder` so only visible cells
+/// materialize, and each cell keeps a stable `ValueKey` derived from [keyOf].
 class ResponsiveListGrid<T> extends ConsumerWidget {
   /// Creates a [ResponsiveListGrid].
   const ResponsiveListGrid({

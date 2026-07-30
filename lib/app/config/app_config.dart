@@ -67,12 +67,6 @@ final class AppConfig {
         value: enableDevTools,
       ),
       backendBaseUrl: _parseBackendBaseUrl(backendBaseUrl),
-      // iOS App Store Apple ID and the deep-link host allowlist are
-      // compile-time `--dart-define-from-file` values (NOT secrets — the Apple
-      // ID is public and ships in the binary either way; the host allowlist is
-      // a public security boundary). Empty defaults disable the in-app-update
-      // iOS store link and inbound deep-link routing respectively (the honest
-      // no-backend default).
       iosAppleId: iosAppleId.trim(),
       allowedDeepLinkHosts: allowedDeepLinkHosts,
     );
@@ -82,23 +76,17 @@ final class AppConfig {
   final bool enableVerboseLogging;
   final bool enableDevTools;
 
-  /// The iOS App Store Apple ID used to build the App Store deep-link for the
-  /// in-app-update iOS path (`itms-apps://itunes.apple.com/app/id<ID>`). Empty
-  /// when not configured (compile-time `IOS_APPLE_ID` define); the iOS update
-  /// adapter degrades honestly to a no-op launch.
+  /// Builds the App Store deep-link for in-app-update on iOS. Empty when
+  /// unconfigured; the update adapter degrades honestly to a no-op launch.
   final String iosAppleId;
 
-  /// Compile-time allowlist of hosts the app will accept inbound deep-link URIs
-  /// from (the security boundary for the deep-linking receiver). Empty by
-  /// default — inbound deep-link routing resolves every URI to `null` until a
-  /// consumer configures `ALLOWED_DEEP_LINK_HOSTS`.
+  /// Compile-time allowlist of hosts accepted for inbound deep-link URIs.
+  /// Empty resolves every inbound URI to `null`.
   final AllowedDeepLinkHosts allowedDeepLinkHosts;
 
-  /// Base URL of the optional backend (`tools/test_server`) used to exercise the
-  /// auth/OTP/register/profile flow end-to-end in integration tests. `null` (the
-  /// default — empty `BACKEND_BASE_URL` define) keeps the no-backend composition
-  /// (InMemory adapters degrade to `notConnected`); a non-null value wires the
-  /// HTTP adapters in `AppDependencies.production`. Never a secret.
+  /// Base URL of the optional backend used for auth/OTP/register/profile
+  /// integration tests. `null` keeps the no-backend composition (InMemory
+  /// adapters degrade to `notConnected`); non-null wires the HTTP adapters.
   final Uri? backendBaseUrl;
 
   bool get verboseLoggingEnabled =>

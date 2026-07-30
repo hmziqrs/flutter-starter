@@ -8,15 +8,13 @@ import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 /// and the localized action label — `confirm` for an affirmative primary
 /// action, `destroy` for an irreversible / destructive one.
 enum ConfirmationIntent {
-  /// An affirmative, non-destructive action. Renders the primary `FButton` for
-  /// the action and the outline `FButton` for cancel. Default action label is
+  /// An affirmative, non-destructive action. Default action label is
   /// `common.confirm`; cancel is `common.cancel`.
   confirm,
 
-  /// An irreversible / destructive action (e.g. discard unsaved edits, delete a
-  /// row). Renders the destructive `FButton` for the action and the outline
-  /// `FButton` for keep/cancel. Default action label is `common.discard`; the
-  /// keep/cancel label is `common.cancel`.
+  /// An irreversible / destructive action (e.g. discard unsaved edits, delete
+  /// a row). Default action label is `common.discard`; cancel is
+  /// `common.cancel`.
   destroy,
 }
 
@@ -24,33 +22,21 @@ enum ConfirmationIntent {
 /// `FButton` variant and localizes the confirm / cancel labels.
 ///
 /// Wraps the dialog in `EscapeDismissibleOverlay` so Escape dismisses
-/// consistently with every other modal in the app (audit #5: the Escape pop
-/// runs through `Navigator.maybePop`, which completes regardless of any enter
-/// / exit animation). The enter/exit transition itself is ForUI-native
-/// (`FDialogRouteMotion`); no custom motion is introduced, so `AppMotion` is
-/// not referenced and reduce-motion users get the framework's native shortcut.
+/// consistently with every other modal in the app.
 ///
 /// Returns `true` if the user confirmed/destroyed, `false` if they cancelled,
-/// and `null` if the dialog was dismissed via Escape (the
-/// `EscapeDismissibleOverlay` calls `maybePop` without a result). Callers that
-/// only care about confirmation treat `null` and `false` identically.
+/// and `null` if the dialog was dismissed via Escape. Callers that only care
+/// about confirmation treat `null` and `false` identically.
 class AppConfirmationDialog {
   const AppConfirmationDialog._();
 
   /// Shows a modal confirmation dialog.
   ///
-  /// - [intent] selects the action-button variant and the default action label.
-  /// - [title] / [body] are the localized copy. [title] is also used as the
-  ///   dialog's `semanticsLabel` unless [semanticsLabel] is supplied.
-  /// - [confirmLabel] overrides the default action label (`common.confirm` for
-  ///   `ConfirmationIntent.confirm`, `common.discard` for
-  ///   `ConfirmationIntent.destroy`).
-  /// - [cancelLabel] overrides the default cancel label (`common.cancel`).
-  ///
-  /// The dialog is NOT barrier-dismissible on tap (the existing discard
-  /// prompts in `register_page` and `update_profile_page` set
-  /// `barrierDismissible: false`); Escape still dismisses via
-  /// `EscapeDismissibleOverlay`.
+  /// [intent] selects the action-button variant and the default action label.
+  /// [title] is also used as the dialog's `semanticsLabel` unless
+  /// [semanticsLabel] is supplied. [confirmLabel] / [cancelLabel] override the
+  /// defaults. The dialog is not barrier-dismissible on tap; Escape still
+  /// dismisses via `EscapeDismissibleOverlay`.
   static Future<bool?> show(
     BuildContext context, {
     required ConfirmationIntent intent,

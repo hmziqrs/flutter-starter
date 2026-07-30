@@ -80,13 +80,9 @@ final class OtpPresentationState {
       assert(resendSeconds >= 0, 'resendSeconds must not be negative.'),
       assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
-  /// Live expiry countdown fixture: whole seconds remaining before the issued
-  /// code expires. Pinned by the dev-gallery countdown case (and its golden) so
-  /// a deterministic value renders without a Timer. At runtime the controller
-  /// carries the live value on `OtpControllerState.remainingSeconds`; this field
-  /// is the static-fixture source for the gallery + goldens only. Distinct from
-  /// [lockedSeconds] (the auth-ratelimit lockout cooldown, owned by the `locked`
-  /// constructor below) — the two countdowns are never aliased.
+  /// Live expiry countdown fixture, pinned by the dev-gallery/golden so a
+  /// deterministic value renders without a Timer. Distinct from
+  /// [lockedSeconds] (the lockout cooldown) — never aliased.
   const OtpPresentationState.countdown({this.remainingSeconds = 0})
     : status = OtpPresentationStatus.empty,
       resendSeconds = 0,
@@ -96,8 +92,6 @@ final class OtpPresentationState {
 
   /// Locked out after too many failed OTP attempts. [lockedSeconds] drives the
   /// live countdown and submit gate; [attemptsRemaining] surfaces the plural.
-  /// The lockout schedule is owned by auth-ratelimit (the shared
-  /// `AttemptTracker`); this constructor only carries the fixture value.
   const OtpPresentationState.locked({this.lockedSeconds = 0, this.remainingSeconds = 0})
     : status = OtpPresentationStatus.locked,
       resendSeconds = 0,
@@ -116,15 +110,11 @@ final class OtpPresentationState {
   /// countdown from this value and disables submit while it is positive.
   final int lockedSeconds;
 
-  /// Whole seconds before the issued code expires. Static-fixture field for the
-  /// dev-gallery countdown case + goldens; the runtime countdown lives on
-  /// `OtpControllerState.remainingSeconds` (no Timer here).
+  /// Whole seconds before the issued code expires (static-fixture field; the
+  /// runtime countdown lives on `OtpControllerState.remainingSeconds`).
   final int remainingSeconds;
 
-  // Private general-purpose constructor placed after the named constructors
-  // + fields so the public API reads top-down. The lint wants constructors
-  // first, but moving this above the named constructors breaks the
-  // readability of the static-fixture API.
+  // Placed after the named constructors so the public API reads top-down.
   // ignore: sort_constructors_first
   const OtpPresentationState._({
     required this.status,
@@ -137,11 +127,8 @@ final class OtpPresentationState {
        assert(lockedSeconds >= 0, 'lockedSeconds must not be negative.'),
        assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
-  /// Returns a copy with `remainingSeconds` overridden. Used by the
-  /// controller-driven MFA runtime path to merge the controller's live
-  /// `remainingSeconds` into the static-fixture presentation so the page's
-  /// countdown rendering observes the real value without reaching into the
-  /// controller directly.
+  /// Returns a copy with `remainingSeconds` overridden. Merges the
+  /// controller's live value into the static-fixture presentation.
   OtpPresentationState copyWithRemainingSeconds(int remainingSeconds) {
     return OtpPresentationState._(
       status: status,

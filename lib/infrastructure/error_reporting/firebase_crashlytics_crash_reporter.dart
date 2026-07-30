@@ -6,26 +6,17 @@ import 'package:starter/infrastructure/logging/log_redactor.dart';
 
 /// Optional remote [CrashReporter] backed by the Firebase Crashlytics SDK.
 ///
-/// Runs **alongside** the existing crash backend (Sentry / Noop) via a composite
-/// fan-out at the composition root — it is constructed unconditionally and
-/// self-disables on unsupported hosts ([firebaseCrashlyticsSupported] is `false`
-/// on web / Linux / Windows). The SDK itself (`Firebase.initializeApp`) is
-/// initialized by the consumer; in a no-backend mobile build Firebase is never
-/// initialized and every call degrades to a swallowed `[core/no-app]`, identical
-/// to the `firebase_performance` adapters.
+/// Runs alongside the existing crash backend (Sentry / Noop) via a composite
+/// fan-out at the composition root. Constructed unconditionally; self-disables
+/// on unsupported hosts ([firebaseCrashlyticsSupported] is `false` on web /
+/// Linux / Windows) and when Firebase was never initialized.
 ///
-/// Mirrors SentryCrashReporter's discipline exactly:
-/// * Every SDK call is wrapped in `try/on Object` and never rethrown — a
-///   reporter must never break the error path it observes.
-/// * Only the redacted [CrashReport] leaves the device, built through the single
-///   [CrashReport.fromError] choke point, so the SDK's own native-bit redaction
-///   is not trusted to know the application's token formats. The stack trace is
-///   forwarded only when [verbose] is `true`.
-/// * [recordFlutterError] forwards to [recordError] rather than
-///   `FirebaseCrashlytics.instance.recordFlutterError`, which would internally
-///   re-present the error via `FlutterError.presentError` (double-handling) and
-///   bypass the redaction choke point. The bootstrap `installErrorHandlers` is
-///   the single owner of `FlutterError.onError`.
+/// Every SDK call is wrapped in `try/on Object` and never rethrown. Only the
+/// redacted [CrashReport] leaves the device, built through the single
+/// [CrashReport.fromError] choke point. [recordFlutterError] forwards to
+/// [recordError] rather than `FirebaseCrashlytics.instance.recordFlutterError`,
+/// which would double-present the error via `FlutterError.presentError` and
+/// bypass redaction.
 final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
   FirebaseCrashlyticsCrashReporter({
     required this.verbose,
@@ -35,9 +26,9 @@ final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
   final bool verbose;
   final LogRedactor redactor;
 
-  /// Lazily-resolved SDK instance. Resolving [FirebaseCrashlytics.instance]
-  /// calls `Firebase.app()`, which throws `[core/no-app]` when Firebase has not
-  /// been initialized — so resolution itself is guarded and never throws.
+  /// Lazily-resolved SDK instance. `FirebaseCrashlytics.instance` throws
+  /// `[core/no-app]` when Firebase hasn't been initialized, so resolution is
+  /// guarded and never throws.
   FirebaseCrashlytics? _crashlytics;
   bool _resolveFailed = false;
 
@@ -51,9 +42,8 @@ final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
     try {
       return _crashlytics = FirebaseCrashlytics.instance;
     } on Object {
-      // Firebase not initialized ([core/no-app]) or the plugin is missing on
-      // this host. Mark unresolvable so subsequent reports short-circuit
-      // cheaply rather than re-attempting the failing lookup on every error.
+      // Firebase not initialized ([core/no-app]) or plugin missing on this
+      // host; mark unresolvable so we don't retry the failing lookup.
       _resolveFailed = true;
       return null;
     }
@@ -72,9 +62,6 @@ final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
     if (crashlytics == null) {
       return;
     }
-    // Single redaction choke point: callers forward raw values; the producing
-    // implementation scrubs them through CrashReport.fromError before any
-    // network sink sees them.
     final report = CrashReport.fromError(
       error,
       stack,
@@ -84,24 +71,18 @@ final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
     );
     try {
       await crashlytics.recordError(
-        // The throwable's message is the already-redacted report text. Wrap in
-        // an Exception so Crashlytics' native grouping/fingerprinting runs on
-        // the redacted message (the core value of crash reporting), matching
-        // SentryCrashReporter's pipeline.
+        // Wrapped in Exception so Crashlytics' grouping/fingerprinting runs
+        // on the already-redacted message.
         Exception(report.message),
         report.stack != null ? StackTrace.fromString(report.stack!) : null,
         reason: 'redacted_context',
-        // `printDetails: false` suppresses Crashlytics' own noisy stderr print
-        // of the (already-redacted) error; the local AppLogger is the source of
-        // truth for dev visibility, wired in installErrorHandlers.
+        // Suppresses Crashlytics' own stderr print; AppLogger is the dev
+        // visibility source of truth.
         printDetails: false,
-        information: report.context.entries.map(
-          (e) => '${e.key}=${e.value}',
-        ),
+        information: report.context.entries.map((e) => '${e.key}=${e.value}'),
       );
     } on Object {
-      // Never rethrow: crash reporting must not break the error path it is
-      // observing. The report is dropped.
+      // Never rethrow: must not break the error path it is observing.
     }
   }
 

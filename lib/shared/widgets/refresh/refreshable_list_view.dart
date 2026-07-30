@@ -18,21 +18,14 @@ enum RefreshIndicatorStyle {
 ///
 /// Composes [AppRefreshIndicator] (Material) or a
 /// `CupertinoSliverRefreshControl` (Apple) over a `ListView.builder` /
-/// `SliverList.builder`, so only the visible items are built (virtualization)
-/// and each item keeps a stable `ValueKey` derived from [keyOf]. The refresh
-/// affordance is feature-supplied via [onRefresh]; a feature with no backend
-/// surfaces `common.notConnected` and never fakes success (audit #13).
+/// `SliverList.builder`, so only the visible items are built and each item
+/// keeps a stable `ValueKey` derived from [keyOf].
 ///
 /// The `auto` style resolves Cupertino on Apple platforms (via
 /// [PlatformCapabilities.isApplePlatform]) and Material elsewhere. Under
 /// `MediaQuery.disableAnimationsOf` the Cupertino branch falls back to the
-/// motion-guarded Material indicator (audit #5): the Cupertino spinner is
-/// Flutter-native and cannot be made transparent without dropping the control,
-/// so the guarded Material path — whose spinner renders transparent and whose
-/// Future always resolves — takes over.
-///
-/// Pure composition: typed items + builder + refresh callback, no state of its
-/// own, no plugin, no side effects beyond [onRefresh].
+/// Material indicator, since the Cupertino spinner cannot be made transparent
+/// without dropping the control.
 class RefreshableListView<T> extends StatelessWidget {
   /// Creates a [RefreshableListView].
   const RefreshableListView({
@@ -116,8 +109,6 @@ class RefreshableListView<T> extends StatelessWidget {
     if (separator == null) {
       return SliverList.builder(itemCount: items.length, itemBuilder: _itemBuilder);
     }
-    // Interleave item / separator so each item keeps a stable ValueKey even when
-    // a separator is requested. The item count therefore doubles minus one.
     final itemCount = items.length * 2 - 1;
     return SliverList.builder(
       itemCount: itemCount,

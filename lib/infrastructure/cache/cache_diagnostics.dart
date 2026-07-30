@@ -1,13 +1,8 @@
 import 'package:starter/infrastructure/cache/cache_store.dart';
 
-/// One row of the optional cache diagnostics dump.
-///
-/// Lives behind `developmentToolsEnabled` on DiagnosticsPage (the wiring is
-/// optional and described in this feature's manifest). Kept narrow to respect
-/// the per-key port discipline: the dump reports presence + age only — it does
-/// not enumerate unknown keys (no `keys()` on [CacheStore], no `clearAll`) and
-/// does not report payload size (the port exposes no byte accessor). The caller
-/// supplies the known key set it wants to inspect.
+/// One row of the optional cache diagnostics dump (behind
+/// `developmentToolsEnabled`). Reports presence + age only — no key
+/// enumeration or payload size; the caller supplies the known key set.
 final class CacheDiagnosticRow {
   const CacheDiagnosticRow({required this.key, required this.age, required this.present});
 
@@ -26,12 +21,7 @@ final class CacheDiagnosticRow {
 }
 
 /// Builds a diagnostics snapshot for the given [keys] by reading [store].age.
-///
-/// Each row is one [CacheDiagnosticRow]; absent keys produce
-/// `present: false, age: null`. Never throws — a per-key storage failure is
-/// reported as absent so the dump never tears down the diagnostics page. The
-/// consuming feature calls this from its DiagnosticsPage trigger with the key
-/// set it owns.
+/// Never throws — a per-key storage failure is reported as absent.
 Future<List<CacheDiagnosticRow>> cacheDiagnosticsSnapshot(
   CacheStore store, {
   Iterable<String> keys = const <String>[],

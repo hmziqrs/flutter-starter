@@ -1,28 +1,18 @@
 import 'package:flutter/foundation.dart';
 
-/// The primitive a known flag decodes to from the remote-config `flags` slice.
-///
-/// The exhaustive switch in `FeatureFlags.fromSlice` dispatches on
-/// `FeatureFlag` (not on this kind), but `FeatureFlag.kind` documents the
-/// expected wire shape and keeps the typed decode branches honest: a boolean
-/// gate, a string config value, or an integer rollout percentage.
+/// The primitive a known flag decodes to from the remote-config `flags`
+/// slice: a boolean gate, a string config value, or an integer rollout
+/// percentage.
 enum FeatureFlagKind { boolean, text, integer }
 
 /// Known feature-flag keys exposed by the typed `FeatureFlags` value object.
 ///
-/// Adding a flag is a four-step, analysis-checked edit:
-/// 1. add a variant here with its `kind` and backend `wireKey`;
-/// 2. add a typed field (and getter) on `FeatureFlags`;
-/// 3. seed it in `FeatureFlags.defaults`;
-/// 4. add a `case` to **every** exhaustive switch over `FeatureFlag` —
-///    `FeatureFlags.fromSlice`, `FeatureFlags.isEnabled`,
-///    `FeatureFlags._valueFor`, `FeatureFlags.copyWith` (via the named
-///    parameter), `FeatureFlags.==`, and `FeatureFlags.hashCode`.
-///
-/// `flutter analyze --fatal-infos` fails the build if any switch is missing a
-/// case, so the surface cannot drift. This is the "no `dynamic` flag bag"
-/// guardrail (audit item 7): the public API never exposes a
-/// `Map<String, Object>` of flags.
+/// Adding a flag: add a variant here with its `kind` and backend `wireKey`,
+/// add a typed field on `FeatureFlags`, seed it in `FeatureFlags.defaults`,
+/// and add a `case` to every exhaustive switch over `FeatureFlag`
+/// (`fromSlice`, `isEnabled`, `_valueFor`, `copyWith`, `==`, `hashCode`) —
+/// analysis fails if any switch is missing a case. The public API never
+/// exposes a raw `Map<String, Object>` of flags.
 enum FeatureFlag {
   /// Staged rollout of the redesigned onboarding flow.
   onboardingRevamp(kind: FeatureFlagKind.boolean, wireKey: 'onboarding_revamp'),
@@ -54,19 +44,14 @@ enum FeatureFlag {
   final String wireKey;
 }
 
-/// Immutable, typed view of every known feature flag.
+/// Immutable, typed view of every known feature flag: typed fields, a
+/// `FeatureFlags.defaults` no-backend baseline (every boolean gate disabled,
+/// search backend at the local fallback, rollout percentage zero),
+/// `copyWith`, and value equality.
 ///
-/// Mirrors the `SettingsState` shape: an `@immutable` value object with typed
-/// fields, a `FeatureFlags.defaults` no-backend baseline, `copyWith`, and value
-/// equality. The honest no-backend baseline has **every boolean gate disabled**,
-/// the search backend set to the local fallback, and the rollout percentage at
-/// zero — a missing backend must never claim a flag is enabled when the baseline
-/// says disabled (C2: never fake success; flags have no user-facing success
-/// state, so the honest baseline is simply "everything off").
-///
-/// There is intentionally **no** `Map<String, Object>` accessor on this surface.
-/// Every flag is a typed field; dynamic lookup goes through `isEnabled`, whose
-/// exhaustive switch keeps the typed and dynamic views in lockstep.
+/// No `Map<String, Object>` accessor — every flag is a typed field; dynamic
+/// lookup goes through `isEnabled`, whose exhaustive switch keeps the typed
+/// and dynamic views in lockstep.
 @immutable
 final class FeatureFlags {
   const FeatureFlags({
@@ -78,8 +63,8 @@ final class FeatureFlags {
     required this.checkoutRolloutPercent,
   });
 
-  /// No-backend baseline. Every boolean gate is disabled, the search backend is
-  /// the local fallback, and the rollout percentage is zero.
+  /// No-backend baseline: every boolean gate disabled, search backend at the
+  /// local fallback, rollout percentage zero.
   const FeatureFlags.defaults()
     : onboardingRevamp = false,
       homeRedesign = false,
@@ -88,13 +73,9 @@ final class FeatureFlags {
       searchBackend = _defaultSearchBackend,
       checkoutRolloutPercent = 0;
 
-  /// Decodes the `flags` slice of a remote-config payload.
-  ///
-  /// Unknown wire keys are ignored. Missing or malformed values keep the
-  /// `FeatureFlags.defaults` entry for that flag — a corrupt or partial backend
-  /// response never fabricates an enabled flag (C2). The exhaustive switch over
-  /// `FeatureFlag` makes `flutter analyze --fatal-infos` fail if a new variant
-  /// is added without a decode branch.
+  /// Decodes the `flags` slice of a remote-config payload. Unknown wire keys
+  /// are ignored; missing or malformed values keep the `defaults` entry for
+  /// that flag rather than fabricating an enabled flag.
   factory FeatureFlags.fromSlice(Map<String, Object?>? slice) {
     var onboardingRevamp = false;
     var homeRedesign = false;
@@ -164,8 +145,7 @@ final class FeatureFlags {
     );
   }
 
-  /// Search backend value that means "no remote backend configured". Kept as a
-  /// named constant so `isEnabled` and the decode path agree on the baseline.
+  /// Search backend value meaning "no remote backend configured".
   static const _defaultSearchBackend = 'local';
 
   /// Lower/upper bound for `checkoutRolloutPercent`; out-of-range backend
@@ -181,10 +161,8 @@ final class FeatureFlags {
   final int checkoutRolloutPercent;
 
   /// Dynamic, typed lookup of whether `flag` is "active". For boolean flags
-  /// this is the literal value; for the string/integer config flags it is
-  /// `true` when the value differs from the no-backend baseline (i.e. the
-  /// backend has overridden it). The exhaustive switch guarantees a new
-  /// `FeatureFlag` variant cannot ship without a branch here.
+  /// this is the literal value; for string/integer config flags it is `true`
+  /// when the value differs from the no-backend baseline.
   bool isEnabled(FeatureFlag flag) {
     return switch (flag) {
       FeatureFlag.onboardingRevamp => onboardingRevamp,
@@ -197,8 +175,7 @@ final class FeatureFlags {
   }
 
   /// Typed wire representation for the diagnostics read-out and an optional
-  /// cache write-through. The exhaustive switch keeps this in lockstep with the
-  /// field set.
+  /// cache write-through.
   Map<String, Object?> toMap() {
     return <String, Object?>{
       for (final flag in FeatureFlag.values) flag.wireKey: _valueFor(flag),

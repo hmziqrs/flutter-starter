@@ -1,10 +1,7 @@
 import 'dart:async';
 
-// Private-field constructors with public-named required parameters are
-// intentional: the constructor is the public surface (composition-root
-// override) while the fields stay internal. `prefer_initializing_formals`
-// would force `this._x` formals, which expose the private name as a named
-// parameter — illegal for a public constructor.
+// Public constructor keeps fields private, so `this._x` initializing formals
+// (which would expose the private name) aren't usable here.
 // ignore_for_file: prefer_initializing_formals
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -20,20 +17,14 @@ import 'package:starter/infrastructure/notifications/notifications_registration.
 /// (FCM / APNs delivery) and `flutter_local_notifications` (foreground banner
 /// rendering).
 ///
-/// **Never constructed by default.** A consumer overrides
-/// [notificationsRepositoryProvider] with this adapter only after wiring
-/// Firebase credentials (`GoogleService-Info.plist` / `google-services.json`)
-/// AND ensuring `Firebase.initializeApp` has run (in `bootstrap.dart`'s
-/// `createApplication`, guarded by the `notifications` configuration flag).
-/// `AppDependencies.production` constructs the `NoopNotificationsRepository`
-/// for every other path (no credentials, web / desktop, or unset flag) so the
-/// app runs green with zero backend (C2). No widget calls either plugin
-/// directly — every side effect goes through this typed port.
+/// Only constructed after Firebase credentials are wired and
+/// `Firebase.initializeApp` has run (`bootstrap.dart`, guarded by the
+/// `notifications` config flag); `AppDependencies.production` otherwise
+/// constructs `NoopNotificationsRepository`.
 ///
-/// The token-registration / permission-revoked round-trip is delegated to the
-/// `registrationClient` constructor parameter (a thin HTTP adapter against the
-/// test-server contract, C9). Message delivery cannot be mocked by a plain
-/// HTTP server, so the foreground / tap paths wrap the plugin SDKs directly.
+/// Token registration is delegated to `registrationClient` (a thin HTTP
+/// adapter); message delivery can't be mocked by a plain HTTP server, so the
+/// foreground / tap paths wrap the plugin SDKs directly.
 class FirebaseNotificationsRepository implements NotificationsRepository {
   FirebaseNotificationsRepository({
     required FirebaseMessaging messaging,
@@ -56,15 +47,10 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   final String _platform;
   final String _deviceId;
 
-  /// Local-notification id used for foreground FCM renders. A stable id means a
-  /// subsequent foreground message replaces the previous banner rather than
-  /// stacking; consumers wanting a per-message stack can extend this with a
-  /// hash of the message id.
+  /// Stable id so a subsequent foreground message replaces the previous
+  /// banner rather than stacking.
   static const int _foregroundNotificationId = 0xb19e;
 
-  // Channel id / name for Android foreground notification rendering. The
-  // channel is created on first use; the values are stable across launches so
-  // the OS group is consistent.
   static const AndroidNotificationChannel _androidChannel = AndroidNotificationChannel(
     'starter_notifications',
     'Starter notifications',
@@ -77,15 +63,9 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
     required bool provisional,
   }) async {
     try {
-      final settings = await _messaging.requestPermission(
-        // alert / badge / sound default to `true` in firebase_messaging; the
-        // explicit `provisional` toggle below is the only non-default.
-        provisional: provisional,
-      );
+      final settings = await _messaging.requestPermission(provisional: provisional);
       return _mapAuthorizationStatus(settings.authorizationStatus);
     } on Object catch (error, stackTrace) {
-      // Degrade honestly: never fake a granted permission. A plugin failure
-      // reads as `denied` so the rationale sheet shows the disabled copy.
       _logger.error(
         'notifications.requestPermission failed',
         error: error,
@@ -144,9 +124,7 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   @override
   Stream<NotificationMessage> get onMessage {
     return FirebaseMessaging.onMessage.map(_toMessage).where((message) {
-      // Render foreground messages as visible local notifications. A failure
-      // here never breaks the message stream — the typed value still flows to
-      // any in-app banner consumer.
+      // Rendering failures never break the message stream.
       unawaited(_renderForeground(message));
       return true;
     });
@@ -154,14 +132,9 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
 
   @override
   Stream<NotificationTap> get onNotificationTap {
-    // Fold the cold-start initial message with the foreground / background
-    // tap stream so the consumer observes taps in arrival order regardless of
-    // process state. The controller's tap queue subscribes immediately on
-    // build so neither the cold-start tap nor the first foreground tap is
-    // lost.
+    // Folds the cold-start initial message with the live tap stream so taps
+    // are observed in arrival order regardless of process state.
     final controller = StreamController<NotificationTap>.broadcast();
-    // Fire-and-forget: the initial-message future feeds the controller as soon
-    // as it resolves; the foreground tap stream below feeds it in real time.
     unawaited(_wireInitialMessage(controller));
     FirebaseMessaging.onMessageOpenedApp
         .map(_toTap)
@@ -203,7 +176,7 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
 
   Future<void> _renderForeground(NotificationMessage message) async {
     try {
-      // Channel registration is idempotent on Android; a no-op elsewhere.
+      // Idempotent on Android; no-op elsewhere.
       await _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_androidChannel);
@@ -227,9 +200,7 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
         ),
       );
     } on Object catch (error, stackTrace) {
-      // Foreground rendering is best-effort. A failure must never break the
-      // foreground message stream above — the typed value still flows to any
-      // in-app banner consumer.
+      // Best-effort; never breaks the foreground message stream above.
       _logger.error(
         'notifications.foreground render failed',
         error: error,
@@ -254,9 +225,8 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   }
 }
 
-/// Route constants a push payload may target. Kept feature-local — the
-/// notifications port resolves taps to **existing** named routes via the
-/// router; this is just the typed fallback when a payload omits a target.
+/// Route constants a push payload may target; fallback when a payload omits
+/// a target.
 @immutable
 final class AppNotificationRoute {
   const AppNotificationRoute._();

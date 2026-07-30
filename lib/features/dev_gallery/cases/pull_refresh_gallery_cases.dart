@@ -4,22 +4,10 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/shared/widgets/lists/responsive_list_grid.dart';
 import 'package:starter/shared/widgets/refresh/refreshable_list_view.dart';
 
-/// Immutable, deterministic preview state for the pull-refresh gallery cases.
-/// One variant per previewed surface; no timers, no plugin, no persistence
-/// (C2: the gallery never fakes a backend action — the refresh `onRefresh`
-/// completes a no-op Future as a preview affordance, never a claim of success).
-enum PullRefreshGalleryState {
-  /// A refreshable lazy list.
-  refreshableList,
-
-  /// A responsive grid that reflows on width.
-  responsiveGrid,
-}
+enum PullRefreshGalleryState { refreshableList, responsiveGrid }
 
 /// Builds the pull-refresh gallery cases: a refreshable lazy list and a
-/// responsive grid. Every case is a static fixture — the refresh `onRefresh`
-/// completes a no-op preview Future; a real call site surfaces
-/// `common.notConnected` rather than faking a successful refresh (audit #13).
+/// responsive grid. The `onRefresh` callback completes a no-op Future.
 List<GalleryCase> buildPullRefreshGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<PullRefreshGalleryState>(
@@ -68,10 +56,6 @@ Widget _previewCell(BuildContext context, _PreviewItem item) {
   );
 }
 
-/// Mounts a [RefreshableListView] with a no-op preview refresh. The
-/// PreviewFrame supplies the Material ancestor the indicator needs, so the drag
-/// gesture and accent spinner are real; the `onRefresh` completes a no-op
-/// Future (the gallery never fakes a backend action).
 class _RefreshableListPreview extends StatelessWidget {
   const _RefreshableListPreview();
 
@@ -86,9 +70,6 @@ class _RefreshableListPreview extends StatelessWidget {
   }
 }
 
-/// Mounts a [ResponsiveListGrid]. The PreviewFrame already nests an
-/// `AppLayoutScope`, so the grid reflows (1 / 2 / 3 columns) as the gallery
-/// viewport width changes.
 class _ResponsiveGridPreview extends StatelessWidget {
   const _ResponsiveGridPreview();
 

@@ -8,12 +8,8 @@ import 'package:starter/shared/theme/app_spacing.dart';
 
 /// Builds the update-blocker gallery cases: the non-dismissible hard-block
 /// [ForceUpdatePage] and the dismissible soft-deprecation [SoftUpdateCard].
-///
-/// Both fixtures are deterministic — no store deep-links, no snooze persistence,
-/// no plugin calls. The callbacks are no-ops (C2: the gallery never fakes a
-/// backend action). The soft card is rendered directly (not inside
-/// [showSoftUpdateDialog]) so the preview is stable without a tap to open the
-/// dialog; this mirrors the documented dual render path of [SoftUpdateCard].
+/// The soft card is rendered directly (not inside [showSoftUpdateDialog]) so
+/// the preview is stable without a tap to open the dialog.
 List<GalleryCase> buildForceUpdateGalleryCases() {
   return [
     TypedGalleryCase<ForceUpdateState>(
@@ -44,9 +40,6 @@ List<GalleryCase> buildForceUpdateGalleryCases() {
   ];
 }
 
-/// Centers the [SoftUpdateCard] in a constrained column so the soft-update
-/// preview is stable without mounting a real dialog. The card's own layout is
-/// the production surface under test; this wrapper only frames it.
 class _SoftUpdateCardPreview extends StatelessWidget {
   const _SoftUpdateCardPreview({required this.state});
 

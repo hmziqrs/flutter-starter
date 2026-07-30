@@ -5,27 +5,13 @@ import 'package:starter/features/force_update/version_gate_store.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/remote_config/remote_config_client.dart';
 
-/// Optional remote-config-backed [VersionGateStore] — the update-blocker typed
-/// port's real impl.
-///
-/// This file lives with its feature because the typed PORT lives with its
-/// feature (C4: `lib/features/{force_update}/`, mirroring `SettingsStore`). It
-/// does **not** own a backend connection: it reads only the `versionPolicy`
-/// slice from the single shared [RemoteConfigClient] under
-/// `lib/infrastructure/remote_config/` — the one backend wrapper that the
-/// future `FeatureFlagsSource` and `ExperimentSource` real impls will also read
-/// from (one backend, three typed surfaces). The reader therefore never opens
-/// its own `HttpClient` and never duplicates the `GET /v1/remote-config`
-/// round-trip.
-///
-/// Constructed at the composition root only when a consumer wires the backend;
-/// never the default. Every backend interaction degrades to
-/// [UpdateRequirementNone] on any failure — a policy that cannot be fetched or
-/// parsed must never fabricate a hard or soft block (C2: never fake success, and
-/// never hard-lock a user we cannot verify).
+/// Optional remote-config-backed [VersionGateStore]. Reads only the
+/// `versionPolicy` slice from the shared [RemoteConfigClient]. Every backend
+/// interaction degrades to [UpdateRequirementNone] on failure — a policy that
+/// cannot be fetched or parsed must never fabricate a hard or soft block.
 final class RemoteConfigVersionGateStore implements VersionGateStore {
-  /// Constructs a store that reads the `versionPolicy` slice from a
-  /// [RemoteConfigClient] configured with [baseUrl], [deviceId], and [timeout].
+  /// Reads the `versionPolicy` slice from a [RemoteConfigClient] configured
+  /// with [baseUrl], [deviceId], and [timeout].
   RemoteConfigVersionGateStore({
     required Uri baseUrl,
     String? deviceId,
@@ -34,12 +20,11 @@ final class RemoteConfigVersionGateStore implements VersionGateStore {
          RemoteConfigClient(baseUrl: baseUrl, deviceId: deviceId, timeout: timeout),
        );
 
-  /// Constructs a store backed by an explicit [client]. The default
-  /// constructor redirects here; tests inject a stub client through this form.
+  /// Constructs a store backed by an explicit [client]; tests inject a stub
+  /// client through this form.
   @visibleForTesting
   RemoteConfigVersionGateStore.withClient(this.client);
 
-  /// The single shared remote-config backend wrapper (C4).
   final RemoteConfigClient client;
 
   String? _storeUrl;

@@ -15,31 +15,20 @@ const double _loadNextThresholdPixels = 240;
 
 /// A lazily-building, virtualized paged list driven by a [PagedState].
 ///
-/// Sits next to `DataListView` under `lib/shared/widgets/lists/` and reuses its
-/// virtualization shape — a `ListView.builder` whose tiles keep a stable
-/// `ValueKey` derived from [keyOf] so widget/state identity survives page
-/// appends. `DataListView` exposes no scroll-controller / trailing-footer slot,
-/// so the paged variant builds its own builder: a `NotificationListener` fires
-/// [onLoadNext] when the viewport approaches the end and the state reports more
-/// pages available (scroll-triggered pagination is never animation-gated, audit
-/// #5), and a trailing `_LoadNextFooter` is appended while a subsequent page is
-/// in flight.
+/// Renders a `ListView.builder` whose tiles keep a stable `ValueKey` derived
+/// from [keyOf] so widget/state identity survives page appends. A
+/// `NotificationListener` fires [onLoadNext] when the viewport approaches the
+/// end and the state reports more pages available, and a trailing
+/// `_LoadNextFooter` is appended while a subsequent page is in flight.
 ///
-/// State mapping (the view never fakes content, audit #13):
+/// State mapping:
 /// - `loading` (first page / refresh) → centered [LoadingStateView].
 /// - `error` → [ErrorStateView] with a retry action wired to [onRefresh] (a
 ///   failed first page) or [onLoadNext] (a failed subsequent page). The body
-///   defaults to `common.notConnected` so a no-backend fetcher surfaces the
-///   honest unavailable state.
+///   defaults to `common.notConnected`.
 /// - `ready` + empty → [EmptyStateView] (feature-supplied title/body).
 /// - `ready` + items → the builder; a `_LoadNextFooter` is appended while
 ///   `loadingNext` is true.
-///
-/// Pure presentational composition: typed [state] + builders + callbacks, reads
-/// only `BuildContext.theme` + `context.t`. No plugin, no side effect beyond
-/// the scroll-triggered callback. The first concrete consumer is `SearchPage`;
-/// the designated deferred consumers are offline-cache (cached paged list) and
-/// any future server-paged surface (audit #3).
 class PagedListView<T> extends StatelessWidget {
   /// Creates a [PagedListView].
   const PagedListView({
@@ -83,12 +72,10 @@ class PagedListView<T> extends StatelessWidget {
   /// Localized error-state title (e.g. `search.errorTitle`).
   final String errorTitle;
 
-  /// Optional localized error-state body. Defaults to `common.notConnected` —
-  /// the view surfaces the honest unavailable state and never invents a cause.
+  /// Optional localized error-state body. Defaults to `common.notConnected`.
   final String? errorBody;
 
-  /// List padding. Defaults to the repo's `AppSpacing.lg` content gutter
-  /// (mirrors `DataListView`).
+  /// List padding. Defaults to the repo's `AppSpacing.lg` content gutter.
   final EdgeInsetsGeometry? padding;
 
   /// Optional widget inserted between adjacent items.
@@ -106,8 +93,6 @@ class PagedListView<T> extends StatelessWidget {
         body: errorBody ?? context.t.common.notConnected,
         action: (
           label: context.t.common.retry,
-          // A failed first page (no items yet) retries the full refresh; a
-          // failed subsequent page retries loadNext to resume appending.
           onTap: state.items.isEmpty ? () => unawaited(onRefresh()) : () => unawaited(onLoadNext()),
         ),
       );
@@ -127,8 +112,6 @@ class PagedListView<T> extends StatelessWidget {
               AppSpacing.lg,
               AppSpacing.lg,
             ),
-        // One extra slot for the loadingNext footer when a subsequent page is
-        // in flight; otherwise the count is exactly the item count.
         itemCount: state.items.length + (state.isLoadingNext ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == state.items.length) {
@@ -156,9 +139,7 @@ class PagedListView<T> extends StatelessWidget {
     );
   }
 
-  /// Fires [onLoadNext] once the viewport nears the end. The notifier guards
-  /// against concurrent loads and no-more-pages, so a redundant call is a cheap
-  /// no-op — no debouncing is needed here.
+  /// Fires [onLoadNext] once the viewport nears the end.
   bool _onScroll(ScrollNotification notification) {
     if (!state.hasMore || state.isLoadingNext || state.isLoading) {
       return false;
@@ -174,10 +155,7 @@ class PagedListView<T> extends StatelessWidget {
   }
 }
 
-/// A small centered spinner rendered while a subsequent page is in flight. The
-/// decorative [FProgress] is the only motion here; the list itself stays
-/// non-animated (audit #5), and the `loadingNext` flag flips without an
-/// animation transition gate.
+/// A small centered spinner rendered while a subsequent page is in flight.
 class _LoadNextFooter extends StatelessWidget {
   const _LoadNextFooter();
 

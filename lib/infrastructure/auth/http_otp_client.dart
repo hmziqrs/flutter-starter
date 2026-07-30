@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-// `comment_references` flags doc cross-references to the sibling session/otp
-// types imported only via the feature package; the references are intentional.
+// Doc comments intentionally reference sibling session/otp types.
 // ignore_for_file: comment_references
 
 import 'package:dio/dio.dart';
@@ -10,30 +9,22 @@ import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [OtpRepository] against the test-server OTP contract (C9).
+/// Real HTTP [OtpRepository] against the test-server OTP contract. Constructed
+/// only when a consumer provides an endpoint; the `InMemoryOtpRepository`
+/// default surfaces `OtpRepositoryException.notConnected` instead.
 ///
-/// Constructed **only when a consumer provides an endpoint** (the no-backend
-/// rule, C2: the `InMemoryOtpRepository` default surfaces
-/// `OtpRepositoryException.notConnected` and never fakes an issue/verify).
-/// Mirrors `HttpNotificationsRegistrationClient` / `HttpAuthClient`: speaks to
-/// the backend through a shared injected [Dio] (built via [buildAppDio] when no
-/// instance is supplied), native-only.
-///
-/// **Stateful**: the backend keys verify off an opaque `attempt_token` returned
-/// by `issue`, but the port presents verify/resend in terms of the user-facing
+/// Stateful: the backend keys verify off an opaque `attempt_token` returned by
+/// `issue`, but the port presents verify/resend in terms of the user-facing
 /// [identifier]. This client holds the `identifier -> attemptToken` (and
-/// `identifier -> OtpPurpose` for resend) mapping in memory so the controller
-/// never handles a raw attempt token. The mapping is per-process and never
-/// persisted; a cold start must re-issue.
+/// `identifier -> OtpPurpose` for resend) mapping in memory, per-process,
+/// never persisted — a cold start must re-issue.
 ///
-/// Every interaction is wrapped in `try/on`. Transport failures (any
-/// [DioException] without a response) surface
-/// [OtpRepositoryException.notConnected]; an unknown attempt token (no prior
-/// `issue`) or any non-2xx/429-classified `4xx` surfaces
-/// [OtpRepositoryException.invalid]; verify maps `409 -> expired`, `429 ->
-/// locked`, `{valid:false} -> invalid`, and `{valid:true}` (with tokens only on
-/// registration-purpose success) to the matching [OtpVerifyResult]. The client
-/// never fabricates a valid result (C2).
+/// Transport failures (a [DioException] without a response) surface
+/// [OtpRepositoryException.notConnected]; an unknown attempt token or any
+/// other `4xx` surfaces [OtpRepositoryException.invalid]; verify maps
+/// `409 -> expired`, `429 -> locked`, `{valid:false} -> invalid`, and
+/// `{valid:true}` (tokens only on registration-purpose success) to the
+/// matching [OtpVerifyResult].
 final class HttpOtpClient implements OtpRepository {
   HttpOtpClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
@@ -57,7 +48,6 @@ final class HttpOtpClient implements OtpRepository {
   Future<OtpVerifyResult> verify({required String identifier, required String code}) async {
     final attemptToken = _attemptTokens[identifier];
     if (attemptToken == null) {
-      // No outstanding issue for this identifier — the caller must issue first.
       throw const OtpRepositoryException.invalid();
     }
     final result = await _send(
@@ -67,7 +57,6 @@ final class HttpOtpClient implements OtpRepository {
     final status = result.status;
     final body = result.body;
     if (status == 409) {
-      // The attempt token is unknown/expired server-side; drop our stale copy.
       _attemptTokens.remove(identifier);
       return const OtpVerifyResult.expired();
     }
@@ -79,10 +68,8 @@ final class HttpOtpClient implements OtpRepository {
       if (valid is! bool || !valid) {
         return const OtpVerifyResult.invalid();
       }
-      // {valid: true}. Tokens arrive ONLY for a registration-purpose success
-      // (the backend activates the pending account and mints a session inline).
-      // Every other purpose returns {valid: true} with no tokens -> the caller
-      // establishes no session from this result.
+      // Tokens arrive only for a registration-purpose success; every other
+      // purpose returns {valid: true} with no tokens.
       final accessToken = _asString(body['access_token']);
       final refreshToken = _asString(body['refresh_token']);
       final expiresAt = _parseDate(body['expires_at']);
@@ -105,14 +92,10 @@ final class HttpOtpClient implements OtpRepository {
 
   @override
   Future<OtpIssueResult> resend({required String identifier}) {
-    // resend takes no purpose in the port; re-issue under the last known
-    // purpose for this identifier (defaults to registration, matching the
-    // initial registration -> OTP -> verify flow).
+    // resend takes no purpose; re-issue under the last known purpose.
     final purpose = _purposes[identifier] ?? OtpPurpose.registration;
     return _issue(path: '/v1/otp/resend', purpose: purpose, identifier: identifier);
   }
-
-  // --------------------------- HTTP plumbing ----------------------------
 
   Future<OtpIssueResult> _issue({
     required String path,
@@ -132,10 +115,8 @@ final class HttpOtpClient implements OtpRepository {
     return envelope;
   }
 
-  /// Posts a JSON body and returns the status and the decoded body so callers
-  /// (`verify`) can branch on status **and** inspect the `{valid: ...}` payload.
-  /// Always sends the `X-Api-Key: dev` header so the dev path's fixed code
-  /// (`123456`) is issued — this is the test / dev adapter only.
+  /// Posts a JSON body; sends `X-Api-Key: dev` so the dev path's fixed code
+  /// (`123456`) is issued (test/dev adapter only).
   Future<({int status, Map<String, Object?> body})> _send({
     required String path,
     required Map<String, Object> body,
@@ -200,7 +181,7 @@ final class HttpOtpClient implements OtpRepository {
         return decoded;
       }
     } on FormatException {
-      // Fall through to an empty body so the caller classifies by status.
+      // Fall through to empty; caller classifies by status.
     }
     return const <String, Object?>{};
   }

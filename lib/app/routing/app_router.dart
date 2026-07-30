@@ -65,12 +65,9 @@ GoRouter buildAppRouter({
   bool hasCompletedOnboarding = false,
   List<NavigatorObserver> observers = const <NavigatorObserver>[],
 }) {
-  // The cold-start seed mirrors AppDependencies.initialSettings
-  // .hasCompletedOnboarding and is threaded from createApplication -> App ->
-  // _AppView. It is a fallback for test harnesses that build the router
-  // without a ProviderScope above MaterialApp.router; the live redirect reads
-  // settingsControllerProvider so the in-session Skip path observes the
-  // optimistic write on the same tick (see _redirectSettingsDeepLinks).
+  // hasCompletedOnboarding is a fallback seed for test harnesses that build the
+  // router without a ProviderScope; the live redirect reads
+  // settingsControllerProvider instead (see _redirectSettingsDeepLinks).
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -140,17 +137,13 @@ GoRouter buildAppRouter({
               GoRoute(
                 name: AppRoutes.accessibilitySettings,
                 path: AppRoutes.accessibilitySettingsPath,
-                // Routed through SettingsPage (like appearance/language) so the
-                // wide two-pane sidebar stays put on desktop; accessibility is a
-                // first-class SettingsSection pane, not a standalone page.
+                // Renders via SettingsPage (like appearance/language) so the wide
+                // two-pane sidebar stays put on desktop.
                 builder: (context, state) => _settingsPage(context, SettingsSection.accessibility),
               ),
               GoRoute(
                 name: AppRoutes.aboutLicense,
                 path: AppRoutes.aboutLicensePath,
-                // In-shell license route (license-share-update spec). Pushed
-                // from the settings "About" tile; thin wrapper over Flutter's
-                // local license registry (backend-free).
                 builder: (context, state) => const AboutLicensePage(),
               ),
             ],
@@ -161,12 +154,8 @@ GoRouter buildAppRouter({
         name: AppRoutes.splash,
         path: AppRoutes.splashPath,
         builder: (context, state) => SplashPage(
-          // SplashPage receives the navigation callback (never calls go_router
-          // directly, per the root contract). On resolve it goes to home; the
-          // existing C5 onboarding redirect then sends fresh installs to
-          // /onboarding (home '/' is a shell-tab destination and gates when
-          // !hasCompletedOnboarding), and the HARD update-blocker redirect
-          // (already first in _redirectSettingsDeepLinks) wins over both.
+          // Goes to home; the onboarding redirect then sends fresh installs to
+          // /onboarding, and the HARD update-blocker redirect wins over both.
           onComplete: (_) => context.goNamed(AppRoutes.home),
         ),
       ),
@@ -224,31 +213,18 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.biometricLock,
         path: AppRoutes.biometricLockPath,
-        // Top-level (outside the shell) like /force-update and the auth routes:
-        // a full-screen gate. The C5 redirect sends protected destinations here
-        // when biometric unlock is enabled and the lock subsystem is locked.
+        // Top-level full-screen gate; the redirect sends protected destinations
+        // here when biometric unlock is enabled and the lock subsystem is locked.
         builder: (context, state) => BiometricLockPage(
           onUnlocked: () => context.goNamed(AppRoutes.home),
-          // Disables the biometric-unlock setting (the only thing keeping the
-          // user on /lock) and navigates to home. This gives the Unavailable
-          // state a real escape: a device whose biometric disappeared post-
-          // enable is not stranded (the redirect's live read sees
-          // biometricUnlockEnabled flip to false on the same tick and stops
-          // gating). When a passcode is configured the fallback hands off to
-          // the passcode entry page instead (the biometric 'unavailable ->
-          // passcode' seam per the pin-autolock spec).
           onUseFallback: () => _useBiometricFallback(context),
         ),
       ),
       GoRoute(
         name: AppRoutes.passcodeEntry,
         path: AppRoutes.passcodeEntryPath,
-        // Top-level (outside the shell) like /lock and /force-update: a
-        // full-screen gate. The C5 redirect sends protected destinations here
-        // when passcode protection is enabled and the passcode requires a
-        // challenge (armed by AutoLockController on idle timeout / background
-        // return). The entry surface is a hard gate: it has no back/escape
-        // navigation until the passcode verifies (or the user disables).
+        // Top-level full-screen gate; the redirect sends protected destinations
+        // here when a passcode challenge is armed. No back/escape until verified.
         builder: (context, state) => PasscodePage(
           mode: PasscodePageMode.entry,
           onUnlocked: () => context.goNamed(AppRoutes.home),
@@ -258,9 +234,6 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.passcodeSetup,
         path: AppRoutes.passcodeSetupPath,
-        // Pushed from the settings security tile when the user turns passcode
-        // protection on. After set() the controller is disarmed in-session so
-        // onSetupComplete returns to settings.
         builder: (context, state) => PasscodePage(
           mode: PasscodePageMode.setup,
           onUnlocked: () => context.goNamed(AppRoutes.home),
@@ -270,9 +243,8 @@ GoRouter buildAppRouter({
       GoRoute(
         name: AppRoutes.search,
         path: AppRoutes.searchPath,
-        // Top-level full-screen flow (outside the StatefulShellRoute), per
-        // architecture.md. No redirect: /search is not a shell-tab destination
-        // and not auth-required, so it falls through the C5 redirect cleanly.
+        // Top-level, outside the StatefulShellRoute; not a shell-tab or
+        // auth-required destination so it falls through the redirect untouched.
         builder: (context, state) => SearchPage(
           onBack: () {
             final router = GoRouter.of(context);
@@ -295,19 +267,10 @@ GoRouter buildAppRouter({
         name: AppRoutes.register,
         path: AppRoutes.registerPath,
         builder: (context, state) => RegisterPage(
-          // Registration is backend-dependent (account creation + OTP issue).
-          // The AuthRepository port does not expose a register method, and the
-          // no-backend default cannot create an account — surfacing
-          // `common.notConnected` here is the honest C13 stance. Navigation to
-          // the OTP step fires only when a consumer wires a real registration
-          // endpoint; the dev-gallery exercises RegisterPage directly with its
-          // own callbacks so the fixture flow stays intact.
+          // The no-backend default throws AuthException.notConnected and
+          // surfaces the dialog; a real backend creates the pending account,
+          // issues the registration OTP, and we navigate to the OTP step.
           onSubmit: (value) async {
-            // Wire registration through the AuthRepository (C13 — never fake
-            // success). The no-backend default throws AuthException.notConnected
-            // and surfaces the dialog; with a backend configured it creates the
-            // pending account + issues the registration OTP, and we navigate to
-            // the OTP step threading the email as the identifier.
             final container = ProviderScope.containerOf(context, listen: false);
             try {
               await container
@@ -367,12 +330,9 @@ GoRouter buildAppRouter({
               message: context.t.routeError.invalidOtpPurpose,
             );
           }
-          // MFA is the controller-driven runtime path: the page reads live
-          // state from `otpControllerProvider` (countdown, lockout, verify /
-          // resend transitions) and the controller surfaces `globalFailure`
-          // honestly under the no-backend default. Registration / password-
-          // reset keep their existing fixture path so the dev-gallery stays
-          // deterministic (C5: reuse the existing OTP route, no new redirect).
+          // MFA and registration are controller-driven: the page reads live
+          // state from otpControllerProvider (countdown, lockout, verify/resend).
+          // Password reset keeps the static fixture path.
           if (purpose == OtpPurpose.mfa || purpose == OtpPurpose.registration) {
             return _OtpRoutePage(
               purpose: purpose,
@@ -412,9 +372,7 @@ GoRouter buildAppRouter({
         name: AppRoutes.updateProfile,
         path: AppRoutes.updateProfilePath,
         // Auth-gated (see _isAuthRequiredDestination): a session is held when
-        // this route builds. The route page loads the profile draft from the
-        // backend over the access token and degrades to ProfileDraft.defaults()
-        // on any failure (graceful — never crashes the page).
+        // this route builds.
         builder: (context, state) => const _UpdateProfileRoutePage(),
       ),
       if (config.developmentToolsEnabled) ...[
@@ -442,23 +400,13 @@ GoRouter buildAppRouter({
   );
 }
 
-// One redirect (C5): predicates chained in priority order. Each block returns
-// the first non-null target. Behavioral precedence: update-blocker HARD ->
-// onboarding -> SESSION -> BIOMETRIC. Code order differs from precedence only
-// for the session gate, which is guarded by `hasCompletedOnboarding` so the
-// onboarding gate still wins for fresh installs (see block 3a below).
-//
-//   (1)  update-blocker HARD (wins over everything)
-//   (2)  settings deep-link normalization
-//   (3a) SESSION auth-required gate (only when onboarding is complete; sends
-//        an anonymous user hitting an auth-only destination to /auth/login)
-//   (3b) onboarding gate (shell-tab destinations -> /onboarding when unset)
-//   (4)  BIOMETRIC gate (locked subsystem -> /lock for shell-tab destinations)
-//
-// Update-blocker HARD must run first so a hard block wins over onboarding and
-// settings normalization. SOFT never redirects — it triggers a post-frame
-// dialog gated by a once-per-process flag plus the snooze timestamp. NONE /
-// loading / error fall through.
+// Single redirect: predicates chained in priority order, each returning the
+// first non-null target. Precedence: update-blocker HARD -> settings
+// normalization -> onboarding -> session -> biometric -> passcode. The
+// onboarding gate runs before the session gate so a fresh install always sees
+// onboarding first, even for an auth-required destination. SOFT never
+// redirects — it triggers a post-frame dialog instead. NONE / loading / error
+// fall through.
 String? _redirectSettingsDeepLinks(
   BuildContext context,
   GoRouterState state, {
@@ -466,8 +414,8 @@ String? _redirectSettingsDeepLinks(
 }) {
   final path = state.uri.path;
 
-  // (1) Update-blocker HARD: any route other than /force-update redirects to
-  // /force-update; on /force-update returns null (no loop).
+  // Update-blocker HARD wins over everything: any route other than
+  // /force-update redirects there; on /force-update returns null (no loop).
   final requirement = ProviderScope.containerOf(
     context,
     listen: false,
@@ -479,7 +427,7 @@ String? _redirectSettingsDeepLinks(
     _maybeShowSoftUpdateDialog(context, requirement);
   }
 
-  // (2) Existing settings deep-link normalization.
+  // Settings deep-link normalization.
   if (path == AppRoutes.appearanceSettingsPath) {
     return state.uri
         .replace(
@@ -497,36 +445,25 @@ String? _redirectSettingsDeepLinks(
         .toString();
   }
 
-  // (3a) Onboarding gate. FIRST in this block so the evaluated order matches
-  // the documented C5 precedence (update -> ONBOARDING -> session -> biometric
-  // -> passcode). Deep links and auth flows must not be hijacked into an
-  // onboarding loop, so skip when already on an onboarding or auth route.
+  // Onboarding gate runs before the session gate. Deep links and auth flows
+  // must never be hijacked into an onboarding loop, so skip when already on
+  // an onboarding or auth route.
   if (_isOnboardingOrAuthRoute(path)) {
     return null;
   }
-  // Read LIVE controller state so the in-session Skip -> markOnboardingComplete
-  // -> goName(home) path is observable here on the same tick. A captured bool
-  // would re-evaluate against the stale pre-mark value and bounce home ->
-  // onboarding until relaunch. The seed is a fallback for test harnesses that
-  // build the router without a ProviderScope above MaterialApp.router.
+  // Live read so the in-session Skip -> markOnboardingComplete -> goNamed(home)
+  // path is observable on the same tick; a captured bool would bounce home ->
+  // onboarding until relaunch.
   final hasCompleted = _readLiveHasCompletedOnboarding(context) ?? hasCompletedOnboardingSeed;
-  // Only the shell-tab destinations gate through onboarding. Detail routes
-  // (/profile/edit, /dev/*) are reachable from the shell and only render after
-  // the shell itself has cleared onboarding, so they do not redirect here;
-  // /profile/edit falls through to the session gate (3b) below.
+  // Only shell-tab destinations gate through onboarding; detail routes
+  // (/profile/edit, /dev/*) only render once the shell has cleared onboarding.
   if (_isShellTabDestination(path) && !hasCompleted) {
     return AppRoutes.onboardingPath;
   }
 
-  // (3b) Session auth-required gate. Composed into the single C5 redirect
-  // (no new callback). Reuses AppRoutes.login — NO new route. Evaluated AFTER
-  // the onboarding gate so onboarding wins for fresh installs (the precedence
-  // chain is update -> onboarding -> SESSION). An auth-only destination (today:
-  // /profile/edit, reached from the settings shell tab) accessed by an
-  // anonymous user is sent to /auth/login. The hasCompletedOnboarding guard is
-  // defense-in-depth: a not-onboarded user reaching an auth-required detail
-  // route (only possible in a test harness without a ProviderScope) is not
-  // bounced to login before completing onboarding.
+  // Session auth-required gate, evaluated after onboarding so onboarding wins
+  // for fresh installs. An anonymous user hitting an auth-only destination is
+  // sent to /auth/login.
   if (_isAuthRequiredDestination(path) && hasCompleted) {
     final session = _readLiveSession(context) ?? const AuthAnonymous();
     if (session is! AuthAuthenticated) {
@@ -535,34 +472,21 @@ String? _redirectSettingsDeepLinks(
   }
 
   // Non-shell-tab, non-auth-required detail routes (/dev/*) stop here — they
-  // are reachable only from the shell (which has cleared onboarding) and do not
-  // re-gate through biometric/passcode independently.
+  // do not re-gate through biometric/passcode independently.
   if (!_isShellTabDestination(path)) {
     return null;
   }
-  // (4) BIOMETRIC gate. A returning user (onboarding complete) on a shell-tab
-  // destination whose biometric unlock is enabled AND whose lock subsystem is
-  // BiometricLockLocked is sent to /lock. Unavailable never redirects (the
-  // predicate acts only on BiometricLockLocked), so a device without biometric
-  // is never looped into a prompt that cannot succeed. /lock itself is not a
-  // shell-tab destination, so it already returned null above (no loop).
+  // Biometric gate: a returning user on a shell-tab destination whose lock
+  // subsystem is BiometricLockLocked is sent to /lock. Unavailable never
+  // redirects, so a device without biometric is never looped into a dead end.
   if (_readLiveBiometricUnlockActive(context)) {
     return AppRoutes.biometricLockPath;
   }
-  // (5) PASSCODE gate (pin-autolock). The passcode is the LAST gate, placed
-  // AFTER biometric: a user with both enabled is sent to biometric first
-  // (block 4), and the biometric page's onUseFallback hands off to /passcode
-  // via _useBiometricFallback. AUTO-LOCK arms the passcode state through
-  // AutoLockController.arm (idle timeout / background return), which flips
-  // PasscodeState.enabled to true, so requiresChallenge becomes true and this
-  // block fires on the next redirect evaluation. requiresChallenge =
-  // isSet && enabled(armed) && lockedUntil == null. During an ACTIVE brute-
-  // force lockout lockedUntil != null so requiresChallenge is false, but the
-  // user is already on /passcode (a hard gate with no escape nav until
-  // verified), so this never creates an escape hatch. /passcode and
-  // /settings/security/passcode are not shell-tab destinations, so they
-  // already returned null above (no loop); the explicit _isPasscodeRoute
-  // guard is belt-and-suspenders.
+  // Passcode gate runs last: a user with both biometric and passcode enabled
+  // hits biometric first, and its onUseFallback hands off to /passcode. Armed
+  // by AutoLockController on idle timeout / background return; an active
+  // brute-force lockout keeps requiresChallenge false but the user is already
+  // on /passcode (a hard gate with no escape until verified).
   if (!_isPasscodeRoute(path) && _readLivePasscodeRequiresChallenge(context)) {
     return AppRoutes.passcodeEntryPath;
   }
@@ -592,9 +516,8 @@ bool? _readLiveHasCompletedOnboarding(BuildContext context) {
   }
 }
 
-/// Reads LIVE session state so an in-session login/logout is observable on the
-/// same tick. Returns null on the test-harness no-scope case (mirrors
-/// [_readLiveHasCompletedOnboarding]).
+/// Reads live session state so an in-session login/logout is observable on
+/// the same tick.
 AuthSession? _readLiveSession(BuildContext context) {
   try {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -604,10 +527,8 @@ AuthSession? _readLiveSession(BuildContext context) {
   }
 }
 
-/// True when the biometric gate should fire: biometric unlock is enabled in
-/// settings AND the lock subsystem is [BiometricLockLocked]. Returns false on
-/// the test-harness no-scope case so tests that do not wire the controllers
-/// never trigger the gate. Unavailable and unlocked never gate.
+/// True when biometric unlock is enabled in settings AND the lock subsystem
+/// is [BiometricLockLocked]. Unavailable and unlocked never gate.
 bool _readLiveBiometricUnlockActive(BuildContext context) {
   try {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -620,9 +541,7 @@ bool _readLiveBiometricUnlockActive(BuildContext context) {
 }
 
 /// Once-per-container guard so the soft-update prompt never nags within a
-/// single session (the snooze timestamp covers cross-launch suppression).
-/// Scoped to the [ProviderContainer] rather than a module-level global so it
-/// resets per test (checklist #4 — composition root confined, no globals).
+/// single session; scoped to the [ProviderContainer] so it resets per test.
 final softUpdatePromptShownProvider = NotifierProvider<_SoftUpdatePromptShown, bool>(
   _SoftUpdatePromptShown.new,
 );
@@ -649,18 +568,13 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
         if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
           return;
         }
-        // Re-check the once-per-session flag HERE, not only synchronously above:
-        // go_router can re-evaluate the single redirect twice in the same frame
-        // (initial location + the refresh when versionCheck resolves), so two
-        // evaluations each pass the synchronous guard and each schedule a
-        // post-frame callback. The first callback to run flips this flag; the
-        // sibling callback short-circuits here so the dialog never stacks.
+        // Re-check here, not only synchronously above: go_router can
+        // re-evaluate the redirect twice in the same frame, scheduling two
+        // post-frame callbacks that both pass the earlier guard. The first to
+        // run flips this flag so the dialog never stacks.
         if (container.read(softUpdatePromptShownProvider)) {
           return;
         }
-        // Mark the flag only when the dialog is actually presented, not before
-        // the post-frame callback — a detection that races with
-        // context.dispose() must not permanently suppress the dialog.
         container.read(softUpdatePromptShownProvider.notifier).markShown();
         unawaited(
           showSoftUpdateDialog(
@@ -687,10 +601,9 @@ Future<void> _launchStoreUrl(String storeUrl) async {
   }
 }
 
-/// Disables the biometric-unlock setting and navigates to home. The optimistic
-/// `state =` inside `SettingsController._replace` runs before the first await,
-/// so the C5 redirect's live read sees `biometricUnlockEnabled` flip to false
-/// on the same tick as `goNamed(home)` and stops gating.
+/// Disables biometric unlock and navigates to home. The optimistic write
+/// resolves before the first await, so the redirect's live read sees
+/// `biometricUnlockEnabled` flip to false on the same tick and stops gating.
 void _disableBiometricAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(
@@ -699,13 +612,9 @@ void _disableBiometricAndGoHome(BuildContext context) {
   context.goNamed(AppRoutes.home);
 }
 
-/// True when a passcode is configured (settings.passcodeEnabled) AND the
-/// passcode subsystem requires a challenge ([PasscodeState.requiresChallenge]:
-/// isSet && armed && not in brute-force lockout). Returns false on the
-/// test-harness no-scope case so unwired tests never trigger the gate. This is
-/// the single predicate the C5 PASSCODE block reads; AUTO-LOCK arms the
-/// passcode state via AutoLockController.arm so requiresChallenge becomes true
-/// on idle timeout / background return.
+/// True when a passcode is configured AND [PasscodeState.requiresChallenge]
+/// (isSet && armed && not in brute-force lockout). AutoLockController arms the
+/// passcode on idle timeout / background return.
 bool _readLivePasscodeRequiresChallenge(BuildContext context) {
   try {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -717,18 +626,14 @@ bool _readLivePasscodeRequiresChallenge(BuildContext context) {
   }
 }
 
-/// True for the passcode entry + setup routes so the PASSCODE gate never loops
-/// (both are full-screen gates, not shell-tab destinations, so the shell-tab
-/// guard already short-circuits — this is belt-and-suspenders).
+/// Belt-and-suspenders guard against the passcode gate looping on its own
+/// entry/setup routes (neither is a shell-tab destination, so the shell-tab
+/// guard already short-circuits).
 bool _isPasscodeRoute(String path) =>
     path == AppRoutes.passcodeEntryPath || path == AppRoutes.passcodeSetupPath;
 
-/// Disables the passcode (clears the hash + armed flag in SecureStore) and the
-/// settings toggle, then navigates to home. Wired to the entry surface's
-/// onDisable escape hatch. The optimistic `state =` writes run before the first
-/// await, so the redirect's live read sees requiresChallenge flip to false on
-/// the same tick as goNamed(home) and stops gating. Mirrors
-/// [_disableBiometricAndGoHome].
+/// Disables the passcode and its settings toggle, then navigates to home.
+/// Mirrors [_disableBiometricAndGoHome].
 void _disablePasscodeAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(container.read(passcodeControllerProvider.notifier).disable());
@@ -738,18 +643,13 @@ void _disablePasscodeAndGoHome(BuildContext context) {
   context.goNamed(AppRoutes.home);
 }
 
-/// Called after the setup surface accepts a confirmed passcode. After set() the
-/// controller is disarmed in-session, so onSetupComplete returns to settings
-/// (where the user came from). Falls back to home if settings is unreachable.
+/// Returns to settings after the setup surface accepts a confirmed passcode.
 void _finishPasscodeSetup(BuildContext context) {
   context.goNamed(AppRoutes.settings);
 }
 
-/// Biometric 'unavailable -> passcode' handoff seam. When biometrics are
-/// unavailable but a passcode is configured, navigate to the passcode entry
-/// page; otherwise fall back to disabling biometric and going home. This
-/// replaces the placeholder onUseFallback on the biometric lock page now that
-/// pin-autolock ships.
+/// Biometric 'unavailable -> passcode' handoff: when a passcode is configured,
+/// go there instead of disabling biometric and going home.
 void _useBiometricFallback(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   try {
@@ -764,15 +664,8 @@ void _useBiometricFallback(BuildContext context) {
   _disableBiometricAndGoHome(context);
 }
 
-/// Marks first-launch onboarding complete (optimistic in-memory write through
-/// the settings controller) and then navigates to home. Called from every
-/// home-navigating onboarding callback — OnboardingPage.onSkip, the paywall
-/// onContinue, and PaywallPage.onSkip — so the redirect's live read sees
-/// hasCompletedOnboarding = true on the same tick as goNamed(home) and does
-/// not bounce back into onboarding. Persistence is fire-and-forget: the
-/// synchronous `state =` inside SettingsController._replace runs before the
-/// first await, and a rollback on persistence failure only re-opens onboarding
-/// on the next cold start (acceptable — the user already saw home).
+/// Marks onboarding complete (optimistic write) and navigates to home so the
+/// redirect's live read does not bounce back into onboarding on the same tick.
 void _completeOnboardingAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(container.read(settingsControllerProvider.notifier).markOnboardingComplete());
@@ -798,10 +691,8 @@ class _LoginRoutePage extends ConsumerStatefulWidget {
 class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
   late bool _passwordResetComplete = widget.passwordResetComplete;
   LoginPresentationStatus _status = LoginPresentationStatus.idle;
-  // Auth-ratelimit (C1). The shared AttemptTracker drives the live lockout
-  // seconds + attempts-remaining surfaced by the page. Mirrors the OTP
-  // controller's recordFailure/recordSuccess wiring so login, OTP, and pin-
-  // autolock share one schedule (the named-consumer list in auth-ratelimit.md).
+  // Driven by the shared AttemptTracker (login, OTP, and pin-autolock share
+  // one lockout schedule).
   int _lockedSeconds = 0;
   int _attemptsRemaining = 0;
 
@@ -813,9 +704,6 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
     }
   }
 
-  /// Builds the presentation, threading the tracker-derived lockout fields so
-  /// the page's existing countdown + attempts-remaining UI lights up the moment
-  /// a failure escalates to a lock.
   LoginPresentationState _presentation() {
     if (_passwordResetComplete) {
       return LoginPresentationState.success(
@@ -849,16 +737,12 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
     return LoginPage(
       presentation: _presentation(),
       onSubmit: (value) async {
-        // Wire authentication through the SessionController (C13 — never fake
-        // success). The no-backend default (InMemoryAuthRepository.login)
-        // throws AuthException.notConnected, which surfaces as globalFailure.
-        // Navigation to home fires only on a real AuthAuthenticated result.
+        // Navigation to home fires only on a real AuthAuthenticated result;
+        // the no-backend default throws AuthException.notConnected instead.
         final router = GoRouter.of(context);
-        // Auth-ratelimit (C1): gate the submit on a live lock check, mirroring
-        // otp_controller's `state.isLocked`. If the identifier is mid-lockout
-        // (e.g. a prior failure on this or the OTP surface), re-surface the
-        // locked presentation and refuse the call rather than burning a request
-        // the server would 429 anyway.
+        // Gate the submit on a live lock check: if the identifier is
+        // mid-lockout, re-surface the locked presentation rather than burning
+        // a request the server would 429 anyway.
         final tracker = ref.read(attemptTrackerProvider);
         final existing = tracker.read(value.email);
         final now = clock.now();
@@ -881,21 +765,17 @@ class _LoginRoutePageState extends ConsumerState<_LoginRoutePage> {
           if (!mounted) return;
           final session = ref.read(sessionControllerProvider);
           if (session is AuthAuthenticated) {
-            // A success clears the shared tracker so an eventual typo is not
-            // one failure away from a lockout (mirrors otp_controller.verify).
+            // Clear the shared tracker so an eventual typo is not one failure
+            // away from a lockout.
             tracker.recordSuccess(value.email);
             router.goNamed(AppRoutes.home);
           } else {
-            // The repository returned without error but did not authenticate
-            // — never navigate as if it did (C13).
+            // Returned without error but did not authenticate — never
+            // navigate as if it did.
             setState(() => _status = LoginPresentationStatus.globalFailure);
           }
         } on AuthException {
           if (!mounted) return;
-          // Record the failure against the shared schedule. If the schedule
-          // locks the identifier, surface the `locked` presentation (the page's
-          // countdown + attempts-remaining UI already exists); otherwise stay
-          // on globalFailure with the remaining free attempts surfaced.
           final attempt = tracker.recordFailure(value.email);
           final lockedNow = clock.now();
           setState(() {
@@ -980,16 +860,12 @@ SettingsPage _settingsPage(BuildContext context, SettingsSection? section) {
       context,
       title: context.t.settings.privacy,
     ),
-    // license-share-update: route the "License" tile to the in-shell
-    // aboutLicense route (Flutter's local license registry; backend-free).
     onOpenLicense: () => context.pushNamed(AppRoutes.aboutLicense),
     loadBuildLabel: () async => (await AppBuildInfo.load()).displayValue,
   );
 }
 
 void _goTab(BuildContext context, int index) {
-  // Returns StatefulNavigationShellState (route.dart:1329), which owns both
-  // goBranch and currentIndex.
   final shell = StatefulNavigationShell.of(context);
   shell.goBranch(index, initialLocation: index == shell.currentIndex);
 }
@@ -1087,29 +963,17 @@ RouteErrorPage _routeErrorPage(
   );
 }
 
-/// Controller-driven MFA OTP route page.
-///
-/// Wires the static [OtpPage] (the dev-gallery fixture surface) to the live
-/// [OtpController] family for the MFA runtime path. The controller owns the
-/// expiry `Timer`, the verify / resend state machine, and the auth-ratelimit
-/// handoff (locked state). The no-backend default surfaces `globalFailure`
-/// honestly: the controller calls `requestIssue` on mount, the
-/// `InMemoryOtpRepository` throws `OtpRepositoryException.notConnected`, and
-/// the page renders the `common.notConnected` alert (C2 — never fakes a code).
-///
-/// A successful verify navigates to home. Navigation never gates on animation
-/// (the page reads `state` and navigates on the success transition).
+/// Wires the static [OtpPage] to the live [OtpController] family for the
+/// MFA / registration runtime path (verify/resend state machine, lockout).
 class _OtpRoutePage extends ConsumerStatefulWidget {
   const _OtpRoutePage({required this.purpose, required this.identifier});
 
-  /// Which OTP flow this page drives. `mfa` verifies and navigates home;
-  /// `registration` additionally publishes the session the backend issued
-  /// inline on a valid verify (the account is activated server-side and the
-  /// session arrives on `OtpControllerState.session`).
+  /// `mfa` verifies and navigates home; `registration` additionally publishes
+  /// the session the backend issued inline on a valid verify.
   final OtpPurpose purpose;
 
-  /// The account identifier the code was issued for (email), sourced from the
-  /// `identifier` query parameter (the login / register flows push it here).
+  /// The account identifier the code was issued for, sourced from the
+  /// `identifier` query parameter.
   final String identifier;
 
   @override
@@ -1120,9 +984,8 @@ class _OtpRoutePageState extends ConsumerState<_OtpRoutePage> {
   @override
   void initState() {
     super.initState();
-    // Kick off the issue request post-frame so the freshly created
-    // ProviderScope is used. Fire-and-forget: the controller surfaces the
-    // outcome (success / globalFailure) through state.
+    // Post-frame, fire-and-forget: the controller surfaces the outcome
+    // (success / globalFailure) through state.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final key = (purpose: widget.purpose, identifier: widget.identifier);
@@ -1137,19 +1000,15 @@ class _OtpRoutePageState extends ConsumerState<_OtpRoutePage> {
     final controller = ref.read(otpControllerProvider(key).notifier);
     return OtpPage(
       purpose: widget.purpose,
-      // Merge the controller's live `remainingSeconds` into the static
-      // presentation so the page's countdown + lockout rendering observes the
-      // real values without the page reaching into the controller directly.
       presentation: state.presentation.copyWithRemainingSeconds(state.remainingSeconds),
       onSubmit: (value) async {
         final ok = await controller.verify(value.code);
         if (!ok || !mounted) {
           return;
         }
-        // Registration: the backend activated the account and returned a
-        // session inline on the valid verify — publish it before navigating
-        // home so the auth-required gates (/profile/edit) pass. MFA carries no
-        // session (the user authenticated through login, not registration).
+        // Registration returns a session inline on a valid verify — publish it
+        // before navigating home so the auth-required gates (/profile/edit)
+        // pass. MFA carries no session (authenticated via login, not here).
         if (widget.purpose == OtpPurpose.registration) {
           final session = ref.read(otpControllerProvider(key)).session;
           if (session != null) {
@@ -1157,9 +1016,7 @@ class _OtpRoutePageState extends ConsumerState<_OtpRoutePage> {
             if (!mounted) return;
           }
         }
-        // Navigation never gates on animation; the controller's success
-        // transition is observed synchronously, and `mounted` guards the
-        // post-await context use.
+        // `mounted` above already guards this post-await context use.
         // ignore: use_build_context_synchronously
         context.goNamed(AppRoutes.home);
       },
@@ -1168,14 +1025,8 @@ class _OtpRoutePageState extends ConsumerState<_OtpRoutePage> {
   }
 }
 
-/// Auth-gated profile-edit route page.
-///
-/// Loads the editable profile draft from the backend over the authenticated
-/// session's access token and degrades to [ProfileDraft.defaults] on any
-/// failure (transport / unaccepted session / no backend) so the page never
-/// crashes. `onSave` persists the draft through the profile port and surfaces a
-/// typed success / notConnected dialog. The avatar-pick flow is preserved
-/// verbatim from the static phase.
+/// Auth-gated profile-edit route page. Loads the profile draft over the
+/// session's access token and degrades to [ProfileDraft.defaults] on failure.
 class _UpdateProfileRoutePage extends StatefulWidget {
   const _UpdateProfileRoutePage();
 
@@ -1189,11 +1040,9 @@ class _UpdateProfileRoutePageState extends State<_UpdateProfileRoutePage> {
   @override
   void initState() {
     super.initState();
-    // The route is auth-gated so a session is held; read its access token and
-    // kick off the load once. `ProviderScope.containerOf(listen: false)` uses
-    // findAncestorWidgetOfExactType, which is safe to call in initState. Any
-    // failure resolves the future with an error and the FutureBuilder degrades
-    // to ProfileDraft.defaults() (graceful — never a half-built page).
+    // Auth-gated route, so a session is held; read its access token and kick
+    // off the load once. Any failure resolves the future with an error and
+    // the FutureBuilder degrades to ProfileDraft.defaults().
     final container = ProviderScope.containerOf(context, listen: false);
     final session = container.read(sessionControllerProvider);
     final accessToken = session is AuthAuthenticated ? session.accessToken : '';
@@ -1205,9 +1054,7 @@ class _UpdateProfileRoutePageState extends State<_UpdateProfileRoutePage> {
     return FutureBuilder<ProfileDraft>(
       future: _initialDraftLoad,
       builder: (context, snapshot) {
-        // Degrade to the local default on pending or error (transport / 401 /
-        // no backend) — never crash the page. With the no-backend default the
-        // load throws ProfileException.notConnected, so this is the path taken.
+        // Degrade to the local default on pending or error — never crash.
         final draft = snapshot.hasData ? snapshot.data! : const ProfileDraft.defaults();
         return UpdateProfilePage(
           initialDraft: draft,
@@ -1234,9 +1081,6 @@ class _UpdateProfileRoutePageState extends State<_UpdateProfileRoutePage> {
               );
             }
           },
-          // permissions-media avatar flow: preserved verbatim from the static
-          // phase. A null result (denied / cancelled / no backend) surfaces the
-          // honest `avatarUnavailable` copy.
           onAvatarPicked: (media) {
             if (media == null) {
               _showInformationDialog(

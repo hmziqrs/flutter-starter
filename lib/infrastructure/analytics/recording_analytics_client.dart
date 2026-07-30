@@ -1,11 +1,9 @@
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 
-/// List-backed [AnalyticsClient] for unit tests.
-///
-/// Not a Mocktail double: it exercises the real [AnalyticsEvent] sealed
-/// hierarchy and exposes the captured calls for assertions. Test-only — never
-/// constructed in production code paths. Mirrors `RecordingCrashReporter`.
+/// List-backed [AnalyticsClient] for unit tests. Exercises the real
+/// [AnalyticsEvent] sealed hierarchy and exposes captured calls for
+/// assertions. Test-only.
 final class RecordingAnalyticsClient implements AnalyticsClient {
   final List<AnalyticsEvent> _events = <AnalyticsEvent>[];
   final List<UserProperty> _properties = <UserProperty>[];

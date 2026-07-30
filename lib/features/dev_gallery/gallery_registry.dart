@@ -33,29 +33,21 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildForceUpdateGalleryCases(),
     ...buildBusyIndicatorGalleryCases(),
     ...buildPullRefreshGalleryCases(),
-    // Wave-3 shared widgets + screens.
     ...buildStateViewsGalleryCases(),
     ...buildSkeletonGalleryCases(),
     ...buildFormScaffoldingGalleryCases(),
     ...buildSplashGalleryCases(),
     ...buildAnnouncementsGalleryCases(),
-    // Wave-4 feature surfaces registered by their gallery contributors.
     ...buildSessionGalleryCases(),
     ...buildAnalyticsGalleryCases(),
     ...buildBiometricGalleryCases(),
-    // Wave-5a feature surfaces.
     ...buildHapticsGalleryCases(),
     ...buildA11yPresetsGalleryCases(),
     ...buildSystemGalleryCases(config: config),
-    // Wave-5b feature surfaces (mfa-otp, push, permissions-media,
-    // license-share-update). Gated by developmentToolsEnabled via the
-    // registry caller (the dev gallery route is only mounted in development).
     ...buildMfaOtpGalleryCases(),
     ...buildNotificationsGalleryCases(),
     ...buildPermissionsGalleryCases(),
     ...buildLicenseShareUpdateGalleryCases(),
-    // Wave-6 feature surfaces (search-pagination, toast-dialogs, pin-autolock,
-    // feedback). Gated by developmentToolsEnabled via the registry caller.
     ...buildSearchPaginationGalleryCases(),
     ...buildToastDialogsGalleryCases(),
     ...buildPinAutolockGalleryCases(),

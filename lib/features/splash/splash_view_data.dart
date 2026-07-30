@@ -1,16 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:starter/features/splash/app_startup_result.dart';
 
-/// The three presentation phases the splash surface renders. The exhaustive
-/// switch over this enum drives SplashScene (audit checklist #7).
+/// The presentation phases the splash surface renders.
 enum SplashPhase { loading, done, error }
 
-/// Immutable, fixture-friendly view data for the splash surface. The production
-/// SplashPage derives it from the watched AppStartupResult future; the
-/// development gallery constructs it directly via [SplashFixtures].
-///
-/// Mirrors the feature-owned, immutable, deterministic convention of
-/// `OnboardingFixtures`: no timers, no repositories, no persistence.
+/// Immutable, fixture-friendly view data for the splash surface. The
+/// production SplashPage derives it from the watched AppStartupResult future;
+/// the development gallery constructs it directly via [SplashFixtures].
 @immutable
 final class SplashViewData {
   const SplashViewData({
@@ -19,9 +15,7 @@ final class SplashViewData {
     this.errorDiagnosticId,
   });
 
-  /// Maps a resolved AppStartupResult to its presentation phase. A fatal
-  /// [AppStartupResult.error] becomes [SplashPhase.error] (carrying the
-  /// diagnostic id); otherwise the surface moves to [SplashPhase.done].
+  /// Maps a resolved [AppStartupResult] to its presentation phase.
   factory SplashViewData.fromResult(AppStartupResult result) {
     if (result.error case final error?) {
       return SplashViewData(
@@ -57,8 +51,7 @@ final class SplashViewData {
   int get hashCode => Object.hash(phase, buildLabel, errorDiagnosticId);
 }
 
-/// Deterministic, immutable gallery fixtures — one per [SplashPhase]. Named to
-/// mirror `OnboardingFixtures`. No async work, no plugin, no persistence.
+/// Deterministic, immutable gallery fixtures, one per [SplashPhase].
 abstract final class SplashFixtures {
   static const loading = SplashViewData(phase: SplashPhase.loading);
 

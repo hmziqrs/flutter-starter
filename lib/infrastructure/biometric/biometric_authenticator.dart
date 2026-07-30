@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 /// The on-device biometric classes an OS reports as enrolled. Mirrors the
-/// subset of `local_auth`'s `BiometricType` that is meaningful across the
-/// starter's platforms, exposed as a typed value so the port surface never
-/// leaks a plugin type (C2: no widget / port consumer depends on a plugin
-/// enum).
+/// subset of `local_auth`'s `BiometricType` relevant to this app's platforms,
+/// so the port surface never leaks the plugin's own enum.
 enum BiometricKind {
   fingerprint,
   face,
@@ -14,32 +12,23 @@ enum BiometricKind {
   deviceCredential,
 }
 
-/// Structured reason a [BiometricAvailability] report came back unavailable.
-///
-/// `null` on an available report. Carried so the lock UI and diagnostics can
-/// distinguish "no hardware" from "nothing enrolled" without re-reading the
-/// plugin (the plugin is never called from a widget).
+/// Why a [BiometricAvailability] report came back unavailable. `null` on an
+/// available report.
 enum BiometricUnavailableReason {
-  /// The platform / device has no biometric feature at all (also the honest
-  /// value the `NoopBiometricAuthenticator` reports for web / unsupported
-  /// desktop).
+  /// No biometric feature at all (also reported by `NoopBiometricAuthenticator`
+  /// for web / unsupported desktop).
   unsupported,
 
-  /// Hardware exists but no biometric is enrolled (or device-level PIN/credential
-  /// setup is incomplete).
+  /// Hardware exists but nothing is enrolled (or PIN/credential setup is
+  /// incomplete).
   notEnrolled,
 
   /// The availability check itself failed (plugin error / missing platform
-  /// binding). Degrades honestly — never fabricates "available".
+  /// binding).
   unknown,
 }
 
 /// Typed availability report produced by [BiometricAuthenticator.checkAvailability].
-///
-/// Immutable value object. `canCheck` is the single boolean the controller and
-/// redirect read to decide whether to gate; `supportedBiometrics`, the optional
-/// `reason`, and `requiresSetup` carry detail for diagnostics and the lock UI
-/// without forcing those readers to touch the plugin.
 @immutable
 final class BiometricAvailability {
   const BiometricAvailability._({
@@ -49,7 +38,7 @@ final class BiometricAvailability {
     required this.reason,
   });
 
-  /// Builds an available report: hardware is present, enrolled, and ready.
+  /// Hardware is present, enrolled, and ready.
   const BiometricAvailability.available({
     required Set<BiometricKind> supportedBiometrics,
     bool requiresSetup = false,
@@ -60,9 +49,8 @@ final class BiometricAvailability {
          reason: null,
        );
 
-  /// Builds an unavailable report. [reason] defaults to [BiometricUnavailableReason.unknown]
-  /// so a bare `unavailable()` is the honest "we could not confirm biometrics"
-  /// outcome rather than an implied "supported but unenrolled".
+  /// [reason] defaults to [BiometricUnavailableReason.unknown] — "could not
+  /// confirm" rather than implying "supported but unenrolled".
   const BiometricAvailability.unavailable({
     BiometricUnavailableReason reason = BiometricUnavailableReason.unknown,
     Set<BiometricKind> supportedBiometrics = const <BiometricKind>{},
@@ -74,15 +62,13 @@ final class BiometricAvailability {
          reason: reason,
        );
 
-  /// `true` only when the OS reports a ready, enrolled biometric. The sole
-  /// field the redirect / controller read to gate.
+  /// `true` only when the OS reports a ready, enrolled biometric.
   final bool canCheck;
 
   /// The enrolled biometric classes (empty when unavailable).
   final Set<BiometricKind> supportedBiometrics;
 
-  /// `true` when the OS reports biometric hardware present but still requires
-  /// the user to complete setup before authentication can proceed.
+  /// `true` when hardware is present but the user must still complete setup.
   final bool requiresSetup;
 
   /// Why the report is unavailable, or `null` when available.
@@ -100,8 +86,7 @@ final class BiometricAvailability {
 
   @override
   int get hashCode {
-    // XOR is commutative/associative so the set's hash contribution is
-    // order-independent (two sets with the same elements hash equally).
+    // XOR keeps the set's hash contribution order-independent.
     var biometricHash = 0;
     for (final kind in supportedBiometrics) {
       biometricHash ^= kind.hashCode;
@@ -120,18 +105,9 @@ final class BiometricAvailability {
 
 /// On-device biometric / device-credential authentication port.
 ///
-/// Mirrors the settings-store port shape: a single-purpose, `Future`-returning
-/// surface owned under `lib/infrastructure/`, with a typed exception
-/// ([BiometricAuthenticatorException]) and `try/on Object` degradation inside
-/// adapters. There is **no** `clearAll`-style bulk call. Backend-free per spec:
-/// the production adapter (`LocalAuthAuthenticator`) talks to the OS directly;
-/// the deterministic default (`NoopBiometricAuthenticator`) reports unavailable
-/// honestly and **never fakes a successful unlock** (C2 / C13).
-///
-/// Implementations never throw for plugin failures: [checkAvailability] degrades
-/// to an unavailable report, and [authenticate] returns `false`. A biometric
-/// that cannot be confirmed must never fabricate availability, and a failed
-/// prompt must never fabricate success.
+/// Implementations never throw for plugin failures: [checkAvailability]
+/// degrades to an unavailable report, and [authenticate] returns `false`
+/// rather than fabricating success.
 abstract interface class BiometricAuthenticator {
   /// Reports the current OS biometric availability. Never throws for plugin
   /// failures — degrades to [BiometricAvailability.unavailable] instead.
@@ -144,8 +120,8 @@ abstract interface class BiometricAuthenticator {
   Future<bool> authenticate({required String localizedReason});
 }
 
-/// Thrown by [BiometricAuthenticator] implementations only for programmer errors
-/// (never for plugin / availability failures, which degrade honestly).
+/// Thrown by [BiometricAuthenticator] implementations only for programmer
+/// errors (never for plugin / availability failures, which degrade instead).
 final class BiometricAuthenticatorException implements Exception {
   const BiometricAuthenticatorException({required this.operation});
 
@@ -156,35 +132,23 @@ final class BiometricAuthenticatorException implements Exception {
 }
 
 /// The biometric lock's public state, owned by `BiometricUnlockController` and
-/// read by the C5 redirect.
-///
-/// Exhaustive `switch` over the three subtypes is required at every call site
-/// (the redirect predicate, the dev-gallery fixtures, and the lock page) so
-/// every branch is handled explicitly. The redirect acts only on
-/// [BiometricLockLocked]; the lock page renders [BiometricLockLocked] and
-/// [BiometricLockUnavailable] differently; [BiometricLockUnlocked] clears the
-/// gate.
+/// read by the redirect. Exhaustively switched over at every call site.
 sealed class BiometricLockState {
   const BiometricLockState();
 }
 
-/// No biometric gate is active (either disabled in settings or already
-/// unlocked this session). Clears the redirect — protected routes are reachable.
+/// No gate active (disabled in settings, or already unlocked this session).
 final class BiometricLockUnlocked extends BiometricLockState {
   const BiometricLockUnlocked();
 }
 
-/// App entry is gated behind a biometric prompt. The redirect sends protected
-/// shell destinations to `AppRoutes.biometricLockPath`; the lock page presents
-/// the unlock action.
+/// App entry is gated behind a biometric prompt.
 final class BiometricLockLocked extends BiometricLockState {
   const BiometricLockLocked();
 }
 
-/// Biometric gating is enabled but the OS reports no usable biometric (no
-/// hardware, nothing enrolled, or the availability check failed). The lock
-/// page surfaces the unavailable body and the device-credential / PIN fallback
-/// seam rather than a prompt that can never succeed.
+/// Gating is enabled but the OS reports no usable biometric (no hardware,
+/// nothing enrolled, or the check failed); the lock page shows a fallback.
 final class BiometricLockUnavailable extends BiometricLockState {
   const BiometricLockUnavailable();
 }

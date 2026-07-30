@@ -2,12 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 
 /// Immutable view data for the update-block UI (the hard-block page and the
-/// soft-deprecation dialog).
-///
-/// Constructed from an [UpdateRequirement] via [ForceUpdateState.from]; the
-/// redirect and gallery fixtures never read the requirement's payload directly.
-/// [storeUrl] is non-empty for `soft` / `hard`; for `none` it is empty (the page
-/// is not shown for `none`, so the empty value is never rendered).
+/// soft-deprecation dialog), built from an [UpdateRequirement] via
+/// [ForceUpdateState.from]. [storeUrl] is empty for `none` (never rendered).
 @immutable
 final class ForceUpdateState {
   const ForceUpdateState({
@@ -16,7 +12,6 @@ final class ForceUpdateState {
     this.message,
   });
 
-  /// Builds the view data for [requirement], mapping each subtype explicitly.
   factory ForceUpdateState.from(UpdateRequirement requirement) {
     return switch (requirement) {
       UpdateRequirementNone() => const ForceUpdateState(

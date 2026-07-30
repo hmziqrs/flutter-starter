@@ -6,19 +6,8 @@ import 'package:starter/shared/widgets/states/empty_state_view.dart';
 /// A themed error-state card for async lists that failed to load.
 ///
 /// Renders a centered alert icon + [title] + [body] stack inside an [FCard],
-/// with an optional retry [action]. The stack is fully centered, so it is
-/// direction-neutral — Arabic glyph spacing and icon placement need no extra
-/// mirroring (audit checklist #6).
-///
-/// The retry callback is feature-supplied via [action]; the view never supplies
-/// a default (no-op) `onTap`. When [action] is `null`, no affordance is
-/// rendered — a feature with no backend wires [StateViewAction] `onTap` to
-/// surface `common.notConnected` honestly and never fakes success (audit
-/// checklist #13, feature spec "No silent retry"). The action label is
-/// feature-supplied too; call sites use `common.retry`.
-///
-/// Pure presentational widget: typed [title] / [body] strings, reads only
-/// `BuildContext.theme`, no state, no plugin calls, no side effects.
+/// with an optional retry [action]. The retry callback is feature-supplied;
+/// when [action] is `null`, no affordance is rendered.
 class ErrorStateView extends StatelessWidget {
   /// Creates an [ErrorStateView].
   const ErrorStateView({
@@ -44,15 +33,12 @@ class ErrorStateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FCard(
-      // Stable identity for widget/integration tests and gallery previews.
       key: const ValueKey('error-state-view'),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            // Decorative: the adjacent title Text carries the name. An explicit
-            // label here would duplicate the title in the AT announcement.
             Icon(icon, size: 32),
             const SizedBox(height: AppSpacing.md),
             Text(

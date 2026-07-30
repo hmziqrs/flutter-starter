@@ -34,15 +34,36 @@ class UpdateProfilePage extends StatefulWidget {
   final ProfilePresentationState presentationState;
   final ProfileSaveCallback onSave;
 
-  /// Invoked with the result of the avatar picker flow (typed `PickedMedia?`
-  /// per the permissions-media contract). `null` means the user cancelled, the
-  /// permission was denied, or no media backend is configured (the honest
-  /// unavailable surface). A non-null value carries the picked image's path +
-  /// MIME type for the caller to render / upload.
+  /// `null` means cancelled, denied, or no media backend configured.
   final AvatarPickedCallback onAvatarPicked;
 
   @override
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
+}
+
+/// Circular avatar placeholder shared by the editor and the wide-layout
+/// preview panel.
+class _AvatarPlaceholder extends StatelessWidget {
+  const _AvatarPlaceholder({required this.size, required this.iconSize, required this.label});
+
+  final double size;
+  final double iconSize;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: label,
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: context.theme.colors.muted, shape: BoxShape.circle),
+        child: Icon(FLucideIcons.userRound, size: iconSize),
+      ),
+    );
+  }
 }
 
 class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationMixin {
@@ -71,11 +92,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
   String _savedDisplayName = '';
   String _savedUsername = '';
   String _savedBio = '';
-  // Restored in-progress draft (state-restoration). RestorableStringN so a
-  // fresh launch (no saved bucket) keeps the initial draft verbatim — null
-  // means "no restored value, leave the controller as-is". Email is read-only,
-  // so it has no restorable counterpart. The value getter asserts isRegistered,
-  // so these are only read after restoreState registers them.
+  // Null means "no restored value, leave the controller as-is" so a fresh
+  // launch keeps the initial draft verbatim. Email is read-only, so it has no
+  // restorable counterpart.
   final RestorableStringN _displayNameDraft = RestorableStringN(null);
   final RestorableStringN _usernameDraft = RestorableStringN(null);
   final RestorableStringN _bioDraft = RestorableStringN(null);
@@ -121,39 +140,33 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     registerForRestoration(_displayNameDraft, 'display_name');
     registerForRestoration(_usernameDraft, 'username');
     registerForRestoration(_bioDraft, 'bio');
-    // Seed ONLY the fields with a saved value so restartAndRestore lands the
-    // user back on their unsaved draft. A fresh launch (no saved bucket) reads
-    // null for every field and leaves the initial-draft controllers untouched,
-    // so the page renders identically to a no-restoration build.
+    // Seed only fields with a saved value; a fresh launch leaves the
+    // initial-draft controllers untouched.
     _synchronizing = true;
-    final displayName = _displayNameDraft.value;
-    if (displayName != null) {
-      _replaceControllerText(_displayNameController, displayName);
-    }
-    final username = _usernameDraft.value;
-    if (username != null) {
-      _replaceControllerText(_usernameController, username);
-    }
-    final bio = _bioDraft.value;
-    if (bio != null) {
-      _replaceControllerText(_bioController, bio);
+    for (final (draft, controller) in [
+      (_displayNameDraft, _displayNameController),
+      (_usernameDraft, _usernameController),
+      (_bioDraft, _bioController),
+    ]) {
+      if (draft.value case final value?) {
+        _replaceControllerText(controller, value);
+      }
     }
     _synchronizing = false;
     _restored = true;
   }
 
-  /// Persists the live controller text to the restorable drafts (state-
-  /// restoration). Guarded by [_restored]: the RestorableProperty value setters
-  /// are only safe after restoreState registers them.
+  /// Persists live controller text to the restorable drafts. Guarded by
+  /// [_restored]: the setters are only safe after restoreState registers them.
   void _syncDrafts() {
-    if (_displayNameDraft.value != _displayNameController.text) {
-      _displayNameDraft.value = _displayNameController.text;
-    }
-    if (_usernameDraft.value != _usernameController.text) {
-      _usernameDraft.value = _usernameController.text;
-    }
-    if (_bioDraft.value != _bioController.text) {
-      _bioDraft.value = _bioController.text;
+    for (final (draft, controller) in [
+      (_displayNameDraft, _displayNameController),
+      (_usernameDraft, _usernameController),
+      (_bioDraft, _bioController),
+    ]) {
+      if (draft.value != controller.text) {
+        draft.value = controller.text;
+      }
     }
   }
 
@@ -184,16 +197,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
 
   @override
   void dispose() {
-    _displayNameController
-      ..removeListener(_onChanged)
-      ..dispose();
-    _usernameController
-      ..removeListener(_onChanged)
-      ..dispose();
+    for (final controller in [_displayNameController, _usernameController, _bioController]) {
+      controller
+        ..removeListener(_onChanged)
+        ..dispose();
+    }
     _emailController.dispose();
-    _bioController
-      ..removeListener(_onChanged)
-      ..dispose();
     _displayNameFocusNode.dispose();
     _usernameFocusNode.dispose();
     _bioFocusNode.dispose();
@@ -286,7 +295,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
 
   void _onChanged() {
     if (!mounted || _isSaving || _synchronizing) return;
-    // Persist the in-progress draft so the next process death restores it.
     if (_restored) {
       _syncDrafts();
     }
@@ -647,20 +655,9 @@ class _AvatarEditor extends StatefulWidget {
 class _AvatarEditorState extends State<_AvatarEditor> {
   bool _avatarFlowInProgress = false;
 
-  /// Runs the full avatar picker flow:
-  /// (1) read the current photos permission (no surprise prompt),
-  /// (2) show the rationale sheet (always before the OS prompt — stores reject
-  ///     apps that request without context, and a rationale prevents silent
-  ///     permanent denials),
-  /// (3) request the permission if the user continues,
-  /// (4) call `MediaPicker.pickImage` when granted,
-  /// (5) forward the typed `PickedMedia?` to the route via the `onAvatarPicked`
-  ///     callback on the parent [UpdateProfilePage].
-  ///
-  /// The no-backend default (`NoopPermissionService` + `NoopMediaPicker`)
-  /// surfaces an honest `null`: the rationale sheet still shows, the request
-  /// returns denied, and `onAvatarPicked(null)` is called — the route renders
-  /// the `avatarUnavailable` surface. Never fakes a grant or a picked image.
+  /// Checks the permission, shows the rationale sheet (always before the OS
+  /// prompt), requests if continued, then picks. Any refusal or a no-backend
+  /// default calls back with `null` rather than faking a grant.
   Future<void> _runAvatarFlow() async {
     if (_avatarFlowInProgress) return;
     setState(() => _avatarFlowInProgress = true);
@@ -703,20 +700,7 @@ class _AvatarEditorState extends State<_AvatarEditor> {
           spacing: AppSpacing.lg,
           runSpacing: AppSpacing.lg,
           children: [
-            Semantics(
-              image: true,
-              label: translations.avatar,
-              child: Container(
-                width: 72,
-                height: 72,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: context.theme.colors.muted,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(FLucideIcons.userRound, size: 32),
-              ),
-            ),
+            _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
             FButton(
               key: const ValueKey('profile-avatar-feedback'),
               variant: .outline,
@@ -747,20 +731,7 @@ class _ProfilePreview extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Semantics(
-              image: true,
-              label: translations.avatar,
-              child: Container(
-                width: 80,
-                height: 80,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: context.theme.colors.muted,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(FLucideIcons.userRound, size: 36),
-              ),
-            ),
+            _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
             const SizedBox(height: AppSpacing.lg),
             Text(
               draft.displayName,

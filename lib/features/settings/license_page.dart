@@ -2,28 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
-/// Thin settings-owned wrapper over Flutter's built-in [LicensePage] (the local
-/// OSS/legal attribution registry — backend-free per the feature spec).
-///
-/// Lives in the settings feature (the bundle's lowest-risk concern lands first;
-/// see the spec's Risks). It reads the installed build via
-/// [AppBuildInfo] (already a dep) for `applicationVersion` and the app name from
-/// the active translation for `applicationName`. `applicationIcon` is omitted:
-/// `AppBuildInfo` has no icon field, and the spec calls for omitting it or
-/// supplying a bundled asset (no asset is bundled here).
-///
-/// The page never calls `go_router` directly — it is a leaf reached via the
-/// `aboutLicense` route (in-shell under the existing ShellRoute, pushed from a
-/// settings "About" tile). The license list itself is Flutter's local registry,
-/// so there is **no** port and **no** backend — honest by construction.
-///
-/// The `package_info_plus` read degrades to a dash on failure so a missing
-/// `PackageInfo` (e.g. a test without the binding) never throws into the page.
+/// Thin wrapper over Flutter's built-in [LicensePage], forwarding the build
+/// version and localized app name.
 class AboutLicensePage extends StatefulWidget {
   const AboutLicensePage({this.applicationName, super.key});
 
-  /// Optional override for the application name shown in the license header.
-  /// Defaults to the localized app name (`Translations.app.name`) at build time.
+  /// Defaults to the localized app name when omitted.
   final String? applicationName;
 
   @override
@@ -36,33 +20,20 @@ class _AboutLicensePageState extends State<AboutLicensePage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    // Flutter's LicensePage renders its own Scaffold + AppBar (a back button +
-    // the conventional "Licenses" header). It must NOT be wrapped in another
-    // Scaffold/AppBar — doing so stacks two headers and two back buttons. The
-    // route is pushed in-shell, so LicensePage's built-in header is the single
-    // header; applicationName/version are forwarded for the legalese block.
+    // LicensePage renders its own Scaffold + AppBar; must not be re-wrapped.
     return FutureBuilder<AppBuildInfo>(
       future: _buildInfo,
       builder: (context, snapshot) {
-        // Degrade to a dash when PackageInfo is unavailable (test harness
-        // without a mock, or a degenerate empty version) so the page never
-        // throws into the list and never shows a fabricated version string
-        // (honest — C13).
-        final version = _resolveVersion(snapshot.data);
         return LicensePage(
           applicationName: widget.applicationName ?? translations.app.name,
-          applicationVersion: version,
-          // applicationIcon omitted: AppBuildInfo carries no icon (spec). An
-          // empty_legalese keeps the Material widget's default body neutral.
+          applicationVersion: _resolveVersion(snapshot.data),
           applicationLegalese: '',
         );
       },
     );
   }
 
-  /// Resolves the version label honestly: the real version+buildNumber when
-  /// present, or `'—'` when [AppBuildInfo] is missing or carries a blank
-  /// version (no fabricated string).
+  /// Falls back to `'—'` when [AppBuildInfo] is missing or blank.
   static String _resolveVersion(AppBuildInfo? info) {
     if (info == null) {
       return '—';

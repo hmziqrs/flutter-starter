@@ -7,18 +7,8 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Standalone accessibility-settings surface, reused by the dev gallery and
-/// tests. The live app renders the same selector in-pane as the
-/// `SettingsSection.accessibility` pane of `SettingsPage` (so the wide
-/// two-pane sidebar stays put on desktop); this standalone page wraps the
-/// shared [AccessibilityPresetSelector] in its own scroll frame for contexts
-/// that mount it directly (no surrounding settings master-detail).
-///
-/// The page is feature-owned (settings) and keeps its own scroll frame rather
-/// than reaching into `SettingsPage`'s private helpers; once ≥3 settings
-/// surfaces share the same labeled-control + scroll-frame shape, those can be
-/// promoted to `lib/shared/widgets/` under the ≥3-consumer rule (today they do
-/// not qualify — see feature spec Audit §3).
+/// Standalone accessibility-settings surface (gallery/tests). The live app
+/// renders the same [AccessibilityPresetSelector] in-pane on `SettingsPage`.
 class AccessibilitySettingsPage extends StatelessWidget {
   const AccessibilitySettingsPage({super.key});
 
@@ -34,13 +24,9 @@ class AccessibilitySettingsPage extends StatelessWidget {
   }
 }
 
-/// The named text-preset selector (comfortable / large / dyslexia), shared by
-/// [AccessibilitySettingsPage] (gallery / tests / compact) and the in-pane
-/// accessibility section of `SettingsPage` (wide / desktop). Selecting a preset
-/// calls `SettingsController.setTextPreset`, which optimistically updates
-/// `SettingsState.textPreset` (and the derived `fontScale` / `fontFamily`) and
-/// persists via the per-key `SettingsStore`. Save failures surface
-/// `common.notConnected` honestly — never a fake success.
+/// Named text-preset selector (comfortable / large / dyslexia). Selecting a
+/// preset persists via `SettingsController.setTextPreset`, surfacing
+/// `common.notConnected` on failure.
 class AccessibilityPresetSelector extends ConsumerStatefulWidget {
   const AccessibilityPresetSelector({super.key});
 

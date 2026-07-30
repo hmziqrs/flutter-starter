@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 /// Pure-Dart shake detector over a stream of `AccelerometerEvent`s. Extracted
-/// from [ShakeFeedbackTrigger] so the threshold + debounce math is unit-testable
-/// without pumping a widget (the lifecycle glue stays in the widget). Stateless
-/// except for the debounce timestamp; safe to drive from a single subscription.
+/// from [ShakeFeedbackTrigger] so the threshold + debounce math is
+/// unit-testable without pumping a widget.
 final class ShakeDetector {
   ShakeDetector({
     required this.onShake,
@@ -52,18 +51,14 @@ double magnitudeOf(AccelerometerEvent event) {
 
 /// Detects accelerometer shakes and fires the mounted [ShakeCallback]. Mounted
 /// by `_AppViewState` only when the platform has an accelerometer AND the user
-/// opted into the `feedback.shake_enabled` setting (feedback spec — shake is
-/// divisive + platform-gated). Desktop / web platforms have no accelerometer;
-/// the default stream factory throws `MissingPluginException` there, which the
-/// trigger swallows and disables itself honestly (never fakes a shake).
+/// opted into the `feedback.shake_enabled` setting. Desktop / web platforms
+/// have no accelerometer; the default stream factory throws
+/// `MissingPluginException` there, which the trigger swallows and disables
+/// itself honestly.
 ///
-/// **Feature-local** (feedback spec audit §3: single consumer — keep here
-/// until a second caller arrives, then promote to `lib/shared/widgets/`).
-///
-/// The plugin is never called from a widget method directly (HARD RULE 4):
-/// `streamFactory` is the single seam, and tests inject a fake factory driven
-/// by a `StreamController<AccelerometerEvent>`. Production passes
-/// [defaultStreamFactory].
+/// `streamFactory` is the single seam to the plugin; tests inject a fake
+/// factory driven by a `StreamController<AccelerometerEvent>`. Production
+/// passes [defaultStreamFactory].
 typedef ShakeStreamFactory =
     Stream<AccelerometerEvent> Function({
       required Duration samplingPeriod,
@@ -94,11 +89,8 @@ const Duration _shakeSamplingPeriod = SensorInterval.gameInterval;
 /// off at runtime); the subscription is cancelled on dispose and whenever
 /// [enabled] flips to false.
 ///
-/// Motion guard (feedback spec audit §5): shake detection is a sensor input,
-/// not a visual animation, so `MediaQuery.disableAnimationsOf` does not gate
-/// it — the user-facing motion is the sheet's ForUI slide, which IS guarded by
-/// `FThemeMotion` + the navigation-never-gates rule. The detector is a
-/// pure-Dart signal path with no visual animation of its own.
+/// Shake detection is a sensor input, not a visual animation, so
+/// `MediaQuery.disableAnimationsOf` does not gate it.
 class ShakeFeedbackTrigger extends StatefulWidget {
   const ShakeFeedbackTrigger({
     required this.enabled,
@@ -121,17 +113,14 @@ class ShakeFeedbackTrigger extends StatefulWidget {
   /// The UI this detector wraps. Built exactly once.
   final Widget child;
 
-  /// Source of accelerometer events. Production uses
-  /// [defaultStreamFactory] (sensors_plus); tests inject a fake driven by a
-  /// `StreamController<AccelerometerEvent>`.
+  /// Source of accelerometer events. Production uses [defaultStreamFactory];
+  /// tests inject a fake driven by a `StreamController<AccelerometerEvent>`.
   final ShakeStreamFactory streamFactory;
 
-  /// Per-sample magnitude threshold. Exposed for tests so a fixture gesture
-  /// can cross it deterministically.
+  /// Per-sample magnitude threshold. Exposed for tests.
   final double magnitudeThreshold;
 
-  /// Minimum gap between fires. Exposed for tests so the debounce window can
-  /// be asserted under `FakeAsync`.
+  /// Minimum gap between fires. Exposed for tests.
   final Duration debounce;
 
   @override
@@ -141,9 +130,9 @@ class ShakeFeedbackTrigger extends StatefulWidget {
 class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
   StreamSubscription<AccelerometerEvent>? _subscription;
   late ShakeDetector _detector;
-  // Whether the platform actually exposed a live accelerometer stream. Flipped
-  // false if the factory throws (web / desktop) so the trigger degrades
-  // honestly rather than crashing.
+
+  /// Whether the platform actually exposed a live accelerometer stream.
+  /// Flipped false if the factory throws (web / desktop).
   bool _sensorAvailable = true;
 
   @override
@@ -189,16 +178,14 @@ class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
     try {
       stream = widget.streamFactory(samplingPeriod: _shakeSamplingPeriod);
     } on Object {
-      // sensors_plus throws on platforms without an accelerometer (web /
-      // desktop). Disable honestly — never fake a shake.
+      // sensors_plus throws on platforms without an accelerometer.
       _sensorAvailable = false;
       return;
     }
     _subscription = stream.listen(
       _detector.handle,
       onError: (_) {
-        // A stream error mid-flight (sensor detached) disables further
-        // detection rather than surfacing an error to the UI.
+        // Sensor detached mid-flight: disable further detection.
         _sensorAvailable = false;
       },
     );
@@ -214,10 +201,7 @@ class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
 }
 
 /// Production stream factory backed by `sensors_plus`. Throws on platforms
-/// without an accelerometer (web / desktop); the trigger swallows that and
-/// disables itself honestly. Kept as a top-level function so it is the single
-/// seam between the feature and the plugin (HARD RULE 4 — no widget calls a
-/// plugin directly; the factory does).
+/// without an accelerometer; the trigger swallows that and disables itself.
 @pragma('vm:entry-point')
 Stream<AccelerometerEvent> defaultStreamFactory({required Duration samplingPeriod}) {
   return accelerometerEventStream(samplingPeriod: samplingPeriod);

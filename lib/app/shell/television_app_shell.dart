@@ -105,6 +105,24 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
     super.dispose();
   }
 
+  List<_TelevisionDestinationData> _destinations(BuildContext context) => [
+    _TelevisionDestinationData(
+      id: 'home',
+      label: context.t.navigation.home,
+      icon: FLucideIcons.house,
+    ),
+    _TelevisionDestinationData(
+      id: 'pricing',
+      label: context.t.navigation.pricing,
+      icon: FLucideIcons.badgeDollarSign,
+    ),
+    _TelevisionDestinationData(
+      id: 'settings',
+      label: context.t.navigation.settings,
+      icon: FLucideIcons.settings,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.presentationTokens;
@@ -112,6 +130,7 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
       tokens.controlMinHeight,
       tokens.focusTargetMinSize,
     );
+    final destinations = _destinations(context);
 
     return Actions(
       actions: _directionalActions,
@@ -158,42 +177,19 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
                       vertical: tokens.cardGap / 2,
                     ),
                     children: [
-                      _TelevisionDestination(
-                        id: 'home',
-                        label: context.t.navigation.home,
-                        icon: FLucideIcons.house,
-                        selected: widget.selectedIndex == 0,
-                        autofocus: widget.selectedIndex == 0,
-                        focusNode: _destinationFocusNodes[0],
-                        minimumHeight: focusTargetHeight,
-                        gap: tokens.cardGap,
-                        tokens: tokens,
-                        onPress: () => widget.onSelectTab(0),
-                      ),
-                      _TelevisionDestination(
-                        id: 'pricing',
-                        label: context.t.navigation.pricing,
-                        icon: FLucideIcons.badgeDollarSign,
-                        selected: widget.selectedIndex == 1,
-                        autofocus: widget.selectedIndex == 1,
-                        focusNode: _destinationFocusNodes[1],
-                        minimumHeight: focusTargetHeight,
-                        gap: tokens.cardGap,
-                        tokens: tokens,
-                        onPress: () => widget.onSelectTab(1),
-                      ),
-                      _TelevisionDestination(
-                        id: 'settings',
-                        label: context.t.navigation.settings,
-                        icon: FLucideIcons.settings,
-                        selected: widget.selectedIndex == 2,
-                        autofocus: widget.selectedIndex == 2,
-                        focusNode: _destinationFocusNodes[2],
-                        minimumHeight: focusTargetHeight,
-                        gap: 0,
-                        tokens: tokens,
-                        onPress: () => widget.onSelectTab(2),
-                      ),
+                      for (final (index, destination) in destinations.indexed)
+                        _TelevisionDestination(
+                          id: destination.id,
+                          label: destination.label,
+                          icon: destination.icon,
+                          selected: widget.selectedIndex == index,
+                          autofocus: widget.selectedIndex == index,
+                          focusNode: _destinationFocusNodes[index],
+                          minimumHeight: focusTargetHeight,
+                          gap: index == destinations.length - 1 ? 0 : tokens.cardGap,
+                          tokens: tokens,
+                          onPress: () => widget.onSelectTab(index),
+                        ),
                     ],
                   ),
                 ),
@@ -297,6 +293,18 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
       }
     });
   }
+}
+
+class _TelevisionDestinationData {
+  const _TelevisionDestinationData({
+    required this.id,
+    required this.label,
+    required this.icon,
+  });
+
+  final String id;
+  final String label;
+  final IconData icon;
 }
 
 class _TelevisionDestination extends StatelessWidget {

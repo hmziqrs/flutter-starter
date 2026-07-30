@@ -11,28 +11,11 @@ import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/lists/paged_list_view.dart';
 import 'package:starter/shared/widgets/search/search_field.dart';
 
-/// Immutable, deterministic preview state for the search + pagination gallery
-/// cases. One variant per previewed surface; no timers, no plugin, no
-/// persistence (C2: the gallery never fakes a backend action — the populated
-/// paged list reads a local fixture corpus, the no-backend list surfaces
-/// `common.notConnected`, never a faked populated page).
-enum SearchPaginationGalleryState {
-  /// The themed, debounced search field.
-  searchField,
+enum SearchPaginationGalleryState { searchField, pagedList, pagedListNoBackend }
 
-  /// A paged list over a local fixture corpus (real-local deterministic source).
-  pagedList,
-
-  /// A paged list whose fetcher is the no-backend [noopPageFetcher] — surfaces
-  /// `common.notConnected` honestly.
-  pagedListNoBackend,
-}
-
-/// Builds the search + pagination gallery cases: the search field, a populated
-/// paged list, and a no-backend paged list. The populated case paginates a
-/// local fixture (C2 "real-local deterministic source"); the no-backend case
-/// uses [noopPageFetcher] so the visitor sees the honest unavailable state a
-/// consumer with no source wired would see (audit #13).
+/// Builds the search + pagination gallery cases: the search field, a paged
+/// list over a local fixture corpus, and a paged list using the no-backend
+/// [noopPageFetcher] (surfaces `common.notConnected`).
 List<GalleryCase> buildSearchPaginationGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<SearchPaginationGalleryState>(
@@ -62,7 +45,6 @@ List<GalleryCase> buildSearchPaginationGalleryCases() {
   ];
 }
 
-/// A typed gallery item rendered as a tile. Deterministic fixture content only.
 @immutable
 final class _GalleryPagedItem {
   const _GalleryPagedItem(this.id, this.label);
@@ -93,9 +75,6 @@ const _galleryItems = <_GalleryPagedItem>[
   _GalleryPagedItem('gallery-row-20', 'Row 20'),
 ];
 
-/// Gallery-local paged notifier over a local fixture corpus (the real-local
-/// deterministic source a consumer might wire). Slices the fixture into pages
-/// so the visitor can scroll to trigger `loadNext`.
 final _galleryPopulatedPagedProvider =
     NotifierProvider<_GalleryPopulatedNotifier, PagedState<_GalleryPagedItem>>(
       _GalleryPopulatedNotifier.new,
@@ -117,9 +96,6 @@ final class _GalleryPopulatedNotifier extends PagedStateNotifierBase<_GalleryPag
   }
 }
 
-/// Gallery-local paged notifier whose fetcher is the honest no-backend
-/// [noopPageFetcher]. Surfaces `common.notConnected` via the shared error state
-/// — never a faked populated page (audit #13).
 final _galleryNoopPagedProvider =
     NotifierProvider<_GalleryNoopNotifier, PagedState<_GalleryPagedItem>>(
       _GalleryNoopNotifier.new,
@@ -130,9 +106,6 @@ final class _GalleryNoopNotifier extends PagedStateNotifierBase<_GalleryPagedIte
   PageFetcher<_GalleryPagedItem> get fetcher => noopPageFetcher<_GalleryPagedItem>();
 }
 
-/// Mounts the [SearchField] in a card so the themed input + clear affordance are
-/// previewable. The field fires `onChanged` into the void (the gallery never
-/// wires a live matcher); typing is purely a visual preview.
 class _GallerySearchFieldPreview extends StatefulWidget {
   const _GallerySearchFieldPreview();
 
@@ -178,11 +151,9 @@ class _GallerySearchFieldPreviewState extends State<_GallerySearchFieldPreview> 
   }
 }
 
-/// Mounts a [PagedListView] driven by one of the gallery-local paged providers.
-/// `noop: true` selects the no-backend provider (surfaces `common.notConnected`);
-/// `noop: false` selects the populated local fixture. The first load is kicked
-/// off post-frame so the preview resolves to its real state (ready / error),
-/// never the idle seed.
+/// Mounts a [PagedListView] driven by one of the gallery-local paged
+/// providers. The first load kicks off post-frame so the preview resolves to
+/// its real state (ready / error) rather than the idle seed.
 class _GalleryPagedPreview extends ConsumerStatefulWidget {
   const _GalleryPagedPreview({required this.noop});
 

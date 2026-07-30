@@ -1,12 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-/// Read-only app environment attached to every feedback submission so the
-/// triage backend can reproduce a report without asking the user. Built once
-/// at the composition root from `AppBuildInfo` + `PlatformCapabilities` +
-/// the active locale, then handed to the controller; a widget never fills it.
-///
-/// Contains no PII: version / platform / locale only. Never auto-attach
-/// account identifiers (feedback spec — PII in metadata note).
+/// Read-only app environment attached to every feedback submission (no PII —
+/// version / platform / locale only, never account identifiers). Built once
+/// at the composition root from `AppBuildInfo` + `PlatformCapabilities` + the
+/// active locale.
 @immutable
 final class FeedbackAppMetadata {
   const FeedbackAppMetadata({
@@ -15,17 +12,13 @@ final class FeedbackAppMetadata {
     required this.locale,
   });
 
-  /// Installed build version (for example `1.0.0+1`). Surfaced verbatim from
-  /// `AppBuildInfo` so the triage backend can reproduce against the exact
-  /// release.
+  /// Installed build version (for example `1.0.0+1`).
   final String appVersion;
 
-  /// Lowercase platform name from `PlatformCapabilities.platform`
-  /// (`ios`, `android`, `macos`, ...). No device identifiers.
+  /// Lowercase platform name (`ios`, `android`, `macos`, ...).
   final String platform;
 
-  /// Active BCP-47 locale tag (for example `en`, `ar`, `zh-Hans`) read from the
-  /// active `AppLocale` at composition time.
+  /// Active BCP-47 locale tag (for example `en`, `ar`, `zh-Hans`).
   final String locale;
 
   @override
@@ -42,17 +35,12 @@ final class FeedbackAppMetadata {
 }
 
 /// The user-editable feedback draft. Owned by `FeedbackController`, persisted
-/// to `SettingsStore` under the `feedback.draft.*` keys so a half-written
-/// report survives backgrounding. Cleared only on a confirmed `accepted`
-/// result — a failed submit retains the text for retry (feedback spec — draft
-/// persistence scope note).
+/// so a half-written report survives backgrounding; cleared only on a
+/// confirmed `accepted` result.
 ///
-/// The optional [email] is trimmed at the controller boundary before it ever
-/// reaches this value; the [message] is preserved verbatim (grapheme-aware
-/// UI handles display). [includeScreenshot] is the user's *intent* — the
-/// actual screenshot bytes are attached by the transport only when a real
-/// backend is configured; with the Noop default the toggle is inert (feedback
-/// spec — screenshot capture needs a real backend note).
+/// [email] is trimmed at the controller boundary before reaching this value.
+/// [includeScreenshot] is the user's intent only — the Noop transport never
+/// captures bytes, so the toggle is inert without a real backend.
 @immutable
 final class FeedbackDraft {
   const FeedbackDraft({
@@ -65,21 +53,16 @@ final class FeedbackDraft {
 
   final String message;
 
-  /// Optional reply-to address. Trimmed + shape-validated before assignment;
-  /// `null` when the user left the field blank (the field is optional).
+  /// Optional reply-to address; `null` when the field was left blank.
   final String? email;
 
-  /// User intent to attach a screenshot. Inert under the Noop transport (no
-  /// backend captures bytes); a real transport reads this to gate capture.
+  /// User intent to attach a screenshot. Inert under the Noop transport.
   final bool includeScreenshot;
 
-  /// `true` when there is nothing worth persisting. Used by the controller to
-  /// skip the debounced write when the draft collapses back to empty.
+  /// `true` when there is nothing worth persisting.
   bool get isEmpty => message.trim().isEmpty && email == null && !includeScreenshot;
 
-  /// `true` when the message has non-whitespace content. The submit button +
-  /// the controller's `submit()` gate on this so an empty report can never
-  /// reach the transport.
+  /// `true` when the message has non-whitespace content; gates `submit()`.
   bool get hasMessage => message.trim().isNotEmpty;
 
   FeedbackDraft copyWith({
@@ -91,8 +74,7 @@ final class FeedbackDraft {
     return FeedbackDraft(
       message: message ?? this.message,
       // `email` is nullable, so a plain `??` cannot distinguish "keep" from
-      // "clear". The explicit [clearEmail] flag mirrors AttemptState's
-      // `clearLockedUntil` + SettingsState's `followSystemLocale` pattern.
+      // "clear"; the explicit [clearEmail] flag disambiguates.
       email: clearEmail ? null : (email ?? this.email),
       includeScreenshot: includeScreenshot ?? this.includeScreenshot,
     );
@@ -111,15 +93,9 @@ final class FeedbackDraft {
   int get hashCode => Object.hash(message, email, includeScreenshot);
 }
 
-/// The normalized value emitted by the feedback sheet after native form
-/// validation. Mirrors the auth `*FormValue` trio: a handwritten typed value
-/// built from `save()` + the live draft, never a `Map`.
-///
-/// Carries the user input plus the `appMetadata` snapshot so the transport
-/// payload (`FeedbackSubmission`) is derived in one step. The email is trimmed
-/// at this boundary; the message is preserved verbatim. Per the feedback spec
-/// the form value lists `message`, `email?`, `includeScreenshot`,
-/// `appMetadata` — this is the canonical typed shape for those four.
+/// The normalized value emitted by the feedback sheet after form validation,
+/// built from `save()` + the live draft plus the `appMetadata` snapshot so
+/// the transport payload (`FeedbackSubmission`) is derived in one step.
 @immutable
 final class FeedbackFormValue {
   const FeedbackFormValue({
@@ -134,7 +110,6 @@ final class FeedbackFormValue {
   /// Trimmed reply-to address, or `null` when the optional field was blank.
   final String? email;
 
-  /// User intent to attach a screenshot.
   final bool includeScreenshot;
 
   /// Snapshot of the app environment at submit time.

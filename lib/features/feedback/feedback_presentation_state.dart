@@ -1,9 +1,8 @@
-/// Status of the feedback sheet's lifecycle. The smallest relevant
-/// vocabulary (contracts.md shared rules): `idle` is the rest state,
-/// `drafting` is "user is composing", `validating` is the synchronous form
-/// pass, `submitting` is the transport round-trip, `success` is a confirmed
-/// `accepted` result, and `failed` is the honest `unavailable` / transport
-/// failure path that surfaces `common.notConnected`.
+/// Status of the feedback sheet's lifecycle: `idle` is the rest state,
+/// `drafting` is composing, `validating` is the synchronous form pass,
+/// `submitting` is the transport round-trip, `success` is a confirmed
+/// `accepted` result, and `failed` covers `unavailable` / transport failure
+/// (surfaces `common.notConnected`).
 enum FeedbackPresentationStatus {
   idle,
   drafting,
@@ -13,13 +12,10 @@ enum FeedbackPresentationStatus {
   failed,
 }
 
-/// Immutable, screen-specific presentation state for the feedback sheet.
-///
-/// Mirrors the auth `*PresentationState` fixtures: a status enum plus named
-/// constructors so the dev-gallery `PreviewFrame` can pin
-/// `drafting` / `submitting` / `failed` deterministically (feedback spec —
-/// dev-gallery fixture). The sheet exhaustive-switches on [status] so strict
-/// analysis stays clean (no default arm).
+/// Immutable, screen-specific presentation state for the feedback sheet: a
+/// status enum plus named constructors so the dev-gallery can pin
+/// `drafting` / `submitting` / `failed` deterministically. The sheet
+/// exhaustive-switches on [status].
 final class FeedbackPresentationState {
   const FeedbackPresentationState({
     this.status = FeedbackPresentationStatus.idle,
@@ -37,14 +33,11 @@ final class FeedbackPresentationState {
 
   final FeedbackPresentationStatus status;
 
-  /// `true` while any non-idle action is in flight (validating / submitting).
-  /// The sheet gates the submit button + fields on this so a half-submitted
-  /// report cannot be re-submitted.
+  /// `true` while validating / submitting; gates the submit button + fields.
   bool get isBusy =>
       status == FeedbackPresentationStatus.validating ||
       status == FeedbackPresentationStatus.submitting;
 
-  /// `true` once the transport accepted the report. The sheet swaps the form
-  /// body for the success copy on this transition.
+  /// `true` once the transport accepted the report.
   bool get isSuccess => status == FeedbackPresentationStatus.success;
 }

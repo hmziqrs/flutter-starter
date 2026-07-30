@@ -8,10 +8,9 @@ import 'package:starter/shared/widgets/busy_indicator.dart';
 ///
 /// Wraps [child] in a [Stack]; when [isBusy] mounts a translucent scrim plus a
 /// centered [BusyIndicator] that absorbs pointer events, so the wrapped submit
-/// action cannot be triggered again. The overlay is purely visual — it never
-/// gates [child]'s callbacks, so the action still completes even when the
-/// spinner is replaced by a static label under reduce-motion. Navigation is
-/// therefore never gated on the indicator (audit checklist #5).
+/// action cannot be triggered again. The overlay is purely visual — the action
+/// still completes even when the spinner is replaced by a static label under
+/// reduce-motion.
 ///
 /// Pass a [value] of `null` for an indeterminate spinner or a fraction in
 /// `0.0..1.0` for a determinate bar. The visible [label] defaults to the
@@ -57,7 +56,6 @@ class BusyOverlay extends StatelessWidget {
               label: label,
               semanticsLabel: semanticsLabel,
               value: value,
-              // Stable identity for widget/integration tests and gallery previews.
               key: const ValueKey('busy-overlay-barrier'),
             ),
           ),
@@ -82,8 +80,6 @@ class _BusyBarrier extends StatelessWidget {
 
     final Widget content;
     if (reduceMotion) {
-      // Reduce-motion: a static localized label replaces the animated spinner.
-      // The underlying action is unaffected — the overlay never gates callbacks.
       content = Text(
         resolvedLabel,
         style: context.theme.typography.body.lg,
@@ -104,8 +100,8 @@ class _BusyBarrier extends StatelessWidget {
       );
     }
 
-    // AbsorbPointer blocks the duplicate submit; BlockSemantics hides the
-    // underlying form from assistive technology while the scrim is mounted.
+    // AbsorbPointer blocks duplicate submits; BlockSemantics hides the
+    // underlying form from assistive tech while the scrim is mounted.
     return AbsorbPointer(
       child: ColoredBox(
         color: context.theme.colors.barrier,

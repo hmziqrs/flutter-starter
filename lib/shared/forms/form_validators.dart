@@ -1,12 +1,8 @@
 /// Pure, locale-agnostic form validators shared across every starter form.
 ///
-/// These were extracted verbatim from the auth form support so that billing,
-/// settings-entry, and feedback forms reuse the exact same policies. Each
-/// validator keeps the `(value, messages)` signature: it never trims a value it
-/// returns, and the feature supplies the localized message so the helper stays
-/// copy-free.
-///
-/// Password values are intentionally **not** trimmed — the secret may contain
+/// Each validator keeps the `(value, messages)` signature: it never trims a
+/// value it returns, and the feature supplies the localized message. Password
+/// values are intentionally **not** trimmed — the secret may contain
 /// leading/trailing spaces; only the email shape policy trims before checking.
 library;
 

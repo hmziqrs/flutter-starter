@@ -24,7 +24,7 @@ class PricingPage extends ConsumerStatefulWidget {
     this.availability = PricingAvailability.available,
     super.key,
   }) : assert(plans.isNotEmpty, 'Pricing needs at least one plan.'),
-       assert(_hasUniquePlanIds(plans), 'Plan IDs must be unique.'),
+       assert(hasUniquePlanIds(plans), 'Plan IDs must be unique.'),
        assert(
          initialPlanId == null || plans.any((plan) => plan.id == initialPlanId),
          'The initial plan ID must identify a supplied plan.',
@@ -45,7 +45,7 @@ class PricingPage extends ConsumerStatefulWidget {
 
 class _PricingPageState extends ConsumerState<PricingPage> {
   late BillingPeriod _billingPeriod = widget.initialBillingPeriod;
-  late String _selectedPlanId = widget.initialPlanId ?? _preferredPlan(widget.plans).id;
+  late String _selectedPlanId = widget.initialPlanId ?? preferredPlan(widget.plans).id;
 
   @override
   Widget build(BuildContext context) {
@@ -235,18 +235,4 @@ class _PlanGrid extends StatelessWidget {
       },
     );
   }
-}
-
-bool _hasUniquePlanIds(List<PlanViewData> plans) {
-  return plans.map((plan) => plan.id).toSet().length == plans.length;
-}
-
-PlanViewData _preferredPlan(List<PlanViewData> plans) {
-  final available = plans.where(
-    (plan) => plan.availability == PricingAvailability.available,
-  );
-  return available.where((plan) => plan.isRecommended).firstOrNull ??
-      available.firstOrNull ??
-      plans.where((plan) => plan.isRecommended).firstOrNull ??
-      plans.first;
 }

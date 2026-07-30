@@ -2,28 +2,21 @@
 ///
 /// Intercepts native URIs (iOS Universal Links, Android App Links, custom
 /// schemes) surfaced by the `app_links` plugin and resolves them to existing
-/// `go_router` destinations via the [AppRoutes] name + path constants. The
-/// receiver is **backend-free** (per the deep-linking feature spec): the only
-/// side effect is navigation. Magic-link *issuance* belongs to the future
-/// mfa-otp / session server features; this module only *receives* links.
+/// `go_router` destinations via the [AppRoutes] name + path constants.
+/// Backend-free: the only side effect is navigation — this module only
+/// *receives* links, it never issues them.
 ///
-/// The security boundary is the host allowlist ([AllowedDeepLinkHosts]), sourced
-/// from compile-time `AppConfig`. URIs whose host is not on the allowlist resolve
-/// to `null` (phishing rejection) — a malicious site can never route a user into
-/// an auth flow. The path is then matched against the known route constants; an
-/// unknown path also resolves to `null` (ignored, never an error).
+/// The security boundary is the host allowlist ([AllowedDeepLinkHosts]),
+/// sourced from compile-time `AppConfig`. A URI whose host is not on the
+/// allowlist resolves to `null` (phishing rejection); an unknown path also
+/// resolves to `null` (ignored, never an error).
 ///
-/// Architecture (per the feature spec and C2/C4):
-/// - [AppLinkHandler] is a **pure, synchronous** `Uri -> ResolvedLink?` resolver.
-///   It owns no plugin, has no side effects, and is exhaustively testable without
-///   a platform channel.
-/// - [DeepLinkService] owns the `AppLinks` plugin instance and exposes the
-///   resolved stream + cold-start initial link. Widgets never name `AppLinks`
-///   directly (checklist #1/#4) — they read [appLinkStreamProvider].
-/// - The composition root (`AppDependencies` / `bootstrap.dart`) constructs the
-///   real adapter; [appLinkHandlerProvider] throws [StateError] until it is
-///   overridden at the `ProviderScope`, mirroring `settingsStoreProvider` /
-///   `secureStoreProvider`.
+/// [AppLinkHandler] is a pure, synchronous `Uri -> ResolvedLink?` resolver
+/// with no plugin and no side effects. [DeepLinkService] owns the `AppLinks`
+/// plugin instance and exposes the resolved stream + cold-start initial
+/// link; widgets read [appLinkStreamProvider] instead of naming `AppLinks`
+/// directly. The composition root constructs the real adapter;
+/// [appLinkHandlerProvider] throws [StateError] until overridden.
 library;
 
 import 'dart:async';
@@ -34,16 +27,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 
-/// Typed result of resolving an inbound deep-link [Uri] against the route table.
-///
-/// Carries the target [routeName] (a constant from [AppRoutes]) plus the
-/// `pathParameters` / `queryParameters` needed to dispatch it via
-/// `context.goNamed` / `context.pushNamed`. Immutable and value-equal so it can
-/// flow through Riverpod unchanged.
-///
-/// `pathParameters` is populated only for routes with a dynamic segment (today:
-/// the OTP route `/auth/otp/:purpose`); static routes leave it empty and carry
-/// any inbound query string through `queryParameters`.
+/// Typed result of resolving an inbound deep-link [Uri] against the route
+/// table. Carries the target [routeName] plus the `pathParameters` /
+/// `queryParameters` needed to dispatch via `context.goNamed` /
+/// `context.pushNamed`. Immutable and value-equal so it flows through
+/// Riverpod unchanged.
 @immutable
 final class ResolvedLink {
   const ResolvedLink({
@@ -52,16 +40,14 @@ final class ResolvedLink {
     this.queryParameters = const <String, String>{},
   });
 
-  /// The [AppRoutes] name to navigate to (e.g. [AppRoutes.login],
-  /// [AppRoutes.otp]).
+  /// The [AppRoutes] name to navigate to.
   final String routeName;
 
-  /// Path parameters for the target route. Today only `purpose` (for the OTP
-  /// route) is ever populated; static routes use an empty map.
+  /// Path parameters for the target route. Only populated for the OTP route
+  /// (`purpose`); static routes use an empty map.
   final Map<String, String> pathParameters;
 
-  /// Query parameters forwarded from the inbound URI. Used to carry re-engagement
-  /// context (e.g. an email hint on a magic-link login).
+  /// Query parameters forwarded from the inbound URI.
   final Map<String, String> queryParameters;
 
   @override
@@ -97,25 +83,17 @@ bool _mapEquals(Map<String, String> a, Map<String, String> b) {
   return true;
 }
 
-/// Compile-time allowlist of deep-link hosts (the associated domains / app-link
-/// hosts the app will accept inbound URIs from).
-///
-/// This is the **security boundary** for inbound routing: a URI whose host is
-/// not in this set resolves to `null` regardless of its path, so a malicious
-/// site cannot route a user into an auth flow. Sourced from compile-time
-/// `AppConfig` (a comma-separated `ALLOWED_DEEP_LINK_HOSTS` define); there is no
-/// runtime fallback (C6 — no runtime environment switching).
-///
-/// Hosts are compared case-insensitively (DNS is). An empty allowlist disables
-/// inbound routing entirely — every URI resolves to `null`, which is the safe
-/// default when no associated domain is configured.
+/// Compile-time allowlist of deep-link hosts. This is the security boundary
+/// for inbound routing: a URI whose host is not in this set resolves to
+/// `null` regardless of its path. Sourced from a comma-separated
+/// `ALLOWED_DEEP_LINK_HOSTS` compile-time define; hosts are compared
+/// case-insensitively. An empty allowlist disables inbound routing entirely.
 @immutable
 final class AllowedDeepLinkHosts {
   const AllowedDeepLinkHosts(this.hosts);
 
-  /// Parses a comma-separated host list (the shape of the compile-time define).
-  /// Empty / whitespace-only values are dropped; hosts are lower-cased so the
-  /// case-insensitive [allows] check is a simple set lookup.
+  /// Parses a comma-separated host list. Empty/whitespace-only values are
+  /// dropped; hosts are lower-cased so [allows] is a simple set lookup.
   factory AllowedDeepLinkHosts.parse(String raw) {
     final normalized = <String>{};
     for (final part in raw.split(',')) {
@@ -127,14 +105,12 @@ final class AllowedDeepLinkHosts {
     return AllowedDeepLinkHosts(normalized);
   }
 
-  /// The empty allowlist — disables inbound routing. The honest default when no
-  /// associated domain is configured.
+  /// The empty allowlist — disables inbound routing.
   static const AllowedDeepLinkHosts empty = AllowedDeepLinkHosts(<String>{});
 
   final Set<String> hosts;
 
-  /// True when [host] is on the allowlist (case-insensitive). `null` and empty
-  /// hosts are never allowed.
+  /// True when [host] is on the allowlist (case-insensitive).
   bool allows(String? host) {
     if (host == null) return false;
     final normalized = host.toLowerCase();
@@ -157,29 +133,19 @@ bool _setEquals(Set<String> a, Set<String> b) {
   return a.containsAll(b);
 }
 
-/// Pure, synchronous `Uri -> ResolvedLink?` resolver.
-///
-/// Implementations must be total (never throw): a malformed URI, foreign host,
-/// or unknown path resolves to `null`. The decision is driven entirely by the
-/// host allowlist and the [AppRoutes] path constants — there is no
-/// network call and no plugin read here.
+/// Pure, synchronous `Uri -> ResolvedLink?` resolver. Implementations must be
+/// total (never throw): a malformed URI, foreign host, or unknown path
+/// resolves to `null`.
 // ignore: one_member_abstracts
 abstract interface class AppLinkHandler {
-  /// Resolves [uri] to a typed [ResolvedLink], or `null` when the URI is
-  /// unhandled (foreign host, unknown path, malformed).
-  ///
-  /// Callers dispatch a non-null result via `context.goNamed` /
-  /// `context.pushNamed`; a `null` result is silently ignored (the app stays on
-  /// its current route). Never throws for ordinary input.
+  /// Resolves [uri] to a typed [ResolvedLink], or `null` when unhandled
+  /// (foreign host, unknown path, malformed). A `null` result is silently
+  /// ignored by callers — the app stays on its current route.
   ResolvedLink? resolve(Uri uri);
 }
 
-/// Production [AppLinkHandler]: allowlist gate + exhaustive path matching against
-/// the [AppRoutes] constants.
-///
-/// Constructed at the composition root with the compile-time
-/// [AllowedDeepLinkHosts]; pure-Dart and side-effect-free so it is fully testable
-/// without a platform channel.
+/// Production [AppLinkHandler]: allowlist gate + exhaustive path matching
+/// against the [AppRoutes] constants.
 final class RouteAppLinkHandler implements AppLinkHandler {
   const RouteAppLinkHandler({required this.allowedHosts});
 
@@ -187,8 +153,8 @@ final class RouteAppLinkHandler implements AppLinkHandler {
 
   @override
   ResolvedLink? resolve(Uri uri) {
-    // Foreign / empty host -> phishing rejection. The host allowlist is the
-    // security boundary; never resolve a path against an untrusted host.
+    // Foreign/empty host -> phishing rejection; never resolve a path against
+    // an untrusted host.
     if (!allowedHosts.allows(uri.host)) {
       return null;
     }
@@ -196,8 +162,7 @@ final class RouteAppLinkHandler implements AppLinkHandler {
   }
 
   /// Path-only resolver, exposed for tests and the dev-gallery trigger. Assumes
-  /// the host gate has already passed (or that the caller is acting on a trusted
-  /// internal path such as a `/dev/diagnostics` simulation).
+  /// the host gate has already passed.
   @visibleForTesting
   static ResolvedLink? resolvePath(String path, Map<String, String> query) {
     final normalized = _normalizePath(path);
@@ -210,9 +175,7 @@ final class RouteAppLinkHandler implements AppLinkHandler {
 }
 
 /// Normalizes a path for matching: collapses a trailing slash (except for the
-/// bare root `/`) and drops any `//` runs the platform may inject. The router
-/// itself does not care about a trailing slash, but normalizing makes the
-/// exhaustive switch below deterministic.
+/// bare root `/`).
 String _normalizePath(String path) {
   if (path.isEmpty) {
     return AppRoutes.homePath;
@@ -224,10 +187,9 @@ String _normalizePath(String path) {
   return normalized;
 }
 
-/// Exhaustive switch over the supported static route paths. Returns the matching
-/// [AppRoutes] name, or `null` for an unknown path. Add new deep-linkable static
-/// routes here (and only here) — the OTP dynamic route is handled separately by
-/// [_tryResolveOtp].
+/// Exhaustive switch over the supported static route paths. Add new
+/// deep-linkable static routes here — the OTP dynamic route is handled
+/// separately by [_tryResolveOtp].
 String? _staticRouteFor(String path) {
   return switch (path) {
     AppRoutes.homePath => AppRoutes.home,
@@ -243,11 +205,9 @@ String? _staticRouteFor(String path) {
 
 const String _otpPathPrefix = '/auth/otp/';
 
-/// Resolves the dynamic OTP route `/auth/otp/<purpose>` using the existing
-/// [OtpPurpose.tryParse] table. Returns `null` for a missing, nested, or unknown
-/// purpose segment — the existing OTP route builder renders a localized error
-/// page for a bad purpose, so a deep link with an invalid purpose is dropped here
-/// rather than navigated to (the user stays on their current route).
+/// Resolves the dynamic OTP route `/auth/otp/<purpose>`. Returns `null` for a
+/// missing, nested, or unknown purpose segment (dropped rather than navigated
+/// to; the user stays on their current route).
 ResolvedLink? _tryResolveOtp(String path, Map<String, String> query) {
   if (!path.startsWith(_otpPathPrefix)) {
     return null;
@@ -271,32 +231,25 @@ ResolvedLink? _tryResolveOtp(String path, Map<String, String> query) {
 /// Owns the `app_links` plugin instance and exposes the resolved inbound stream
 /// plus the cold-start initial link.
 ///
-/// Widgets consume this only through [appLinkStreamProvider] — they never name
-/// `AppLinks` directly (checklist #1/#4: no widget calls a plugin). The
-/// composition root constructs the production [AppLinksDeepLinkService]; tests
-/// and the dev-gallery trigger use [StreamDeepLinkService] with a
-/// `StreamController<Uri>`.
+/// Widgets consume this only through [appLinkStreamProvider] — no widget calls
+/// the plugin directly.
 abstract interface class DeepLinkService {
-  /// The live stream of resolved inbound links. Foreign-host / unknown-path URIs
-  /// are filtered out (resolved to `null` and dropped) so listeners only ever
-  /// see actionable destinations.
+  /// The live stream of resolved inbound links. Foreign-host / unknown-path
+  /// URIs are filtered out so listeners only see actionable destinations.
   Stream<ResolvedLink> get links;
 
-  /// The cold-start link that launched the app, or `null` when the app was
-  /// opened normally. Captured once before the router is built so the initial
-  /// location can be seeded (see `bootstrap.dart`).
+  /// The cold-start link that launched the app, or `null` when opened
+  /// normally. Captured once before the router is built (see `bootstrap.dart`).
   Future<ResolvedLink?> getInitialLink();
 
-  /// Releases platform subscriptions. The app-scope instance lives for the
-  /// process; this is primarily exercised by tests.
+  /// Releases platform subscriptions.
   void dispose();
 }
 
 /// Functional seam over the platform plugin so [AppLinksDeepLinkService] is
-/// unit-testable without the concrete `AppLinks` class hierarchy (which is a
-/// concrete class extending a `PlatformInterface`, not an implementable
-/// interface). Production wraps `AppLinks()` via [_PluginAppLinkInbox]; tests
-/// pass a stub.
+/// unit-testable without the concrete `AppLinks` class (a `PlatformInterface`
+/// subclass, not an implementable interface). Production wraps `AppLinks()`
+/// via [_PluginAppLinkInbox]; tests pass a stub.
 abstract interface class AppLinkInbox {
   /// The cold-start URI that launched the app, or `null`.
   Future<Uri?> getInitialLink();
@@ -317,13 +270,9 @@ final class _PluginAppLinkInbox implements AppLinkInbox {
   Stream<Uri> get links => _platform.uriLinkStream;
 }
 
-/// Production [DeepLinkService] over the `app_links` plugin.
-///
-/// The plugin is the **backend-free production default** (receiving is local;
-/// per the feature spec there is no Noop — the real plugin IS the default). A
-/// plugin failure degrades honestly: [getInitialLink] returns `null` and
-/// [links] emits nothing, so the app boots to its normal initial location and
-/// never crashes on a malformed inbound URI.
+/// Production [DeepLinkService] over the `app_links` plugin. A plugin failure
+/// degrades honestly: [getInitialLink] returns `null` and [links] emits
+/// nothing, so the app boots to its normal initial location.
 final class AppLinksDeepLinkService implements DeepLinkService {
   AppLinksDeepLinkService({
     required this._handler,
@@ -337,9 +286,8 @@ final class AppLinksDeepLinkService implements DeepLinkService {
 
   @override
   Stream<ResolvedLink> get links {
-    // Map + filter nulls (foreign host / unknown path) so listeners only see
-    // actionable destinations. Errors on the platform stream are caught and
-    // converted to an end — the app never tears down over a bad inbound URI.
+    // Errors on the platform stream are caught and converted to an end — the
+    // app never tears down over a bad inbound URI.
     return _platform.links
         .map(_handler.resolve)
         .where((link) => link != null)
@@ -356,29 +304,23 @@ final class AppLinksDeepLinkService implements DeepLinkService {
       }
       return _handler.resolve(uri);
     } on Object {
-      // A plugin failure must never strand startup. Treat as "no initial link"
-      // so the router seeds its normal initial location.
+      // A plugin failure must never strand startup.
       return null;
     }
   }
 
   @override
   void dispose() {
-    // AppLinks has no public dispose across versions; release our handle so the
-    // platform instance can be GC'd. The broadcast stream is owned by the
-    // plugin and self-cleans when the listener cancels.
+    // AppLinks has no public dispose across versions; release our handle so
+    // the platform instance can be GC'd.
     _inbox = null;
   }
 }
 
 /// Test / dev-gallery [DeepLinkService] backed by a caller-owned
-/// [StreamController] of raw [Uri]s.
-///
-/// Resolves each emitted URI through the injected [AppLinkHandler] (so foreign
-/// hosts and unknown paths are filtered exactly as in production) and surfaces a
-/// fixed cold-start URI. Never the production default — production uses
-/// [AppLinksDeepLinkService]. Used by unit/widget tests and a future
-/// `/dev/diagnostics` manual-QA trigger; no Mocktail, no codegen.
+/// [StreamController] of raw [Uri]s. Resolves each emitted URI through the
+/// injected [AppLinkHandler] so foreign hosts and unknown paths are filtered
+/// exactly as in production.
 @visibleForTesting
 final class StreamDeepLinkService implements DeepLinkService {
   StreamDeepLinkService({
@@ -410,29 +352,21 @@ final class StreamDeepLinkService implements DeepLinkService {
 
   @override
   void dispose() {
-    // Closing is the caller's responsibility when they own the controller
-    // (tests typically pass `StreamController.broadcast()`). Only close streams
-    // this service created — here we never do, so this is a safe no-op that
-    // matches the production adapter's shape.
+    // Closing is the caller's responsibility when they own the controller;
+    // we never create one, so this is a safe no-op.
   }
 }
 
 /// Handwritten Riverpod handle for the [DeepLinkService]. Overridden at the
-/// composition root with [AppLinksDeepLinkService] (constructed in
-/// `AppDependencies`); throws [StateError] until wired (mirrors
-/// `settingsStoreProvider` / `secureStoreProvider` — HARD RULE 2).
-///
-/// Named `appLinkHandlerProvider` per the feature spec ("handwritten Riverpod
-/// over a DeepLinkService").
+/// composition root with [AppLinksDeepLinkService]; throws [StateError]
+/// until wired.
 final appLinkHandlerProvider = Provider<DeepLinkService>(
   (ref) => throw StateError(
     'DeepLinkService must be overridden at the composition root.',
   ),
 );
 
-/// Derived stream of resolved inbound links. `_AppViewState` `ref.listen`s this
-/// and dispatches via `context.goNamed` / `context.pushNamed` — it never touches
-/// `AppLinks` or [DeepLinkService] directly. Cold-start is handled separately
+/// Derived stream of resolved inbound links. Cold-start is handled separately
 /// (`bootstrap.dart` seeds `initialLocation` from `getInitialLink` before the
 /// router builds).
 final appLinkStreamProvider = StreamProvider<ResolvedLink>(

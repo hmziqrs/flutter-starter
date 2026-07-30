@@ -14,31 +14,15 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// The two surfaces this page renders. The entry surface is the full-screen
-/// gate the C5 redirect sends a protected destination to; the setup surface is
-/// pushed from settings when the user turns passcode protection on.
+/// Entry is the full-screen challenge gate; setup is pushed from settings to
+/// configure a new passcode.
 enum PasscodePageMode { entry, setup }
 
 /// Full-screen passcode gate (entry) and configuration surface (setup).
 ///
-/// Rendered by the top-level `passcodeEntry` / `passcodeSetup` routes (outside
-/// the shell, like the auth routes and the biometric lock). It consumes the
-/// shared [AuthPageScaffold] (the adaptive auth shell) and
-/// [EscapeDismissibleOverlay] (keyboard focus + Escape handling).
-///
-/// The page performs no plugin calls and never calls `go_router` directly.
-/// Every side effect goes through a callback ([onUnlocked] / [onSetupComplete]
-/// navigation, [onDisable] escape) or the [PasscodeController] /
-/// [AutoLockController] ports. Navigation fires immediately on a successful
-/// unlock and never gates on the shake / countdown animations (motion rule 5):
-/// the non-animated fallback still clears the field and updates the attempt
-/// counter when the platform requests reduced motion.
-///
-/// The entry surface is a **hard gate**: it has no back/escape navigation
-/// until the passcode verifies (or the user disables). The redirect is the
-/// enforcer, not a per-route trap — Escape dismissal is harmless because the
-/// redirect re-sends any protected destination straight back to the entry path
-/// while [PasscodeState.requiresChallenge] holds.
+/// The entry surface is a hard gate: no back/escape navigation until verified
+/// or disabled — the redirect re-sends any protected destination back here
+/// while [PasscodeState.requiresChallenge] holds, so Escape dismissal is safe.
 class PasscodePage extends ConsumerWidget {
   const PasscodePage({
     required this.mode,
@@ -49,33 +33,24 @@ class PasscodePage extends ConsumerWidget {
     super.key,
   });
 
-  /// The configured digit length. Defaults to 4 (banking/enterprise default);
-  /// the setup surface validates the same length for both entries.
   final int passcodeLength;
 
   static const defaultPasscodeLength = 4;
 
-  /// Invoked the moment an entry-surface verify succeeds. The composition root
-  /// wires this to `context.goNamed(home)` after clearing the auto-lock state.
-  /// Also used by the setup surface's success path.
+  /// Fires on a successful entry-surface verify, or setup completion.
   final VoidCallback onUnlocked;
 
-  /// Invoked when the setup surface accepts a confirmed passcode. The
-  /// composition root navigates back to settings (or home). Distinct from
-  /// [onUnlocked] so the two flows can route differently.
+  /// Fires when the setup surface accepts a confirmed passcode.
   final VoidCallback? onSetupComplete;
 
-  /// Escape hatch for the entry surface: disables the passcode and clears the
-  /// gate. Optional — when null the disable affordance is hidden (the user
-  /// cannot disable from the entry screen without it).
+  /// Optional escape hatch: disables the passcode from the entry screen.
+  /// Hidden when null.
   final VoidCallback? onDisable;
 
   final PasscodePageMode mode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // AppLayoutScope is provided here so the descendant _PasscodeView can read
-    // `appLayoutClassProvider` (which resolves through the inherited scope).
     return AppLayoutScope(
       builder: (context, _) => _PasscodeView(
         mode: mode,
@@ -158,9 +133,8 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   }
 
   Widget _buildForm(BuildContext context, {required PasscodeState passcodeState}) {
-    // The raw Material TextFields below need a Material ancestor; the shared
-    // AuthPageScaffold uses ForUI's FScaffold (no implicit Material). A
-    // transparent Material provides the ancestor without altering the surface.
+    // AuthPageScaffold has no implicit Material ancestor; the raw TextFields
+    // below need one, so provide a transparent one.
     return Material(
       type: MaterialType.transparency,
       child: Column(
@@ -216,21 +190,13 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
         if (isLockedOut)
           _LockedOutNotice(seconds: lockedSeconds)
         else
-          TextField(
+          _digitField(
+            context,
             key: const ValueKey('passcode-entry-field'),
             controller: _entryController,
             focusNode: _entryFocus,
-            keyboardType: TextInputType.number,
-            keyboardAppearance: Theme.of(context).brightness,
-            maxLength: widget.passcodeLength,
-            obscureText: true,
-            enableInteractiveSelection: false,
+            labelText: translations.enterTitle,
             autofillHints: const [AutofillHints.password],
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              counterText: '',
-              labelText: translations.enterTitle,
-            ),
             onChanged: (_) {
               if (mounted) setState(() {});
               if (_entryController.text.length == widget.passcodeLength) {
@@ -241,9 +207,8 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             autofocus: true,
           ),
         const SizedBox(height: AppSpacing.lg),
-        // Shake wrapper is applied around the actions so an incorrect attempt
-        // nudges the whole surface; the non-animated fallback (reduce-motion)
-        // still clears the field and updates the attempt counter.
+        // Shake nudges the whole surface on an incorrect attempt; under
+        // reduce-motion the field clear + error text still surface the failure.
         _ShakeGuard(
           shaking: _shake,
           child: Column(
@@ -285,20 +250,12 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
+              _digitField(
+                context,
                 key: const ValueKey('passcode-setup-entry'),
                 controller: _entryController,
                 focusNode: _entryFocus,
-                keyboardType: TextInputType.number,
-                keyboardAppearance: Theme.of(context).brightness,
-                maxLength: widget.passcodeLength,
-                obscureText: true,
-                enableInteractiveSelection: false,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  counterText: '',
-                  labelText: translations.setupTitle,
-                ),
+                labelText: translations.setupTitle,
                 onChanged: (_) {
                   if (mounted) setState(() {});
                   if (_entryController.text.length == widget.passcodeLength) {
@@ -308,20 +265,12 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
                 autofocus: true,
               ),
               const SizedBox(height: AppSpacing.md),
-              TextField(
+              _digitField(
+                context,
                 key: const ValueKey('passcode-setup-confirm'),
                 controller: _confirmController,
                 focusNode: _confirmFocus,
-                keyboardType: TextInputType.number,
-                keyboardAppearance: Theme.of(context).brightness,
-                maxLength: widget.passcodeLength,
-                obscureText: true,
-                enableInteractiveSelection: false,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  counterText: '',
-                  labelText: translations.reenter,
-                ),
+                labelText: translations.reenter,
                 onChanged: (_) {
                   if (mounted) setState(() {});
                 },
@@ -337,6 +286,35 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
           child: Text(translations.confirmTitle),
         ),
       ],
+    );
+  }
+
+  Widget _digitField(
+    BuildContext context, {
+    required Key key,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String labelText,
+    required ValueChanged<String> onChanged,
+    ValueChanged<String>? onSubmitted,
+    List<String>? autofillHints,
+    bool autofocus = false,
+  }) {
+    return TextField(
+      key: key,
+      controller: controller,
+      focusNode: focusNode,
+      keyboardType: TextInputType.number,
+      keyboardAppearance: Theme.of(context).brightness,
+      maxLength: widget.passcodeLength,
+      obscureText: true,
+      enableInteractiveSelection: false,
+      autofillHints: autofillHints,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(counterText: '', labelText: labelText),
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      autofocus: autofocus,
     );
   }
 
@@ -367,8 +345,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             _entryError = translations.lockedOut(n: secs, seconds: secs);
           });
         case PasscodeVerifyResult.notConfigured:
-          // Nothing to verify against — treat as unlocked so the user is not
-          // trapped on a gate with no credential.
+          // Nothing to verify against; treat as unlocked rather than trapping.
           widget.onUnlocked();
       }
     } finally {
@@ -399,8 +376,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
       }
       await ref.read(passcodeControllerProvider.notifier).setPasscode(entry);
       if (!mounted) return;
-      // Setup arms nothing within this session (the user just chose the value);
-      // clear auto-lock in case a prior session had armed it.
+      // Clear auto-lock in case a prior session had armed it.
       ref.read(autoLockControllerProvider.notifier).unlock();
       widget.onSetupComplete?.call();
     } finally {
@@ -411,9 +387,8 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   void _signalIncorrect({required String message}) {
     _entryController.clear();
     if (mounted) setState(() {});
-    // The shake is a micro-interaction; under reduce-motion it is skipped but
-    // the error message + cleared field still surface the failure (motion
-    // rule 5: the non-animated fallback completes the action).
+    // Shake is skipped under reduce-motion; the error text + cleared field
+    // still surface the failure.
     if (!MediaQuery.disableAnimationsOf(context)) {
       setState(() {
         _shake = true;
@@ -429,11 +404,8 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   }
 }
 
-/// Row of passcode dots. The fill is driven by the controller text length so it
-/// is deterministic for tests and the dev-gallery (no timing-sensitive cursor).
-/// A slow pulse on the locked-out case is the only animation, guarded by the
-/// caller's reduce-motion check at the call site (the dots themselves render
-/// statically when [pulse] is false).
+/// Row of passcode dots; fill is driven by controller text length (no
+/// timing-sensitive cursor).
 class _PasscodeDots extends StatelessWidget {
   const _PasscodeDots({required this.filled, required this.total, required this.pulse});
 
@@ -446,8 +418,7 @@ class _PasscodeDots extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Dots are LTR-numeric per the i18n RTL note; wrap in a fixed
-        // Directionality so an Arabic locale does not mirror the digit order.
+        // Force LTR so an Arabic locale does not mirror the digit order.
         Directionality(
           textDirection: TextDirection.ltr,
           child: Row(
@@ -520,10 +491,8 @@ class _LockedOutNotice extends StatelessWidget {
   }
 }
 
-/// Wraps a subtree in an optional horizontal shake. When [shaking] is false or
-/// the platform requests reduced motion, the child renders untouched. The shake
-/// never blocks a downstream navigation: the caller invokes the navigation
-/// callback directly and this wrapper only animates presentation.
+/// Optional horizontal shake; renders [child] untouched when [shaking] is
+/// false or reduce-motion is on.
 class _ShakeGuard extends StatelessWidget {
   const _ShakeGuard({required this.shaking, required this.child});
 

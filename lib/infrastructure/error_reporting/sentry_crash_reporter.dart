@@ -3,19 +3,11 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-/// Optional remote [CrashReporter] backed by the Sentry SDK.
-///
-/// Constructed at the composition root only when a DSN is configured; the SDK
-/// itself is initialized there (`SentryFlutter.init`) with that DSN. Every SDK
-/// call is wrapped in `try/on Object` and any failure is dropped — a reporter
-/// must never break the error path it observes. Only the redacted
-/// [CrashReport] message leaves the device, forwarded as the exception text via
-/// Sentry's exception pipeline ([Sentry.captureException]) so reports land in
-/// the crash stream with native stack-based grouping/fingerprinting. The stack
-/// trace is forwarded through the same pipeline (enabling the native
-/// stack-triage view) only when [verbose] is true, so a non-verbose build ships
-/// only the redacted message. The SDK's own native-bit redaction is not trusted
-/// — [CrashReport.fromError] is the single redaction choke point.
+/// Optional remote [CrashReporter] backed by the Sentry SDK. Constructed at
+/// the composition root only when a DSN is configured. Every SDK call is
+/// wrapped in `try/on Object` and any failure is dropped. Only the redacted
+/// [CrashReport] message leaves the device via [Sentry.captureException]; the
+/// stack trace is forwarded only when [verbose] is true.
 final class SentryCrashReporter implements CrashReporter {
   SentryCrashReporter({
     required this.verbose,
@@ -41,8 +33,7 @@ final class SentryCrashReporter implements CrashReporter {
     try {
       await _capture(report);
     } on Object {
-      // Never rethrow: crash reporting must not break the error path it is
-      // observing. The report is dropped.
+      // Never rethrow: must not break the error path it is observing.
     }
   }
 
@@ -56,12 +47,8 @@ final class SentryCrashReporter implements CrashReporter {
   }
 
   Future<void> _capture(CrashReport report) async {
-    // Route through Sentry's exception pipeline (not captureMessage) so the
-    // report lands in the crash stream with stack-based grouping/fingerprinting
-    // and the native stack-triage view — the core value of crash reporting.
-    // The throwable's message is the already-redacted report text; the stack is
-    // the verbose-gated, already-redacted report.stack. Only redacted text
-    // leaves the device (the LogRedactor choke point in CrashReport.fromError).
+    // captureException (not captureMessage) so the report lands in the crash
+    // stream with native stack-based grouping/fingerprinting.
     await Sentry.captureException(
       Exception(report.message),
       stackTrace: report.stack != null ? StackTrace.fromString(report.stack!) : null,

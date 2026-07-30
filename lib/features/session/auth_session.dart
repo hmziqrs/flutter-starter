@@ -1,14 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 /// The authoritative session state, read by route guards, network clients, and
-/// the UI.
-///
-/// Sealed so every consumer switches exhaustively over exactly two states —
-/// [AuthAnonymous] (no session held) and [AuthAuthenticated] (tokens + identity
-/// in memory). Modeled on `UpdateRequirement` (sealed + final subtypes) and the
-/// value-object discipline of `SettingsState`: `@immutable`, `copyWith`, value
-/// equality. The router's auth-required predicate reads [isAuthenticated]; it
-/// never inspects token fields directly.
+/// the UI. Sealed over [AuthAnonymous] and [AuthAuthenticated] so every
+/// consumer switches exhaustively.
 sealed class AuthSession {
   const AuthSession();
 
@@ -16,9 +10,8 @@ sealed class AuthSession {
   bool get isAuthenticated;
 }
 
-/// No session is held. The cold-start default, the result of `logout`, and the
-/// rolled-back state when `login` persistence fails. Carries no tokens and no
-/// identity.
+/// No session is held: the cold-start default, the result of `logout`, and
+/// the rolled-back state when `login` persistence fails.
 @immutable
 final class AuthAnonymous extends AuthSession {
   const AuthAnonymous();
@@ -33,13 +26,10 @@ final class AuthAnonymous extends AuthSession {
   int get hashCode => 'AuthAnonymous'.hashCode;
 }
 
-/// An authenticated session.
-///
-/// The access token lives only in memory; the refresh token is persisted via
-/// `SessionRepository` over `SecureStore` so a cold start can rehydrate by
-/// calling `refresh`. Tokens are secrets — every log line that touches them
-/// flows through `AppLogger` so `LogRedactor` scrubs them; they are never
-/// logged directly.
+/// An authenticated session. Tokens are secrets: the access token lives only
+/// in memory, the refresh token is persisted via `SessionRepository` over
+/// `SecureStore`, and any log line touching them flows through `AppLogger` so
+/// `LogRedactor` scrubs them.
 @immutable
 final class AuthAuthenticated extends AuthSession {
   const AuthAuthenticated({
@@ -49,26 +39,21 @@ final class AuthAuthenticated extends AuthSession {
     required this.userId,
   });
 
-  /// Short-lived bearer token used to authorize authenticated requests. Held
-  /// only in memory; never persisted.
+  /// Short-lived bearer token. Held only in memory; never persisted.
   final String accessToken;
 
-  /// Longer-lived refresh token used to mint new access tokens. Persisted via
-  /// `SessionRepository` so the session survives cold start; rotated on every
-  /// successful `refresh`.
+  /// Longer-lived refresh token, persisted so the session survives cold
+  /// start; rotated on every successful `refresh`.
   final String refreshToken;
 
-  /// When the [accessToken] expires. The foreground-refresh path re-validates
-  /// once this passes.
+  /// When the [accessToken] expires.
   final DateTime expiresAt;
 
-  /// Stable identity of the signed-in user, issued by the auth backend and
-  /// inherited across token rotations.
+  /// Stable identity of the signed-in user, inherited across token rotations.
   final String userId;
 
-  /// Whether the access token has expired. The session is still held (the
-  /// refresh token may still mint a new access token); the foreground-refresh
-  /// path calls `refresh` to re-validate.
+  /// Whether the access token has expired (the session is still held; the
+  /// foreground-refresh path calls `refresh` to re-validate).
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
   AuthAuthenticated copyWith({

@@ -293,14 +293,8 @@ class _RecentActivity extends StatelessWidget {
             body: translations.recentEmptyBody,
           )
         else
-          // Lazy virtualized builder (pull-refresh feature): the home activity
-          // list is the first concrete DataListView consumer. shrinkWrap +
-          // NeverScrollableScrollPhysics keep it inline within the outer home
-          // ListView (the home-wide pull-to-refresh gesture is deferred to the
-          // toast-dialogs wave; this keeps the HomePage contract frozen). The
-          // per-tile ValueKey is preserved on _ActivityTile so existing tests
-          // that target `home-activity-<id>` keep working alongside DataListView's
-          // own `data-list-<id>` KeyedSubtree wrapper.
+          // shrinkWrap + NeverScrollableScrollPhysics keep this inline within
+          // the outer home ListView.
           DataListView<HomeActivityViewData>(
             key: const ValueKey('home-activity-list'),
             items: viewData.recentActivity,

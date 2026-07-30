@@ -1,17 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-/// Freshness of a [CacheEntry] at a given instant.
-///
-/// Exhaustive over the three states a cached read can resolve to — a consumer
-/// `switch`es on this (never an `if` chain) so adding a state is a compile
-/// error at every reader (guardrail 7).
+/// Freshness of a [CacheEntry] at a given instant. Consumers exhaustively
+/// switch on this rather than an `if` chain.
 enum CacheStatus {
   /// `fetchedAt + ttlSeconds` has not elapsed; the value is served as-is.
   fresh,
 
-  /// The TTL has elapsed but the entry is still present. It is served honestly
-  /// marked stale when the device is offline (or the refresh failed) so the UI
-  /// can show "showing saved content" — never as fresh-looking data.
+  /// TTL elapsed but the entry is still present; served marked stale (e.g.
+  /// when offline) rather than as fresh-looking data.
   stale,
 
   /// No entry exists for the key.
@@ -20,16 +16,9 @@ enum CacheStatus {
 
 /// Typed JSON (de)serialization boundary for a cached value of type [T].
 ///
-/// The `CacheStore` port persists entries as JSON, so a typed [T] value needs a
-/// pair of pure functions to cross that boundary. [CacheCodec] bundles them so
-/// a call site passes one value (the spec's "JSON (de)serialization behind
-/// typed factories"). [encode] must return a JSON-serializable value
-/// (`null`, `bool`, `num`, `String`, `List`, or `Map<String, Object?>`);
-/// [decode] reconstructs [T] from whatever [encode] produced.
-///
-/// Built-in codecs for the common cases ([CacheCodec.string], [CacheCodec.json])
-/// are provided; domain types supply their own. A codec is a pure, const,
-/// stateless value — safe to share across isolates and providers.
+/// [encode] must return a JSON-serializable value (`null`, `bool`, `num`,
+/// `String`, `List`, or `Map<String, Object?>`); [decode] reconstructs [T]
+/// from whatever [encode] produced. Const and stateless.
 final class CacheCodec<T> {
   const CacheCodec({required this.encode, required this.decode});
 
@@ -45,9 +34,8 @@ final class CacheCodec<T> {
     decode: _decodeString,
   );
 
-  /// Codec for an arbitrary JSON value — the value is stored verbatim and read
-  /// back as [Object?] (the caller narrows it). Use only when the value is
-  /// already a JSON-compatible type; prefer a typed domain codec otherwise.
+  /// Codec for an arbitrary already-JSON-compatible value, stored verbatim
+  /// and read back as [Object?]. Prefer a typed domain codec otherwise.
   static const CacheCodec<Object?> json = CacheCodec<Object?>(
     encode: _identityObject,
     decode: _identityObject,
@@ -60,28 +48,9 @@ final class CacheCodec<T> {
   static Object? _identityObject(Object? value) => value;
 }
 
-/// An immutable, value-equal cached entry for a typed value [T].
-///
-/// The backbone of the offline read path: a [CacheEntry<T>] pairs the fetched
-/// value with its provenance (`fetchedAt` epoch millis, `ttlSeconds`, optional
-/// `etag`) so a reader can decide freshness without re-fetching. All
-/// freshness math is pure and tested under `FakeAsync` via `clock`.
-///
-/// Field meanings:
-/// - [value]: the typed payload (decoded via a [CacheCodec] at the storage
-///   boundary).
-/// - [fetchedAt]: epoch **milliseconds** at which the value was fetched from
-///   its source. Milliseconds (not seconds) match the Dart `DateTime`
-///   convention so [statusAt] / [ageAt] are exact to the millisecond.
-/// - [ttlSeconds]: how long the entry is [CacheStatus.fresh]. The entry is
-///   stale the instant `fetchedAt + ttlSeconds` elapses. Must be `>= 0`; a
-///   value of `0` makes the entry stale immediately (always revalidate).
-/// - [etag]: optional opaque validator returned by the source (e.g. an HTTP
-///   `ETag`). Carried through the cache untouched so a refresh can send
-///   `If-None-Match`; the cache never interprets it.
-///
-/// Equality is by value across all four fields so [CacheEntry] flows through
-/// Riverpod unchanged and snapshot tests are deterministic.
+/// An immutable, value-equal cached entry for a typed value [T]. Pairs the
+/// fetched [value] with its provenance ([fetchedAt], [ttlSeconds], optional
+/// [etag]) so a reader can decide freshness without re-fetching.
 @immutable
 final class CacheEntry<T> {
   /// Creates an immutable cached entry.
@@ -98,10 +67,12 @@ final class CacheEntry<T> {
   /// Epoch milliseconds at which [value] was fetched.
   final int fetchedAt;
 
-  /// Seconds the entry is [CacheStatus.fresh] starting at [fetchedAt].
+  /// Seconds the entry is [CacheStatus.fresh] starting at [fetchedAt]. `0`
+  /// makes the entry stale immediately.
   final int ttlSeconds;
 
-  /// Optional opaque validator (e.g. HTTP `ETag`) carried through verbatim.
+  /// Optional opaque validator (e.g. HTTP `ETag`) carried through verbatim,
+  /// never interpreted, so a refresh can send `If-None-Match`.
   final String? etag;
 
   /// Freshness at [now]. Fresh while `now < fetchedAt + ttlSeconds`; stale

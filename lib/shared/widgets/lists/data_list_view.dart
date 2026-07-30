@@ -3,19 +3,11 @@ import 'package:starter/shared/theme/app_spacing.dart';
 
 /// A lazily-building, virtualized list primitive.
 ///
-/// The foundation for paginated/cached lists (search-pagination,
-/// offline-cache): only the visible items are built (`ListView.builder` /
-/// `ListView.separated`) and each item keeps a stable `ValueKey` derived from
-/// [keyOf], so widget/state identity survives edits and tests can target tiles
-/// by stable id. Pads with the repo's spacing scale by default. The empty case
-/// renders a feature-supplied [empty] placeholder (typically `EmptyStateView`);
-/// the list never synthesizes data (audit #13).
-///
-/// Pure presentational widget: typed items + builder, reads only `BuildContext`
-/// for default padding, no state, no plugin, no side effects. The first concrete
-/// consumer is `HomePage._RecentActivity`; the designated deferred consumers
-/// are search-results (search-pagination) and cached lists (offline-cache) per
-/// the feature spec (audit #3).
+/// Only the visible items are built (`ListView.builder` / `ListView.separated`)
+/// and each item keeps a stable `ValueKey` derived from [keyOf], so
+/// widget/state identity survives edits and tests can target tiles by stable
+/// id. Pads with the repo's spacing scale by default. The empty case renders a
+/// feature-supplied [empty] placeholder (typically `EmptyStateView`).
 class DataListView<T> extends StatelessWidget {
   /// Creates a [DataListView].
   const DataListView({

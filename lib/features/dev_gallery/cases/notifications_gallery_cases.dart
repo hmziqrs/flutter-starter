@@ -5,13 +5,8 @@ import 'package:starter/features/notifications/notification_permission_status.da
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Immutable, deterministic preview state for the notifications permission
-/// rationale gallery cases. One rationale variant per
-/// [NotificationPermissionStatus]; no timers, no plugin, no persistence.
-///
-/// All gallery callbacks are deterministic no-ops (C2: the gallery never
-/// fakes a backend action — the preview is read-only copy, so it stays
-/// stable).
+/// Preview state for the notifications permission rationale gallery cases:
+/// one variant per [NotificationPermissionStatus].
 final class NotificationsGalleryState {
   const NotificationsGalleryState._({
     required this.permission,
@@ -40,13 +35,8 @@ final class NotificationsGalleryState {
 }
 
 /// Builds the notifications permission rationale gallery cases
-/// (not-requested / granted / denied). Each case renders the production
-/// rationale card visually as static copy so the state-specific CTA is
-/// previewable without a live `NotificationsRepository` or plugin.
-///
-/// The rationale sheet stays feature-local (it has a single consumer); it is
-/// **not** promoted to `lib/shared/widgets/` (C3: shared extraction needs ≥3
-/// consumers).
+/// (not-requested / granted / denied) as static copy, previewable without a
+/// live `NotificationsRepository` or plugin.
 List<GalleryCase> buildNotificationsGalleryCases() {
   return [
     for (final entry in NotificationsGalleryState.values)
@@ -119,9 +109,6 @@ class _NotificationsRationalePreview extends StatelessWidget {
   }
 }
 
-/// Read-only chip for the rationale action affordances. The gallery preview is
-/// never interactive — the chip carries only the translated label so the
-/// dev-gallery visitor can preview the copy without a live repository.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.label});
 

@@ -9,31 +9,24 @@ import 'package:starter/features/settings/settings_store.dart';
 
 /// Deterministic [ExperimentSource] — the no-backend production default.
 ///
-/// Hashes a stable device id (read once from [store] and persisted under
+/// Hashes a stable device id (read once from [store], persisted under
 /// [stableIdKey]) per [ExperimentKey] into a variant bucket using a fixed
-/// allocation table. This is a **real** local assignment (stable, reproducible
-/// across launches and controller rebuilds, no network), not a Noop — so the UI
-/// can branch meaningfully on a variant without a backend (C2: the honest
-/// no-backend baseline is a real deterministic resolution, never faked remote
-/// data).
+/// allocation table. This is a real local assignment (stable, reproducible
+/// across launches, no network), not a Noop.
 ///
 /// Constructed in `AppDependencies.production`. The optional
-/// `RemoteConfigExperimentSource` reads the `experiments` slice of the shared
-/// remote-config response and **degrades to this table** when offline rather
-/// than throwing (C4: one backend, three readers; C2: never fabricate).
+/// `RemoteConfigExperimentSource` degrades to this table when offline rather
+/// than throwing.
 ///
-/// The hash is FNV-1a (32-bit) over `"$salt:$stableId:$wireKey"`. FNV-1a is
-/// stable across Dart isolates and platforms (unlike `String.hashCode`, which
-/// is not guaranteed stable on the web target); the salt makes the mapping
-/// non-obvious so the bucket is not reversible to a device fingerprint. The
-/// stable id itself is generated with [Random.secure] and persisted once; the
-/// `LogRedactor` scrubs `deviceId` if it ever appears in a log (the salt here is
-/// the load-bearing non-reversibility guard at this layer).
+/// The hash is FNV-1a (32-bit) over `"$salt:$stableId:$wireKey"` — stable
+/// across Dart isolates and the web target (unlike `String.hashCode`); the
+/// salt keeps the bucket non-reversible to a device fingerprint. Do not
+/// change the hash function or salt scheme without accepting a re-bucketing
+/// of all existing assignments.
 final class DeterministicExperimentSource implements ExperimentSource {
-  /// Constructs a deterministic source that persists the stable device id under
-  /// [stableIdKey] in [store], hashing with [salt]. The [randomSeed] generator
-  /// is injectable for tests that need a deterministic id seed; it defaults to
-  /// [Random.secure] in production.
+  /// Constructs a deterministic source that persists the stable device id
+  /// under [stableIdKey] in [store], hashing with [salt]. [randomSeed] is
+  /// injectable for tests; defaults to [Random.secure] in production.
   DeterministicExperimentSource({
     required this.store,
     this.salt = defaultSalt,
@@ -41,9 +34,7 @@ final class DeterministicExperimentSource implements ExperimentSource {
     Random? randomSeed,
   }) : random = randomSeed ?? Random.secure();
 
-  /// SettingsStore key under which the stable device id is persisted (per-key
-  /// discipline — no `clearAll`). Surfaced so the diagnostics surface and tests
-  /// can reference the canonical key.
+  /// SettingsStore key under which the stable device id is persisted.
   static const defaultStableIdKey = 'experiments.deviceStableId';
 
   /// Default hash salt. Versioned so a future re-bucketing rollout can change
@@ -59,13 +50,12 @@ final class DeterministicExperimentSource implements ExperimentSource {
   /// SettingsStore key for the stable device id.
   final String stableIdKey;
 
-  /// The random generator used to mint a fresh stable id (secure in production;
-  /// seedable in tests).
+  /// The random generator used to mint a fresh stable id.
   final Random random;
 
-  /// Cached stable id for the lifetime of this source instance. Once read or
-  /// generated, every [assignmentFor] call reuses it so a single session never
-  /// re-hashes against a fresh id (the sticky-assignment contract).
+  /// Cached stable id for the lifetime of this source instance, so a single
+  /// session never re-hashes against a fresh id (the sticky-assignment
+  /// contract).
   String? _cachedStableId;
 
   @override
@@ -82,11 +72,10 @@ final class DeterministicExperimentSource implements ExperimentSource {
   @override
   Stream<List<ExperimentAssignment>> changes() => const Stream<List<ExperimentAssignment>>.empty();
 
-  /// Returns the stable device id, reading it from [store] (and caching +
+  /// Returns the stable device id, reading it from [store] (caching +
   /// persisting a freshly generated id on first contact). A read or write
-  /// failure degrades honestly: a generated id is still used for the session so
-  /// the UI never blocks, but it will not persist (a user who clears app data
-  /// may re-bucket, which the spec accepts).
+  /// failure still returns a generated id for the session; it just won't
+  /// persist.
   Future<String> _stableId() async {
     final cached = _cachedStableId;
     if (cached != null) {
@@ -106,15 +95,13 @@ final class DeterministicExperimentSource implements ExperimentSource {
     try {
       await store.writeString(stableIdKey, generated);
     } on Object {
-      // Persist failed; the in-memory id is still used for this session so the
-      // UI renders, but it will not survive a restart. Degrade honestly.
+      // Persist failed; the in-memory id is used for this session only.
     }
     _cachedStableId = generated;
     return generated;
   }
 
-  /// Generates a fresh 128-bit stable id as a 32-char hex string. Uses the
-  /// injected [random] (secure in production; seedable in tests).
+  /// Generates a fresh 128-bit stable id as a 32-char hex string.
   String _generateId() {
     final bytes = Uint8List(16);
     for (var i = 0; i < bytes.length; i++) {
@@ -123,11 +110,10 @@ final class DeterministicExperimentSource implements ExperimentSource {
     return _toHex(bytes);
   }
 
-  /// Buckets [stableId] into a variant arm for [key] using the experiment's
-  /// allocation table. A zero-weight table degrades to the control arm
-  /// (defensive — the const tables are all non-zero). The bucket input is
-  /// scoped per [ExperimentKey.wireKey], so adding a new experiment never
-  /// re-buckets an existing one.
+  /// Buckets [stableId] into a variant arm for [key] using its allocation
+  /// table. A zero-weight table degrades to the control arm. The bucket
+  /// input is scoped per [ExperimentKey.wireKey], so adding a new experiment
+  /// never re-buckets an existing one.
   @visibleForTesting
   ExperimentVariant bucket(ExperimentKey key, String stableId) => _bucket(key, stableId);
 
@@ -144,16 +130,13 @@ final class DeterministicExperimentSource implements ExperimentSource {
         return ExperimentVariant.forKind(allocation.variant);
       }
     }
-    // Unreachable when weights are non-negative and sum > 0; the modulo keeps
-    // the bucket below `total`, so some arm always matches. Kept as a
-    // type-safe control fallback rather than throwing.
+    // Unreachable when weights are non-negative and sum > 0 (modulo keeps the
+    // bucket below `total`); kept as a type-safe fallback.
     return const ExperimentVariantControl();
   }
 
   /// Stable FNV-1a (32-bit) hash of [input], returned as a non-negative
-  /// integer. Stable across Dart isolates and the web target (the multiply
-  /// stays within double precision and the mask truncates to 32 bits on every
-  /// platform), unlike `String.hashCode`.
+  /// integer.
   static int _fnv1a32(String input) {
     const offsetBasis = 0x811c9dc5;
     const prime = 0x01000193;
@@ -168,8 +151,7 @@ final class DeterministicExperimentSource implements ExperimentSource {
   }
 }
 
-/// Lowercase hex encoder for the 16-byte stable id, kept local so the
-/// deterministic source ships zero extra dependencies.
+/// Lowercase hex encoder for the 16-byte stable id.
 String _toHex(Uint8List bytes) {
   const alphabet = '0123456789abcdef';
   final out = StringBuffer();

@@ -47,3 +47,40 @@ final class TypedGalleryCase<TState> implements GalleryCase {
     return pageFactory(context, stateFactory(context));
   }
 }
+
+/// One case's id suffix, label, and state, sharing a screen and page factory
+/// supplied by [buildTypedGalleryCases].
+typedef GalleryCaseDefinition<TState> = ({
+  String suffix,
+  GalleryLabelBuilder labelBuilder,
+  GalleryStateFactory<TState> stateFactory,
+});
+
+/// Shorthand for a [GalleryCaseDefinition] with a fixed, already-built state.
+GalleryCaseDefinition<TState> galleryCaseOf<TState>(
+  String suffix,
+  GalleryLabelBuilder labelBuilder,
+  TState state,
+) => (suffix: suffix, labelBuilder: labelBuilder, stateFactory: (_) => state);
+
+/// Expands a list of [GalleryCaseDefinition]s sharing one screen and page
+/// factory into their [TypedGalleryCase]s.
+List<GalleryCase> buildTypedGalleryCases<TState>({
+  required String idPrefix,
+  required String screenId,
+  required GalleryLabelBuilder screenLabelBuilder,
+  required List<GalleryCaseDefinition<TState>> definitions,
+  required ProductionPageFactory<TState> pageFactory,
+}) {
+  return [
+    for (final definition in definitions)
+      TypedGalleryCase<TState>(
+        id: '$idPrefix.${definition.suffix}',
+        screenId: screenId,
+        screenLabelBuilder: screenLabelBuilder,
+        caseLabelBuilder: definition.labelBuilder,
+        stateFactory: definition.stateFactory,
+        pageFactory: pageFactory,
+      ),
+  ];
+}

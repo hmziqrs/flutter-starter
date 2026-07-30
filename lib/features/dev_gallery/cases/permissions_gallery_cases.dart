@@ -6,11 +6,9 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Immutable, deterministic preview state for the permission rationale gallery
-/// cases. One per (permission, denied-state); no timers, no plugin, no
-/// persistence — the gallery renders [PermissionRationaleBody] directly in a
-/// card (sheets are modal, so the gallery embeds the same body rather than
-/// triggering a real sheet, keeping the preview hermetic).
+/// Preview state for the permission rationale gallery cases. The gallery
+/// renders [PermissionRationaleBody] directly in a card, since sheets are
+/// modal and this keeps the preview hermetic.
 final class PermissionGalleryState {
   const PermissionGalleryState({
     required this.permission,
@@ -26,49 +24,45 @@ final class PermissionGalleryState {
   final bool showDeniedAlert;
 }
 
-/// Builds the permission rationale gallery cases: the promptable rationale, the
-/// denied state, and the permanently-denied (one-way-door) state — all for the
-/// avatar flow's `photos` permission so the three states are directly
-/// comparable. Gated by `developmentToolsEnabled` via the registry caller.
+/// Builds the permission rationale gallery cases: the promptable rationale,
+/// the denied state, and the permanently-denied (one-way-door) state — all
+/// for the avatar flow's `photos` permission so the states are comparable.
 List<GalleryCase> buildPermissionsGalleryCases() {
-  return [
-    TypedGalleryCase<PermissionGalleryState>(
-      id: 'permissions.rationale',
-      screenId: 'permissions',
-      screenLabelBuilder: (translations) => translations.devGallery.screenPermissions,
-      caseLabelBuilder: (translations) => translations.devGallery.casePermissionRationale,
-      stateFactory: (_) => const PermissionGalleryState(
-        permission: AppPermission.photos,
-        permanentlyDenied: false,
-        showDeniedAlert: false,
+  return buildTypedGalleryCases<PermissionGalleryState>(
+    idPrefix: 'permissions',
+    screenId: 'permissions',
+    screenLabelBuilder: (t) => t.devGallery.screenPermissions,
+    definitions: [
+      galleryCaseOf(
+        'rationale',
+        (t) => t.devGallery.casePermissionRationale,
+        const PermissionGalleryState(
+          permission: AppPermission.photos,
+          permanentlyDenied: false,
+          showDeniedAlert: false,
+        ),
       ),
-      pageFactory: (context, state) => _PermissionPreview(state: state),
-    ),
-    TypedGalleryCase<PermissionGalleryState>(
-      id: 'permissions.denied',
-      screenId: 'permissions',
-      screenLabelBuilder: (translations) => translations.devGallery.screenPermissions,
-      caseLabelBuilder: (translations) => translations.devGallery.casePermissionDenied,
-      stateFactory: (_) => const PermissionGalleryState(
-        permission: AppPermission.photos,
-        permanentlyDenied: false,
-        showDeniedAlert: true,
+      galleryCaseOf(
+        'denied',
+        (t) => t.devGallery.casePermissionDenied,
+        const PermissionGalleryState(
+          permission: AppPermission.photos,
+          permanentlyDenied: false,
+          showDeniedAlert: true,
+        ),
       ),
-      pageFactory: (context, state) => _PermissionPreview(state: state),
-    ),
-    TypedGalleryCase<PermissionGalleryState>(
-      id: 'permissions.permanentlyDenied',
-      screenId: 'permissions',
-      screenLabelBuilder: (translations) => translations.devGallery.screenPermissions,
-      caseLabelBuilder: (translations) => translations.devGallery.casePermissionPermanentlyDenied,
-      stateFactory: (_) => const PermissionGalleryState(
-        permission: AppPermission.photos,
-        permanentlyDenied: true,
-        showDeniedAlert: false,
+      galleryCaseOf(
+        'permanentlyDenied',
+        (t) => t.devGallery.casePermissionPermanentlyDenied,
+        const PermissionGalleryState(
+          permission: AppPermission.photos,
+          permanentlyDenied: true,
+          showDeniedAlert: false,
+        ),
       ),
-      pageFactory: (context, state) => _PermissionPreview(state: state),
-    ),
-  ];
+    ],
+    pageFactory: (context, state) => _PermissionPreview(state: state),
+  );
 }
 
 class _PermissionPreview extends StatelessWidget {
@@ -97,11 +91,6 @@ class _PermissionPreview extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  // The same body the modal sheet renders — buttons are wired to
-                  // no-ops so the preview stays deterministic (no real prompt,
-                  // no navigation). The permanently-denied case renders the
-                  // blocked-state alert + "Open settings" action in place of a
-                  // re-prompt (the one-way-door rule).
                   PermissionRationaleBody(
                     permission: state.permission,
                     permanentlyDenied: state.permanentlyDenied,

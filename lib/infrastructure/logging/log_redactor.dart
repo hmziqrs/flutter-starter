@@ -2,21 +2,11 @@
 /// context before they reach Talker / crash reporters.
 ///
 /// [redactText] runs its passes in a deliberate order so the most specific
-/// patterns win and composite tokens collapse to a single replacement in one
-/// pass:
-///   1. [_bearerToken] - `Bearer <jwt>` headers (whole header first).
-///   2. [_sensitiveAssignment] - `token=...` / `password=...` style values.
-///   3. [_queryStringToken] - `?access_token=...` / `&refresh_token=...` URL
-///      params not caught by [_sensitiveAssignment] (no `\b` before the
-///      underscored key).
-///   4. [_email] - email addresses (before [_phoneE164] so a `+`-alias local
-///      part is not partially redacted).
-///   5. [_pan] - Luhn-gated card numbers (13-19 digits, optional single
-///      space/dash separators). Non-Luhn runs are preserved to avoid eating
-///      diagnostic / order IDs.
-///   6. [_phoneE164] - `+<digits>` E.164 phone numbers.
-///   7. [_jwtPayload] - standalone `xxx.yyy.zzz` JWT bodies (last, so a
-///      `Bearer <jwt>` is fully gone before this runs).
+/// patterns win: bearer tokens, then `key=value` assignments, then query
+/// params, then email (before phone, so a `+`-alias local part isn't
+/// partially redacted), then Luhn-gated card numbers (non-Luhn digit runs
+/// survive, to avoid eating order/diagnostic IDs), then E.164 phone numbers,
+/// then standalone JWT bodies last (so a `Bearer <jwt>` is already gone).
 final class LogRedactor {
   const LogRedactor();
 

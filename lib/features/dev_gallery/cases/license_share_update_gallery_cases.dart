@@ -8,25 +8,9 @@ import 'package:starter/infrastructure/updates/app_update_service.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Builds the license / share / in-app-update gallery cases.
-///
-/// Three concerns, one bundle (the feature doc sequences them together because
-/// they share the diagnostics dev triggers and the `AppBuildInfo` / settings
-/// seams):
-///
-/// * **License** — the [AboutLicensePage] wrapper over Flutter's local license
-///   registry (backend-free).
-/// * **Share** — one deterministic preview per [ShareResult] variant. The
-///   preview never pops a real OS sheet (C2: the gallery never fakes a backend
-///   action); it renders the typed result state the production adapter would
-///   surface.
-/// * **Update** — one deterministic preview per [UpdateAvailability] variant.
-///   The preview never calls the Play / App Store plugin; it renders the typed
-///   availability state, including the server-only [UpdateAvailability.required]
-///   so the gallery documents that variant even though the OS-store adapters
-///   never produce it.
-///
-/// All fixtures are deterministic — no plugins, no timers, no persistence.
+/// Builds the license, share-result, and app-update-availability gallery
+/// cases. Share and update previews render the typed result/availability
+/// state directly, without popping a real OS share sheet or store plugin.
 List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
   return [
     TypedGalleryCase<void>(
@@ -44,7 +28,11 @@ List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
         screenLabelBuilder: (translations) => translations.devGallery.screenShare,
         caseLabelBuilder: (translations) => _shareResultLabel(translations, result),
         stateFactory: (_) => result,
-        pageFactory: (context, state) => _ShareResultPreview(result: state),
+        pageFactory: (context, state) => _IconLabelCard(
+          screenLabel: (t) => t.devGallery.screenShare,
+          caseLabel: (t) => _shareResultLabel(t, state),
+          icon: _shareIcon(state),
+        ),
       ),
     for (final availability in UpdateAvailability.values)
       TypedGalleryCase<UpdateAvailability>(
@@ -53,7 +41,12 @@ List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
         screenLabelBuilder: (translations) => translations.devGallery.screenAppUpdate,
         caseLabelBuilder: (translations) => _updateAvailabilityLabel(translations, availability),
         stateFactory: (_) => availability,
-        pageFactory: (context, state) => _UpdateAvailabilityPreview(availability: state),
+        pageFactory: (context, state) => _IconLabelCard(
+          screenLabel: (t) => t.devGallery.screenAppUpdate,
+          caseLabel: (t) => _updateAvailabilityLabel(t, availability),
+          icon: _updateIcon(availability),
+          iconColorError: availability == UpdateAvailability.required,
+        ),
       ),
   ];
 }
@@ -77,50 +70,6 @@ String _updateAvailabilityLabel(
   };
 }
 
-/// Centers a typed [ShareResult] preview so the state the production adapter
-/// would surface is visible without triggering the OS share sheet.
-class _ShareResultPreview extends StatelessWidget {
-  const _ShareResultPreview({required this.result});
-
-  final ShareResult result;
-
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: FCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  Icon(_shareIcon(result), color: context.theme.colors.primary),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          translations.devGallery.screenShare,
-                          style: context.theme.typography.body.lg,
-                        ),
-                        Text(_shareResultLabel(translations, result)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 IconData _shareIcon(ShareResult result) {
   return switch (result) {
     ShareResult.success => FLucideIcons.check,
@@ -129,12 +78,28 @@ IconData _shareIcon(ShareResult result) {
   };
 }
 
-/// Centers a typed [UpdateAvailability] preview so the state the production
-/// adapter would surface is visible without calling the Play / App Store plugin.
-class _UpdateAvailabilityPreview extends StatelessWidget {
-  const _UpdateAvailabilityPreview({required this.availability});
+IconData _updateIcon(UpdateAvailability availability) {
+  return switch (availability) {
+    UpdateAvailability.noUpdate => FLucideIcons.check,
+    UpdateAvailability.available => FLucideIcons.download,
+    UpdateAvailability.required => FLucideIcons.alertTriangle,
+  };
+}
 
-  final UpdateAvailability availability;
+/// Shared card layout for the share/update-availability previews: an icon
+/// beside a screen label and case label.
+class _IconLabelCard extends StatelessWidget {
+  const _IconLabelCard({
+    required this.screenLabel,
+    required this.caseLabel,
+    required this.icon,
+    this.iconColorError = false,
+  });
+
+  final GalleryLabelBuilder screenLabel;
+  final GalleryLabelBuilder caseLabel;
+  final IconData icon;
+  final bool iconColorError;
 
   @override
   Widget build(BuildContext context) {
@@ -150,8 +115,8 @@ class _UpdateAvailabilityPreview extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    _updateIcon(availability),
-                    color: availability == UpdateAvailability.required
+                    icon,
+                    color: iconColorError
                         ? context.theme.colors.error
                         : context.theme.colors.primary,
                   ),
@@ -160,11 +125,8 @@ class _UpdateAvailabilityPreview extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          translations.devGallery.screenAppUpdate,
-                          style: context.theme.typography.body.lg,
-                        ),
-                        Text(_updateAvailabilityLabel(translations, availability)),
+                        Text(screenLabel(translations), style: context.theme.typography.body.lg),
+                        Text(caseLabel(translations)),
                       ],
                     ),
                   ),
@@ -176,12 +138,4 @@ class _UpdateAvailabilityPreview extends StatelessWidget {
       ),
     );
   }
-}
-
-IconData _updateIcon(UpdateAvailability availability) {
-  return switch (availability) {
-    UpdateAvailability.noUpdate => FLucideIcons.check,
-    UpdateAvailability.available => FLucideIcons.download,
-    UpdateAvailability.required => FLucideIcons.alertTriangle,
-  };
 }

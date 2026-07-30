@@ -606,16 +606,10 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
               ),
               FTile(
                 key: const ValueKey('settings-open-license'),
-                // license-share-update: tile -> in-shell aboutLicense route
-                // (Flutter's local license registry; backend-free).
                 title: Text(translations.settings.about.license),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenLicense,
               ),
-              // feedback: the primary 'menu entry' open path (feedback.md
-              // Contract: the sheet opens from a menu entry + the shake
-              // listener). Always present — the sheet degrades honestly to
-              // notConnected via NoopFeedbackTransport, so no capability gate.
               FTile(
                 key: const ValueKey('settings-send-feedback'),
                 title: Text(translations.feedback.title),
@@ -630,11 +624,22 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   }
 }
 
-/// Haptic-feedback opt-in. Watches [settingsControllerProvider] for the
-/// `hapticsEnabled` flag (a plaintext settings key, default-on). The flag is a
-/// necessary-but-not-sufficient gate: each call site ALSO checks
-/// `MediaQuery.disableAnimationsOf` so the reduce-motion accessibility setting
-/// always wins. Surfaces `common.notConnected` on persistence failure.
+/// Mixin for tiles that optimistically run an async settings write and show
+/// `common.notConnected` on failure.
+mixin _SaveFailureState<T extends StatefulWidget> on State<T> {
+  bool _saveFailed = false;
+
+  Future<void> _run(Future<void> Function() operation) async {
+    try {
+      await operation();
+      if (mounted) setState(() => _saveFailed = false);
+    } on Object {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+}
+
+/// Haptics opt-in; gated at each call site by reduce-motion, not here.
 class _HapticsTile extends ConsumerStatefulWidget {
   const _HapticsTile();
 
@@ -642,9 +647,7 @@ class _HapticsTile extends ConsumerStatefulWidget {
   ConsumerState<_HapticsTile> createState() => _HapticsTileState();
 }
 
-class _HapticsTileState extends ConsumerState<_HapticsTile> {
-  bool _saveFailed = false;
-
+class _HapticsTileState extends ConsumerState<_HapticsTile> with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -659,30 +662,10 @@ class _HapticsTileState extends ConsumerState<_HapticsTile> {
       saveFailed: _saveFailed,
     );
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
 }
 
-/// Biometric-unlock opt-in. Watches [settingsControllerProvider] (the
-/// enablement flag is a plaintext settings key, unlike the analytics opt-in
-/// which is SecureStore-backed). Surfaces `common.notConnected` on persistence
-/// failure, mirroring the appearance save-error pattern.
-///
-/// The toggle is gated on [biometricAvailabilityProvider]: the optimistic write
-/// is refused when the OS reports no usable biometric (web / desktop-no-
-/// biometric / not-enrolled). Without this gate a user could enable biometric
-/// on an unsupported device and be permanently trapped on /lock on the next
-/// cold start (the C5 redirect fires during the controller's conservative
-/// loading window, then the state becomes Unavailable and the /lock page has
-/// no real escape). Turning OFF is always allowed so a user whose biometric
-/// disappeared post-enable can recover from the /lock fallback action.
+/// Biometric-unlock opt-in, refused when the device reports no usable
+/// biometric so a user can't get trapped on /lock with no way back in.
 class _BiometricUnlockTile extends ConsumerStatefulWidget {
   const _BiometricUnlockTile();
 
@@ -690,9 +673,7 @@ class _BiometricUnlockTile extends ConsumerStatefulWidget {
   ConsumerState<_BiometricUnlockTile> createState() => _BiometricUnlockTileState();
 }
 
-class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
-  bool _saveFailed = false;
-
+class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -708,32 +689,16 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
       label: Text(translations.settings.enableBiometric),
       value: enabled,
       onChange: (value) {
-        // Refuse to enable on a device that cannot authenticate. The switch is
-        // controlled by the watched settings value, so refusing the write snaps
-        // the toggle back to off on the next rebuild. Turning off is always
-        // allowed so a user can recover from a post-enable biometric loss.
         if (value && !canCheck) return;
         unawaited(_run(() => controller.setBiometricUnlockEnabled(enabled: value)));
       },
       saveFailed: _saveFailed,
     );
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
 }
 
-/// Passcode opt-in (pin-autolock). Toggling ON pushes the passcode-setup route
-/// so the user can configure a numeric passcode; the gate does not arm until a
-/// hash is actually stored ([PasscodeState.isSet]). Toggling OFF disables the
-/// passcode (clears the hash + armed flag) and clears the settings flag.
-/// Surfaces `common.notConnected` on persistence failure.
+/// Passcode opt-in: enabling pushes the setup route; the gate only arms once
+/// a hash is actually stored. Disabling clears the hash and the settings flag.
 class _PasscodeTile extends ConsumerStatefulWidget {
   const _PasscodeTile();
 
@@ -741,9 +706,7 @@ class _PasscodeTile extends ConsumerStatefulWidget {
   ConsumerState<_PasscodeTile> createState() => _PasscodeTileState();
 }
 
-class _PasscodeTileState extends ConsumerState<_PasscodeTile> {
-  bool _saveFailed = false;
-
+class _PasscodeTileState extends ConsumerState<_PasscodeTile> with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -755,9 +718,6 @@ class _PasscodeTileState extends ConsumerState<_PasscodeTile> {
       value: enabled,
       onChange: (value) async {
         if (value) {
-          // Reflect the intent immediately so the toggle shows ON, then push
-          // the setup route. The gate only arms once the setup surface stores
-          // a hash (isSet becomes true), so this intermediate state is safe.
           await _run(() => controller.setPasscodeEnabled(enabled: true));
           if (context.mounted) context.goNamed(AppRoutes.passcodeSetup);
         } else {
@@ -770,19 +730,9 @@ class _PasscodeTileState extends ConsumerState<_PasscodeTile> {
       saveFailed: _saveFailed,
     );
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
 }
 
-/// Lock-when-backgrounded toggle (pin-autolock). Only meaningful when a
-/// passcode is configured; the tile is disabled (read-only) otherwise.
+/// Lock-when-backgrounded toggle; inert until a passcode is configured.
 class _LockOnBackgroundTile extends ConsumerStatefulWidget {
   const _LockOnBackgroundTile();
 
@@ -790,9 +740,8 @@ class _LockOnBackgroundTile extends ConsumerStatefulWidget {
   ConsumerState<_LockOnBackgroundTile> createState() => _LockOnBackgroundTileState();
 }
 
-class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile> {
-  bool _saveFailed = false;
-
+class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile>
+    with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -802,8 +751,6 @@ class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile> {
       keyName: 'lock-on-background',
       label: Text(translations.settings.lockOnBackground),
       value: state.lockOnBackground,
-      // Refuse toggles when no passcode is configured: the auto-lock subsystem
-      // has nothing to re-lock to. The controlled toggle snaps back on rebuild.
       onChange: (value) {
         if (!state.passcodeEnabled) return;
         unawaited(_run(() => controller.setLockOnBackground(enabled: value)));
@@ -811,20 +758,10 @@ class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile> {
       saveFailed: _saveFailed,
     );
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
 }
 
-/// Idle auto-lock delay selector (pin-autolock). Cycles through a small fixed
-/// set of delays on tap: Off -> 30s -> 1m -> 5m -> Off. Only meaningful when a
-/// passcode is configured; the tile is inert otherwise.
+/// Idle auto-lock delay selector; cycles Off -> 30s -> 1m -> 5m -> Off on tap.
+/// Inert until a passcode is configured.
 class _AutoLockDelayTile extends ConsumerStatefulWidget {
   const _AutoLockDelayTile();
 
@@ -832,9 +769,8 @@ class _AutoLockDelayTile extends ConsumerStatefulWidget {
   ConsumerState<_AutoLockDelayTile> createState() => _AutoLockDelayTileState();
 }
 
-class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> {
+class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> with _SaveFailureState {
   static const _options = <int>[0, 30, 60, 300];
-  bool _saveFailed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -846,8 +782,6 @@ class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> {
       label: Text(translations.settings.autoLockDelay),
       status: _labelFor(translations, state.autoLockDelaySeconds),
       value: state.autoLockDelaySeconds > 0,
-      // Rendered as a toggle-like card: tapping cycles to the next delay option.
-      // Only active when a passcode is configured.
       onChange: (_) {
         if (!state.passcodeEnabled) return;
         final currentIndex = _options.indexOf(state.autoLockDelaySeconds);
@@ -864,21 +798,10 @@ class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> {
     final minutes = seconds ~/ 60;
     return '${minutes}m';
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
 }
 
-/// Analytics opt-in. Watches [analyticsOptInControllerProvider] (the opt-in is a
-/// SecureStore-backed sensitive preference, NOT a [SettingsState] field). The
-/// same controller is consulted by the real analytics client before every emit;
-/// the Noop default ignores it. Surfaces `common.notConnected` on failure.
+/// Analytics opt-in; backed by [analyticsOptInControllerProvider] (SecureStore),
+/// not [SettingsState].
 class _AnalyticsOptInTile extends ConsumerStatefulWidget {
   const _AnalyticsOptInTile();
 
@@ -886,9 +809,7 @@ class _AnalyticsOptInTile extends ConsumerStatefulWidget {
   ConsumerState<_AnalyticsOptInTile> createState() => _AnalyticsOptInTileState();
 }
 
-class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> {
-  bool _saveFailed = false;
-
+class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -905,15 +826,6 @@ class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> {
       onChange: (value) => _run(() => controller.setOptIn(value: value)),
       saveFailed: _saveFailed,
     );
-  }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
   }
 }
 
@@ -995,9 +907,8 @@ class _AppearanceSettingsContent extends ConsumerStatefulWidget {
   ConsumerState<_AppearanceSettingsContent> createState() => _AppearanceSettingsContentState();
 }
 
-class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsContent> {
-  bool _saveFailed = false;
-
+class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsContent>
+    with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -1094,19 +1005,6 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
       ),
     );
   }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) {
-        setState(() => _saveFailed = false);
-      }
-    } on Object {
-      if (mounted) {
-        setState(() => _saveFailed = true);
-      }
-    }
-  }
 }
 
 class _LanguageSettingsContent extends ConsumerStatefulWidget {
@@ -1116,43 +1014,31 @@ class _LanguageSettingsContent extends ConsumerStatefulWidget {
   ConsumerState<_LanguageSettingsContent> createState() => _LanguageSettingsContentState();
 }
 
-class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsContent> {
-  bool _saveFailed = false;
-
+class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsContent>
+    with _SaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
+    final options = <(String, AppLocale?, String)>[
+      ('locale-system', null, translations.settings.languageSystem),
+      ('locale-en', AppLocale.en, translations.settings.languageEnglish),
+      ('locale-ar', AppLocale.ar, translations.settings.languageArabic),
+      ('locale-zh-Hans', AppLocale.zhHans, translations.settings.languageChinese),
+    ];
 
     return _SettingsScrollFrame(
       title: translations.settings.language,
       child: _SpacedSettingsTiles(
         children: [
-          _LocaleTile(
-            key: const ValueKey('locale-system'),
-            selected: settings.localeOverride == null,
-            label: translations.settings.languageSystem,
-            onPress: () => _setLocale(controller, null),
-          ),
-          _LocaleTile(
-            key: const ValueKey('locale-en'),
-            selected: settings.localeOverride == AppLocale.en,
-            label: translations.settings.languageEnglish,
-            onPress: () => _setLocale(controller, AppLocale.en),
-          ),
-          _LocaleTile(
-            key: const ValueKey('locale-ar'),
-            selected: settings.localeOverride == AppLocale.ar,
-            label: translations.settings.languageArabic,
-            onPress: () => _setLocale(controller, AppLocale.ar),
-          ),
-          _LocaleTile(
-            key: const ValueKey('locale-zh-Hans'),
-            selected: settings.localeOverride == AppLocale.zhHans,
-            label: translations.settings.languageChinese,
-            onPress: () => _setLocale(controller, AppLocale.zhHans),
-          ),
+          for (final (key, locale, label) in options)
+            _LocaleTile(
+              key: ValueKey(key),
+              selected: settings.localeOverride == locale,
+              label: label,
+              onPress: () => _run(() => controller.setLocale(locale)),
+            ),
           if (_saveFailed)
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -1167,19 +1053,6 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
         ],
       ),
     );
-  }
-
-  Future<void> _setLocale(SettingsController controller, AppLocale? locale) async {
-    try {
-      await controller.setLocale(locale);
-      if (mounted) {
-        setState(() => _saveFailed = false);
-      }
-    } on Object {
-      if (mounted) {
-        setState(() => _saveFailed = true);
-      }
-    }
   }
 }
 

@@ -15,13 +15,11 @@ typedef InvalidFieldTarget = ({
 
 /// Reveals and focuses the first invalid field in explicit visual order.
 ///
-/// Walks [orderedTargets] in order and, for the first entry whose `field` is in
-/// [invalidFields], scrolls it into view via [Scrollable.ensureVisible] and then
-/// requests focus on its [FocusNode]. This uses `ensureVisible` rather than an
-/// animation, so the reveal is deterministic and reduce-motion-safe, and
-/// navigation never gates on it (audit checklist #5). [isMounted] is consulted
-/// before requesting focus so a submit that unmounts the form mid-flight cannot
-/// touch a disposed node.
+/// Walks [orderedTargets] in order and, for the first entry whose `field` is
+/// in [invalidFields], scrolls it into view via [Scrollable.ensureVisible] and
+/// then requests focus on its [FocusNode]. [isMounted] is consulted before
+/// requesting focus so a submit that unmounts the form mid-flight cannot touch
+/// a disposed node.
 Future<void> revealFirstInvalid(
   Set<FormFieldState<Object?>> invalidFields, {
   required Iterable<InvalidFieldTarget> orderedTargets,

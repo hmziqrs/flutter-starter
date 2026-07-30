@@ -2,11 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-/// List-backed [CrashReporter] for unit tests.
-///
-/// Not a Mocktail double: it exercises the real [CrashReport] redaction path
-/// and exposes the captured reports for assertions. Test-only — never
-/// constructed in production code.
+/// List-backed [CrashReporter] for unit tests. Exercises the real
+/// [CrashReport] redaction path and exposes captured reports for assertions.
 final class RecordingCrashReporter implements CrashReporter {
   RecordingCrashReporter({
     required this.verbose,

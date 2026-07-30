@@ -4,20 +4,7 @@ import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/states/skeleton_tile.dart';
 import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
-/// Immutable, deterministic preview state for the skeleton gallery cases.
-///
-/// One variant per shimmer path. No timers, no async work, no persistence
-/// (C2: the gallery never fakes a backend action — a skeleton is a pure
-/// loading treatment driven by an `isLoading` flag).
-enum SkeletonGalleryState {
-  /// The static (non-shimmering) path — reduce-motion and golden baseline.
-  /// Forces `disableAnimations` so the preview is deterministic regardless of
-  /// the gallery environment's animation toggle.
-  staticList,
-
-  /// The animated shimmer path — interactive preview only (never goldens).
-  shimmerList,
-}
+enum SkeletonGalleryState { staticList, shimmerList }
 
 /// Builds the skeleton gallery cases: a static reduce-motion list (the golden
 /// baseline) and an animated shimmer list. Both preview the same mirrored
@@ -45,11 +32,9 @@ List<GalleryCase> buildSkeletonGalleryCases() {
   ];
 }
 
-/// Frames the skeleton list inside the gallery's constrained content column.
-///
-/// The static variant injects a `MediaQuery.disableAnimations` override so the
-/// non-shimmering fallback paints deterministically (golden path). The shimmer
-/// variant inherits the gallery environment's animation setting.
+/// The static variant forces `disableAnimations` so the non-shimmering
+/// fallback paints deterministically for goldens; the shimmer variant
+/// inherits the gallery environment's animation setting.
 class _SkeletonPreview extends StatelessWidget {
   const _SkeletonPreview({required this.state});
 

@@ -6,29 +6,11 @@ import 'package:starter/shared/widgets/states/empty_state_view.dart';
 import 'package:starter/shared/widgets/states/error_state_view.dart';
 import 'package:starter/shared/widgets/states/loading_state_view.dart';
 
-/// Immutable, deterministic preview state for the state-views gallery cases.
-///
-/// One variant per canonical async-list state (empty / error / loading). No
-/// timers, no async work, no persistence (C2: the gallery never fakes a backend
-/// action — the retry `onTap` is a no-op preview callback, never a claim of
-/// success).
-enum StateViewsGalleryState {
-  /// The empty-list state, with a primary call-to-action affordance.
-  empty,
-
-  /// The failed-load state, with a feature-supplied retry affordance whose
-  /// label reuses `common.retry`.
-  error,
-
-  /// The in-flight state, built around the shared `BusyIndicator`.
-  loading,
-}
+enum StateViewsGalleryState { empty, error, loading }
 
 /// Builds the state-views gallery cases: an [EmptyStateView], an
-/// [ErrorStateView], and a [LoadingStateView]. Every case is a static fixture
-/// wired to deterministic, localized copy. The error case's retry action is a
-/// no-op preview callback (the gallery never fakes a backend action); a real
-/// call site wires it to surface `common.notConnected`.
+/// [ErrorStateView], and a [LoadingStateView], each wired to deterministic,
+/// localized copy. The retry action is a no-op preview callback.
 List<GalleryCase> buildStateViewsGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<StateViewsGalleryState>(
@@ -61,9 +43,6 @@ List<GalleryCase> buildStateViewsGalleryCases() {
   ];
 }
 
-/// Frames each state-view variant inside the gallery's constrained content
-/// column. The state-view card itself is the production surface under test;
-/// this wrapper only centers and pads it.
 class _StateViewsPreview extends StatelessWidget {
   const _StateViewsPreview({required this.state});
 
@@ -76,7 +55,6 @@ class _StateViewsPreview extends StatelessWidget {
       StateViewsGalleryState.empty => EmptyStateView(
         title: translations.states.emptyTitle,
         body: translations.states.emptyBody,
-        // No-op preview callback — the gallery never fakes a backend action.
         action: (label: translations.common.retry, onTap: () {}),
       ),
       StateViewsGalleryState.error => ErrorStateView(

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/app/presentation/production_page_factory.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/forgot_password_presentation_state.dart';
@@ -50,12 +49,6 @@ final class PricingGalleryState {
   final PricingAvailability availability;
 }
 
-typedef _CaseDefinition<TState> = ({
-  String suffix,
-  GalleryLabelBuilder labelBuilder,
-  GalleryStateFactory<TState> stateFactory,
-});
-
 /// Builds every production-page case contributed by the static feature wave.
 List<GalleryCase> buildProductionGalleryCases() => [
   ..._buildOnboardingCases(),
@@ -83,7 +76,7 @@ List<GalleryCase> buildProductionGalleryCases() => [
 ];
 
 List<GalleryCase> _buildOnboardingCases() {
-  return _typedCases<OnboardingGalleryState>(
+  return buildTypedGalleryCases<OnboardingGalleryState>(
     idPrefix: 'onboarding',
     screenId: 'onboarding',
     screenLabelBuilder: (translations) => translations.devGallery.screenOnboarding,
@@ -113,7 +106,7 @@ List<GalleryCase> _buildOnboardingCases() {
 }
 
 List<GalleryCase> _buildPaywallCases() {
-  return _typedCases<PricingGalleryState>(
+  return buildTypedGalleryCases<PricingGalleryState>(
     idPrefix: 'pricing.paywall',
     screenId: 'paywall',
     screenLabelBuilder: (translations) => translations.devGallery.screenPaywall,
@@ -141,7 +134,7 @@ List<GalleryCase> _buildPaywallCases() {
 }
 
 List<GalleryCase> _buildPricingCases() {
-  return _typedCases<PricingGalleryState>(
+  return buildTypedGalleryCases<PricingGalleryState>(
     idPrefix: 'pricing',
     screenId: 'pricing',
     screenLabelBuilder: (translations) => translations.devGallery.screenPricing,
@@ -162,7 +155,7 @@ List<GalleryCase> _buildPricingCases() {
   );
 }
 
-List<_CaseDefinition<PricingGalleryState>> _pricingDefinitions() => [
+List<GalleryCaseDefinition<PricingGalleryState>> _pricingDefinitions() => [
   (
     suffix: 'monthly',
     labelBuilder: (translations) => translations.devGallery.caseMonthly,
@@ -206,7 +199,7 @@ List<_CaseDefinition<PricingGalleryState>> _pricingDefinitions() => [
 ];
 
 List<GalleryCase> _buildHomeCases() {
-  return _typedCases<HomeViewData>(
+  return buildTypedGalleryCases<HomeViewData>(
     idPrefix: 'home',
     screenId: 'home',
     screenLabelBuilder: (translations) => translations.devGallery.screenHome,
@@ -240,18 +233,18 @@ List<GalleryCase> _buildHomeCases() {
 }
 
 List<GalleryCase> _buildLoginCases() {
-  return _typedCases<LoginPresentationState>(
+  return buildTypedGalleryCases<LoginPresentationState>(
     idPrefix: 'auth.login',
     screenId: 'login',
     screenLabelBuilder: (translations) => translations.devGallery.screenLogin,
     definitions: [
-      _definition('idle', _caseDefault, const LoginPresentationState()),
-      _definition('focused', _caseFocused, const LoginPresentationState.focused()),
-      _definition('invalid', _caseInvalid, const LoginPresentationState.invalid()),
-      _definition('submitting', _caseSubmitting, const LoginPresentationState.submitting()),
-      _definition('fieldError', _caseFieldError, const LoginPresentationState.fieldFailure()),
-      _definition('globalError', _caseGlobalError, const LoginPresentationState.globalFailure()),
-      _definition('success', _caseSuccess, const LoginPresentationState.success()),
+      galleryCaseOf('idle', _caseDefault, const LoginPresentationState()),
+      galleryCaseOf('focused', _caseFocused, const LoginPresentationState.focused()),
+      galleryCaseOf('invalid', _caseInvalid, const LoginPresentationState.invalid()),
+      galleryCaseOf('submitting', _caseSubmitting, const LoginPresentationState.submitting()),
+      galleryCaseOf('fieldError', _caseFieldError, const LoginPresentationState.fieldFailure()),
+      galleryCaseOf('globalError', _caseGlobalError, const LoginPresentationState.globalFailure()),
+      galleryCaseOf('success', _caseSuccess, const LoginPresentationState.success()),
     ],
     pageFactory: (context, state) => LoginPage(
       presentation: state,
@@ -263,22 +256,22 @@ List<GalleryCase> _buildLoginCases() {
 }
 
 List<GalleryCase> _buildRegisterCases() {
-  return _typedCases<RegisterPresentationState>(
+  return buildTypedGalleryCases<RegisterPresentationState>(
     idPrefix: 'auth.register',
     screenId: 'register',
     screenLabelBuilder: (translations) => translations.devGallery.screenRegister,
     definitions: [
-      _definition('idle', _caseDefault, const RegisterPresentationState()),
-      _definition('focused', _caseFocused, const RegisterPresentationState.focused()),
-      _definition('invalid', _caseInvalid, const RegisterPresentationState.invalid()),
-      _definition('submitting', _caseSubmitting, const RegisterPresentationState.submitting()),
-      _definition('fieldError', _caseFieldError, const RegisterPresentationState.fieldFailure()),
-      _definition(
+      galleryCaseOf('idle', _caseDefault, const RegisterPresentationState()),
+      galleryCaseOf('focused', _caseFocused, const RegisterPresentationState.focused()),
+      galleryCaseOf('invalid', _caseInvalid, const RegisterPresentationState.invalid()),
+      galleryCaseOf('submitting', _caseSubmitting, const RegisterPresentationState.submitting()),
+      galleryCaseOf('fieldError', _caseFieldError, const RegisterPresentationState.fieldFailure()),
+      galleryCaseOf(
         'globalError',
         _caseGlobalError,
         const RegisterPresentationState.globalFailure(),
       ),
-      _definition('success', _caseSuccess, const RegisterPresentationState.success()),
+      galleryCaseOf('success', _caseSuccess, const RegisterPresentationState.success()),
     ],
     pageFactory: (context, state) => RegisterPage(
       presentation: state,
@@ -291,34 +284,34 @@ List<GalleryCase> _buildRegisterCases() {
 }
 
 List<GalleryCase> _buildForgotPasswordCases() {
-  return _typedCases<ForgotPasswordPresentationState>(
+  return buildTypedGalleryCases<ForgotPasswordPresentationState>(
     idPrefix: 'auth.forgotPassword',
     screenId: 'forgot-password',
     screenLabelBuilder: (translations) => translations.devGallery.screenForgotPassword,
     definitions: [
-      _definition('idle', _caseDefault, const ForgotPasswordPresentationState()),
-      _definition(
+      galleryCaseOf('idle', _caseDefault, const ForgotPasswordPresentationState()),
+      galleryCaseOf(
         'focused',
         _caseFocused,
         const ForgotPasswordPresentationState.focused(),
       ),
-      _definition('invalid', _caseInvalid, const ForgotPasswordPresentationState.invalid()),
-      _definition(
+      galleryCaseOf('invalid', _caseInvalid, const ForgotPasswordPresentationState.invalid()),
+      galleryCaseOf(
         'submitting',
         _caseSubmitting,
         const ForgotPasswordPresentationState.submitting(),
       ),
-      _definition(
+      galleryCaseOf(
         'fieldError',
         _caseFieldError,
         const ForgotPasswordPresentationState.fieldFailure(),
       ),
-      _definition(
+      galleryCaseOf(
         'globalError',
         _caseGlobalError,
         const ForgotPasswordPresentationState.globalFailure(),
       ),
-      _definition('success', _caseSuccess, const ForgotPasswordPresentationState.success()),
+      galleryCaseOf('success', _caseSuccess, const ForgotPasswordPresentationState.success()),
     ],
     pageFactory: (context, state) => ForgotPasswordPage(
       presentation: state,
@@ -329,34 +322,34 @@ List<GalleryCase> _buildForgotPasswordCases() {
 }
 
 List<GalleryCase> _buildResetPasswordCases() {
-  return _typedCases<ResetPasswordPresentationState>(
+  return buildTypedGalleryCases<ResetPasswordPresentationState>(
     idPrefix: 'auth.resetPassword',
     screenId: 'reset-password',
     screenLabelBuilder: (translations) => translations.devGallery.screenResetPassword,
     definitions: [
-      _definition('idle', _caseDefault, const ResetPasswordPresentationState()),
-      _definition(
+      galleryCaseOf('idle', _caseDefault, const ResetPasswordPresentationState()),
+      galleryCaseOf(
         'focused',
         _caseFocused,
         const ResetPasswordPresentationState.focused(),
       ),
-      _definition('invalid', _caseInvalid, const ResetPasswordPresentationState.invalid()),
-      _definition(
+      galleryCaseOf('invalid', _caseInvalid, const ResetPasswordPresentationState.invalid()),
+      galleryCaseOf(
         'submitting',
         _caseSubmitting,
         const ResetPasswordPresentationState.submitting(),
       ),
-      _definition(
+      galleryCaseOf(
         'fieldError',
         _caseFieldError,
         const ResetPasswordPresentationState.fieldFailure(),
       ),
-      _definition(
+      galleryCaseOf(
         'globalError',
         _caseGlobalError,
         const ResetPasswordPresentationState.globalFailure(),
       ),
-      _definition('success', _caseSuccess, const ResetPasswordPresentationState.success()),
+      galleryCaseOf('success', _caseSuccess, const ResetPasswordPresentationState.success()),
     ],
     pageFactory: (context, state) => ResetPasswordPage(
       presentation: state,
@@ -372,24 +365,24 @@ List<GalleryCase> _buildOtpCases({
   required String screenId,
   required GalleryLabelBuilder screenLabelBuilder,
 }) {
-  return _typedCases<OtpPresentationState>(
+  return buildTypedGalleryCases<OtpPresentationState>(
     idPrefix: idPrefix,
     screenId: screenId,
     screenLabelBuilder: screenLabelBuilder,
     definitions: [
-      _definition('empty', _caseEmpty, const OtpPresentationState()),
-      _definition('partial', _casePartial, const OtpPresentationState.partial()),
-      _definition(
+      galleryCaseOf('empty', _caseEmpty, const OtpPresentationState()),
+      galleryCaseOf('partial', _casePartial, const OtpPresentationState.partial()),
+      galleryCaseOf(
         'pastedComplete',
         _casePastedComplete,
         const OtpPresentationState.pastedComplete(),
       ),
-      _definition('invalid', _caseInvalid, const OtpPresentationState.invalid()),
-      _definition('expired', _caseExpired, const OtpPresentationState.expired()),
-      _definition('resending', _caseResending, const OtpPresentationState.resending()),
-      _definition('submitting', _caseSubmitting, const OtpPresentationState.submitting()),
-      _definition('globalError', _caseGlobalError, const OtpPresentationState.globalFailure()),
-      _definition('success', _caseSuccess, const OtpPresentationState.success()),
+      galleryCaseOf('invalid', _caseInvalid, const OtpPresentationState.invalid()),
+      galleryCaseOf('expired', _caseExpired, const OtpPresentationState.expired()),
+      galleryCaseOf('resending', _caseResending, const OtpPresentationState.resending()),
+      galleryCaseOf('submitting', _caseSubmitting, const OtpPresentationState.submitting()),
+      galleryCaseOf('globalError', _caseGlobalError, const OtpPresentationState.globalFailure()),
+      galleryCaseOf('success', _caseSuccess, const OtpPresentationState.success()),
     ],
     pageFactory: (context, state) => OtpPage(
       purpose: purpose,
@@ -401,12 +394,12 @@ List<GalleryCase> _buildOtpCases({
 }
 
 List<GalleryCase> _buildProfileCases() {
-  return _typedCases<ProfilePresentationState>(
+  return buildTypedGalleryCases<ProfilePresentationState>(
     idPrefix: 'profile.update',
     screenId: 'profile',
     screenLabelBuilder: (translations) => translations.devGallery.screenProfile,
     definitions: [
-      _definition(
+      galleryCaseOf(
         'default',
         _caseDefault,
         const ProfilePresentationState.defaults(),
@@ -421,12 +414,12 @@ List<GalleryCase> _buildProfileCases() {
         labelBuilder: _caseInvalid,
         stateFactory: (_) => ProfilePresentationState.invalid(draft: _invalidProfileDraft()),
       ),
-      _definition(
+      galleryCaseOf(
         'saving',
         _caseSaving,
         const ProfilePresentationState.saving(draft: ProfileDraft.defaults()),
       ),
-      _definition(
+      galleryCaseOf(
         'saved',
         _caseSaved,
         const ProfilePresentationState.saved(draft: ProfileDraft.defaults()),
@@ -443,10 +436,6 @@ List<GalleryCase> _buildProfileCases() {
       initialDraft: const ProfileDraft.defaults(),
       presentationState: state,
       onSave: (_) => _showUnavailableFeedback(context),
-      // permissions-media: the gallery uses a no-op callback (the rationale
-      // flow is exercised in the permissions gallery cases + the live
-      // update-profile route; the production gallery only renders the form
-      // state deterministically).
       onAvatarPicked: (_) => _showInformationDialog(
         context,
         title: context.t.profile.update.changeAvatar,
@@ -457,7 +446,7 @@ List<GalleryCase> _buildProfileCases() {
 }
 
 List<GalleryCase> _buildSettingsCases() {
-  return _typedCases<SettingsSection?>(
+  return buildTypedGalleryCases<SettingsSection?>(
     idPrefix: 'settings',
     screenId: 'settings',
     screenLabelBuilder: (translations) => translations.devGallery.screenSettings,
@@ -506,43 +495,9 @@ List<GalleryCase> _buildSettingsCases() {
       onOpenPricing: () => _showUnavailableFeedback(context),
       onOpenTerms: () => _showLegalDialog(context, context.t.settings.terms),
       onOpenPrivacy: () => _showLegalDialog(context, context.t.settings.privacy),
-      // license-share-update: gallery settings tile surfaces the same legal
-      // dialog (the live route wires to the in-shell aboutLicense page).
       onOpenLicense: () => _showLegalDialog(context, context.t.settings.about.license),
       loadBuildLabel: () => Future.value(context.t.common.notConnected),
     ),
-  );
-}
-
-List<GalleryCase> _typedCases<TState>({
-  required String idPrefix,
-  required String screenId,
-  required GalleryLabelBuilder screenLabelBuilder,
-  required List<_CaseDefinition<TState>> definitions,
-  required ProductionPageFactory<TState> pageFactory,
-}) {
-  return [
-    for (final definition in definitions)
-      TypedGalleryCase<TState>(
-        id: '$idPrefix.${definition.suffix}',
-        screenId: screenId,
-        screenLabelBuilder: screenLabelBuilder,
-        caseLabelBuilder: definition.labelBuilder,
-        stateFactory: definition.stateFactory,
-        pageFactory: pageFactory,
-      ),
-  ];
-}
-
-_CaseDefinition<TState> _definition<TState>(
-  String suffix,
-  GalleryLabelBuilder labelBuilder,
-  TState state,
-) {
-  return (
-    suffix: suffix,
-    labelBuilder: labelBuilder,
-    stateFactory: (_) => state,
   );
 }
 

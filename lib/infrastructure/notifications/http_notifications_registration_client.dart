@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-// `comment_references` flags doc cross-references to sibling-class names
-// (NotificationsException etc.) imported only via the feature package; the
-// references are intentional.
+// Doc comments intentionally reference sibling feature-package types.
 // ignore_for_file: comment_references
 
 import 'package:dio/dio.dart';
@@ -11,20 +9,10 @@ import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/notifications_registration.dart';
 
 /// Real HTTP [NotificationsRegistration] client against the test-server push
-/// contract (C9).
-///
-/// Constructed **only in the test / dev graph** (integration tests point it at
-/// a random-port test server; the development config may point it at a fixed
-/// local URL). It is never constructed in `AppDependencies.production` — the
-/// [NoopNotificationsRepository] is the production default, and the optional
-/// `FirebaseNotificationsRepository` wires its own registration client only
-/// when a consumer passes a configured endpoint. Speaks to the backend through
-/// a shared injected [Dio] (built via [buildAppDio] when no instance is
-/// supplied); web falls through to the Noop default per `PlatformCapabilities`.
-///
-/// Token / deviceId values reach this class only after the
-/// `LogRedactor`-scrubbed logging path inside the Firebase adapter; this class
-/// itself does not log the values (it logs only the round-trip outcome).
+/// contract. Constructed only in the test/dev graph or by
+/// `FirebaseNotificationsRepository` when a consumer passes a configured
+/// endpoint; never in `AppDependencies.production` directly (the
+/// [NoopNotificationsRepository] is the production default).
 final class HttpNotificationsRegistrationClient implements NotificationsRegistration {
   HttpNotificationsRegistrationClient({required Uri baseUrl, Dio? dio})
     : _dio = dio ?? buildAppDio(baseUrl);
@@ -76,10 +64,8 @@ final class HttpNotificationsRegistrationClient implements NotificationsRegistra
     );
   }
 
-  /// Sends the request and classifies the outcome. The body is unused (the
-  /// contract is 204 / 4xx — no payload to surface): 2xx succeeds, a 4xx
-  /// surfaces [NotificationsException.unknown], anything else (5xx / transport)
-  /// surfaces [NotificationsException.notConnected].
+  /// 2xx succeeds; 4xx surfaces [NotificationsException.unknown]; anything
+  /// else (5xx / transport) surfaces [NotificationsException.notConnected].
   Future<void> _roundTrip(Future<Response<String>> Function() send) async {
     final Response<String> response;
     try {

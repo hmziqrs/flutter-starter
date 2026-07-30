@@ -3,19 +3,15 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
-/// Severity of an in-app announcement. Drives the [FAlert] variant + icon via an
-/// exhaustive switch in `announcement_banner.dart`. Adding a value is a compile
-/// error there until it is deliberately styled.
+/// Severity of an in-app announcement. Drives the [FAlert] variant + icon via
+/// an exhaustive switch in `announcement_banner.dart`.
 enum AnnouncementSeverity { info, success, warning, critical }
 
 /// A localized, dismiss-tracked broadcast rendered above the router shell.
-///
-/// Title/message are resolved lazily through [Translations] (the same
-/// `String Function(Translations)` shape the connectivity gallery uses), keeping
-/// the value object free of slang string keys while staying fully typed. The
-/// object itself is never persisted — only its [id] joins the dismissed set
-/// stored under the `announcements.dismissedIds` key (see
-/// `announcements_controller.dart`).
+/// Title/message resolve lazily through [Translations], keeping the value
+/// object free of slang string keys while staying fully typed. The object
+/// itself is never persisted — only its [id] joins the dismissed set stored
+/// under `announcements.dismissedIds`.
 @immutable
 final class Announcement {
   const Announcement({
@@ -43,9 +39,9 @@ final class Announcement {
   /// Localized body, resolved against the active [Translations].
   final String Function(Translations translations) message;
 
-  /// Optional existing named route navigated to via `context.goNamed` when the
-  /// CTA is tapped. A plain string — features must not import route constants, so
-  /// the fixture author carries the route name.
+  /// Optional existing named route navigated to via `context.goNamed` when
+  /// the CTA is tapped. A plain string — features must not import route
+  /// constants.
   final String? actionRoute;
 
   /// Whether the dismiss control is offered. Critical broadcasts can pin
@@ -79,12 +75,9 @@ final class Announcement {
     return true;
   }
 
-  /// Whether [buildInfo] satisfies the version window.
-  ///
-  /// Ungated announcements (both bounds `null`) are always in window — even
-  /// before [buildInfo] resolves — so the banner never flashes stale. Gated
-  /// announcements are excluded until [buildInfo] is available, so a fixture
-  /// never appears before the version check completes.
+  /// Whether [buildInfo] satisfies the version window. Ungated announcements
+  /// (both bounds `null`) are always in window, even before [buildInfo]
+  /// resolves; gated announcements are excluded until it is available.
   bool isWithinVersionWindow(AppBuildInfo? buildInfo) {
     final min = minAppVersion;
     final max = maxAppVersion;
@@ -137,9 +130,9 @@ final class Announcement {
   );
 }
 
-/// Compares two dotted version strings (`"1.2.3"`) segment by segment. Missing
-/// segments are treated as `0`; non-numeric segments fall back to `0`. Returns
-/// `-1`, `0`, or `1`. Pure and typed — no `dynamic`/`num` widening.
+/// Compares two dotted version strings (`"1.2.3"`) segment by segment.
+/// Missing segments are treated as `0`; non-numeric segments fall back to
+/// `0`. Returns `-1`, `0`, or `1`.
 int _compareVersions(String a, String b) {
   final pa = a.split('.');
   final pb = b.split('.');
@@ -156,10 +149,7 @@ int _compareVersions(String a, String b) {
 
 /// Resolves the first announcement in [announcements] that is not dismissed,
 /// inside its date window at [now], and inside its version window for
-/// [buildInfo]. List order is priority order — author the feed highest-priority
-/// first. Pure and deterministic: tests drive [now] / [buildInfo] directly and
-/// the controller (`announcements_controller.dart`) calls this on every build /
-/// dismiss.
+/// [buildInfo]. List order is priority order.
 Announcement? resolveActiveAnnouncement({
   required List<Announcement> announcements,
   required Set<String> dismissedIds,
@@ -183,13 +173,11 @@ Announcement? resolveActiveAnnouncement({
 
 /// Lifecycle of a dismiss interaction. The banner observes
 /// [AnnouncementsState.status] to surface a transient toast when persistence
-/// fails — the optimistic dismiss rolls back so the banner re-appears, and the
-/// toast makes the failure audible (audit #13: honest feedback, no silent loss).
+/// fails — the optimistic dismiss rolls back so the banner re-appears.
 enum AnnouncementsStatus { idle, dismissFailure }
 
 /// Immutable state published by the announcements controller. Holds the
-/// resolved [active] banner (computed via [resolveActiveAnnouncement]) and the
-/// dismissed id set for observability.
+/// resolved [active] banner and the dismissed id set for observability.
 @immutable
 final class AnnouncementsState {
   const AnnouncementsState({

@@ -118,3 +118,16 @@ abstract final class PricingFixtures {
     ];
   }
 }
+
+bool hasUniquePlanIds(List<PlanViewData> plans) =>
+    plans.map((plan) => plan.id).toSet().length == plans.length;
+
+/// Picks the plan to preselect: the recommended available plan, else the
+/// first available plan, else the recommended plan, else the first plan.
+PlanViewData preferredPlan(List<PlanViewData> plans) {
+  final available = plans.where((plan) => plan.availability == PricingAvailability.available);
+  return available.where((plan) => plan.isRecommended).firstOrNull ??
+      available.firstOrNull ??
+      plans.where((plan) => plan.isRecommended).firstOrNull ??
+      plans.first;
+}

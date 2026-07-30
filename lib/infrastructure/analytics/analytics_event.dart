@@ -1,22 +1,16 @@
 import 'package:flutter/foundation.dart';
 
-/// Typed analytics event.
-///
-/// Sealed so every emit is exactly one of three known shapes — there is no
-/// `Map<String, dynamic>` on the public surface (callers pass a typed variant;
-/// an adapter translates to its SDK's payload shape internally). Each variant is
-/// an immutable value object with value equality.
+/// Typed analytics event. Sealed so every emit is exactly one of three known
+/// shapes — no `Map<String, dynamic>` on the public surface.
 @immutable
 sealed class AnalyticsEvent {
   const AnalyticsEvent();
 }
 
-/// A screen became visible.
-///
-/// Emitted by `AnalyticsRouteObserver` on forward navigation, replacement, and
-/// pop-to-screen — never by an individual page (zero per-page edits, C4).
+/// A screen became visible. Emitted by `AnalyticsRouteObserver` on forward
+/// navigation, replacement, and pop-to-screen — never by an individual page.
 /// `routeName` is the resolved `go_router` route identifier
-/// (`state.name ?? state.path`), a typed `String` rather than raw route args.
+/// (`state.name ?? state.path`).
 final class ScreenView extends AnalyticsEvent {
   const ScreenView({required this.routeName});
 
@@ -65,13 +59,9 @@ final class FunnelStep extends AnalyticsEvent {
   int get hashCode => Object.hash(name, step);
 }
 
-/// A typed user property attached to the analytics identity.
-///
-/// Both [key] and [value] are typed primitives: the port surface carries no
-/// `Map<String, dynamic>`. An adapter forwards the pair to its SDK's
-/// person-property API. Never include raw email/phone as a `userId` substitute
-/// (PII discipline) — values flow through `AppLogger` so `LogRedactor` scrubs
-/// token/email formats before any network sink sees them.
+/// A typed user property attached to the analytics identity. Values flow
+/// through `AppLogger` so `LogRedactor` scrubs token/email formats before any
+/// network sink sees them.
 @immutable
 final class UserProperty {
   const UserProperty({required this.key, required this.value});

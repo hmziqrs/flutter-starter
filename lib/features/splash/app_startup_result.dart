@@ -2,15 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
 /// A typed, immutable summary of the startup work `createApplication` already
-/// performs (build-info load, settings load, locale apply). Carried out of the
-/// composition root so SplashPage can observe the existing init future
-/// without re-running any of it (the canonical splash mistake).
-///
-/// `error` is non-null only when a fatal init step could not be recovered. The
-/// production composition root currently swallows settings/locale failures into
-/// safe defaults, so a successful cold start yields `isSuccess == true` with
-/// the individual `settingsLoaded` / `localeApplied` flags recording whether the
-/// persisted values were honored.
+/// performs (build-info load, settings load, locale apply), carried out of
+/// the composition root so SplashPage can observe the existing init future
+/// without re-running any of it. `error` is non-null only when a fatal init
+/// step could not be recovered.
 @immutable
 final class AppStartupResult {
   const AppStartupResult({

@@ -89,9 +89,8 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
   bool _callbackSubmitting = false;
   bool _dirty = false;
 
-  // state-restoration: the display name + email drafts survive a simulated
-  // process death. Passwords deliberately have NO restorable counterpart —
-  // secrets never participate in restoration (mirrors login_page).
+  // Display name + email drafts survive process death; passwords
+  // deliberately do not — secrets never participate in restoration.
   final RestorableString _displayNameDraft = RestorableString('');
   final RestorableString _emailDraft = RestorableString('');
 

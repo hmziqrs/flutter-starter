@@ -4,24 +4,22 @@
 
 import 'package:flutter/foundation.dart';
 
-/// A foreground push payload delivered while the app is open, mapped to a
-/// typed [NotificationMessage]. Foreground rendering is delegated to
-/// `flutter_local_notifications` by the optional real adapter; the Noop default
-/// publishes nothing on its [NotificationsRepository.onMessage] stream.
+/// A foreground push payload delivered while the app is open. Foreground
+/// rendering is delegated to `flutter_local_notifications` by the optional
+/// real adapter; the Noop default publishes nothing on
+/// [NotificationsRepository.onMessage].
 @immutable
 final class NotificationMessage {
   const NotificationMessage({this.title, this.body, this.data = const <String, String>{}});
 
-  /// Optional human-readable title. `null` when the incoming payload carries
-  /// only a data blob (no visible notification in the system tray).
+  /// Optional human-readable title. `null` for data-only messages.
   final String? title;
 
   /// Optional human-readable body. `null` for data-only messages.
   final String? body;
 
-  /// String-typed data payload. Plugin values are coerced to strings so the
-  /// feature surface never leaks `dynamic`; non-string values are stringified
-  /// in the real adapter before this object is constructed.
+  /// String-typed data payload; plugin values are coerced to strings so the
+  /// feature surface never leaks `dynamic`.
   final Map<String, String> data;
 
   NotificationMessage copyWith({String? title, String? body, Map<String, String>? data}) {
@@ -64,26 +62,22 @@ int _hashMap(Map<String, String> map) {
   return hash;
 }
 
-/// A notification-opened (tap) event, mapped to a typed [NotificationTap]
-/// consumed by the router.
-///
-/// The optional real adapter folds `firebase_messaging`'s `getInitialMessage`
-/// (cold-start tap) with its `onMessageOpenedApp` stream (foreground /
-/// background tap) into one arrival-ordered stream of [NotificationTap]
-/// values. The router resolves [targetRoute] to an **existing** named route
-/// via `context.pushNamed`; [params] carries the typed route arguments (never
-/// a raw `Map<String, dynamic>`). The Noop default publishes an empty stream.
+/// A notification-opened (tap) event consumed by the router. The optional
+/// real adapter folds `firebase_messaging`'s `getInitialMessage` (cold-start
+/// tap) with its `onMessageOpenedApp` stream into one arrival-ordered stream.
+/// The router resolves [targetRoute] to an existing named route via
+/// `context.pushNamed`; [params] carries the typed route arguments. The Noop
+/// default publishes an empty stream.
 @immutable
 final class NotificationTap {
   const NotificationTap({required this.targetRoute, this.params = const <String, String>{}});
 
-  /// Existing named route the tap should resolve to (e.g. `home`,
-  /// `updateProfile`). The router is the sole resolver — `NotificationTap`
-  /// never carries a raw URI.
+  /// Existing named route the tap should resolve to. The router is the sole
+  /// resolver — `NotificationTap` never carries a raw URI.
   final String targetRoute;
 
-  /// Typed route params. Plugin values are coerced to strings so the router
-  /// surface never leaks `dynamic`.
+  /// Typed route params, coerced to strings so the router surface never
+  /// leaks `dynamic`.
   final Map<String, String> params;
 
   NotificationTap copyWith({String? targetRoute, Map<String, String>? params}) {

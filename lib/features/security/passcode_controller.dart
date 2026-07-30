@@ -1,21 +1,11 @@
-/// Local passcode credential store + brute-force lockout state (pin-autolock).
+/// Local passcode credential store + brute-force lockout state.
 ///
-/// Backend-free per spec: all hashing, verification, and lockout bookkeeping are
-/// local. The passcode hash + salt live in `SecureStore` (tamper-resistant
-/// keychain); the brute-force counter is persisted alongside them in
-/// `SecureStore` (never `SettingsStore`, which is plaintext and would let a
-/// user wipe their own lockout). The lockout **schedule** is reused verbatim
-/// from auth-ratelimit (`freeAttemptsBeforeLockout` + `cooldownSecondsFor`) so
-/// there is a single canonical escalation table for every challenge surface.
-///
-/// Like the AttemptTracker itself, the local lockout is a **UX / defense-in-
-/// depth control, not a security boundary** — the authoritative gate is the
-/// salted hash. The counter slows casual abuse and keeps the UX honest about a
-/// lockout; it must never be presented as the real enforcement.
-///
-/// The raw passcode is never stored and never logged. The controller never puts
-/// the cleartext into a context map or a log line; the `LogRedactor`'s
-/// `passcode=` assignment regex is the belt-and-suspenders backstop.
+/// The salted hash lives in `SecureStore` (never plaintext prefs, so a user
+/// can't wipe their own lockout). Lockout schedule is shared with
+/// auth-ratelimit (`freeAttemptsBeforeLockout` + `cooldownSecondsFor`). The
+/// lockout counter is UX/defense-in-depth only, not the security boundary —
+/// the salted hash is authoritative. The raw passcode is never stored or
+/// logged.
 library;
 
 import 'dart:async';
@@ -28,47 +18,26 @@ import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
-/// Why a [PasscodeController.verify] call was rejected, when it was. Exhaustive
-/// `switch` required at every call site (the page renders each case distinctly).
+/// Outcome of a [PasscodeController.verify] call.
 enum PasscodeVerifyResult {
-  /// The hash matched. The controller has disarmed the challenge and cleared
-  /// the brute-force counter; the caller navigates forward.
+  /// Hash matched; gate disarmed and lockout counter cleared.
   success,
 
-  /// The hash did not match. `attemptsRemaining` (possibly zero) reflects the
-  /// new count; the page re-arms for the next attempt or shows the lockout.
+  /// Hash mismatch; `attemptsRemaining` reflects the new count.
   incorrect,
 
-  /// An active brute-force lockout refuses the attempt before it is hashed.
-  /// `lockedUntil` is in the future; the page shows the countdown.
+  /// An active lockout refused the attempt before hashing.
   lockedOut,
 
-  /// No passcode is set, so there is nothing to verify against. The caller
-  /// treats this as "no gate" rather than a failure.
+  /// No passcode configured; treated as "no gate", not a failure.
   notConfigured,
 }
 
 /// Immutable snapshot of the local passcode subsystem.
 ///
-/// Fields mirror the feature spec exactly:
-/// - [enabled] — the passcode gate is **armed** (a challenge is required right
-///   now). Set on cold start when a hash exists, armed by `AutoLockController`
-///   on background-return / idle-timeout, and cleared by a successful `verify`.
-///   This is the transient "locked" flag for the passcode subsystem; the user's
-///   on/off preference lives in `SettingsState.passcodeEnabled`.
-/// - [isSet] — a salted hash exists in `SecureStore` (a passcode has been
-///   configured). Sticky until [PasscodeController.disable] clears it.
-/// - [attemptsRemaining] — free attempts left before the next lockout step.
-/// - [lockedUntil] — absolute wall-clock expiry of the active brute-force
-///   lockout, or `null` when not locked out.
-///
-/// [requiresChallenge] is the single predicate the C5 redirect reads (passcode
-/// last in the precedence chain): a shell-tab destination is sent to the
-/// passcode entry route only when a hash exists, the gate is armed, and no
-/// brute-force lockout is active. The `lockedUntil == null` term keeps a user
-/// who is mid-lockout from being redirected away from the entry page they are
-/// already on (the entry page is a hard gate — no navigation away until
-/// verified — so a non-null `lockedUntil` there just drives the countdown UI).
+/// [enabled] is the transient "armed" flag (challenge required now); the
+/// user's on/off preference lives separately in `SettingsState.passcodeEnabled`.
+/// [isSet] means a salted hash exists in `SecureStore`.
 @immutable
 final class PasscodeState {
   const PasscodeState({
@@ -92,27 +61,20 @@ final class PasscodeState {
   final int attemptsRemaining;
   final DateTime? lockedUntil;
 
-  /// Monotonic count of consecutive failed verifies since the last successful
-  /// verify (the schedule index). Unlike [attemptsRemaining] (which clamps at
-  /// 0), this counter only ever resets on a successful verify, so the
-  /// auth-ratelimit cooldown table escalates 30s -> 60s -> 5m -> 15m across
-  /// repeated failures even after a lockout expires. Mirrors the shared
-  /// `AttemptTracker`'s monotonic `attempts` field.
+  /// Monotonic failure count since the last success (the escalation-schedule
+  /// index); unlike [attemptsRemaining] it never clamps at 0, so cooldowns keep
+  /// escalating 30s -> 60s -> 5m -> 15m across repeated lockouts.
   final int totalFailures;
 
-  /// The redirect predicate (passcode, last in the C5 precedence chain).
   bool get requiresChallenge => isSet && enabled && lockedUntil == null;
 
-  /// `true` only while the brute-force lockout is still in the future at [now].
-  /// Once [lockedUntil] has passed the lockout is expired (the next attempt is
-  /// accepted) but [attemptsRemaining] keeps its value so a fresh failure still
-  /// escalates per the schedule.
+  /// True only while the lockout is still in the future; an expired lockout
+  /// accepts the next attempt but keeps [attemptsRemaining]'s value.
   bool isLockedAt(DateTime now) {
     final until = lockedUntil;
     return until != null && until.isAfter(now);
   }
 
-  /// Whole seconds left in the active lockout at [now], clamped to non-negative.
   int lockedSecondsAt(DateTime now) {
     final until = lockedUntil;
     if (until == null) return 0;
@@ -151,30 +113,18 @@ final class PasscodeState {
   int get hashCode => Object.hash(enabled, isSet, attemptsRemaining, lockedUntil, totalFailures);
 }
 
-/// Handwritten Riverpod seed for the cold-start [PasscodeState]. Overridden at
-/// the composition root with the hydrated snapshot so the redirect reads a
-/// ready value on the first frame (mirrors `initialSettingsProvider`). The
-/// controller hydrates from [SecureStore] when this is not overridden.
+/// Cold-start seed, overridden at the composition root with the hydrated
+/// snapshot; the controller hydrates from [SecureStore] otherwise.
 final initialPasscodeProvider = Provider<PasscodeState>(
   (ref) => const PasscodeState.absent(),
 );
 
-/// Handwritten Riverpod `NotifierProvider` over the passcode subsystem state.
-///
-/// Methods mirror the feature spec: `setPasscode` / `changePasscode` /
-/// `disable` / `verify`, plus `arm` (called by `AutoLockController` on
-/// background-return / idle-timeout). No codegen. Overridden at the App
-/// `ProviderScope` through `AppDependencies` only when a test needs a fixed
-/// seed; production hydrates from `SecureStore` in `build`.
 final passcodeControllerProvider = NotifierProvider<PasscodeController, PasscodeState>(
   PasscodeController.new,
 );
 
-// The class is intentionally non-`final` so the dev-gallery can pin a fixed
-// state via a gallery-only subclass (mirrors `BiometricUnlockController`).
+// Non-`final` so the dev gallery can pin a fixed state via a subclass.
 class PasscodeController extends Notifier<PasscodeState> {
-  /// SecureStore keys. All four live in the keychain (never plaintext prefs)
-  /// so the brute-force counter is tamper-resistant.
   static const saltKey = 'security.passcode.salt';
   static const hashKey = 'security.passcode.hash';
   static const attemptsKey = 'security.passcode.attempts_remaining';
@@ -186,18 +136,12 @@ class PasscodeController extends Notifier<PasscodeState> {
 
   @override
   PasscodeState build() {
-    // Hydrate from SecureStore. The seed (initialPasscodeProvider) is the
-    // composition-root shortcut for tests; otherwise read the keychain so the
-    // redirect observes the real configured state on the first frame.
     final seeded = ref.watch(initialPasscodeProvider);
     if (seeded != const PasscodeState.absent()) {
       return seeded;
     }
-    // Fire-and-forget hydration: read the keychain and adopt the result. The
-    // absent default keeps the redirect permissive until the async read resolves
-    // (a passcode that is genuinely unset stays absent; a configured one arms
-    // on the next frame). Mirrors how the biometric controller holds its
-    // conservative gate only while its availability check is pending.
+    // Fire-and-forget hydration: stay permissive (absent) until the keychain
+    // read resolves, then arm on the next frame if a passcode is configured.
     unawaited(_hydrate());
     return const PasscodeState.absent();
   }
@@ -215,10 +159,8 @@ class PasscodeController extends Notifier<PasscodeState> {
         attemptsRemaining: attemptsRemaining,
         lockedUntil: lockedUntil,
       );
-      // Cold-start re-challenge: a configured passcode arms the gate on every
-      // fresh ProviderContainer (every app launch). Within a session, a freshly
-      // set passcode stays disarmed (build() ran before setPasscode), so the
-      // user is not challenged immediately after setup.
+      // Every fresh launch re-arms a configured passcode; a passcode just set
+      // this session stays disarmed until the next cold start.
       state = PasscodeState(
         enabled: true,
         isSet: true,
@@ -227,17 +169,14 @@ class PasscodeController extends Notifier<PasscodeState> {
         totalFailures: totalFailures,
       );
     } on SecureStoreException {
-      // A keychain read failure degrades to the absent default (no gate) rather
-      // than trapping the user out of the app. The hash is the authoritative
-      // gate; if it cannot be read, there is nothing honest to challenge with.
+      // Keychain read failure degrades to absent (no gate) rather than
+      // trapping the user out of the app.
     }
   }
 
-  /// Configures a new passcode. Generates a fresh salt, stores the salted hash,
-  /// and leaves the gate **disarmed** within this session (the user just chose
-  /// the value; challenging them immediately would be poor UX). The next cold
-  // start arms via [_hydrate]. Persists the cleared brute-force counter so a
-  /// freshly set passcode starts with the full free-attempt budget.
+  /// Stores a fresh salted hash; leaves the gate disarmed for this session
+  /// (arms on the next cold start via [_hydrate]) and resets the lockout
+  /// counter to the full free-attempt budget.
   Future<void> setPasscode(String pin) async {
     final salt = _hasher.generateSalt();
     final hash = _hasher.saltAndHash(pin, salt);
@@ -250,9 +189,8 @@ class PasscodeController extends Notifier<PasscodeState> {
     );
   }
 
-  /// Returns true only when [oldPin] verifies against the stored hash before
-  /// [newPin] replaces it. A wrong old passcode consumes a brute-force attempt
-  /// (delegated to [verify]); a locked-out state refuses the change.
+  /// Verifies [oldPin] (consuming a lockout attempt on failure) before storing
+  /// [newPin]; refuses while locked out.
   Future<bool> changePasscode({required String oldPin, required String newPin}) async {
     final result = await verify(oldPin);
     if (result != PasscodeVerifyResult.success) {
@@ -262,36 +200,28 @@ class PasscodeController extends Notifier<PasscodeState> {
     return true;
   }
 
-  /// Removes the salt, hash, and brute-force counter from [SecureStore] and
-  /// disarms the gate. The user opted out; subsequent cold starts stay absent.
   Future<void> disable() async {
     await _deleteAll();
     state = const PasscodeState.absent();
   }
 
-  /// Arms the gate (challenge required). Called by `AutoLockController` on
-  /// background-return and idle-timeout events. No-op when no passcode is set
-  /// (there is nothing to challenge with).
+  /// Arms the gate; called by `AutoLockController` on background-return /
+  /// idle-timeout. No-op when no passcode is set.
   void arm() {
     if (!state.isSet) return;
     if (state.enabled) return;
     state = state.copyWith(enabled: true);
   }
 
-  /// Attempts to unlock the gate with [pin]. See [PasscodeVerifyResult] for the
-  /// exhaustive outcomes. On success the gate is disarmed and the brute-force
-  /// counter is cleared; the caller (the page) navigates forward and calls
-  /// `autoLockControllerProvider.notifier.unlock()` so the AUTOLOCK block of the
-  /// redirect also clears. The raw [pin] is never stored or logged.
+  /// Verifies [pin]; the raw value is never stored or logged.
   Future<PasscodeVerifyResult> verify(String pin) async {
     if (!state.isSet) return PasscodeVerifyResult.notConfigured;
     if (state.isLockedAt(DateTime.now())) return PasscodeVerifyResult.lockedOut;
 
     final storedHash = await _readHash();
     if (storedHash == null) {
-      // The hydrated state believed a hash existed but the keychain has none
-      // (cleared out-of-band). Treat as not-configured rather than failing the
-      // attempt — there is nothing to verify against.
+      // Hydrated state believed a hash existed but the keychain has none
+      // (cleared out-of-band); nothing to verify against.
       state = const PasscodeState.absent();
       return PasscodeVerifyResult.notConfigured;
     }
@@ -317,16 +247,9 @@ class PasscodeController extends Notifier<PasscodeState> {
   }
 
   Future<void> _recordFailure() async {
-    // Reuse the auth-ratelimit schedule (single canonical escalation table) via
-    // the MONOTONIC running failure count. The count is 1-indexed (this failure
-    // is the Nth); cooldownSecondsFor maps it to 0/0/30/60/300/900. Crucially,
-    // the index is NOT re-derived from attemptsRemaining — that field clamps at
-    // 0 once the free budget is spent, so deriving from it would cap the index
-    // at freeAttemptsBeforeLockout+1 forever and freeze the cooldown at the
-    // first lockout tier (30s) for every subsequent failure. The monotonic
-    // counter only resets on a successful verify (mirrors the shared
-    // AttemptTracker), so a brute-forcer who never succeeds faces the full
-    // 30s -> 60s -> 5m -> 15m escalation across repeated lockout cycles.
+    // Escalation index must come from the monotonic totalFailures, not
+    // attemptsRemaining (which clamps at 0 and would freeze the cooldown at
+    // the first tier forever).
     final attempts = state.totalFailures + 1;
     final cooldown = cooldownSecondsFor(attempts);
     final now = DateTime.now();
@@ -350,9 +273,8 @@ class PasscodeController extends Notifier<PasscodeState> {
       await _store.delete(lockedUntilKey);
       await _store.delete(totalFailuresKey);
     } on SecureStoreException {
-      // Persistence failure does not roll back an unlock — the hash matched and
-      // the gate is disarmed in-memory; a stale persisted counter only means the
-      // next cold start shows a stale countdown that clears on the first verify.
+      // Best-effort: the in-memory unlock already happened; a stale persisted
+      // counter just clears on the next verify.
     }
   }
 
@@ -374,15 +296,11 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.write(saltKey, salt),
         _store.write(hashKey, hash),
         _store.write(attemptsKey, attemptsRemaining.toString()),
-        // A fresh passcode has no active lockout and no failure history; clear
-        // any stale values.
         _store.delete(lockedUntilKey),
         _store.delete(totalFailuresKey),
       ]);
     } on SecureStoreException {
-      // Re-throw as a typed failure so the page surfaces an honest error rather
-      // than silently dropping the credential. The in-memory state is NOT
-      // updated on persistence failure (setPasscode callers await this).
+      // In-memory state is not updated on failure; caller awaits and surfaces it.
       rethrow;
     }
   }
@@ -402,8 +320,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         },
       ]);
     } on SecureStoreException {
-      // Best-effort persistence of the UX counter; the in-memory state is the
-      // source of truth for the current session.
+      // Best-effort: in-memory state is the source of truth for this session.
     }
   }
 
@@ -417,8 +334,8 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.delete(totalFailuresKey),
       ]);
     } on SecureStoreException {
-      // Best-effort: a failed delete still disarms in-memory so the user is not
-      // trapped. A stale hash left in the keychain is harmless without the gate.
+      // Best-effort: in-memory disarm still happens; a stale keychain hash is
+      // harmless without the gate.
     }
   }
 
@@ -430,10 +347,8 @@ class PasscodeController extends Notifier<PasscodeState> {
     return parsed;
   }
 
-  /// Parses the monotonic failure count. For legacy data written before the
-  /// counter existed (or a fresh install), reconcile from [attemptsRemaining]
-  /// so a cold start that lands mid-lockout still escalates on the next failure
-  /// rather than resetting the schedule to the first tier.
+  /// For legacy data written before this counter existed, reconciles from
+  /// [attemptsRemaining] so a cold start mid-lockout still escalates correctly.
   static int _parseTotalFailures(
     String? saved, {
     required int attemptsRemaining,
@@ -447,8 +362,6 @@ class PasscodeController extends Notifier<PasscodeState> {
     if (implied > 0) {
       return implied;
     }
-    // A persisted lockout with no recorded count implies the free budget was
-    // spent; seed with at least the first lockout index so escalation resumes.
     return lockedUntil != null ? freeAttemptsBeforeLockout + 1 : 0;
   }
 
@@ -457,10 +370,8 @@ class PasscodeController extends Notifier<PasscodeState> {
     return DateTime.tryParse(saved);
   }
 
-  /// Constant-time string comparison so passcode verification does not leak the
-  /// hash length or a prefix via timing. Both operands are fixed-length hex
-  /// digests from the same hasher, so the lengths always match in practice; the
-  /// guard keeps the comparison honest if a future hasher changes the format.
+  /// Constant-time compare so verification does not leak hash length/prefix
+  /// via timing.
   static bool constantTimeEquals(String a, String b) {
     if (a.length != b.length) return false;
     var diff = 0;

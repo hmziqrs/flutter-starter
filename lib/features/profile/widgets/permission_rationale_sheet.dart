@@ -6,38 +6,16 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// The user's selection on the permission rationale sheet.
-///
-/// The permanently-denied state offers [openSettings] (the one-way-door recovery
-/// path) where the promptable state offers [continueRequest] (proceed to the OS
-/// prompt). [dismiss] covers Escape / barrier dismissal and is the default when
-/// the sheet returns no value.
-enum PermissionRationaleResult {
-  /// Proceed to the OS permission prompt (only offered when the permission is
-  /// still promptable — NOT when permanently denied).
-  continueRequest,
+/// The user's selection on the permission rationale sheet. [openSettings] is
+/// the one-way-door recovery path for permanently-denied; [continueRequest]
+/// proceeds to the OS prompt. [dismiss] is the default when the sheet
+/// returns no value.
+enum PermissionRationaleResult { continueRequest, openSettings, dismiss }
 
-  /// Open the system settings page (the recovery path for permanently denied).
-  openSettings,
-
-  /// Dismissed via Escape, barrier tap, or "Not now".
-  dismiss,
-}
-
-/// Shows the permission rationale sheet (ForUI `FSheet` wrapped in
-/// [EscapeDismissibleOverlay]) and resolves to the user's selection.
-///
-/// **Rationale before prompt, always.** Call this *before* invoking
-/// `PermissionService.requestStatus`: stores reject apps that request without
-/// context, and a rationale step prevents silent permanent denials. The
-/// permanently-denied state is a one-way door — pass [permanentlyDenied] so the
-/// sheet offers "Open settings" (the only recovery path) and NOT a re-prompt,
-/// which is the single most common implementation bug.
-///
-/// Returns [PermissionRationaleResult.dismiss] when the user dismisses via
-/// Escape / barrier tap. The sheet's slide animation is ForUI-built-in (the
-/// feature spec motion audit notes no custom entrance is added); navigation
-/// never gates on its completion.
+/// Shows the permission rationale sheet. Call this *before*
+/// `PermissionService.requestStatus` — always rationale before prompt. Pass
+/// [permanentlyDenied] so a one-way-door permission offers "Open settings"
+/// rather than a re-prompt.
 Future<PermissionRationaleResult> showPermissionRationaleSheet({
   required BuildContext context,
   required AppPermission permission,
@@ -49,10 +27,7 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
     draggable: false,
     useSafeArea: true,
     builder: (sheetContext) => ColoredBox(
-      // ForUI's FSheet paints no surface of its own (the route barrier only
-      // dims the app behind via an image filter). Give the sheet an opaque
-      // background so the rationale reads cleanly instead of showing through to
-      // the dimmed app. Mirrors showFeedbackSheet.
+      // FSheet paints no surface of its own; give it an opaque background.
       color: sheetContext.theme.colors.background,
       child: EscapeDismissibleOverlay(
         child: PermissionRationaleBody(
@@ -70,14 +45,8 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
   return result ?? PermissionRationaleResult.dismiss;
 }
 
-/// Reusable body of the permission rationale sheet.
-///
-/// Extracted from the modal so the dev-gallery `PreviewFrame` fixture can render
-/// the same content deterministically (sheets are modal, so the gallery embeds
-/// this body directly in a card rather than triggering a real sheet). The avatar
-/// flow and future permission consumers reuse it. Feature-local under
-/// `lib/features/profile/widgets/` until a third consumer arrives, then promote
-/// to `lib/shared/widgets/` (feature spec audit: shared-extraction threshold).
+/// Reusable body of the permission rationale sheet; extracted so the
+/// dev-gallery can render it deterministically outside a real modal sheet.
 class PermissionRationaleBody extends StatelessWidget {
   const PermissionRationaleBody({
     required this.permission,
@@ -88,23 +57,17 @@ class PermissionRationaleBody extends StatelessWidget {
     super.key,
   });
 
-  /// The permission this rationale explains. Drives the title, rationale copy,
-  /// and the leading icon (exhaustive switch).
   final AppPermission permission;
 
-  /// `true` when the OS reports the permission permanently denied. Switches the
-  /// primary action from "Continue" (request) to "Open settings" and never
-  /// offers a re-prompt — the one-way-door rule.
+  /// Switches the primary action from "Continue" to "Open settings"; never
+  /// offers a re-prompt (the one-way-door rule).
   final bool permanentlyDenied;
 
-  /// Invoked when the user chooses to proceed to the OS prompt. Only offered
-  /// when [permanentlyDenied] is false.
+  /// Only offered when [permanentlyDenied] is false.
   final VoidCallback onContinue;
 
-  /// Invoked when the user chooses to open system settings (the recovery path).
   final VoidCallback onOpenSettings;
 
-  /// Invoked when the user dismisses the rationale ("Not now" / Escape).
   final VoidCallback onDismiss;
 
   @override
@@ -120,10 +83,7 @@ class PermissionRationaleBody extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // The leading icon + title sit in a Row so the icon mirrors under
-            // RTL (Row respects the ambient Directionality): leading in LTR,
-            // trailing in ar. This is the direction-sensitive surface called out
-            // by the feature spec's RTL note.
+            // Row respects ambient Directionality, so the icon mirrors under RTL.
             Row(
               children: [
                 Icon(copy.icon, size: 28),
@@ -143,44 +103,32 @@ class PermissionRationaleBody extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.xl),
-            if (permanentlyDenied)
-              _permanentlyDeniedActions(translations)
-            else
-              _promptableActions(translations),
+            _actions(translations),
           ],
         ),
       ),
     );
   }
 
-  Widget _promptableActions(Translations translations) {
+  Widget _actions(Translations translations) {
+    final primary = permanentlyDenied
+        ? (
+            key: 'permission-rationale-open-settings',
+            label: translations.permission.openSettings,
+            onPress: onOpenSettings,
+          )
+        : (
+            key: 'permission-rationale-continue',
+            label: translations.permission.continueRequest,
+            onPress: onContinue,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FButton(
-          key: const ValueKey('permission-rationale-continue'),
-          onPress: onContinue,
-          child: Text(translations.permission.continueRequest),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        FButton(
-          key: const ValueKey('permission-rationale-dismiss'),
-          variant: .outline,
-          onPress: onDismiss,
-          child: Text(translations.permission.notNow),
-        ),
-      ],
-    );
-  }
-
-  Widget _permanentlyDeniedActions(Translations translations) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FButton(
-          key: const ValueKey('permission-rationale-open-settings'),
-          onPress: onOpenSettings,
-          child: Text(translations.permission.openSettings),
+          key: ValueKey(primary.key),
+          onPress: primary.onPress,
+          child: Text(primary.label),
         ),
         const SizedBox(height: AppSpacing.sm),
         FButton(

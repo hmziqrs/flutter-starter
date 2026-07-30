@@ -5,18 +5,10 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Full-screen, non-dismissible hard-update block.
-///
-/// Wraps the body in a [PopScope] with `canPop: false` so the platform back
-/// gesture / Escape cannot dismiss the block. It is **not** wrapped in
-/// `EscapeDismissibleOverlay` (unlike the soft dialog): a hard block is a true
-/// trap. The only affordance is "Update now", wired by the composition root to
-/// the store deep-link via `url_launcher`. The page itself performs no side
-/// effects and calls no plugin — every action goes through the [onUpdateNow]
-/// callback (C2: no widget calls a plugin directly).
-///
-/// Public constructor remains usable by `ProductionPageFactory<ForceUpdateState>`
-/// adapters (the dev-gallery renders this page from a typed fixture state).
+/// Full-screen, non-dismissible hard-update block. Wrapped in [PopScope]
+/// with `canPop: false` so the back gesture / Escape cannot dismiss it — a
+/// hard block is a true trap. The only affordance is "Update now"; the page
+/// itself performs no side effects and calls no plugin.
 class ForceUpdatePage extends StatelessWidget {
   const ForceUpdatePage({
     required this.state,
@@ -27,8 +19,6 @@ class ForceUpdatePage extends StatelessWidget {
   final ForceUpdateState state;
 
   /// Opens the store deep-link carried by [state].
-  ///
-  /// Wired by the composition root to `url_launcher` with the state's storeUrl.
   final VoidCallback onUpdateNow;
 
   @override

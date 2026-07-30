@@ -2,14 +2,10 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
-/// Production default [AnalyticsClient].
-///
-/// Runs green with zero backend: it records nothing remotely and never throws.
-/// Events are routed through `AppLogger.debug` so verbose dev runs see them in
-/// the local log (and so `LogRedactor` scrubs any token/email formats before
-/// they reach that surface — the single redaction choke point). `AppLogger.debug`
-/// is itself a no-op when verbose logging is disabled, so non-verbose builds pay
-/// nothing. Analytics has no user-facing success state to fake (guardrail 13).
+/// Production default [AnalyticsClient]: records nothing remotely, never
+/// throws. Events route through `AppLogger.debug` (a no-op when verbose
+/// logging is disabled) so `LogRedactor` scrubs any token/email formats
+/// before they reach the log.
 final class NoopAnalyticsClient implements AnalyticsClient {
   NoopAnalyticsClient({required this.logger});
 
@@ -36,9 +32,8 @@ final class NoopAnalyticsClient implements AnalyticsClient {
     );
   }
 
-  /// Exhaustive over the sealed [AnalyticsEvent]. Carries only stable
-  /// identifiers (route name / target / funnel name + step) — never raw route
-  /// args — and `AppLogger` runs them through `LogRedactor`.
+  /// Carries only stable identifiers (route name / target / funnel name +
+  /// step), never raw route args.
   static Map<String, Object?> _describeEvent(AnalyticsEvent event) {
     return switch (event) {
       ScreenView(:final routeName) => <String, Object?>{

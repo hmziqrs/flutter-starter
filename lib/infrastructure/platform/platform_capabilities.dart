@@ -35,13 +35,9 @@ final class PlatformCapabilities {
   final bool supportsFileSystem;
   final AppTvPlatform tvPlatform;
 
-  /// Whether the current platform is an Apple platform (iOS / macOS).
-  ///
-  /// Derived read-only from [platform] (no platform channel) so shared widgets
-  /// keep a single platform seam when choosing Cupertino vs Material affordances
-  /// (e.g. pull-to-refresh — see `AppRefreshIndicator` / `RefreshableListView`).
-  /// Matches the existing read-only-derived-getter pattern: it adds no state and
-  /// no side effects.
+  /// Whether the current platform is an Apple platform (iOS / macOS). Derived
+  /// read-only from [platform] so shared widgets keep a single platform seam
+  /// when choosing Cupertino vs Material affordances.
   bool get isApplePlatform =>
       platform == TargetPlatform.iOS.name || platform == TargetPlatform.macOS.name;
 

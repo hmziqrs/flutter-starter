@@ -3,12 +3,8 @@ import 'package:starter/features/announcements/announcement_view_data.dart';
 /// Compile-time announcement fixtures. The default feed ([standard]) is the
 /// production broadcast; the named single-severity fixtures double as
 /// dev-gallery templates (via [forSeverity]) and ready-to-enable copy.
-///
-/// Always-in-window by design — version/date gating is exercised by the
-/// controller tests with constructed [Announcement] instances, not by the
-/// default feed. A consumer authors a real feed by replacing [standard] (or by
-/// wiring a deferred `AnnouncementsSource` override later — see the feature
-/// spec's backend-free stance).
+/// Always-in-window by design; version/date gating is exercised by the
+/// controller tests with constructed [Announcement] instances instead.
 abstract final class AnnouncementFixtures {
   /// Friendly first-launch welcome (info). The first item in [standard], so it
   /// is what the banner shows until dismissed.
@@ -25,8 +21,7 @@ abstract final class AnnouncementFixtures {
     severity: AnnouncementSeverity.success,
     title: (t) => t.announcements.fixtures.changelog.title,
     message: (t) => t.announcements.fixtures.changelog.message,
-    // Plain route name — features must not import route constants. Matches the
-    // existing `settings` named route; the banner resolves it via goNamed.
+    // Plain route name — features must not import route constants.
     actionRoute: 'settings',
   );
 
@@ -38,9 +33,7 @@ abstract final class AnnouncementFixtures {
     message: (t) => t.announcements.fixtures.deprecation.message,
   );
 
-  /// Ongoing outage (critical). Dismissible like every other broadcast so the
-  /// banner can be cleared (the controller persists the dismissal under the
-  /// dismissed-id set).
+  /// Ongoing outage (critical). Dismissible like every other broadcast.
   static final Announcement outage = Announcement(
     id: 'outage',
     severity: AnnouncementSeverity.critical,
@@ -49,8 +42,7 @@ abstract final class AnnouncementFixtures {
   );
 
   /// Returns the named fixture for [severity]. Exhaustive over
-  /// [AnnouncementSeverity]; adding a severity is a compile error here until a
-  /// fixture is supplied.
+  /// [AnnouncementSeverity].
   static Announcement forSeverity(AnnouncementSeverity severity) {
     return switch (severity) {
       AnnouncementSeverity.info => welcome,
@@ -61,10 +53,8 @@ abstract final class AnnouncementFixtures {
   }
 
   /// Production default feed. Ordered least-alarming first so
-  /// [resolveActiveAnnouncement] surfaces a friendly banner on first launch and
-  /// cycles through severities as the user dismisses each. The critical
-  /// `outage` is last and dismissible, so it appears only after the first three
-  /// are dismissed — and can itself be cleared.
+  /// [resolveActiveAnnouncement] surfaces a friendly banner on first launch
+  /// and cycles through severities as the user dismisses each.
   static final List<Announcement> standard = [
     welcome,
     changelog,

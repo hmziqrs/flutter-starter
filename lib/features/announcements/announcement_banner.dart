@@ -8,18 +8,17 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// A floating announcements banner composed in the top `Column` of the overlay
-/// `Stack` in `MaterialApp.router`'s `builder:` (see `app.dart`). Floating — it
-/// overlaps the router content's top edge instead of reserving layout space, so
-/// it never pushes a page's content down. Auth/onboarding are top-level routes
-/// outside `AppShell`; composing it in the global overlay keeps the banner
-/// visible across every route.
+/// A floating announcements banner composed in the top `Column` of the
+/// overlay `Stack` in `MaterialApp.router`'s `builder:`. Floating — it
+/// overlaps the router content's top edge instead of reserving layout space,
+/// so it never pushes a page's content down. Composing it in the global
+/// overlay keeps the banner visible across every route, including the
+/// top-level auth/onboarding routes outside `AppShell`.
 ///
 /// Watches [announcementsControllerProvider] and renders the active
 /// [Announcement] via [AnnouncementBannerView]. Enter/exit motion is sourced
 /// from [AppMotion] and guarded by [MediaQuery.disableAnimationsOf] with a
-/// non-animated fallback that still toggles visibility. No widget calls a plugin
-/// directly — the controller reads the settings store for dismiss persistence.
+/// non-animated fallback that still toggles visibility.
 class AnnouncementBanner extends ConsumerStatefulWidget {
   const AnnouncementBanner({super.key});
 
@@ -31,9 +30,8 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   @override
   void initState() {
     super.initState();
-    // Surface a transient toast when a dismiss fails to persist, then clear the
-    // status so the transition can re-fire. Kept out of build (no side effects
-    // in build) — mirrors ConnectivityBanner's recovery-toast listener.
+    // Surface a transient toast when a dismiss fails to persist, then clear
+    // the status so the transition can re-fire.
     ref.listenManual<AnnouncementsState>(
       announcementsControllerProvider,
       (previous, next) {
@@ -68,9 +66,6 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   @override
   Widget build(BuildContext context) {
     final active = ref.watch(announcementsControllerProvider).active;
-    // Childless: renders only its own animated row. The overlay `Stack` in
-    // `app.dart` pins it at the top and lets the router content fill the screen
-    // behind it, so the banner floats over content instead of reserving space.
     return _AnnouncementBannerSlot(
       active: active,
       onDismiss: active == null
@@ -83,9 +78,6 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   }
 
   void _goAction(BuildContext context, String route) {
-    // The banner lives below MaterialApp.router, so GoRouter.of resolves. The
-    // route name comes from the Announcement's actionRoute string; navigation is
-    // never gated on the enter/exit animation (audit #5).
     GoRouter.of(context).goNamed(route);
   }
 }
@@ -127,15 +119,11 @@ class _AnnouncementBannerSlot extends StatelessWidget {
 }
 
 /// The pure visual for one announcement. Rendered by [AnnouncementBanner]
-/// (controller-driven, with real dismiss/goNamed callbacks) and by the
-/// dev-gallery fixture (a fixed announcement with no-op callbacks), so the
-/// preview is fully deterministic.
+/// and by the dev-gallery fixture, so the preview is fully deterministic.
 ///
-/// Uses [FAlert] for the status card. [FAlert] exposes no trailing/actions slot,
-/// so the dismiss and action controls are embedded in its `title` row — this
-/// keeps them INSIDE the alert's bordered card instead of floating beside it.
-/// The title [Row] honors `Directionality`, so the controls flip to the leading
-/// edge in Arabic with no manual mirroring.
+/// [FAlert] exposes no trailing/actions slot, so the dismiss and action
+/// controls are embedded in its `title` row. The title [Row] honors
+/// `Directionality` with no manual mirroring.
 class AnnouncementBannerView extends StatelessWidget {
   const AnnouncementBannerView({
     required this.announcement,
@@ -167,11 +155,8 @@ class AnnouncementBannerView extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.sm,
             ),
-            // Full width so [FAlert]'s internal title/subtitle rows wrap against
-            // the screen edge regardless of the parent's cross-axis alignment
-            // (production: Positioned left/right = 0; gallery: a centered
-            // Column). Without this, a centered parent would let the alert
-            // shrink-to-fit and the title text would overflow.
+            // Full width so FAlert's title/subtitle wrap against the screen
+            // edge regardless of the parent's cross-axis alignment.
             child: SizedBox(
               width: double.infinity,
               child: FAlert(
@@ -181,11 +166,6 @@ class AnnouncementBannerView extends StatelessWidget {
                   size: 18,
                   semanticLabel: presentation.severityLabel,
                 ),
-                // [FAlert] has no trailing/actions slot, so the dismiss and
-                // action controls live in its title row. This renders them
-                // INSIDE the alert's bordered card (the previous layout floated
-                // them beside it). The Row honors Directionality: in RTL the
-                // controls flip to the leading edge with no manual mirroring.
                 title: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -232,10 +212,8 @@ class AnnouncementBannerView extends StatelessWidget {
 }
 
 /// Resolves the [FAlert] variant, leading icon, and accessible severity label
-/// for [severity]. Exhaustive over [AnnouncementSeverity]; adding a value is a
-/// compile error here until it is deliberately styled (audit #7). `info` /
-/// `success` use the primary style; `warning` / `critical` use the destructive
-/// style — distinct icons disambiguate all four severities.
+/// for [severity]. Exhaustive over [AnnouncementSeverity]. `info` / `success`
+/// use the primary style; `warning` / `critical` use the destructive style.
 ({FAlertVariant variant, IconData icon, String severityLabel}) _presentationFor(
   AnnouncementSeverity severity,
   Translations translations,

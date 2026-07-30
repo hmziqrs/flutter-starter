@@ -80,8 +80,6 @@ class BusyIndicator extends StatelessWidget {
     };
   }
 
-  /// Clamps [value] into the closed range `[0.0, 1.0]` without the `num`
-  /// widening that [num.clamp] would introduce under strict analysis.
   static double _clamp(double value) {
     if (value < 0) return 0;
     if (value > 1) return 1;

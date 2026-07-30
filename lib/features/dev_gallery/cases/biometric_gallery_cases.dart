@@ -8,14 +8,9 @@ import 'package:starter/infrastructure/biometric/biometric_authenticator_provide
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 
 /// Builds the biometric lock gallery cases: the [BiometricLockLocked] prompt
-/// and the [BiometricLockUnavailable] fallback surface.
-///
-/// Both fixtures are deterministic — no platform biometric prompt, no plugin
-/// call, no navigation. The page is pinned to the preview state via a
-/// gallery-only controller override, and the underlying authenticator is the
-/// honest [NoopBiometricAuthenticator] so an accidental tap degrades to the
-/// failure alert rather than triggering the OS prompt (C2 / C13: the gallery
-/// never fakes a successful unlock).
+/// and the [BiometricLockUnavailable] fallback surface. Both pin the page via
+/// a gallery-only controller override with [NoopBiometricAuthenticator], so
+/// an accidental tap degrades to the failure alert instead of the OS prompt.
 List<GalleryCase> buildBiometricGalleryCases() {
   return [
     TypedGalleryCase<BiometricLockState>(
@@ -37,10 +32,8 @@ List<GalleryCase> buildBiometricGalleryCases() {
   ];
 }
 
-/// Pins [BiometricLockPage] to a fixed lock state inside a nested
-/// [ProviderScope]. The PreviewFrame already provides a ProviderScope
-/// (interactionPolicy); this nests one that overrides the controller and the
-/// authenticator so the preview never reaches the platform plugin.
+/// Pins [BiometricLockPage] to a fixed lock state, overriding the controller
+/// and authenticator so the preview never reaches the platform plugin.
 class _BiometricPreview extends StatelessWidget {
   const _BiometricPreview({required this.state});
 
@@ -56,8 +49,6 @@ class _BiometricPreview extends StatelessWidget {
         ),
       ],
       child: BiometricLockPage(
-        // Gallery callbacks are deterministic no-ops: the preview never
-        // navigates and never fakes an unlock.
         onUnlocked: () {},
         onUseFallback: () {},
       ),
@@ -66,8 +57,7 @@ class _BiometricPreview extends StatelessWidget {
 }
 
 /// Gallery-only [BiometricUnlockController] that returns a fixed state and
-/// never reads the OS availability (mirrors the gallery-only
-/// `_FixedConnectivityService` pattern in the connectivity gallery cases).
+/// never reads the OS availability.
 class _PinnedBiometricUnlockController extends BiometricUnlockController {
   _PinnedBiometricUnlockController(this.pinnedState);
 

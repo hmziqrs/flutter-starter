@@ -1,13 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 /// The outcome of comparing the installed build against the published version
-/// policy.
-///
-/// Exhaustive `switch` over the three subtypes is required at every call site
-/// (the `go_router` redirect, the dev-gallery fixtures, and the mapping to the
-/// force-update view data) so every branch is handled explicitly. The honest
-/// no-backend default is [UpdateRequirementNone] — a missing policy source must
-/// never fabricate a hard or soft block (C2: never fake success).
+/// policy. The no-backend default is [UpdateRequirementNone] — a missing
+/// policy source must never fabricate a hard or soft block.
 sealed class UpdateRequirement {
   const UpdateRequirement();
 }

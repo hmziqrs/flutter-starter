@@ -12,28 +12,18 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// The animated in-app splash screen.
-///
-/// Watches the existing init future exposed by [appStartupResultProvider] and
-/// hands off to the router (home / onboarding) the moment it resolves. The
-/// splash is a presentation wrapper over work the composition root already
-/// performs — it never re-runs settings, locale, or package_info load (the
-/// canonical splash mistake). The branded reveal and spinner are cosmetic;
-/// navigation is **never** gated on their completion (audit checklist #5).
-///
-/// The page receives a navigation callback rather than calling `go_router`
-/// directly, consistent with the root integration contract. The router's
-/// `onComplete` performs `context.goNamed(home)`; the existing C5 redirect then
-/// sends fresh installs to onboarding transparently.
+/// The animated in-app splash screen. Watches the existing init future
+/// exposed by [appStartupResultProvider] and hands off to the router the
+/// moment it resolves; it never re-runs settings, locale, or package_info
+/// load. The branded reveal and spinner are cosmetic — navigation is never
+/// gated on their completion.
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({
     required this.onComplete,
     super.key,
   });
 
-  /// Invoked exactly once with the resolved startup result. The router uses this
-  /// to navigate to home (the onboarding/force-update redirects compose in the
-  /// existing C5 helper).
+  /// Invoked exactly once with the resolved startup result.
   final void Function(AppStartupResult result) onComplete;
 
   @override
@@ -46,12 +36,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // Listen for the resolved future and hand off. fireImmediately covers the
-    // common case where createApplication completes before the widget mounts.
-    // The handoff is deferred to the next frame (a frame, NOT an animation
-    // completion) so the router is never mutated mid-build; under the bounded
-    // pumpAppFrames (8 frames) harness it fires on frame 1 regardless of the
-    // logo reveal's progress.
+    // fireImmediately covers the case where createApplication completes
+    // before the widget mounts. The handoff is deferred to the next frame
+    // (not an animation completion) so the router is never mutated mid-build.
     ref.listenManual<AsyncValue<AppStartupResult>>(
       appStartupResultProvider,
       (_, next) {
@@ -87,10 +74,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 }
 
 /// The branded splash visual for a fixed [SplashViewData]. Public so the
-/// development gallery can compose deterministic loading / done / error
-/// previews without the async provider; the production [SplashPage] renders it
-/// from the watched future. Motion is sourced from [AppMotion] and guarded with
-/// [MediaQuery.disableAnimationsOf] plus a non-animated fallback.
+/// development gallery can compose deterministic loading/done/error previews
+/// without the async provider.
 class SplashScene extends StatelessWidget {
   const SplashScene({required this.viewData, super.key});
 
@@ -259,13 +244,9 @@ class _BrandMark extends StatelessWidget {
   }
 }
 
-/// A small indeterminate activity indicator for the loading phase.
-///
-/// Carries a [semanticsLabel] so the loading state is announced to assistive
-/// tech in the normal-motion branch (where there is no static label text),
-/// mirroring `BusyIndicator` / `LoadingStateView`. Without it the
-/// `CircularProgressIndicator` emits no semantics node and the loading phase is
-/// invisible to TalkBack/VoiceOver (audit checklist #6: accessible parity).
+/// A small indeterminate activity indicator for the loading phase. Carries a
+/// [semanticsLabel] so the loading state is announced to assistive tech
+/// (without it `CircularProgressIndicator` emits no semantics node).
 class _Spinner extends StatelessWidget {
   const _Spinner({required this.semanticsLabel});
 
@@ -285,11 +266,9 @@ class _Spinner extends StatelessWidget {
   }
 }
 
-/// A one-shot logo reveal: opacity 0 -> 1 and scale 0.92 -> 1 over
-/// [AppMotion.deliberate] with the emphasized curve. Motion-guarded: under
+/// A one-shot logo reveal: opacity 0 -> 1 and scale 0.92 -> 1. Under
 /// [MediaQuery.disableAnimationsOf] the child renders statically (fully
-/// revealed) and the controller never runs. The reveal is purely cosmetic —
-/// navigation is driven by [SplashPage] and never waits on this animation.
+/// revealed) and the controller never runs; navigation never waits on it.
 class _LogoReveal extends StatefulWidget {
   const _LogoReveal({required this.child});
 

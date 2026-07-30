@@ -6,7 +6,6 @@ import 'package:starter/features/auth/in_memory_otp_repository.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/experiments/deterministic_experiment_source.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
-import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/features/feedback/feedback_controller.dart';
@@ -130,18 +129,14 @@ final class AppDependencies {
     Set<String> dismissedAnnouncementIds = const <String>{},
   }) {
     final settingsStore = InMemorySettingsStore();
-    // No-backend default: the in-memory version gate always returns none, so
-    // the redirect never short-circuits in tests (C2: never fake a block).
     final versionGateStore = InMemoryVersionGateStore();
     final effectiveSecureStore = secureStore ?? InMemorySecureStore();
     return AppDependencies(
       settingsRepository: SettingsRepository(settingsStore),
       settingsStore: settingsStore,
-      // Test default: a returning user who has completed onboarding, so the
-      // shell / navigation / gallery suites boot straight to home. The
-      // fresh-install onboarding-redirect contract is covered independently by
-      // app_router_onboarding_redirect_test.dart, which builds its own
-      // fresh-install dependencies rather than relying on this factory.
+      // Defaults to a returning user who has completed onboarding, so shell /
+      // navigation / gallery suites boot straight to home. The fresh-install
+      // redirect is covered independently by app_router_onboarding_redirect_test.dart.
       initialSettings:
           initialSettings ?? const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
       secureStore: effectiveSecureStore,
@@ -149,31 +144,18 @@ final class AppDependencies {
       crashReporterBackend: const NoopCrashReporterBackend(),
       versionGateStore: versionGateStore,
       versionCheck: const UpdateRequirementNone(),
-      // Backend-free per spec: the real local connectivity_plus sensor IS the
-      // production default (no Noop, no credentials). Safe in integration tests
-      // on a real platform; widget tests override connectivityServiceProvider.
+      // Real local connectivity_plus sensor, not a Noop: safe in integration
+      // tests on a real platform; widget tests override the provider instead.
       connectivityService: ConnectivityPlusService(),
-      // Splash seed: a resolved success so test harnesses that read the
-      // startup result never throw (mirrors the inMemory
-      // hasCompletedOnboarding:true default). The test build info mirrors the
-      // global test fixture in app_build_info_test.dart.
       appStartupResult: const AppStartupResult(
         buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: true,
         localeApplied: true,
       ),
       buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-      // Test-harness default: no dismissed announcements, so the default feed
-      // surfaces its first fixture (keeps the floating banner exercised in the
-      // full-app pump). Harnesses that tap top-of-screen targets pass a non-empty
-      // set to keep the floating banner from occluding those targets.
+      // No dismissed announcements by default, so the first fixture surfaces
+      // and exercises the floating banner in a full-app pump.
       initialDismissedAnnouncementIds: dismissedAnnouncementIds,
-      // Wave-4 ports. All no-backend defaults so tests never trigger a real
-      // adapter (C2): the unseeded InMemoryAuthRepository surfaces notConnected
-      // rather than faking a session, NoopAnalyticsClient routes through the
-      // logger, InMemoryFeatureFlagsSource returns defaults, the Noop biometric
-      // authenticator reports canCheck:false honestly, and the in-memory
-      // attempt tracker is fresh per launch.
       authRepository: InMemoryAuthRepository(),
       sessionRepository: SessionRepository(effectiveSecureStore),
       initialSession: initialSession ?? const AuthAnonymous(),
@@ -183,21 +165,8 @@ final class AppDependencies {
       featureFlagsSource: InMemoryFeatureFlagsSource(),
       biometricAuthenticator: const NoopBiometricAuthenticator(),
       attemptTracker: InMemoryAttemptTracker(),
-      // Haptics: Noop keeps hermeticity so a tap in a test/golden harness never
-      // reaches the platform channel.
       hapticService: NoopHapticService(),
-      // Wave-5b ports. Honest no-backend defaults so tests/goldens never reach
-      // a real platform channel (C2 / C13): InMemoryOtpRepository surfaces
-      // notConnected, NoopNotificationsRepository reports denied, the Noop
-      // permission/media/share/update adapters report denied / null /
-      // unavailable / noUpdate honestly. The real platform adapters are
-      // selected by `AppDependencies.production` per PlatformCapabilities.
       otpRepository: const InMemoryOtpRepository(),
-      // Profile port. The in-memory harness defaults to an anonymous session
-      // (see initialSession above) and the profile route is auth-gated, so this
-      // route is unreachable in the no-backend harness; NoopProfileRepository
-      // is the honest default (surfaces notConnected rather than fabricating a
-      // profile) and never breaks the TV remote smoke test.
       profileRepository: const NoopProfileRepository(),
       notificationsRepository: const NoopNotificationsRepository(),
       notificationsBackend: const NoopNotificationsBackend(),
@@ -207,15 +176,9 @@ final class AppDependencies {
       mediaPicker: const NoopMediaPicker(),
       shareService: const NoopShareService(),
       appUpdateService: const NoopAppUpdateService(),
-      // Deep-link handler: tests do not drive inbound URIs; pass a no-op
-      // service whose stream is empty and whose initial link is null. A test
-      // that needs to drive links overrides the provider directly.
+      // Tests don't drive inbound URIs; a test that needs to overrides the
+      // provider directly with a stream-backed service.
       appLinkHandler: const _NoOpDeepLinkService(),
-      // Wave-6 ports. Honest no-backend / real-local defaults so tests/goldens
-      // never fake a backend success (C2): the deterministic experiment source
-      // is a real local assignment over the in-memory settings store; the
-      // in-memory cache store starts empty; the Noop feedback transport
-      // surfaces unavailable. The feedback metadata carries test build info.
       experimentSource: DeterministicExperimentSource(store: settingsStore),
       cacheStore: InMemoryCacheStore(),
       feedbackTransport: const NoopFeedbackTransport(),
@@ -241,161 +204,82 @@ final class AppDependencies {
   final UpdateRequirement versionCheck;
   final ConnectivityService connectivityService;
 
-  /// Typed summary of the work `createApplication` already performs (build-info
-  /// load, settings load, locale apply). Carried out of the composition root so
-  /// SplashPage can observe the existing init future without re-running any of
-  /// it. Built in `AppDependencies.production` from the load outcome and the
-  /// already-loaded build info; `localeApplied` is finalized in
-  /// `createApplication` once the locale apply runs (see copyWith below).
+  /// Summary of work `createApplication` already performs (build-info load,
+  /// settings load, locale apply) so SplashPage can observe it without
+  /// re-running any of it. `localeApplied` is finalized via [copyWith] once
+  /// the locale apply runs, since that happens after this factory returns.
   final AppStartupResult appStartupResult;
 
-  /// The installed build, surfaced for the announcements version window. Reuses
-  /// the value already loaded for the update check rather than reading
-  /// `PackageInfo` a second time.
+  /// The installed build, reused for the announcements version window instead
+  /// of reading `PackageInfo` a second time.
   final AppBuildInfo? buildInfo;
 
-  /// Cold-start seed of dismissed announcement ids (decoded from the
-  /// `announcements.dismissedIds` settings key). Mirrors `initialSettings`:
-  /// pre-loaded at the composition root so the controller resolves synchronously.
+  /// Cold-start seed of dismissed announcement ids, pre-loaded so the
+  /// controller resolves synchronously.
   final Set<String> initialDismissedAnnouncementIds;
 
-  /// Session auth port + refresh-token repository + cold-start session seed.
-  /// The honest no-backend default is unseeded [InMemoryAuthRepository] +
-  /// [AuthAnonymous] (C2: a cold start never fakes a session). The consumer
-  /// swaps in a real HTTP adapter against the test-server contract when an
-  /// endpoint is configured.
   final AuthRepository authRepository;
   final SessionRepository sessionRepository;
   final AuthSession initialSession;
 
-  /// Analytics port + read-only backend descriptor + cold-start opt-in seed.
-  /// The no-backend default is [NoopAnalyticsClient] (routes through AppLogger
-  /// and never fakes a success state). The opt-in seed is pre-loaded from
-  /// SecureStore so the controller resolves synchronously on the first frame.
   final AnalyticsClient analyticsClient;
   final AnalyticsClientBackend analyticsClientBackend;
   final bool initialAnalyticsOptIn;
 
-  /// Feature-flags source. The no-backend default returns [FeatureFlags.defaults]
-  /// and emits nothing; a remote-config backend is a consumer override only.
   final FeatureFlagsSource featureFlagsSource;
 
-  /// Biometric authenticator. Selected from `PlatformCapabilities` at the
-  /// composition root: real [LocalAuthAuthenticator] on supported native
-  /// platforms, honest [NoopBiometricAuthenticator] for web/unsupported.
   final BiometricAuthenticator biometricAuthenticator;
 
   /// Local per-identifier attempt/lockout tracker (UX-only, pure-Dart). Fresh
   /// per launch; shared by login, OTP, and the future pin-autolock surface.
   final AttemptTracker attemptTracker;
 
-  /// Haptic feedback port. The local device IS the production backend
-  /// ([DeviceHapticService] wraps `flutter/services` `HapticFeedback` — no
-  /// credentials, no faking, C2); [NoopHapticService] is the hermeticity-only
-  /// default for tests/goldens. Each call site additionally gates on
-  /// `MediaQuery.disableAnimationsOf` and the `hapticsEnabled` setting.
   final HapticService hapticService;
 
-  /// OTP repository port (mfa-otp). The no-backend default
-  /// ([InMemoryOtpRepository]) surfaces `OtpRepositoryException.notConnected`
-  /// and never fakes an issued code; the optional real HTTP adapter against
-  /// the `tools/test_server/` OTP contract is a consumer override only.
   final OtpRepository otpRepository;
 
-  /// Profile repository port. The no-backend default
-  /// ([NoopProfileRepository]) surfaces `ProfileException.notConnected` and
-  /// never fakes a profile (the UI degrades to `ProfileDraft.defaults()`); the
-  /// optional real HTTP adapter ([HttpProfileRepository]) is constructed in
-  /// [AppDependencies.production] only when a backend URL is configured.
   final ProfileRepository profileRepository;
 
-  /// Push notifications port (push-notifications). The no-backend default
-  /// ([NoopNotificationsRepository]) reports denied, publishes empty streams,
-  /// and throws notConnected for the registration actions. The optional real
-  /// Firebase adapter is constructed by the consumer only when credentials are
-  /// wired AND the platform is iOS / Android.
   final NotificationsRepository notificationsRepository;
   final NotificationsBackend notificationsBackend;
   final NotificationPermissionStatus initialNotificationPermission;
   final String? initialNotificationToken;
 
-  /// Runtime-permission port (permissions-media). The composition root selects
-  /// `DevicePermissionService` on supported native platforms or the honest
-  /// `NoopPermissionService` for web / unsupported / integration-test runs.
   final PermissionService permissionService;
 
-  /// Media-picker port (permissions-media). The composition root selects
-  /// `ImagePickerMediaPicker` on supported native platforms or the honest
-  /// `NoopMediaPicker` for web / unsupported / integration-test runs.
   final MediaPicker mediaPicker;
 
-  /// Native share-sheet port (license-share-update). The composition root
-  /// selects `SharePlusShareService` on platforms with a native share target
-  /// or the honest `NoopShareService` for web / unsupported / integration-test
-  /// runs.
   final ShareService shareService;
 
-  /// OS-store in-app update port (license-share-update). The composition root
-  /// selects `AndroidAppUpdateService` / `IosAppUpdateService` on supported
-  /// native platforms or the honest `NoopAppUpdateService` for web /
-  /// unsupported / integration-test runs. Non-blocking by design: the server
-  /// `VersionGateStore` owns the hard / soft block (no double-block).
+  /// Non-blocking OS-store update prompt; the server [VersionGateStore] owns
+  /// the hard/soft block, so this never double-blocks.
   final AppUpdateService appUpdateService;
 
-  /// Inbound deep-link service (deep-linking). Owns the `app_links` plugin
-  /// instance and exposes the resolved inbound stream + the cold-start initial
-  /// link. Constructed at the composition root with the compile-time
-  /// `AllowedDeepLinkHosts`; tests use the no-op service (no inbound URIs).
   final DeepLinkService appLinkHandler;
 
-  /// A/B experiment source (ab-experiments). The deterministic local source is
-  /// the no-backend production default (a real assignment, NOT a Noop); a
-  /// consumer wires `RemoteConfigExperimentSource` only when a remote-config
-  /// endpoint is configured. The source MUST share the production
-  /// `settingsStore` so the stable device id stays consistent.
+  /// Must share the production `settingsStore` so the stable device id used
+  /// for assignment stays consistent.
   final ExperimentSource experimentSource;
 
-  /// Offline-first cache store (offline-cache). The file-per-key store is the
-  /// production default on non-web platforms; web falls back to in-memory
-  /// (path_provider is unsupported). `InMemoryCacheStore` is the hermetic test
-  /// default (never fakes a populated cache for a source that does not exist).
   final CacheStore cacheStore;
 
-  /// Feedback transport port (feedback). `NoopFeedbackTransport` is the honest
-  /// no-backend default (returns `FeedbackResult.unavailable`, never accepts);
-  /// a consumer constructs an HTTP adapter only when an endpoint is configured.
   final FeedbackTransport feedbackTransport;
 
-  /// Pre-loaded feedback draft (feedback) so the controller resolves
-  /// synchronously on the first frame. Tolerant decode of the three
-  /// SettingsStore keys; degrades to empty on a missing/malformed value.
+  /// Pre-loaded so the controller resolves synchronously on the first frame.
   final FeedbackDraft initialFeedbackDraft;
 
-  /// Pre-loaded shake-to-feedback opt-in (feedback). Default false; the toggle
-  /// is hidden on web/desktop (no accelerometer).
   final bool initialFeedbackShakeEnabled;
 
-  /// Read-only app environment attached to every feedback submission (version /
-  /// platform / locale). Built once at the composition root; no PII.
   final FeedbackAppMetadata feedbackAppMetadata;
 
-  /// Dev-only HTTP inspector host (HTTP overlay). The concrete implementation
-  /// is chosen by the build ENTRYPOINT: the production entrypoint wires a
-  /// [StubInspectorHost] (no `dio_request_inspector` import, so the package is
-  /// absent from release AOT and the flutter/flutter#188060 snapshotter crash
-  /// cannot occur), and the development entrypoint wires a `RealInspectorHost`
-  /// that is active only when dev tools are enabled AND a backend URL is
-  /// configured. The host is threaded to `bootstrap` (which wraps the app in the
-  /// inspector overlay when active), to [buildAppDio] (which attaches the host's
-  /// interceptor to the shared Dio), and to `App` (which adds the host's
-  /// navigator observers). The stub is inert everywhere it is used (tests,
-  /// production, no-backend dev), so no dev tooling ever ships in a release
-  /// graph. See `AppDependencies.production`.
+  /// Dev-only HTTP inspector host, chosen by the build entrypoint: production
+  /// wires [StubInspectorHost] (no `dio_request_inspector` import, so the
+  /// package is absent from release AOT — avoids the flutter/flutter#188060
+  /// snapshotter crash); development wires a `RealInspectorHost`. Threaded to
+  /// `bootstrap` (overlay wrapper), [buildAppDio] (interceptor), and `App`
+  /// (navigator observers).
   final InspectorHost inspectorHost;
 
-  /// Returns a copy with the provided fields replaced. Used by
-  /// `createApplication` to finalize the startup result's `localeApplied` flag
-  /// once the locale apply has run (which happens after `AppDependencies.production`).
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
     return AppDependencies(
       settingsRepository: settingsRepository,
@@ -448,20 +332,11 @@ final class AppDependencies {
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
     AppBuildInfo? buildInfo,
-    // Optional override of the OS-keychain-backed SecureStore. Production
-    // builds leave this null so FlutterSecureStorageStore (the default) is used.
-    // An integration test on a headless runner with no secret-service daemon
-    // (e.g. ubuntu-24.04 without gnome-keyring) injects an InMemorySecureStore
-    // so the flow never touches libsecret. Mirrors the `inMemory` factory seam.
+    // Null uses the production FlutterSecureStorageStore; a headless
+    // integration test (no secret-service daemon) injects an in-memory store
+    // so the flow never touches libsecret.
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
-    // Dev-only HTTP inspector host, selected by the build entrypoint. Defaults
-    // to the no-op [StubInspectorHost] so production / release graphs and test
-    // call sites compile no dio_request_inspector code (avoiding the
-    // flutter/flutter#188060 release-AOT snapshotter crash). The development
-    // entrypoint overrides this with a `RealInspectorHost`, whose own runtime
-    // gate (development tools enabled AND a backend configured) keeps it inert
-    // for no-backend / no-dev-tools launches — identical to the prior behavior.
     InspectorHost inspectorHost = const StubInspectorHost(),
   }) async {
     PlatformCapabilities capabilities;
@@ -493,45 +368,27 @@ final class AppDependencies {
       settings = const SettingsState.defaults();
       settingsLoaded = false;
     }
-    // Pre-load the dismissed-announcement id set so AnnouncementsController
-    // resolves active synchronously on the first frame. Tolerant of malformed
-    // storage (treated as "nothing dismissed" rather than throwing).
+    // Pre-loaded so AnnouncementsController resolves synchronously; malformed
+    // storage degrades to "nothing dismissed" rather than throwing.
     final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(
       await settingsStore.readString(DismissedAnnouncements.key),
     );
-    // No-backend default: InMemoryVersionGateStore returns none, so production
-    // runs green with zero backend wiring (C2). The optional
-    // RemoteConfigVersionGateStore activates only when a remote-config backend
-    // is configured; until that wiring lands, the honest none default is used.
     final versionGateStore = InMemoryVersionGateStore();
     final versionCheck = buildInfo == null
         ? const UpdateRequirementNone()
         : await versionGateStore.check(buildInfo);
-    // Shared SecureStore reused by the session repository and the analytics
-    // opt-in pre-load so the keychain is opened once. An injected store (e.g.
-    // InMemorySecureStore for a headless integration test) wins over the
-    // production OS-keychain default; null leaves production behavior unchanged.
+    // Shared by the session repository and the analytics opt-in pre-load so
+    // the keychain is opened once.
     final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
-    // Pre-load the analytics opt-in flag (a single SecureStore read) so the
-    // AnalyticsOptInController resolves synchronously on the first frame. A
-    // keychain failure degrades to "not opted in" rather than throwing
-    // (guardrail 13: never risk an unexpected emit).
     var initialAnalyticsOptIn = false;
     try {
       initialAnalyticsOptIn = await effectiveSecureStore.read(analyticsOptInKey) == 'true';
     } on Object {
       initialAnalyticsOptIn = false;
     }
-    // Select the biometric authenticator from the current platform: real
-    // local_auth on supported native platforms, honest Noop for web/unsupported
-    // (the Noop reports canCheck:false and never fakes a success).
     final biometricAuthenticator = capabilities.isWeb
         ? const NoopBiometricAuthenticator()
         : LocalAuthAuthenticator();
-    // Pre-load the feedback draft + shake opt-in so the FeedbackController
-    // resolves synchronously on the first frame (mirrors the analytics opt-in
-    // pre-load). Tolerant of malformed/missing keys (degrades to empty draft /
-    // false). Never throws — a persistence failure must not strand startup.
     var initialFeedbackDraft = const FeedbackDraft.empty();
     var initialFeedbackShakeEnabled = false;
     try {
@@ -552,10 +409,8 @@ final class AppDependencies {
     } on Object {
       initialFeedbackShakeEnabled = false;
     }
-    // Offline-cache: the file-per-key store is the production default on non-web
-    // platforms; web falls back to in-memory (path_provider is unsupported). A
-    // directory-resolution failure degrades honestly to in-memory rather than
-    // stranding startup.
+    // Web falls back to in-memory (path_provider is unsupported); a
+    // directory-resolution failure also degrades to in-memory.
     CacheStore cacheStore;
     if (capabilities.isWeb) {
       cacheStore = InMemoryCacheStore();
@@ -573,20 +428,14 @@ final class AppDependencies {
       platform: capabilities.platform,
       locale: settings.localeOverride?.languageTag ?? 'en',
     );
-    // Auth / OTP / profile ports. When a backend URL is configured the real HTTP
-    // adapters are constructed against it (C9); otherwise the honest no-backend
-    // defaults surface notConnected and never fake success (C2). This is the
-    // single composition-root seam that switches the three session-coupled
-    // ports together.
+    // When a backend URL is configured the real HTTP adapters are constructed
+    // against it; otherwise the no-backend defaults surface notConnected.
     final AuthRepository authRepository;
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
     if (backendBaseUrl != null) {
-      // One shared Dio for the base URL (connection pooling + a single dev
-      // overlay). The inspector host attaches its interceptor only when active
-      // (development + dev tools + backend); the stub host is a no-op, so
-      // production / release get a plain Dio with no inspector code reachable.
-      // All three session-coupled adapters share this Dio.
+      // One shared Dio (connection pooling + a single dev overlay) for all
+      // three session-coupled adapters.
       final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
@@ -601,15 +450,9 @@ final class AppDependencies {
       settingsStore: settingsStore,
       initialSettings: settings,
       secureStore: effectiveSecureStore,
-      // Crash reporting fans out to [existing backend, Firebase Crashlytics].
-      // The existing arm is the honest no-op sink today (the optional
-      // SentryCrashReporter activates here once a crash-reporting DSN is
-      // configured); FirebaseCrashlyticsCrashReporter is constructed
-      // unconditionally and self-disables on web / Linux / Windows and when
-      // Firebase is not initialized, so this composite never breaks the error
-      // path it observes and runs green with zero backend wiring (C2). On
-      // Linux / Windows the Firebase arm no-ops, so the composite effectively
-      // runs only the existing backend.
+      // FirebaseCrashlyticsCrashReporter self-disables on web/Linux/Windows and
+      // when Firebase is not initialized, so the composite is safe with the
+      // Noop-only existing arm.
       crashReporter: CompositeCrashReporter(<CrashReporter>[
         const NoopCrashReporter(),
         FirebaseCrashlyticsCrashReporter(verbose: false),
@@ -617,15 +460,10 @@ final class AppDependencies {
       crashReporterBackend: const NoopCrashReporterBackend(),
       versionGateStore: versionGateStore,
       versionCheck: versionCheck,
-      // Backend-free per spec: the real local connectivity_plus sensor IS the
-      // production default (no Noop, no credentials). A sensor failure degrades
-      // honestly to offline and never fakes online.
       connectivityService: ConnectivityPlusService(),
-      // Forward the startup signals WITHOUT re-loading: buildInfo and
-      // settingsLoaded are already known here. `localeApplied` is set true
-      // optimistically because the locale apply runs in `createApplication`
-      // after this factory returns; `createApplication` finalizes it via
-      // copyWith when the apply fails.
+      // `localeApplied` is optimistic here; `createApplication` finalizes it
+      // via copyWith once the locale apply (which runs after this returns)
+      // is known to have failed.
       appStartupResult: AppStartupResult(
         buildInfo: buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: settingsLoaded,
@@ -633,22 +471,12 @@ final class AppDependencies {
       ),
       buildInfo: buildInfo,
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
-      // Wave-4 auth port. Selected above from `backendBaseUrl`: the real
-      // HttpAuthClient when a backend is configured, else the honest unseeded
-      // InMemoryAuthRepository default (C2). This is an override seam the
-      // consumer activates by setting BACKEND_BASE_URL.
       authRepository: authRepository,
       sessionRepository: SessionRepository(effectiveSecureStore),
       initialSession: const AuthAnonymous(),
-      // Analytics fans out to [existing backend, Firebase Analytics]. The
-      // existing arm is the honest no-op sink today (the optional
-      // PosthogAnalyticsClient activates here once PostHog credentials +
-      // opt-in are wired); FirebaseAnalyticsClient is constructed
-      // unconditionally and self-disables on Linux / Windows and when Firebase
-      // is not initialized, so this composite never breaks the UX it measures
-      // and runs green with zero backend wiring (C2). On Linux / Windows the
-      // Firebase arm no-ops, so the composite effectively runs only the
-      // existing backend.
+      // FirebaseAnalyticsClient self-disables on Linux/Windows and when
+      // Firebase is not initialized, so the composite is safe with the
+      // Noop-only existing arm.
       analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
         NoopAnalyticsClient(logger: logger),
         FirebaseAnalyticsClient(),
@@ -658,50 +486,24 @@ final class AppDependencies {
       featureFlagsSource: InMemoryFeatureFlagsSource(),
       biometricAuthenticator: biometricAuthenticator,
       attemptTracker: InMemoryAttemptTracker(),
-      // Haptics: the local device IS the production backend (real
-      // HapticFeedback — no credentials, no faking, C2). The reduce-motion guard
-      // + hapticsEnabled setting are enforced at each call site, not here.
       hapticService: const DeviceHapticService(),
-      // Wave-5b OTP + Wave profile ports. Selected above from `backendBaseUrl`:
-      // the real HTTP adapters when a backend is configured, else the honest
-      // no-backend defaults that surface notConnected and never fake success
-      // (C2 / C13). Each is a port override seam the consumer activates by
-      // setting BACKEND_BASE_URL.
       otpRepository: otpRepository,
       profileRepository: profileRepository,
-      // Notifications: Noop is the platform-agnostic default. The optional
-      // Firebase adapter is constructed by the consumer only on iOS / Android
-      // with credentials (firebase_messaging has no desktop/web support). Web
-      // / desktop / no-credentials all stay on the Noop default.
+      // Firebase adapter is a consumer override on iOS/Android with
+      // credentials only; firebase_messaging has no desktop/web support.
       notificationsRepository: const NoopNotificationsRepository(),
       notificationsBackend: const NoopNotificationsBackend(),
       initialNotificationPermission: NotificationPermissionStatus.notRequested,
       initialNotificationToken: null,
-      // Permissions / media / share / update: select the real device adapter on
-      // a supported native platform, honest Noop on web / unsupported / test
-      // runs. The selection is at the composition root (never via a global);
-      // each adapter degrades honestly and never fakes a grant / pick / share /
-      // available update.
       permissionService: _selectPermissionService(capabilities),
       mediaPicker: _selectMediaPicker(capabilities),
       shareService: _selectShareService(capabilities),
       appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
-      // Deep-link handler: the real `app_links` plugin is the production
-      // default on mobile; web is handled by `MaterialApp.router`'s browser
-      // URL bar (no double-wire); desktop / unsupported degrade honestly (the
-      // service publishes nothing, the app boots to its normal initial
-      // location). The cold-start `getInitialLink` is captured in
-      // `bootstrap.dart` before the router builds.
+      // Web is handled by MaterialApp.router's browser URL bar instead; the
+      // cold-start getInitialLink is captured in bootstrap.dart.
       appLinkHandler: AppLinksDeepLinkService(
         handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
       ),
-      // Wave-6 production defaults. The deterministic experiment source is the
-      // real-local no-backend default over the shared settings store (the stable
-      // device id is lazily minted+persisted on first assignment). The file
-      // cache store (or in-memory on web) is the production default. The Noop
-      // feedback transport surfaces unavailable (never fakes success); the draft
-      // + shake opt-in are pre-loaded above. A consumer wires a real experiment
-      // / feedback backend only when configured.
       experimentSource: DeterministicExperimentSource(store: settingsStore),
       cacheStore: cacheStore,
       feedbackTransport: const NoopFeedbackTransport(),
@@ -709,19 +511,9 @@ final class AppDependencies {
       initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
       feedbackAppMetadata: feedbackAppMetadata,
       platformCapabilities: capabilities,
-      // Dev-only HTTP inspector host (stub unless the development entrypoint
-      // injected the real one). Threaded to bootstrap (overlay wrapper), App
-      // (navigator observers), and the shared Dio (interceptor) so the dev
-      // overlay is live in development only and entirely absent in release.
       inspectorHost: inspectorHost,
     );
   }
-
-  // The platform-selectors below are static private helpers so the production
-  // factory stays readable. Each maps a `PlatformCapabilities` snapshot to the
-  // honest adapter: real device adapter on supported native platforms, Noop
-  // for web / unsupported / integration-test runs. Never a global; never a
-  // fabricated success.
 
   static PermissionService _selectPermissionService(PlatformCapabilities caps) {
     if (caps.isWeb) return const NoopPermissionService();

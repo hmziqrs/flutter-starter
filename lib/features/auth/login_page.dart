@@ -65,9 +65,8 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
-  // The email draft is restorable across a simulated process death
-  // (state-restoration). The (secret) password deliberately has NO restorable
-  // counterpart: secrets never participate in restoration.
+  // The email draft is restorable across process death; the password
+  // deliberately is not — secrets never participate in restoration.
   late final TextEditingController _emailController;
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'login.email');
@@ -77,25 +76,22 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   bool _callbackSubmitting = false;
   bool _rememberMe = false;
 
-  // Rate-limit countdown (auth-ratelimit). Drives the live lockout seconds
-  // decremented by a 1s Timer.periodic; the submit gate is OR-ed with _locked.
+  // Live lockout countdown, decremented by a 1s Timer.periodic.
   Timer? _countdownTimer;
   int _liveLockedSeconds = 0;
 
   bool get _submitting =>
       _callbackSubmitting || widget.presentation.status == LoginPresentationStatus.submitting;
 
-  /// True while a rate-limit lockout is active. Independent of any animation so
-  /// the non-animated fallback still disables submit.
+  /// True while a rate-limit lockout is active.
   bool get _locked =>
       widget.presentation.status == LoginPresentationStatus.locked && _liveLockedSeconds > 0;
 
   @override
   void initState() {
     super.initState();
-    // The controller starts empty; restoreState seeds it from [_emailDraft]
-    // once registration flushes the saved value. The [RestorableProperty.value]
-    // getter asserts isRegistered, so it is not read here before restoreState.
+    // restoreState seeds the controller from [_emailDraft] once registration
+    // flushes the saved value.
     _emailController = TextEditingController()..addListener(_syncEmailDraft);
     _liveLockedSeconds = widget.presentation.lockedSeconds;
     _requestFixtureFocus();
@@ -103,8 +99,6 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   }
 
   void _syncEmailDraft() {
-    // _emailDraft is registered by the time the user can type (restoreState ran
-    // during didChangeDependencies), so the value getter is safe here.
     if (_emailController.text != _emailDraft.value) {
       _emailDraft.value = _emailController.text;
     }
@@ -115,11 +109,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    // Restore ONLY the email draft (state-restoration contract). registerFor-
-    // Restoration flushes the saved value into [_emailDraft]; we then seed the
-    // controller so restartAndRestore lands the user back on their typed email.
-    // On a no-restoration build (goldens / disabled scope) restoreState is never
-    // called and the draft stays empty — the controller renders empty text.
+    // Restore only the email draft; the password never participates.
     registerForRestoration(_emailDraft, 'email_draft');
     if (_emailController.text != _emailDraft.value) {
       _emailController.text = _emailDraft.value;
@@ -420,8 +410,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
     };
   }
 
-  /// Non-destructive "attempts remaining" notice, shown while the user still
-  /// has free attempts before the next lockout. Suppressed once locked (the
+  /// Non-destructive "attempts remaining" notice; suppressed once locked (the
   /// destructive [_feedbackAlert] carries the countdown instead).
   Widget? _attemptsRemainingAlert(BuildContext context) {
     final remaining = widget.presentation.attemptsRemaining;

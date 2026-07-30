@@ -1,31 +1,12 @@
 /// Exponential per-identifier lockout schedule for repeated failed sign-in
 /// attempts.
 ///
-/// This is a **UX / defense-in-depth control only — NOT a security boundary.**
-/// Client-side throttling is trivially bypassed (clear the prefs key, swap the
-/// device, replay against the server directly). The authoritative gate is
-/// server-side (e.g. the mfa-otp test server returns `429 locked`); this local
-/// complement keeps the UX honest about a lockout the server already imposed
-/// and slows down casual abuse. It must never be presented to a forker as the
-/// real enforcement.
+/// UX / defense-in-depth only — NOT a security boundary (trivially bypassed
+/// client-side; the server's own 429 is authoritative). This keeps the UX
+/// honest about a lockout the server already imposes.
 ///
-/// The schedule is a single `const` table: the cooldown in seconds applied when
-/// the running failure count reaches each index. Index `0` is the rest state
-/// (no failures), index `1` the first failure, and so on; entries past the end
-/// clamp to the final value. The default table
-/// `[0, 0, 30, 60, 300, 900]` grants two free attempts, then escalates
-/// 30s → 60s → 5m → 15m. Change the table in one place — there are no magic
-/// numbers at call sites.
-///
-/// Identifiers (typically an email or phone) are normalized and FNV-1a hashed
-/// before they touch the backing map so the raw PII value is never stored as a
-/// key, never reaches logs, and never leaks via heap inspection. The hash is
-/// non-cryptographic and deterministic; it is for PII hygiene, not security.
-///
-/// Three consumers — the login page, the OTP page in this feature, and the
-/// future pin-autolock feature — share this one pure-Dart class via a direct
-/// feature-local import (no `shared/` bucket is warranted for a pure-Dart
-/// primitive with designated consumers; see contracts.md C3).
+/// Shared by the login page, the OTP page, and any future PIN-autolock
+/// feature via a direct feature-local import.
 library;
 
 import 'dart:math';
@@ -33,43 +14,25 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Cooldown seconds applied by each failure (1-indexed).
-///
-/// `table[0]` is the cooldown imposed by the 1st failure, `table[1]` by the
-/// 2nd, and so on; counts past the last index clamp to the final entry. With
-/// the default `[0, 0, 30, 60, 300, 900]`, the first two failures are free
-/// and the third locks for 30s, escalating to 60s → 5m → 15m. The leading-zero
-/// count matches [freeAttemptsBeforeLockout] so call sites stay literal-free.
+/// Cooldown seconds per failure count (1-indexed); counts past the table tail
+/// clamp to the final entry. `[0, 0, 30, 60, 300, 900]`: two free attempts,
+/// then 30s -> 60s -> 5m -> 15m.
 const List<int> attemptCooldownSeconds = [0, 0, 30, 60, 300, 900];
 
-/// Number of failed attempts allowed before the first lockout. Equal to the
-/// count of leading zero entries in [attemptCooldownSeconds] — the table is the
-/// source of truth and this constant mirrors it for readability at call sites.
+/// Failed attempts allowed before the first lockout (leading-zero count of
+/// [attemptCooldownSeconds]).
 const int freeAttemptsBeforeLockout = 2;
 
-/// Lockout seconds for [attemptCooldownSeconds] entries past the table. Kept as
-/// a `const` so [AttemptState.nextCooldownSeconds] never needs an `if`/clamp
-/// branch in callers.
 int get _maxCooldownSeconds => attemptCooldownSeconds.last;
 
 /// Snapshot of the local rate-limit state for one identifier.
 ///
-/// Immutable and value-equal so it can flow through Riverpod unchanged. All
-/// derived fields ([attemptsRemaining], [nextCooldownSeconds]) are computed by
-/// the tracker at write time using the const cooldown table, so consumers
-/// never repeat the schedule arithmetic.
-///
-/// `lockedUntil` is the absolute wall-clock expiry of the active lockout (or
-/// `null` when the identifier is not locked). It is **not** normalized on read:
-/// once [lockedUntil] has passed, [isLockedAt] returns `false` but [attempts]
-/// and [attemptsRemaining] keep their values so a follow-up failure still
-/// escalates per the schedule. Only [AttemptTracker.recordSuccess] clears the
-/// record.
+/// `lockedUntil` is not normalized on read: once it has passed, [isLockedAt]
+/// returns `false` but [attempts]/[attemptsRemaining] are unchanged so a
+/// follow-up failure keeps escalating. Only [AttemptTracker.recordSuccess]
+/// clears the record.
 @immutable
 final class AttemptState {
-  /// Creates an immutable snapshot. Construction is feature-internal (the
-  /// tracker is the only caller in production); tests construct directly to
-  /// exercise the dev-gallery / pinned fixtures.
   const AttemptState({
     required this.attempts,
     required this.lockedUntil,
@@ -85,34 +48,25 @@ final class AttemptState {
          'nextCooldownSeconds must not be negative.',
        );
 
-  /// Total failed attempts recorded for this identifier since the last
-  /// [AttemptTracker.recordSuccess]. Never resets on lockout expiry — only on
-  /// success.
+  /// Total failed attempts since the last [AttemptTracker.recordSuccess].
   final int attempts;
 
-  /// Absolute wall-clock time the active lockout expires, or `null` when the
-  /// identifier is not locked. Historical: stays set after expiry so a new
-  /// failure re-locks immediately at the next schedule step.
+  /// Absolute expiry of the active lockout, or `null` when not locked.
   final DateTime? lockedUntil;
 
-  /// Failed attempts the user may still make before the next lockout kicks in.
-  /// Zero once [attempts] has reached [freeAttemptsBeforeLockout]; stays zero
-  /// after a lockout expires (the schedule escalates rather than forgiving).
+  /// Failed attempts still allowed before the next lockout.
   final int attemptsRemaining;
 
-  /// Lockout seconds the *next* failure will impose. Drives the
-  /// "too many attempts" copy and lets the UI warn before the lock lands.
+  /// Lockout seconds the *next* failure will impose.
   final int nextCooldownSeconds;
 
-  /// Whether the lock is still active at [now]. `false` once [lockedUntil] has
-  /// passed (or was always `null`).
+  /// Whether the lock is still active at [now].
   bool isLockedAt(DateTime now) {
     final until = lockedUntil;
     return until != null && until.isAfter(now);
   }
 
   /// Whole seconds left in the active lockout at [now], or `0` when unlocked.
-  /// Clamped to non-negative so the countdown text never shows a negative value.
   int lockedSecondsAt(DateTime now) {
     final until = lockedUntil;
     if (until == null) {
@@ -152,53 +106,29 @@ final class AttemptState {
 
 /// Local per-identifier attempt counter and lockout scheduler.
 ///
-/// Pure-Dart and synchronous so it can be reasoned about under `FakeAsync` and
-/// shared across login, OTP, and future PIN-autolock surfaces without a
-/// per-screen dependency. The default [InMemoryAttemptTracker] is constructed
-/// at the composition root; a future persisted variant may layer on
-/// `SecureStore` (never `SettingsStore` — plaintext prefs would let a user wipe
-/// their own lockout). The persistence choice is injected, never hard-coded.
-///
-/// Implementations must not throw for ordinary use; the methods are
-/// synchronous and best-effort. Identifiers are normalized and hashed by the
-/// implementation so the raw value never reaches the backing store.
+/// Pure-Dart and synchronous so it works under `FakeAsync`. Identifiers are
+/// normalized and hashed by the implementation before touching the backing
+/// store.
 abstract interface class AttemptTracker {
   /// Records one failed attempt for [identifier] and returns the new state.
-  ///
-  /// Escalates the lockout per [attemptCooldownSeconds]: the cooldown at the
-  /// new attempt count is applied when non-zero, otherwise [AttemptState] is
-  /// returned unlocked. The returned state is what the caller renders.
   AttemptState recordFailure(String identifier);
 
-  /// Clears the record for [identifier]. Called on a successful authentication
-  /// so a user who eventually types the right value is not one typo away from
-  /// a lockout.
+  /// Clears the record for [identifier] on a successful authentication.
   void recordSuccess(String identifier);
 
-  /// Returns the current state for [identifier], or `null` when no failures
-  /// have been recorded. Read-only — never mutates the record.
+  /// Returns the current state for [identifier], or `null` if unrecorded.
   AttemptState? read(String identifier);
 }
 
-/// Deterministic in-memory [AttemptTracker].
-///
-/// The no-backend production default (a local lockout is authoritative for the
-/// local UX — there is no `common.notConnected` path; see the feature spec).
-/// Reset on relaunch, which is acceptable for a UX-only complement. Test
-/// suites and the dev-gallery inject a fresh instance per group; production
-/// constructs one at the composition root.
-///
-/// Pass a `now` override in tests to assert `lockedUntil` without `FakeAsync`;
-/// production omits it and reads `DateTime.now()`.
+/// Deterministic in-memory [AttemptTracker]. Resets on relaunch, which is
+/// acceptable for a UX-only complement.
 final class InMemoryAttemptTracker implements AttemptTracker {
   InMemoryAttemptTracker({DateTime Function()? now}) : _now = now ?? DateTime.now;
 
   final DateTime Function() _now;
   final Map<String, AttemptState> _states = {};
 
-  /// Read-only snapshot of every hashed identifier → state entry. Used by
-  /// tests to assert schedule escalation; never exposed past the tracker in
-  /// production.
+  /// Read-only snapshot of every hashed identifier -> state entry (tests only).
   Map<String, AttemptState> get snapshot => Map.unmodifiable(_states);
 
   @override
@@ -227,11 +157,8 @@ final class InMemoryAttemptTracker implements AttemptTracker {
   AttemptState? read(String identifier) => _states[hashIdentifier(identifier)];
 }
 
-/// Lockout seconds the schedule imposes for the [attemptCount]-th failure
-/// (1-indexed: pass the running failure count after the increment). Values
-/// `<= 0` return `0` (no failure recorded yet); counts past the table tail
-/// clamp to the final entry so the 7th failure stays at the max cooldown
-/// rather than throwing.
+/// Lockout seconds for the [attemptCount]-th failure (1-indexed). `<= 0`
+/// returns `0`; counts past the table tail clamp to the max cooldown.
 int cooldownSecondsFor(int attemptCount) {
   if (attemptCount <= 0) {
     return 0;
@@ -244,11 +171,8 @@ int cooldownSecondsFor(int attemptCount) {
 }
 
 /// Normalizes and hashes [identifier] with FNV-1a (32-bit) so the raw email /
-/// phone never sits in a map key, a prefs row, or a log line.
-///
-/// Non-cryptographic and deliberately stable: it is for PII hygiene, NOT a
-/// security control. Lower-casing and trimming first means `User@Example.com`
-/// and `user@example.com ` share a bucket.
+/// phone never sits in a map key or a log line. Non-cryptographic — PII
+/// hygiene only, not a security control.
 String hashIdentifier(String identifier) {
   final normalized = identifier.trim().toLowerCase();
   var hash = 0x811C9DC5;
@@ -260,9 +184,7 @@ String hashIdentifier(String identifier) {
 }
 
 /// Handwritten Riverpod handle for the [AttemptTracker]. Overridden at the
-/// composition root with a fresh [InMemoryAttemptTracker]; throws until wired
-/// (mirrors `settingsStoreProvider` / `secureStoreProvider`). Tests override
-/// with a fresh in-memory instance per group.
+/// composition root; throws until wired.
 final attemptTrackerProvider = Provider<AttemptTracker>(
   (ref) => throw StateError('AttemptTracker must be overridden at the composition root.'),
 );

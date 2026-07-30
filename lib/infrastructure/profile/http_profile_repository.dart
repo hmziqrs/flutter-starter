@@ -5,23 +5,17 @@ import 'package:starter/features/profile/profile_repository.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [ProfileRepository] against the test-server profile contract (C9).
-///
-/// Constructed **only when a consumer provides an endpoint** (the no-backend
-/// rule, C2): until then the UI degrades to `ProfileDraft.defaults()` and never
-/// fabricates a backend-sourced profile. Mirrors `HttpAuthClient`: speaks to the
-/// backend through a shared injected [Dio] (built via [buildAppDio] when no
-/// instance is supplied), native-only.
+/// Real HTTP [ProfileRepository] against the test-server profile contract.
+/// Constructed only when a consumer provides an endpoint; until then the UI
+/// degrades to `ProfileDraft.defaults()`.
 ///
 /// `load` performs `GET /v1/profile`; `save` performs `PUT /v1/profile` with
-/// `{displayName, bio}` (email is read-only and omitted from the write body).
-/// Both authorize with `Authorization: Bearer <accessToken>`. Every interaction
-/// is wrapped in `try/on` and mapped to a typed [ProfileException]: transport
-/// failures (any [DioException] without a response) and `401` (unaccepted
-/// session) surface [ProfileException.notConnected] so the caller degrades to a
-/// local default; any other `4xx` surfaces [ProfileException.unknown]; a
-/// `5xx`/unclassified response surfaces [ProfileException.notConnected] (C2:
-/// degrade, never fake).
+/// `{displayName, bio}` (email is read-only, omitted from the write body).
+/// Both authorize with `Authorization: Bearer <accessToken>`. Transport
+/// failures and `401` surface [ProfileException.notConnected] so the caller
+/// degrades to a local default; other `4xx` surfaces
+/// [ProfileException.unknown]; `5xx`/unclassified surfaces
+/// [ProfileException.notConnected].
 final class HttpProfileRepository implements ProfileRepository {
   HttpProfileRepository({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
@@ -47,8 +41,6 @@ final class HttpProfileRepository implements ProfileRepository {
     );
     return _parseProfile(body);
   }
-
-  // --------------------------- HTTP plumbing ----------------------------
 
   Future<Map<String, Object?>> _send({
     required String method,
@@ -85,10 +77,8 @@ final class HttpProfileRepository implements ProfileRepository {
   }
 
   Never _classifyStatus(int status) {
-    // 401 (unaccepted session) folds into the notConnected bucket so the caller
-    // degrades to a local default — ProfileException has no `unauthorized` kind
-    // by design (the profile screen never surfaces an auth-challenge UI itself;
-    // it degrades and lets the session layer handle re-auth).
+    // 401 folds into notConnected: ProfileException has no `unauthorized`
+    // kind by design — the session layer handles re-auth, not this screen.
     if (status == 401 || status >= 500) {
       throw const ProfileException.notConnected();
     }

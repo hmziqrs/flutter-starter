@@ -1,9 +1,7 @@
 /// Aliasing facade over the canonical shared form helpers in
-/// `lib/shared/forms/`. The five auth pages (login / register / forgot-password
-/// / reset-password / otp) still resolve the Auth-prefixed symbols they were
-/// written against; each alias below forwards to the rename-only canonical
-/// implementation. New features (billing, settings-entry, feedback) should
-/// import `package:starter/shared/forms/*` directly.
+/// `lib/shared/forms/`, kept so the auth pages resolve the Auth-prefixed
+/// symbols they were written against. New features should import
+/// `package:starter/shared/forms/*` directly.
 library;
 
 import 'package:flutter/widgets.dart';
