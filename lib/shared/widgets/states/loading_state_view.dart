@@ -10,7 +10,6 @@ import 'package:starter/shared/widgets/busy_indicator.dart';
 /// [MediaQuery.disableAnimationsOf] is false; under reduce-motion a static
 /// localized [title] label replaces it.
 class LoadingStateView extends StatelessWidget {
-  /// Creates a [LoadingStateView].
   const LoadingStateView({
     required this.title,
     this.value,

@@ -25,7 +25,6 @@ final class PagedFetchException implements Exception {
 /// cursor to request the next page (`null` when there are no more).
 @immutable
 final class PagedResult<T> {
-  /// Creates a [PagedResult].
   const PagedResult({required this.items, this.nextCursor});
 
   /// The typed items in this page.

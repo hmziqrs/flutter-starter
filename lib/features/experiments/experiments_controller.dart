@@ -13,7 +13,6 @@ import 'package:starter/features/experiments/experiment_variant.dart';
 /// equality so the controller's diff commits only on a real change.
 @immutable
 final class ExperimentsSnapshot {
-  /// Constructs a snapshot from the resolved [assignments].
   const ExperimentsSnapshot({this.assignments = const <ExperimentAssignment>[]});
 
   /// Every known experiment's current assignment, in [ExperimentKey] index

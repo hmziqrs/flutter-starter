@@ -41,7 +41,6 @@ class ResponsiveGridColumns {
 /// via [crossAxisCounts]. Built on `GridView.builder` so only visible cells
 /// materialize, and each cell keeps a stable `ValueKey` derived from [keyOf].
 class ResponsiveListGrid<T> extends ConsumerWidget {
-  /// Creates a [ResponsiveListGrid].
   const ResponsiveListGrid({
     required this.items,
     required this.itemBuilder,

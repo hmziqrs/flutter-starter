@@ -90,10 +90,8 @@ void main() {
         expect(find.text(translations.common.cancel), findsOneWidget);
         expect(find.text(translations.common.discard), findsOneWidget);
 
-        // The destructive action button uses the destructive variant.
         final action = tester.widget<FButton>(find.byKey(_actionKey));
         expect(action.variant, FButtonVariant.destructive);
-        // The cancel/keep button stays outline.
         final cancel = tester.widget<FButton>(find.byKey(_cancelKey));
         expect(cancel.variant, FButtonVariant.outline);
       });

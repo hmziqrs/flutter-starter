@@ -12,7 +12,6 @@ typedef StateViewAction = ({String label, VoidCallback onTap});
 /// Renders a centered icon + [title] + [body] stack inside an [FCard], with an
 /// optional [action] affordance.
 class EmptyStateView extends StatelessWidget {
-  /// Creates an [EmptyStateView].
   const EmptyStateView({
     required this.title,
     required this.body,

@@ -27,7 +27,6 @@ enum RefreshIndicatorStyle {
 /// Material indicator, since the Cupertino spinner cannot be made transparent
 /// without dropping the control.
 class RefreshableListView<T> extends StatelessWidget {
-  /// Creates a [RefreshableListView].
   const RefreshableListView({
     required this.items,
     required this.itemBuilder,

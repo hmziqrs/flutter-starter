@@ -9,7 +9,6 @@ import 'package:forui/forui.dart';
 /// wires [onChanged] to its own debounced query controller; the debounce
 /// window lives there, not here.
 class SearchField extends StatelessWidget {
-  /// Creates a [SearchField].
   const SearchField({
     required this.controller,
     required this.onChanged,

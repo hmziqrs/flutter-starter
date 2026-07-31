@@ -30,7 +30,6 @@ const double _loadNextThresholdPixels = 240;
 /// - `ready` + items → the builder; a `_LoadNextFooter` is appended while
 ///   `loadingNext` is true.
 class PagedListView<T> extends StatelessWidget {
-  /// Creates a [PagedListView].
   const PagedListView({
     required this.state,
     required this.itemBuilder,

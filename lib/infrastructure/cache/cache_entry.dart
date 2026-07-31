@@ -53,7 +53,6 @@ final class CacheCodec<T> {
 /// [etag]) so a reader can decide freshness without re-fetching.
 @immutable
 final class CacheEntry<T> {
-  /// Creates an immutable cached entry.
   const CacheEntry({
     required this.value,
     required this.fetchedAt,

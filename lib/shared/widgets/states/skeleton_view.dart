@@ -10,7 +10,6 @@ import 'package:starter/shared/motion/app_motion.dart';
 /// lighter than [baseColor] so the shimmer sweep reads in both themes.
 @immutable
 class SkeletonStyle {
-  /// Creates a [SkeletonStyle].
   const SkeletonStyle({
     required this.baseColor,
     required this.highlightColor,
@@ -85,7 +84,6 @@ class _SkeletonShimmerScope extends InheritedWidget {
 /// Tests must use bounded frame pumps, never `pumpAndSettle` — the repeating
 /// shimmer would otherwise hang the harness.
 class SkeletonView extends StatefulWidget {
-  /// Creates a [SkeletonView].
   const SkeletonView({
     required this.child,
     this.style,
@@ -170,7 +168,6 @@ class _SkeletonViewState extends State<SkeletonView> with SingleTickerProviderSt
 /// is driving a shimmer animation, overlays the moving highlight sweep.
 /// Otherwise paints the static base fill only.
 class SkeletonBox extends StatelessWidget {
-  /// Creates a [SkeletonBox].
   const SkeletonBox({
     this.width,
     this.height,
@@ -211,7 +208,6 @@ class SkeletonBox extends StatelessWidget {
 /// A skeleton bone shaped like a single line of text: a [SkeletonBox] whose
 /// width is a [widthFraction] of the available width, or a [fixedWidth].
 class SkeletonLine extends StatelessWidget {
-  /// Creates a [SkeletonLine].
   const SkeletonLine({
     this.widthFraction = 1.0,
     this.fixedWidth,
@@ -257,7 +253,6 @@ class SkeletonLine extends StatelessWidget {
 /// A circular skeleton bone (avatar / leading icon placeholder): a
 /// [SkeletonBox] with equal width/height and a fully rounded radius.
 class SkeletonCircle extends StatelessWidget {
-  /// Creates a [SkeletonCircle].
   const SkeletonCircle({this.size = 32.0, super.key});
 
   /// Diameter in logical pixels.

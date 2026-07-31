@@ -17,7 +17,6 @@ import 'package:starter/shared/widgets/busy_indicator.dart';
 /// localized `common.saving`; an explicit [semanticsLabel] overrides the
 /// spinner's accessibility label (defaulting to [label]).
 class BusyOverlay extends StatelessWidget {
-  /// Creates a [BusyOverlay].
   const BusyOverlay({
     required this.isBusy,
     required this.child,

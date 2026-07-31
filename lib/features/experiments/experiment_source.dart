@@ -15,7 +15,6 @@ enum ExperimentAssignmentSource { local, remote }
 /// backend for the remote source). Value equality over every field.
 @immutable
 final class ExperimentAssignment {
-  /// Constructs an assignment.
   const ExperimentAssignment({
     required this.key,
     required this.variant,

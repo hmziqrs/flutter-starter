@@ -29,7 +29,6 @@ enum BusySeverity {
 /// This is the single shared busy primitive — every async action (auth submit
 /// states, profile save, ...) adopts it instead of forking a progress widget.
 class BusyIndicator extends StatelessWidget {
-  /// Creates a [BusyIndicator].
   const BusyIndicator({
     this.value,
     this.semanticsLabel,

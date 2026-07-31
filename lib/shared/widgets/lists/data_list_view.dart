@@ -9,7 +9,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 /// id. Pads with the repo's spacing scale by default. The empty case renders a
 /// feature-supplied [empty] placeholder (typically `EmptyStateView`).
 class DataListView<T> extends StatelessWidget {
-  /// Creates a [DataListView].
   const DataListView({
     required this.items,
     required this.itemBuilder,

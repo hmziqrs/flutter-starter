@@ -23,7 +23,6 @@ final class FakeConnectivityService implements ConnectivityService {
   /// verify the `resumed` lifecycle edge re-arms the sensor.
   int refreshCount = 0;
 
-  /// Whether [dispose] ran.
   bool disposed = false;
 
   @override

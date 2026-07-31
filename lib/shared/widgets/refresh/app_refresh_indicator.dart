@@ -10,7 +10,6 @@ import 'package:starter/i18n/translations.g.dart';
 /// transparent (no visible animation) and a localized `Semantics` live region
 /// announces the refresh progress instead; [onRefresh] still always resolves.
 class AppRefreshIndicator extends StatefulWidget {
-  /// Creates an [AppRefreshIndicator].
   const AppRefreshIndicator({
     required this.onRefresh,
     required this.child,

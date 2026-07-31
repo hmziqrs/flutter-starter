@@ -9,7 +9,6 @@ import 'package:starter/shared/widgets/states/empty_state_view.dart';
 /// with an optional retry [action]. The retry callback is feature-supplied;
 /// when [action] is `null`, no affordance is rendered.
 class ErrorStateView extends StatelessWidget {
-  /// Creates an [ErrorStateView].
   const ErrorStateView({
     required this.title,
     required this.body,

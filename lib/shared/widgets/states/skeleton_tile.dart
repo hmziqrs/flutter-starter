@@ -10,7 +10,6 @@ import 'package:starter/shared/widgets/states/skeleton_view.dart';
 /// it inherits the ancestor [SkeletonView] shimmer (or the static
 /// reduce-motion fill) with no extra wiring.
 class SkeletonTile extends StatelessWidget {
-  /// Creates a [SkeletonTile].
   const SkeletonTile({
     this.avatarSize = 32.0,
     this.titleFraction = 0.55,
@@ -73,7 +72,6 @@ class SkeletonTile extends StatelessWidget {
 /// primitives and inherits the ancestor [SkeletonView] shimmer or the static
 /// reduce-motion fill.
 class SkeletonCard extends StatelessWidget {
-  /// Creates a [SkeletonCard].
   const SkeletonCard({
     this.iconSize = 20.0,
     this.lineCount = 2,

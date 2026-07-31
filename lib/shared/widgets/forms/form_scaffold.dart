@@ -16,7 +16,6 @@ import 'package:starter/shared/widgets/busy_overlay.dart';
 /// feature-supplied and performs the `validate()` → reveal → `save()` → async
 /// submit sequence from the feature's own presentation state.
 class FormScaffold extends StatelessWidget {
-  /// Creates a [FormScaffold].
   const FormScaffold({
     required this.formKey,
     required this.fields,

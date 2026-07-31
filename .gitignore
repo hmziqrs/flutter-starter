@@ -54,3 +54,5 @@ macos/Runner/Configs/LocalSigning.xcconfig
 # Native build caches created when adding plugins with native deps (SPM, Kotlin)
 **/xcshareddata/swiftpm/
 android/.kotlin/
+
+.commandcode

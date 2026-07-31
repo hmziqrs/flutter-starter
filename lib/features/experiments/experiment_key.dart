@@ -6,7 +6,6 @@ import 'package:starter/features/experiments/experiment_variant.dart';
 /// split bucket identically) and need not sum to 100.
 @immutable
 final class ExperimentAllocation {
-  /// Constructs an allocation for [variant] with the given [weight].
   const ExperimentAllocation(this.variant, this.weight)
     : assert(weight >= 0, 'ExperimentAllocation weight must be non-negative.');
 
