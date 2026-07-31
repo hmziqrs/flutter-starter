@@ -21,7 +21,6 @@ void main() {
       expect(find.byType(FCard), findsOneWidget);
       expect(find.text('Could not load this'), findsOneWidget);
       expect(find.text('Something went wrong.'), findsOneWidget);
-      // No action supplied -> no affordance rendered (no silent default lambda).
       expect(find.byType(FButton), findsNothing);
     });
 
@@ -95,7 +94,6 @@ void main() {
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).states.errorTitle),
         findsOneWidget,
       );
-      // The retry label reuses common.retry.
       expect(
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).common.retry),
         findsOneWidget,

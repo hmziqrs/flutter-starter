@@ -3,9 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 
-/// Resolved copy + leading icon for the permission rationale sheet. The
-/// exhaustive switch below makes a new [AppPermission] a compile error until
-/// its copy is supplied.
 final class PermissionRationaleCopy {
   const PermissionRationaleCopy._({
     required this.icon,

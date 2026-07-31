@@ -7,9 +7,6 @@ import 'package:starter/shared/widgets/busy_overlay.dart';
 
 enum BusyGalleryState { indeterminate, determinate, overlay }
 
-/// Builds the busy-indicator gallery cases: an indeterminate [BusyIndicator], a
-/// determinate [BusyIndicator] at 0.6, and a modal [BusyOverlay] scrim, pinned
-/// with [BusyOverlay.isBusy] always true so the scrim stays visible.
 List<GalleryCase> buildBusyIndicatorGalleryCases() {
   return [
     TypedGalleryCase<BusyGalleryState>(

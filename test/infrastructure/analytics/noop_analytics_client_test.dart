@@ -7,8 +7,6 @@ void main() {
   group('NoopAnalyticsClient', () {
     test('track completes and never throws for every event variant', () async {
       final client = NoopAnalyticsClient(logger: AppLogger(verbose: false));
-      // The verbose-routing path is exercised for every sealed variant; none
-      // throw (analytics must never break the UX it measures).
       await expectLater(
         client.track(const ScreenView(routeName: 'home')),
         completes,
@@ -31,15 +29,10 @@ void main() {
     });
 
     test('routes through AppLogger when verbose without throwing', () async {
-      // A verbose AppLogger is the production dev-run sink. The no-op routes
-      // every event through logger.debug (a no-op when not verbose); the call
-      // path here confirms the verbose branch is reached and remains total.
       final client = NoopAnalyticsClient(logger: AppLogger(verbose: true));
       await client.track(const ScreenView(routeName: 'home'));
       await client.setUserProperty(const UserProperty(key: 'plan', value: 'pro'));
       await client.setUserId('user-42');
-      // No assertion on log text: AppLogger wraps an opaque Talker instance.
-      // The contract under test is that routing never throws.
     });
   });
 }

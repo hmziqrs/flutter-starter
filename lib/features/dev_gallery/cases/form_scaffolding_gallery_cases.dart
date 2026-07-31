@@ -16,8 +16,6 @@ enum FormScaffoldGalleryState {
   final bool isSubmitting;
 }
 
-/// Builds the [FormScaffold] gallery cases: submit disabled, submit enabled,
-/// and a submitting form with the busy overlay mounted.
 List<GalleryCase> buildFormScaffoldingGalleryCases() {
   return [
     for (final state in FormScaffoldGalleryState.values)

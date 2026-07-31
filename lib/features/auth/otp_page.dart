@@ -81,11 +81,8 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   bool _callbackSubmitting = false;
   String _savedCode = '';
 
-  // The typed OTP code (a transient token, not a long-lived secret) survives
-  // process death; a fresh restoration build keeps the fixture code below.
   final RestorableString _codeDraft = RestorableString('');
 
-  // Live lockout countdown, decremented by a 1s Timer.periodic.
   Timer? _countdownTimer;
   int _liveLockedSeconds = 0;
 
@@ -106,7 +103,6 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
     registerForRestoration(_codeDraft, 'code_draft');
-    // Only override the fixture when a real user draft exists.
     if (_codeDraft.value.isNotEmpty) {
       _otpController.value = TextEditingValue(
         text: _codeDraft.value,
@@ -328,9 +324,6 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     );
   }
 
-  /// Live expiry countdown notice, rendered while the code has not yet
-  /// expired and no terminal status is active. Numeric value flows LTR per
-  /// the feature spec's RTL note.
   Widget? _countdownAlert(BuildContext context) {
     final remaining = widget.presentation.remainingSeconds;
     if (remaining <= 0) {
@@ -401,8 +394,6 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     };
   }
 
-  /// Non-destructive "attempts remaining" notice; suppressed once locked (the
-  /// destructive [_feedbackAlert] carries the countdown instead).
   Widget? _attemptsRemainingAlert(BuildContext context) {
     final remaining = widget.presentation.attemptsRemaining;
     if (remaining <= 0 || widget.presentation.status == OtpPresentationStatus.locked) {

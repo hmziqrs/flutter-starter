@@ -2,11 +2,6 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/widgets.dart';
 
-/// Bounded responsive units derived from the logical space available to the app.
-///
-/// Layout and typography scaling intentionally use logical width rather than
-/// [MediaQueryData.devicePixelRatio]. Density is only exposed through [pixel]
-/// and [snap] for drawing physical-pixel-aligned details.
 @immutable
 final class AppUnit {
   const AppUnit._({
@@ -72,19 +67,14 @@ final class AppUnit {
   final double spacingScale;
   final double typographyScale;
 
-  /// One physical display pixel expressed in Flutter logical pixels.
   double get pixel => 1 / devicePixelRatio;
 
-  /// Scales a layout or spacing value using the bounded responsive scale.
   double un(num value) => value * spacingScale;
 
-  /// Returns a multiple of the app's four-point spacing unit.
   double sp([num multiplier = 1]) => un(baseSpace * multiplier);
 
-  /// Scales a design font size before the ambient [TextScaler] is applied.
   double font(num value) => value * typographyScale;
 
-  /// Aligns a logical value to the nearest physical display pixel.
   double snap(num logicalPixels) {
     return (logicalPixels * devicePixelRatio).roundToDouble() / devicePixelRatio;
   }

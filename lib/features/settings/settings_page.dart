@@ -631,8 +631,6 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   }
 }
 
-/// Mixin for tiles that optimistically run an async settings write and show
-/// `common.notConnected` on failure.
 mixin _SaveFailureState<T extends StatefulWidget> on State<T> {
   bool _saveFailed = false;
 
@@ -646,7 +644,6 @@ mixin _SaveFailureState<T extends StatefulWidget> on State<T> {
   }
 }
 
-/// Haptics opt-in; gated at each call site by reduce-motion, not here.
 class _HapticsTile extends ConsumerStatefulWidget {
   const _HapticsTile();
 
@@ -671,8 +668,6 @@ class _HapticsTileState extends ConsumerState<_HapticsTile> with _SaveFailureSta
   }
 }
 
-/// Biometric-unlock opt-in, refused when the device reports no usable
-/// biometric so a user can't get trapped on /lock with no way back in.
 class _BiometricUnlockTile extends ConsumerStatefulWidget {
   const _BiometricUnlockTile();
 
@@ -704,8 +699,6 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> with
   }
 }
 
-/// Passcode opt-in: enabling pushes the setup route; the gate only arms once
-/// a hash is actually stored. Disabling clears the hash and the settings flag.
 class _PasscodeTile extends ConsumerStatefulWidget {
   const _PasscodeTile({required this.onOpenSetup});
 
@@ -741,7 +734,6 @@ class _PasscodeTileState extends ConsumerState<_PasscodeTile> with _SaveFailureS
   }
 }
 
-/// Lock-when-backgrounded toggle; inert until a passcode is configured.
 class _LockOnBackgroundTile extends ConsumerStatefulWidget {
   const _LockOnBackgroundTile();
 
@@ -769,8 +761,6 @@ class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile>
   }
 }
 
-/// Idle auto-lock delay selector; cycles Off -> 30s -> 1m -> 5m -> Off on tap.
-/// Inert until a passcode is configured.
 class _AutoLockDelayTile extends ConsumerStatefulWidget {
   const _AutoLockDelayTile();
 
@@ -809,8 +799,6 @@ class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> with _Sa
   }
 }
 
-/// Analytics opt-in; backed by [analyticsOptInControllerProvider] (SecureStore),
-/// not [SettingsState].
 class _AnalyticsOptInTile extends ConsumerStatefulWidget {
   const _AnalyticsOptInTile();
 
@@ -838,8 +826,6 @@ class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> with _
   }
 }
 
-/// Shared FCard shell for a boolean opt-in toggle with a status line and an
-/// optional save-error notice. Used by the biometric and analytics tiles.
 class _ToggleCard extends StatelessWidget {
   const _ToggleCard({
     required this.keyName,
@@ -1095,8 +1081,6 @@ class _AccessibilitySettingsContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return _SettingsScrollFrame(
       title: context.t.settings.accessibility.title,
-      // Shared with the standalone AccessibilitySettingsPage so the preset UI is
-      // identical in-pane (wide/desktop) and standalone (gallery/tests).
       child: const AccessibilityPresetSelector(),
     );
   }

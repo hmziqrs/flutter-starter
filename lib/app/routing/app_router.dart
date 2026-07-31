@@ -24,8 +24,6 @@ GoRouter buildAppRouter({
   bool hasCompletedOnboarding = false,
   List<NavigatorObserver> observers = const <NavigatorObserver>[],
 }) {
-  // hasCompletedOnboarding is a fallback seed for test harnesses that build the
-  // router without a ProviderScope; appRedirect reads the live settings state.
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -49,7 +47,6 @@ GoRouter buildAppRouter({
     ],
     errorBuilder: buildRouteErrorPage,
     observers: observers,
-    // C5: this remains the router's one and only redirect callback.
     redirect: (context, state) => appRedirect(
       context,
       state,

@@ -122,9 +122,6 @@ void main() {
 
   group('sealed family exhaustiveness', () {
     test('a switch over ExperimentVariant covers every subtype', () {
-      // This test exists to lock the exhaustiveness guardrail: adding a new
-      // ExperimentVariant subtype compile-fails this switch (and every consumer
-      // switch) until a branch is added.
       String label(ExperimentVariant variant) {
         return switch (variant) {
           ExperimentVariantControl() => 'control',

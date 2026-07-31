@@ -101,7 +101,6 @@ void main() {
     });
 
     test('exhaustive switch covers every subtype', () {
-      // Drives each branch once; a new subtype would fail to compile here.
       for (final requirement in const <UpdateRequirement>[
         UpdateRequirementNone(),
         UpdateRequirementSoft(

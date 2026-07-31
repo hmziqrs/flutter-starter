@@ -13,8 +13,6 @@ List<RouteBase> buildSecurityRoutes() => [
   GoRoute(
     name: AppRoutes.biometricLock,
     path: AppRoutes.biometricLockPath,
-    // Top-level full-screen gate; the redirect sends protected destinations
-    // here when biometric unlock is enabled and the lock subsystem is locked.
     builder: (context, state) => BiometricLockPage(
       onUnlocked: () => context.goNamed(AppRoutes.home),
       onUseFallback: () => _useBiometricFallback(context),
@@ -23,8 +21,6 @@ List<RouteBase> buildSecurityRoutes() => [
   GoRoute(
     name: AppRoutes.passcodeEntry,
     path: AppRoutes.passcodeEntryPath,
-    // Top-level full-screen gate; the redirect sends protected destinations
-    // here when a passcode challenge is armed. No back/escape until verified.
     builder: (context, state) => PasscodePage(
       mode: PasscodePageMode.entry,
       onUnlocked: () => context.goNamed(AppRoutes.home),
@@ -42,9 +38,6 @@ List<RouteBase> buildSecurityRoutes() => [
   ),
 ];
 
-/// Disables biometric unlock and navigates to home. The optimistic write
-/// resolves before the first await, so the redirect's live read sees
-/// `biometricUnlockEnabled` flip to false on the same tick and stops gating.
 void _disableBiometricAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(
@@ -53,8 +46,6 @@ void _disableBiometricAndGoHome(BuildContext context) {
   context.goNamed(AppRoutes.home);
 }
 
-/// Disables the passcode and its settings toggle, then navigates to home.
-/// Mirrors [_disableBiometricAndGoHome].
 void _disablePasscodeAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(container.read(passcodeControllerProvider.notifier).disable());
@@ -64,13 +55,10 @@ void _disablePasscodeAndGoHome(BuildContext context) {
   context.goNamed(AppRoutes.home);
 }
 
-/// Returns to settings after the setup surface accepts a confirmed passcode.
 void _finishPasscodeSetup(BuildContext context) {
   context.goNamed(AppRoutes.settings);
 }
 
-/// Biometric 'unavailable -> passcode' handoff: when a passcode is configured,
-/// go there instead of disabling biometric and going home.
 void _useBiometricFallback(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   try {

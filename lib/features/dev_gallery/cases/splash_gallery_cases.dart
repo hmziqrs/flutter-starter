@@ -2,9 +2,6 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/splash/splash_page.dart';
 import 'package:starter/features/splash/splash_view_data.dart';
 
-/// Builds the in-app splash gallery cases (loading / done / error), each
-/// composing the production [SplashScene] with a deterministic
-/// [SplashViewData] fixture.
 List<GalleryCase> buildSplashGalleryCases() {
   return buildTypedGalleryCases<SplashViewData>(
     idPrefix: 'splash',

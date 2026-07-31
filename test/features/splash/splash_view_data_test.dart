@@ -11,7 +11,6 @@ void main() {
       expect(SplashFixtures.error.phase, SplashPhase.error);
 
       expect(SplashFixtures.values, hasLength(3));
-      // Fixtures are immutable value objects; reloading yields equal instances.
       expect(SplashFixtures.loading, SplashFixtures.loading);
     });
 

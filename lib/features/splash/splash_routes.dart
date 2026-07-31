@@ -7,8 +7,6 @@ List<RouteBase> buildSplashRoutes() => [
     name: AppRoutes.splash,
     path: AppRoutes.splashPath,
     builder: (context, state) => SplashPage(
-      // Goes to home; the onboarding redirect then sends fresh installs to
-      // /onboarding, and the HARD update-blocker redirect wins over both.
       onComplete: (_) => context.goNamed(AppRoutes.home),
     ),
   ),

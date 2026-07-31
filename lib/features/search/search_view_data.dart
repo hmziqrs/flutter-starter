@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'search_view_data.freezed.dart';
 
-/// A single typed search result matched over a local, feature-supplied corpus.
 @Freezed(toStringOverride: false)
 class SearchResultViewData with _$SearchResultViewData {
   const SearchResultViewData({
@@ -11,7 +10,6 @@ class SearchResultViewData with _$SearchResultViewData {
     this.subtitle = '',
   });
 
-  /// Stable identifier used as the list `ValueKey` seed.
   @override
   final String id;
 
@@ -20,8 +18,6 @@ class SearchResultViewData with _$SearchResultViewData {
   @override
   final String subtitle;
 
-  /// Case-insensitive, trimmed substring match over [title] and [subtitle]. An
-  /// empty/whitespace query matches every item.
   bool matches(String query) {
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) return true;
@@ -32,14 +28,11 @@ class SearchResultViewData with _$SearchResultViewData {
   String toString() => 'SearchResultViewData(id: $id, title: $title)';
 }
 
-/// The page-level view-data: the local corpus the search field filters.
 @freezed
 class SearchViewData with _$SearchViewData {
   SearchViewData({required Iterable<SearchResultViewData> results})
     : results = List<SearchResultViewData>.unmodifiable(results);
 
-  /// Fixture corpus sized to demonstrate pagination and matching. Real
-  /// consumers override `searchCorpusProvider`.
   factory SearchViewData.defaults() => SearchViewData(results: _fixtureResults);
 
   @override

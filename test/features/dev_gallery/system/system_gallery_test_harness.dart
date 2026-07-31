@@ -19,10 +19,6 @@ Widget systemGalleryTestApp({
   double bottomViewInset = 0,
 }) {
   return ProviderScope(
-    // Mirror the production composition root: the DiagnosticsPage case reads
-    // featureFlagsControllerProvider, experimentAssignmentsProvider, and
-    // cacheStoreProvider — each throws until its port is overridden. Seed the
-    // no-backend / real-local defaults for every system case.
     overrides: [
       platformCapabilitiesProvider.overrideWithValue(
         const PlatformCapabilities.nonTelevision(),

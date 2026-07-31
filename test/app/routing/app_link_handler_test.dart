@@ -170,7 +170,6 @@ void main() {
         handler.resolve(uri('https://evil.example.com/auth/login')),
         isNull,
       );
-      // Even a host that shares a parent domain is rejected: the match is exact.
       expect(
         handler.resolve(uri('https://sub.app.example.com/auth/login')),
         isNull,
@@ -214,10 +213,7 @@ void main() {
     });
 
     tearDown(() {
-      // The controller is single-subscription; close()'s returned future only
-      // completes once the done event reaches a listener, which these tests
-      // never attach. unawaited marks the close fire-and-forget so the test
-      // doesn't hang waiting for a non-existent subscriber.
+      // close()'s future never completes without a listener these tests never attach; unawaited avoids a hang.
       unawaited(controller.close());
     });
 
@@ -259,7 +255,6 @@ void main() {
 
     test('dispose is a safe no-op (does not close the caller-owned controller)', () async {
       StreamDeepLinkService(handler: handler, controller: controller).dispose();
-      // The controller is still usable (the test's tearDown closes it).
       controller.add(Uri.parse('https://app.example.com/'));
       await Future<void>.delayed(Duration.zero);
       expect(controller.isClosed, isFalse);
@@ -314,8 +309,6 @@ void main() {
   });
 }
 
-/// Minimal fake [AppLinkInbox] that returns a deterministic initial URI and/or a
-/// controlled stream. Avoids touching the platform channel in unit tests.
 class _StubInbox implements AppLinkInbox {
   _StubInbox({this.initial, this.stream});
 

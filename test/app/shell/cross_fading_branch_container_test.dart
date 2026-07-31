@@ -1,24 +1,3 @@
-// Focused coverage for `crossFadingBranchContainer` (design items 1-2 in
-// `docs/nested_navigation_design.md` -> "New coverage is required").
-//
-// The canonical golden harness renders gallery fixtures through `PreviewFrame`,
-// not `AppShell`, so it cannot exercise branch navigation. These tests mount a
-// minimal real `StatefulShellRoute` with `navigatorContainerBuilder:
-// crossFadingBranchContainer` and three trivial branches, then drive branch
-// changes with `router.go(...)` so the container actually builds and animates.
-//
-// They verify:
-//  1. Every `AnimatedOpacity` is correct at the initial, midpoint, and settled
-//     frames; inactive branches stay mounted but have pointer/focus/semantics/
-//     tickers disabled while only the current branch is interactive.
-//  2. `MediaQuery.disableAnimationsOf` collapses the duration to `Duration.zero`
-//     for an immediate swap, and a rapid A->B->C retarget never fully reveals a
-//     stale branch while still landing on the destination.
-//  3. `ExcludeFocus` actually *unfocuses* the outgoing branch at runtime when
-//     the current branch changes — the focus guarantee
-//     (docs/nested_navigation_design.md:152-156) that the wrapper-property
-//     assertions above do not exercise.
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,15 +16,12 @@ void main() {
       (tester) async {
         await _pumpShell(tester);
 
-        // Opacities: branch 0 (current) at 1, branches 1 and 2 at 0.
         final opacities = _currentOpacities(tester);
         expect(opacities, hasLength(3));
         expect(opacities[0], 1.0);
         expect(opacities[1], 0.0);
         expect(opacities[2], 0.0);
 
-        // Each branch's wrappers are present in stable index order so the
-        // current branch is the sole interactive/accessible/ticking one.
         expect(_ignorePointer(tester, 0).ignoring, isFalse);
         expect(_excludeFocus(tester, 0).excluding, isFalse);
         expect(_excludeSemantics(tester, 0).excluding, isFalse);
@@ -61,9 +37,6 @@ void main() {
           expect(_tickerMode(tester, i).enabled, isFalse, reason: 'branch $i tickers disabled');
         }
 
-        // Inactive branches stay mounted: their branch page widgets are still
-        // in the tree (lazily created once visited), but the wrappers exist
-        // regardless because the container always emits one per child.
         expect(_animatedOpacity(tester, 0), isNotNull);
         expect(_animatedOpacity(tester, 1), isNotNull);
         expect(_animatedOpacity(tester, 2), isNotNull);
@@ -75,23 +48,17 @@ void main() {
       (tester) async {
         await _pumpShell(tester);
 
-        // Switch to branch 1, then advance ~halfway through AppMotion.standard.
         _go(tester, '/b');
         await tester.pump();
         await tester.pump(AppMotion.standard ~/ 2);
 
         final opacities = _currentOpacities(tester);
-        // Outgoing branch 0 strictly between 0 and 1.
         expect(opacities[0], greaterThan(0));
         expect(opacities[0], lessThan(1));
-        // Incoming branch 1 strictly between 0 and 1.
         expect(opacities[1], greaterThan(0));
         expect(opacities[1], lessThan(1));
-        // Untouched branch 2 still fully transparent.
         expect(opacities[2], 0.0);
 
-        // Mid-fade the outgoing branch is still painted (not offstaged), so the
-        // handoff is a true cross-fade rather than a hide-then-reveal.
         expect(_ignorePointer(tester, 0).ignoring, isTrue);
         expect(_ignorePointer(tester, 1).ignoring, isFalse);
       },
@@ -109,7 +76,6 @@ void main() {
         expect(opacities[1], 1.0);
         expect(opacities[2], 0.0);
 
-        // After settling, branch 1 is the sole interactive branch.
         expect(_ignorePointer(tester, 1).ignoring, isFalse);
         expect(_tickerMode(tester, 1).enabled, isTrue);
         expect(_ignorePointer(tester, 0).ignoring, isTrue);
@@ -124,8 +90,6 @@ void main() {
       (tester) async {
         await _pumpShell(tester, disableAnimations: true);
 
-        // The reduce-motion guard in `_CrossFadingBranchContainer.build`
-        // collapses every wrapper's fade duration to `Duration.zero`.
         for (var i = 0; i < 3; i++) {
           expect(
             _animatedOpacity(tester, i).duration,
@@ -134,13 +98,10 @@ void main() {
           );
         }
 
-        // Initial opacities are still correct.
         final initial = _currentOpacities(tester);
         expect(initial[0], 1.0);
         expect(initial[1], 0.0);
 
-        // Switch branch; on the very next frame the destination is already at
-        // its target — there is no multi-frame fade.
         _go(tester, '/b');
         await tester.pump();
 
@@ -155,15 +116,6 @@ void main() {
       (tester) async {
         await _pumpShell(tester);
 
-        // Chain the retargets with bounded mid-pumps so neither fade settles.
-        // `go('/a')` against an initial location of '/a' is a route no-op; the
-        // subsequent `/b` and `/c` switches are what exercise retargeting from
-        // a partial opacity (B reversing back to 0, C rising from 0).
-        //
-        // Each step uses two pumps: the first applies the router rebuild and
-        // registers the AnimatedOpacity ticker; the second advances the fake
-        // clock so that ticker fires for that branch. A single combined pump
-        // would inspect the frame *before* the ticker fired.
         _go(tester, '/a');
         await _advance(tester, const Duration(milliseconds: 30));
         _expectNoStaleBranchFullyOpaque(tester, currentIndex: 0);
@@ -176,8 +128,6 @@ void main() {
         await _advance(tester, const Duration(milliseconds: 30));
         _expectNoStaleBranchFullyOpaque(tester, currentIndex: 2);
 
-        // After settling, destination C is fully opaque and the stale branches
-        // have completed their fade back to transparent.
         await tester.pumpAndSettle();
         final settled = _currentOpacities(tester);
         expect(settled[2], 1.0);
@@ -191,17 +141,6 @@ void main() {
     testWidgets(
       'ExcludeFocus unfocuses the outgoing branch when the current branch changes',
       (tester) async {
-        // Self-contained harness. The shared `_BranchPage`/`_pumpShell` helpers
-        // have no focusable widget and the existing wrapper-property assertions
-        // depend on the current child structure, so this case mounts its own
-        // minimal router over two trivial branches where branch 0 hosts a
-        // `Focus` widget with a `FocusNode` we control. That makes it possible
-        // to observe the runtime guarantee the widget-property assertions do
-        // NOT exercise: when the current branch changes, `ExcludeFocus` on the
-        // outgoing branch rebuilds with `excluding: true`, which marks its
-        // subtree non-focusable and removes primary focus from any focused
-        // descendant — even though the branch widget stays mounted (cross-fade
-        // out) and is still being painted.
         final branchAFocusNode = FocusNode(debugLabel: 'branch-a-focus');
         addTearDown(branchAFocusNode.dispose);
 
@@ -240,8 +179,6 @@ void main() {
         await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
-        // (a) While branch 0 is current, its node can take primary focus. This
-        //     confirms the harness is wired up and the node starts focusable.
         branchAFocusNode.requestFocus();
         await tester.pump();
         expect(
@@ -250,15 +187,9 @@ void main() {
           reason: 'branch 0 node should hold primary focus while branch 0 is current',
         );
 
-        // (b) Switch to branch 1.
         GoRouter.of(tester.element(find.byKey(hostKey))).go('/b');
         await tester.pumpAndSettle();
 
-        // (c) Load-bearing behavioral assertion: the outgoing branch's
-        //     `ExcludeFocus` rebuilt with `excluding: true`, marking its subtree
-        //     non-focusable. Any focused descendant loses primary focus, so the
-        //     branch-0 node is no longer primary focus even though the branch
-        //     widget is still mounted and cross-fading out.
         expect(
           FocusManager.instance.primaryFocus,
           isNot(branchAFocusNode),
@@ -267,9 +198,6 @@ void main() {
               're-enables on branch 0',
         );
 
-        // (d) Switching back re-enables `ExcludeFocus` on branch 0
-        //     (`excluding: false`), so the node is focusable again and can
-        //     re-take primary focus.
         GoRouter.of(tester.element(find.byKey(hostKey))).go('/a');
         await tester.pumpAndSettle();
         branchAFocusNode.requestFocus();
@@ -283,8 +211,6 @@ void main() {
     );
   });
 }
-
-// --- Shell harness ---------------------------------------------------------
 
 Future<void> _pumpShell(
   WidgetTester tester, {
@@ -321,15 +247,10 @@ Widget _host(
   StatefulNavigationShell shell, {
   required bool disableAnimations,
 }) {
-  // Tag the subtree so wrapper finders can scope to the container tree and
-  // ignore any incidental AnimatedOpacity the Material app adds elsewhere.
   final body = SizedBox(key: _hostKey, child: shell);
   if (!disableAnimations) {
     return body;
   }
-  // Wrapping the shell in a MediaQuery with `disableAnimations: true` makes
-  // `MediaQuery.disableAnimationsOf(context)` true at the container's context,
-  // exercising the reduce-motion branch.
   return MediaQuery(
     data: MediaQuery.of(context).copyWith(disableAnimations: true),
     child: body,
@@ -341,11 +262,7 @@ void _go(WidgetTester tester, String location) {
   GoRouter.of(ctx).go(location);
 }
 
-/// Pumps a frame to apply the router rebuild and register the AnimatedOpacity
-/// ticker, then advances the fake clock by [duration] so that ticker fires on
-/// the next frame's transient-callback phase. The test binding fires transient
-/// callbacks (where tickers report elapsed time) BEFORE the build phase that
-/// registers them, so a single combined pump would inspect the pre-tick frame.
+/// Two-step pump: transient ticker callbacks fire before the build registering the AnimatedOpacity ticker.
 Future<void> _advance(WidgetTester tester, Duration duration) async {
   await tester.pump();
   await tester.pump(duration);
@@ -365,22 +282,13 @@ class _BranchPage extends StatelessWidget {
   }
 }
 
-// --- Wrapper finders -------------------------------------------------------
-// The container emits a stable index-ordered child list, so the Nth wrapper of
-// each type corresponds to branch N. Finders are scoped under `_hostKey` to
-// avoid matching incidental AnimatedOpacity/IgnorePointer/etc. from the
-// surrounding Material app.
-
 AnimatedOpacity _animatedOpacity(WidgetTester tester, int branchIndex) {
   return tester
       .widgetList<AnimatedOpacity>(_scoped(find.byType(AnimatedOpacity)))
       .elementAt(branchIndex);
 }
 
-/// The Nth `AnimatedOpacity` we emit corresponds to branch N. The active
-/// branch's `Navigator` also contributes its own `IgnorePointer`s (and other
-/// gate widgets) deeper in the subtree, so wrapper lookups must scope to our
-/// `AnimatedOpacity` rather than the global widget list.
+/// Scope to our AnimatedOpacity: the branch Navigator also emits IgnorePointer/gate widgets deeper down.
 Element _branchWrapper(WidgetTester tester, int branchIndex) {
   return tester.elementList(_scoped(find.byType(AnimatedOpacity))).elementAt(branchIndex);
 }
@@ -409,9 +317,7 @@ ExcludeSemantics _excludeSemantics(WidgetTester tester, int branchIndex) =>
 TickerMode _tickerMode(WidgetTester tester, int branchIndex) =>
     _branchWrapperDescendant<TickerMode>(tester, branchIndex);
 
-/// Current animated opacity values read from the render objects, not the
-/// widget's target. Mid-flight `widget.opacity` is the destination; the
-/// underlying `Animation<double>.value` is the live interpolated value.
+/// Reads the render object's live value: mid-flight widget.opacity is the destination, not the current value.
 List<double> _currentOpacities(WidgetTester tester) {
   return tester
       .renderObjectList<RenderAnimatedOpacity>(

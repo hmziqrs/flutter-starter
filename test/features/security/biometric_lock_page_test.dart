@@ -10,8 +10,6 @@ import 'package:starter/infrastructure/biometric/biometric_authenticator_provide
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// Test-only controller that reports a fixed [BiometricLockState] and never
-/// reaches the OS availability check (mirrors the dev-gallery pin).
 class _PinnedBiometricUnlockController extends BiometricUnlockController {
   _PinnedBiometricUnlockController(this.pinnedState);
 
@@ -83,11 +81,7 @@ void main() {
     expect(find.text(translations.lockTitle), findsOneWidget);
     expect(find.text(translations.lockBody), findsOneWidget);
     expect(find.text(translations.unlock), findsOneWidget);
-    // The PIN / device-credential handoff seam is reachable ONLY when biometric
-    // is unavailable. In the locked+available case a ghost fallback was a C5
-    // no-trap/no-loop violation (it routed to /passcode but never cleared the
-    // biometric lock, so /home bounced straight back to /lock), so it is now
-    // suppressed here.
+    // A ghost fallback in this locked+available case caused a /lock -> /home -> /lock loop.
     expect(find.text(translations.useFallback), findsNothing);
   });
 
@@ -111,8 +105,6 @@ void main() {
     final translations = tester.element(find.byType(BiometricLockPage)).t.security.biometric;
     expect(find.text(translations.unavailableTitle), findsOneWidget);
     expect(find.text(translations.unavailableBody), findsOneWidget);
-    // Unavailable hides the unlock button (it can never succeed) and surfaces
-    // the fallback as the primary action.
     expect(find.text(translations.unlock), findsNothing);
     expect(find.text(translations.useFallback), findsOneWidget);
   });
@@ -132,7 +124,6 @@ void main() {
         ),
       ),
     );
-    // Let the availability future resolve and the controller settle on locked.
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }

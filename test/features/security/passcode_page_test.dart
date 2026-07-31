@@ -44,8 +44,7 @@ ProviderScope _scope({required Widget child}) {
 }
 
 Future<void> _settle(WidgetTester tester) async {
-  // Motion-guarded pages are never settled with pumpAndSettle (timers may keep
-  // the phase alive). Eight bounded frames mirror pumpAppFrames.
+  // pumpAndSettle never settles motion-guarded pages (repeating timers), so pump bounded frames.
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
@@ -122,8 +121,6 @@ void main() {
 
   testWidgets('entry with the correct passcode fires onUnlocked', (tester) async {
     var unlocked = 0;
-    // Seed the controller with a configured, armed passcode so the entry
-    // surface can verify against it.
     const hasher = CryptoPasscodeHasher();
     final salt = hasher.generateSalt();
     final hash = hasher.saltAndHash('2580', salt);

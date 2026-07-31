@@ -16,8 +16,6 @@ void main() {
         const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
       );
 
-      // The non-default value is persisted; the rest of the appearance defaults
-      // remain at their cold-start writes (themeMode/accent/fontScale).
       expect(store.snapshot[SettingsRepository.onboardingKey], 'true');
 
       final loaded = await repository.load();

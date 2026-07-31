@@ -19,7 +19,6 @@ void main() {
     await server.close(force: true);
   });
 
-  /// Status code and body the stub server returns on the next request.
   int? nextStatus;
   Object? nextBody;
 
@@ -37,8 +36,6 @@ void main() {
       });
   }
 
-  /// Builds a remote source pointed at [server] with a deterministic fallback
-  /// sharing the given [fallbackStore] (so the degrade path is observable).
   RemoteConfigExperimentSource sourceFor(
     HttpServer server, {
     required DeterministicExperimentSource fallback,
@@ -108,17 +105,15 @@ void main() {
 
     test('a missing entry degrades to the deterministic fallback', () async {
       nextStatus = HttpStatus.ok;
-      nextBody = payload(const <String, Object?>{}); // no paywall entry
+      nextBody = payload(const <String, Object?>{});
       await startServer();
       final store = InMemorySettingsStore();
       final fallback = deterministic(store);
       final source = sourceFor(server, fallback: fallback);
 
       final assignment = await source.assignmentFor(ExperimentKey.paywallLayout);
-      // Degrade is a real local assignment (sticky, local source).
       expect(assignment.source, ExperimentAssignmentSource.local);
       expect(assignment.sticky, isTrue);
-      // The fallback persisted a stable id under the canonical key.
       expect(
         await store.readString(DeterministicExperimentSource.defaultStableIdKey),
         isNotNull,
@@ -194,23 +189,17 @@ void main() {
         fallback: deterministic(InMemorySettingsStore()),
       );
 
-      // Drive one assignmentFor per known key concurrently (mirrors the
-      // controller's Future.wait refresh cycle).
       final results = await Future.wait(
         <Future<ExperimentAssignment>>[
           for (final key in ExperimentKey.values) source.assignmentFor(key),
         ],
       );
 
-      // All keys resolved; the server saw exactly one round-trip.
       expect(results.length, ExperimentKey.values.length);
       expect(requests, 1);
     });
 
     test('DeterministicExperimentSource is the no-backend peer (sanity)', () async {
-      // Documents the C4 contract: three peer sources, one shared client. The
-      // deterministic default needs no backend and resolves a sticky local
-      // assignment.
       final fallback = deterministic(InMemorySettingsStore());
       final assignment = await fallback.assignmentFor(ExperimentKey.paywallLayout);
       expect(assignment.source, ExperimentAssignmentSource.local);

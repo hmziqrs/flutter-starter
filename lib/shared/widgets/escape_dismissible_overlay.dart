@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Gives modal content a consistent keyboard Escape dismissal action.
 class EscapeDismissibleOverlay extends StatefulWidget {
   const EscapeDismissibleOverlay({required this.child, super.key});
 

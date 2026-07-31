@@ -13,11 +13,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
-/// Focus-order hardening for the accessibility-preset selector. Verifies the
-/// preset tiles traverse in declared enum order (comfortable -> large ->
-/// dyslexia) under keyboard Tab, in both LTR (en) and RTL (ar) — the
-/// tile order is layout-driven and must not invert under RTL (FTile reverses
-/// content horizontally but the vertical tab order is the widget tree order).
 void main() {
   setUp(() async {
     await LocaleSettings.setLocale(AppLocale.en);
@@ -27,7 +22,6 @@ void main() {
     await tester.pumpWidget(_harness(locale: AppLocale.en));
     await _settle(tester);
 
-    // Tab into the page. The first focusable preset tile is comfortable.
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
     expect(_focusedPresetKey(tester), 'a11y-preset-comfortable');
@@ -89,20 +83,13 @@ void main() {
   });
 }
 
-/// Bounded frame pump (checklist #5 — never pumpAndSettle).
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
 }
 
-/// Returns the ValueKey string of the preset tile that currently holds primary
-/// focus, or null when no preset tile is focused.
-///
-/// The `a11y-preset-*` key sits on the `FTile`, which builds its own `Focus`
-/// subtree around the title/subtitle content. `Focus.of` looks UP for a Focus
-/// ancestor, so we probe a descendant (the title text) that lives inside that
-/// subtree rather than the `FTile` element itself.
+/// The focus node lives inside FTile's own subtree, so probe a descendant Text, not FTile.
 String? _focusedPresetKey(WidgetTester tester) {
   for (final preset in AppTextPreset.values) {
     final node = Focus.of(

@@ -232,9 +232,6 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
       dependencies: AppDependencies.inMemory(
         platformCapabilities: capabilities,
-        // The floating announcement banner overlaps the top of the home page;
-        // dismiss the whole feed so it never occludes the navigation targets
-        // these keyboard cases tap. Banner behavior has its own coverage.
         dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
       ),
     ),

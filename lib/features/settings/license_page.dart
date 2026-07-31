@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
-/// Thin wrapper over Flutter's built-in [LicensePage], forwarding the build
-/// version and localized app name.
 class AboutLicensePage extends StatefulWidget {
   const AboutLicensePage({this.applicationName, super.key});
 
-  /// Defaults to the localized app name when omitted.
   final String? applicationName;
 
   @override
@@ -33,7 +30,6 @@ class _AboutLicensePageState extends State<AboutLicensePage> {
     );
   }
 
-  /// Falls back to `'—'` when [AppBuildInfo] is missing or blank.
   static String _resolveVersion(AppBuildInfo? info) {
     if (info == null) {
       return '—';

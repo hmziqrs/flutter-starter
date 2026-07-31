@@ -57,7 +57,6 @@ void main() {
       final state = container.read(feedbackControllerProvider);
       expect(state.draft.message, 'hello');
       expect(state.presentation.status, FeedbackPresentationStatus.drafting);
-      // Flush the 400ms debounce.
       await Future<void>.delayed(const Duration(milliseconds: 600));
       expect(store.snapshot[feedbackDraftMessageKey], 'hello');
     });
@@ -91,12 +90,10 @@ void main() {
       container.read(feedbackControllerProvider.notifier).setMessage('a real report');
       final accepted = await container.read(feedbackControllerProvider.notifier).submit();
       expect(accepted, isFalse);
-      // The honest no-backend path: failed, never success.
       expect(
         container.read(feedbackControllerProvider).presentation.status,
         FeedbackPresentationStatus.failed,
       );
-      // Draft is retained for retry on failure.
       expect(container.read(feedbackControllerProvider).draft.message, 'a real report');
     });
 
@@ -105,8 +102,6 @@ void main() {
       final store = InMemorySettingsStore();
       final container = _container(transport: transport, store: store);
       container.read(feedbackControllerProvider.notifier).setMessage('report');
-      // Flush the debounced persist so the keys are written before the accept
-      // clears them.
       await Future<void>.delayed(const Duration(milliseconds: 600));
       expect(store.snapshot[feedbackDraftMessageKey], 'report');
       final accepted = await container.read(feedbackControllerProvider.notifier).submit();
@@ -115,10 +110,8 @@ void main() {
         container.read(feedbackControllerProvider).presentation.status,
         FeedbackPresentationStatus.success,
       );
-      // Draft cleared in-memory AND in the store.
       expect(container.read(feedbackControllerProvider).draft.message, '');
       expect(store.snapshot[feedbackDraftMessageKey], isNull);
-      // The submission carries the app metadata (no PII beyond the message).
       expect(transport.submissions.single.message, 'report');
       expect(transport.submissions.single.appMetadata, _metadata);
     });
@@ -152,9 +145,6 @@ void main() {
     });
 
     test('draft persists across controller rebuild via the seed', () async {
-      // Simulate the composition-root seed: write the draft to the store, then
-      // build a fresh container whose initialFeedbackDraftProvider reads it
-      // back (decodeFeedbackDraft mirrors the production decode).
       final store = InMemorySettingsStore();
       await store.writeString(feedbackDraftMessageKey, 'persisted across cold start');
       await store.writeString(feedbackDraftEmailKey, 'u@example.com');

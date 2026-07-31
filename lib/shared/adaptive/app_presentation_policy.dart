@@ -1,16 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 
-/// The distance-oriented viewing environment used by presentation policy.
-///
-/// Layout width is deliberately absent. A narrow deterministic preview can
-/// exercise ten-foot behavior without changing its structural layout class.
 enum AppViewingEnvironment {
   nearField,
   tenFoot,
 }
 
-/// The stable viewing and input policy shared by application presentation.
 @immutable
 final class AppPresentationPolicy {
   const AppPresentationPolicy({
@@ -27,7 +22,6 @@ final class AppPresentationPolicy {
       interactionPolicy == AppInteractionPolicy.remote ||
       interactionPolicy == AppInteractionPolicy.hybridRemote;
 
-  /// Returns the presentation policy exposed by the nearest scope.
   static AppPresentationPolicy of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppPresentationScope>();
     if (scope == null) {
@@ -55,7 +49,6 @@ final class AppPresentationPolicy {
   int get hashCode => Object.hash(viewingEnvironment, interactionPolicy);
 }
 
-/// Exposes one immutable presentation policy to layout and theme consumers.
 class AppPresentationScope extends InheritedWidget {
   const AppPresentationScope({
     required this.policy,

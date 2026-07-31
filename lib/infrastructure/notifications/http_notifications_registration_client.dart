@@ -1,18 +1,10 @@
 import 'dart:convert';
 
-// Doc comments intentionally reference sibling feature-package types.
-// ignore_for_file: comment_references
-
 import 'package:dio/dio.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/notifications_registration.dart';
 
-/// Real HTTP [NotificationsRegistration] client against the test-server push
-/// contract. Constructed only in the test/dev graph or by
-/// `FirebaseNotificationsRepository` when a consumer passes a configured
-/// endpoint; never in `AppDependencies.production` directly (the
-/// [NoopNotificationsRepository] is the production default).
 final class HttpNotificationsRegistrationClient implements NotificationsRegistration {
   HttpNotificationsRegistrationClient({required Uri baseUrl, Dio? dio})
     : _dio = dio ?? buildAppDio(baseUrl);
@@ -64,8 +56,6 @@ final class HttpNotificationsRegistrationClient implements NotificationsRegistra
     );
   }
 
-  /// 2xx succeeds; 4xx surfaces [NotificationsException.unknown]; anything
-  /// else (5xx / transport) surfaces [NotificationsException.notConnected].
   Future<void> _roundTrip(Future<Response<String>> Function() send) async {
     final Response<String> response;
     try {

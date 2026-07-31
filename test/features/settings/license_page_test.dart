@@ -11,16 +11,12 @@ import 'package:starter/shared/theme/forui_theme_factory.dart';
 void main() {
   group('AboutLicensePage', () {
     setUp(() async {
-      // Locale pinned so the rendered strings are deterministic and the title
-      // lookup below matches exactly.
       await LocaleSettings.setLocale(AppLocale.en);
     });
 
     testWidgets('renders the license title and version from a package_info fixture', (
       tester,
     ) async {
-      // Seed the binding with a deterministic package_info fixture so the page's
-      // AppBuildInfo.load() resolves without a real platform channel.
       PackageInfo.setMockInitialValues(
         appName: 'Starter',
         packageName: 'com.example.starter',
@@ -30,21 +26,14 @@ void main() {
       );
 
       await tester.pumpWidget(_harness());
-      // Let the AppBuildInfo future resolve; never pumpAndSettle to avoid
-      // depending on animation completion (the license list itself is static).
       await tester.pump(const Duration(milliseconds: 10));
 
-      // The localized license title (locale pinned to en in setUp) is rendered
-      // as the app bar heading. findsWidgets because the Material LicensePage
-      // also exposes the title in its own header chrome.
+      // findsWidgets: Material's LicensePage also renders this title in its header.
       expect(find.text('Licenses'), findsWidgets);
-      // The version + buildNumber fixture surfaces in the LicensePage header.
       expect(find.text('1.2.3+42'), findsOneWidget);
     });
 
     testWidgets('degrades to a dash when PackageInfo is unavailable', (tester) async {
-      // A blank fixture (no version) still builds the page; the FutureBuilder
-      // falls back to the honest dash rather than throwing into the list.
       PackageInfo.setMockInitialValues(
         appName: '',
         packageName: '',
@@ -57,9 +46,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 10));
 
       expect(find.text('Licenses'), findsWidgets);
-      // Empty version+buildNumber -> displayValue is '+', which is not a useful
-      // label, so the page degrades to the honest dash placeholder (no
-      // fabricated version string).
       expect(find.text('—'), findsOneWidget);
     });
 

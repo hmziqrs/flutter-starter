@@ -78,10 +78,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
   String get restorationId => 'reset-password-view';
 
   @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    // No restorable properties: both fields are new passwords, and secrets
-    // never participate in restoration.
-  }
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {}
 
   @override
   void initState() {

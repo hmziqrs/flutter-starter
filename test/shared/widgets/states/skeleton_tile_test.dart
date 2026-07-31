@@ -21,7 +21,6 @@ void main() {
 
       expect(find.byType(SkeletonTile), findsOneWidget);
       expect(find.byType(FCard), findsOneWidget);
-      // Leading avatar + title line + subtitle line.
       expect(find.byType(SkeletonCircle), findsOneWidget);
       expect(find.byType(SkeletonLine), findsNWidgets(2));
       expect(tester.takeException(), isNull);
@@ -67,7 +66,6 @@ void main() {
 
       expect(find.byType(SkeletonCard), findsOneWidget);
       expect(find.byType(FCard), findsOneWidget);
-      // 1 icon box + 1 title line + 3 body lines, each line renders a box.
       expect(find.byType(SkeletonLine), findsNWidgets(4));
       expect(find.byType(SkeletonBox), findsNWidgets(5));
     });

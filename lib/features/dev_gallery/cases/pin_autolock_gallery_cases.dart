@@ -7,11 +7,6 @@ import 'package:starter/features/security/passcode_page.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
-/// Builds the passcode + auto-lock gallery cases: the entry surface in its
-/// three runtime states (idle, error, locked-out) and the setup surface with a
-/// confirm-mismatch. The controller is pinned via a gallery-only override
-/// backed by an in-memory [SecureStore], so a stray submit never reaches the
-/// keychain.
 List<GalleryCase> buildPinAutolockGalleryCases() {
   return [
     TypedGalleryCase<_PasscodeFixture>(
@@ -58,8 +53,6 @@ final class _PasscodeFixture {
   const _PasscodeFixture();
 }
 
-/// Pins [PasscodePage] inside a nested [ProviderScope] so the preview never
-/// reaches the OS keychain and never navigates.
 class _PasscodePreview extends StatelessWidget {
   const _PasscodePreview({required this.state, this.lockedOut = false, this.setup = false});
 
@@ -86,8 +79,6 @@ class _PasscodePreview extends StatelessWidget {
   }
 }
 
-/// Gallery-only `PasscodeController` that returns a fixed state and never
-/// reads the keychain.
 class _PinnedPasscodeController extends PasscodeController {
   _PinnedPasscodeController({required this.lockedOut});
 
@@ -115,7 +106,6 @@ class _PinnedPasscodeController extends PasscodeController {
   Future<PasscodeVerifyResult> verify(String pin) async => PasscodeVerifyResult.incorrect;
 }
 
-/// In-memory [SecureStore] whose reads always return nothing.
 final class _EmptySecureStore implements SecureStore {
   @override
   Future<String?> read(String key) async => null;

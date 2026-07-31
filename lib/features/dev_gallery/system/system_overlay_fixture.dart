@@ -10,7 +10,6 @@ import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 part 'system_overlay_fixture.freezed.dart';
 
-/// The deterministic ForUI overlay state rendered by the development gallery.
 enum SystemOverlayFixtureKind {
   dialog,
   sheet,
@@ -20,14 +19,12 @@ enum SystemOverlayFixtureKind {
   keyboardInset,
 }
 
-/// Immutable input for a development-only overlay fixture.
 @freezed
 abstract class SystemOverlayFixtureState with _$SystemOverlayFixtureState {
   const factory SystemOverlayFixtureState({required SystemOverlayFixtureKind kind}) =
       _SystemOverlayFixtureState;
 }
 
-/// A development-only host for exercising real ForUI overlay controls.
 class SystemOverlayFixturePage extends StatelessWidget {
   const SystemOverlayFixturePage({required this.state, super.key});
 

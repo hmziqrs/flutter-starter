@@ -3,12 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 
-/// A themed loading-state card for async lists that are still in flight.
-///
-/// Renders a centered stack inside an [FCard] built around the shared
-/// [BusyIndicator] primitive. The indeterminate spinner is shown only when
-/// [MediaQuery.disableAnimationsOf] is false; under reduce-motion a static
-/// localized [title] label replaces it.
 class LoadingStateView extends StatelessWidget {
   const LoadingStateView({
     required this.title,
@@ -17,15 +11,10 @@ class LoadingStateView extends StatelessWidget {
     super.key,
   });
 
-  /// Localized caption shown beneath the spinner and as the static
-  /// reduce-motion label (e.g. `states.loadingTitle`).
   final String title;
 
-  /// Determinate progress fraction (`0.0..1.0`); `null` (the default) renders
-  /// an indeterminate [BusyIndicator].
   final double? value;
 
-  /// Accessibility label forwarded to the [BusyIndicator]. Defaults to [title].
   final String? semanticsLabel;
 
   @override

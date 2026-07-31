@@ -14,7 +14,6 @@ String _caseLabel(Translations t, ConnectivityState state) => switch (state) {
   ConnectivityState.limited => t.connectivity.limited,
 };
 
-/// Builds the connectivity banner gallery cases (online / offline / limited).
 List<GalleryCase> buildConnectivityGalleryCases() {
   return [
     for (final state in ConnectivityState.values)
@@ -61,8 +60,6 @@ class _ConnectivityPreview extends StatelessWidget {
   }
 }
 
-/// Gallery-only [ConnectivityService] pinned to a single state. A deterministic
-/// fixture (no plugin, no timers, no persistence) — never fakes an action.
 final class _FixedConnectivityService implements ConnectivityService {
   const _FixedConnectivityService(this.state);
 

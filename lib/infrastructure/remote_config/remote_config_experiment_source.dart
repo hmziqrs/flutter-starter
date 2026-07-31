@@ -7,25 +7,7 @@ import 'package:starter/features/experiments/experiment_variant.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/remote_config/remote_config_client.dart';
 
-/// Optional remote-config-backed [ExperimentSource]. Reads only the
-/// `experiments` slice from the one shared [RemoteConfigClient] — it never
-/// opens its own `HttpClient`.
-///
-/// Constructed at the composition root only when a consumer wires the
-/// backend; never the default. Every backend interaction degrades to the
-/// injected [fallback] on any failure (fetch, parse, or missing entry) rather
-/// than fabricating an assignment. `changes` emits nothing since the backend
-/// is poll-based; live refresh flows through the controller's resume-driven
-/// `assignmentFor`.
-///
-/// The controller drives one `assignmentFor` per known key per refresh cycle;
-/// the in-flight coalescer ([_inFlight]) collapses those onto a single
-/// `GET /v1/remote-config` round-trip.
 final class RemoteConfigExperimentSource implements ExperimentSource {
-  /// Constructs a source that reads the `experiments` slice from a
-  /// [RemoteConfigClient] configured with [baseUrl], [deviceId], and [timeout],
-  /// degrading to [fallback] on any backend failure. [buildInfo] is the
-  /// installed build sent as the `version` query hint.
   RemoteConfigExperimentSource({
     required Uri baseUrl,
     required AppBuildInfo buildInfo,
@@ -38,8 +20,6 @@ final class RemoteConfigExperimentSource implements ExperimentSource {
          fallback: fallback,
        );
 
-  /// Constructs a source backed by an explicit [client]. The default
-  /// constructor redirects here; tests inject a stub client through this form.
   @visibleForTesting
   RemoteConfigExperimentSource.withClient(
     this.client, {
@@ -47,22 +27,14 @@ final class RemoteConfigExperimentSource implements ExperimentSource {
     required this.fallback,
   });
 
-  /// The single shared remote-config backend wrapper.
   final RemoteConfigClient client;
 
-  /// The installed build, sent as the `version` query hint.
   final AppBuildInfo buildInfo;
 
-  /// The deterministic local table this source degrades to on any backend
-  /// failure, missing entry, or malformed payload.
   final ExperimentSource fallback;
 
-  /// Last successfully fetched payload, returned on a subsequent fetch
-  /// failure so a backend blip degrades to the last known good slice.
   RemoteConfigPayload? _cached;
 
-  /// In-flight fetch future; coalesces concurrent `assignmentFor` calls onto
-  /// one round-trip. Cleared in `finally` so the next cycle fetches again.
   Future<RemoteConfigPayload?>? _inFlight;
 
   @override
@@ -96,9 +68,6 @@ final class RemoteConfigExperimentSource implements ExperimentSource {
   @override
   Stream<List<ExperimentAssignment>> changes() => const Stream<List<ExperimentAssignment>>.empty();
 
-  /// Fetches the payload once per refresh cycle, coalescing concurrent calls.
-  /// On any failure, returns the last cached payload (or `null` if none) so
-  /// [assignmentFor] degrades to the local table — never throws.
   Future<RemoteConfigPayload?> _payload() async {
     final inflight = _inFlight;
     if (inflight != null) {
@@ -131,8 +100,6 @@ final class RemoteConfigExperimentSource implements ExperimentSource {
   static String? _asString(Object? raw) => raw is String ? raw : null;
 }
 
-/// Shares one fetch result across concurrent callers via the in-flight
-/// coalescer.
 class _PayloadCompleter {
   _PayloadCompleter() : _completer = Completer<RemoteConfigPayload?>();
 

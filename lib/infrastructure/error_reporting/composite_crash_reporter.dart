@@ -1,10 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 
-/// [CrashReporter] that fans every call out to a list of backends,
-/// sequentially, each isolated in its own `try/on Object` so one failing or
-/// unavailable backend never blocks the rest. Constructed at the composition
-/// root to dual-report crashes (e.g. Sentry and Firebase Crashlytics).
 final class CompositeCrashReporter implements CrashReporter {
   CompositeCrashReporter(List<CrashReporter> reporters)
     : _reporters = List<CrashReporter>.unmodifiable(reporters);

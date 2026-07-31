@@ -69,13 +69,6 @@ class _RegistryCaseHost extends StatelessWidget {
         platformCapabilitiesProvider.overrideWithValue(
           dependencies.platform.platformCapabilities,
         ),
-        // Mirror the production composition root (app.dart): the DiagnosticsPage
-        // gallery case reads featureFlagsControllerProvider +
-        // experimentAssignmentsProvider + cacheStoreProvider, each of which
-        // throws until its port is overridden; the feedback gallery cases read
-        // feedbackControllerProvider (-> transport / metadata / draft). Seed the
-        // no-backend / real-local defaults from AppDependencies.inMemory so every
-        // registered case mounts without a composition-root gap.
         featureFlagsSourceProvider.overrideWithValue(dependencies.remoteConfig.featureFlagsSource),
         experimentSourceProvider.overrideWithValue(dependencies.remoteConfig.experimentSource),
         cacheStoreProvider.overrideWithValue(dependencies.storage.cacheStore),

@@ -12,17 +12,8 @@ import 'package:starter/features/session/auth_session.dart';
 
 part 'otp_controller.freezed.dart';
 
-/// Family key for [otpControllerProvider]: `(purpose, identifier)` resolves to
-/// the same controller instance, keeping a registration OTP and an MFA OTP for
-/// the same identifier independent.
 typedef OtpControllerKey = ({OtpPurpose purpose, String identifier});
 
-/// Immutable runtime state surfaced by [OtpController] to the OTP page.
-///
-/// Composes the fixture-friendly [OtpPresentationState] with the live,
-/// controller-owned fields a static fixture cannot carry: [remainingSeconds]
-/// (live expiry countdown), [attemptsRemaining] (read from the shared
-/// [AttemptTracker]), and [isExpired].
 @freezed
 abstract class OtpControllerState with _$OtpControllerState {
   @Assert('remainingSeconds >= 0', 'remainingSeconds must not be negative.')
@@ -37,27 +28,14 @@ abstract class OtpControllerState with _$OtpControllerState {
 
   const OtpControllerState._();
 
-  /// The session a registration-purpose verify issued inline; `null` for
-  /// every other outcome/purpose. The registration OTP page publishes this via
-  /// `SessionController.establish` before navigating home.
-  /// `true` while the shared tracker has locked this identifier out.
   bool get isLocked => presentation.status == OtpPresentationStatus.locked;
 
-  /// `true` while a network call is in flight (issue / verify / resend).
   bool get isBusy =>
       presentation.status == OtpPresentationStatus.submitting ||
       presentation.status == OtpPresentationStatus.resending;
 }
 
-/// Handwritten Riverpod family [NotifierProvider] over [OtpControllerState].
-///
-/// One controller per `(OtpPurpose, identifier)`. Owns the expiry `Timer` and
-/// submit/resend transitions; reuses the shared [AttemptTracker] so the OTP
-/// and sign-in lockout are one schedule. Countdown ticks read `clock.now()`
-/// (package:clock) so tests stay deterministic under `FakeAsync` —
-/// `DateTime.now()` ignores the fake clock.
-// The family builder returns a private `NotifierProviderFamily<...>` type not
-// part of flutter_riverpod's public API, so the top-level type is inferred.
+// Family builder returns a private Riverpod family type; the top-level type is inferred.
 // ignore: specify_nonobvious_property_types
 final otpControllerProvider =
     NotifierProvider.family<OtpController, OtpControllerState, OtpControllerKey>(
@@ -67,7 +45,6 @@ final otpControllerProvider =
 final class OtpController extends Notifier<OtpControllerState> {
   OtpController(this.key);
 
-  /// The `(purpose, identifier)` this instance owns.
   final OtpControllerKey key;
 
   Timer? _countdown;
@@ -82,9 +59,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     return OtpControllerState(attemptsRemaining: _freeAttemptsNow());
   }
 
-  /// Requests a fresh code from the backend and starts the expiry countdown.
-  /// On [OtpRepositoryException] the state becomes `globalFailure` — never a
-  /// faked issued code.
   Future<void> requestIssue() async {
     if (state.isBusy) return;
     state = state.copyWith(presentation: const OtpPresentationState.submitting());
@@ -99,9 +73,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     }
   }
 
-  /// Verifies [code] and drives the typed transition. Returns whether the
-  /// code was valid. An `invalid`/`locked` outcome records a tracker failure;
-  /// a locked schedule surfaces `locked` with the tracker's cooldown seconds.
   Future<bool> verify(String code) async {
     if (state.isBusy || state.isLocked) return false;
     state = state.copyWith(presentation: const OtpPresentationState.submitting());
@@ -109,8 +80,6 @@ final class OtpController extends Notifier<OtpControllerState> {
       final result = await _repository.verify(identifier: key.identifier, code: code);
       switch (result.outcome) {
         case OtpVerifyOutcome.valid:
-          // Clear the tracker on success so a prior typo is not one failure
-          // away from a lockout.
           _tracker.recordSuccess(key.identifier);
           _countdown?.cancel();
           state = state.copyWith(
@@ -132,7 +101,6 @@ final class OtpController extends Notifier<OtpControllerState> {
           );
           return false;
         case OtpVerifyOutcome.locked:
-          // Server-side 429 agrees with the client cooldown.
           return _applyFailure();
       }
     } on OtpRepositoryException {
@@ -141,9 +109,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     }
   }
 
-  /// Resends the code and restarts the countdown from the refreshed expiry.
-  /// Returns `true` on success; on [OtpRepositoryException] the state becomes
-  /// `globalFailure` — never a faked "code sent".
   Future<bool> resend() async {
     if (state.isBusy || state.isLocked) return false;
     state = state.copyWith(presentation: const OtpPresentationState.resending());
@@ -157,8 +122,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     }
   }
 
-  /// Records a tracker failure and maps the result to `locked` or `invalid`.
-  /// Always returns `false`.
   bool _applyFailure() {
     final attempt = _tracker.recordFailure(key.identifier);
     final now = clock.now();
@@ -172,8 +135,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     return false;
   }
 
-  /// (Re)starts the expiry countdown from [expiresAt]. Reaching zero flips the
-  /// state to `expired` and cancels the timer.
   void _startCountdown(DateTime expiresAt) {
     _countdown?.cancel();
     final start = expiresAt.difference(clock.now()).inSeconds;
@@ -208,7 +169,6 @@ final class OtpController extends Notifier<OtpControllerState> {
     });
   }
 
-  /// Free attempts left before the next lockout, read from the shared tracker.
   int _freeAttemptsNow() {
     final recorded = _tracker.read(key.identifier);
     if (recorded == null) return freeAttemptsBeforeLockout;

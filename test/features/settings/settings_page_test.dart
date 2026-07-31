@@ -17,8 +17,6 @@ void main() {
     _setViewport(tester, const Size(390, 844));
     await LocaleSettings.setLocale(AppLocale.en);
     await tester.pumpWidget(
-      // The compact overview taps into Account -> Profile (/profile/edit), which
-      // is auth-required (C5 session gate); seed an authenticated session.
       _app(initialLocation: '/settings', initialSession: _authenticatedSession),
     );
     await tester.pumpAndSettle();
@@ -54,18 +52,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-view-pricing')));
     await tester.pumpAndSettle();
     expect(find.text('Plans for the way you work'), findsOneWidget);
-    // settings.onOpenPricing is now a branch switch (_goTab), not a push, so
-    // there is no in-app Back edge from Pricing to the subscription section.
     expect(
       GoRouter.of(tester.element(find.text('Plans for the way you work'))).canPop(),
       isFalse,
     );
 
-    // Pricing opens as a sibling branch, so system Back no longer returns to
-    // the subscription section. Retapping the Settings bottom-nav must restore
-    // the saved settings stack via reset-on-retap (goBranch without
-    // initialLocation), surfacing the subscription section's pricing affordance
-    // again.
     await tester.tap(
       find.descendant(
         of: find.byKey(const ValueKey('compact-navigation')),
@@ -77,9 +68,6 @@ void main() {
 
     await tester.pumpWidget(_app(initialLocation: '/settings?section=privacy-about'));
     await tester.pumpAndSettle();
-    // The Wave-6 pin-autolock tile grew the privacy-about section past the
-    // test viewport, so the Terms affordance sits below the fold. Scroll it
-    // into view so the tap reaches the handler (mirrors tapVisible).
     await tester.ensureVisible(find.byKey(const ValueKey('settings-open-terms')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-open-terms')).hitTestable());
@@ -243,8 +231,6 @@ final _developmentConfig = AppConfig(
   allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
-/// Seeded authenticated session for the auth-required /profile/edit destination
-/// (C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
 final _authenticatedSession = AuthAuthenticated(
   accessToken: 'test-access-token',
   refreshToken: 'test-refresh-token',

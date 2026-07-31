@@ -20,7 +20,6 @@ void main() {
         ],
       );
       addTearDown(fresh.dispose);
-      // Force the controller to build (it lazily builds on first read).
       fresh.listen(autoLockControllerProvider, (_, _) {}, fireImmediately: true);
       return fresh;
     }
@@ -35,11 +34,9 @@ void main() {
         final container = buildContainer(delaySeconds: 30, lockOnBackground: false);
         expect(container.read(autoLockControllerProvider).locked, isFalse);
 
-        // Just under the delay: still unlocked.
         async.elapse(const Duration(seconds: 29));
         expect(container.read(autoLockControllerProvider).locked, isFalse);
 
-        // Crossing the delay fires the idle Timer -> arm(idleTimeout).
         async.elapse(const Duration(seconds: 2));
         final state = container.read(autoLockControllerProvider);
         expect(state.locked, isTrue);
@@ -51,11 +48,9 @@ void main() {
       final container = buildContainer(delaySeconds: 0, lockOnBackground: true);
       expect(container.read(autoLockControllerProvider).locked, isFalse);
 
-      // paused alone does not arm (only the paused -> resumed return edge fires).
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.paused);
       expect(container.read(autoLockControllerProvider).locked, isFalse);
 
-      // The foreground return arms the background-return lock.
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.resumed);
       final state = container.read(autoLockControllerProvider);
       expect(state.locked, isTrue);
@@ -84,11 +79,9 @@ void main() {
       fakeAsync((async) {
         final container = buildContainer(delaySeconds: 10, lockOnBackground: false);
         async.elapse(const Duration(seconds: 7));
-        // User activity resets the window before it fires.
         container.read(autoLockControllerProvider.notifier).extend();
         async.elapse(const Duration(seconds: 7));
         expect(container.read(autoLockControllerProvider).locked, isFalse);
-        // A full window after the extend still fires.
         async.elapse(const Duration(seconds: 4));
         expect(container.read(autoLockControllerProvider).locked, isTrue);
       });

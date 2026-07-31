@@ -1,7 +1,5 @@
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// In-memory [SecureStore] fake for tests, mirroring `InMemorySettingsStore`.
-/// Flip [failReads] / [failWrites] to surface [SecureStoreException].
 final class InMemorySecureStore implements SecureStore {
   InMemorySecureStore({Map<String, String>? seed}) : _values = {...?seed};
 

@@ -5,17 +5,6 @@ import 'package:starter/features/profile/profile_repository.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [ProfileRepository] against the test-server profile contract.
-/// Constructed only when a consumer provides an endpoint; until then the UI
-/// degrades to `ProfileDraft.defaults()`.
-///
-/// `load` performs `GET /v1/profile`; `save` performs `PUT /v1/profile` with
-/// `{displayName, bio}` (email is read-only, omitted from the write body).
-/// Both authorize with `Authorization: Bearer <accessToken>`. Transport
-/// failures and `401` surface [ProfileException.notConnected] so the caller
-/// degrades to a local default; other `4xx` surfaces
-/// [ProfileException.unknown]; `5xx`/unclassified surfaces
-/// [ProfileException.notConnected].
 final class HttpProfileRepository implements ProfileRepository {
   HttpProfileRepository({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
@@ -77,8 +66,6 @@ final class HttpProfileRepository implements ProfileRepository {
   }
 
   Never _classifyStatus(int status) {
-    // 401 folds into notConnected: ProfileException has no `unauthorized`
-    // kind by design — the session layer handles re-auth, not this screen.
     if (status == 401 || status >= 500) {
       throw const ProfileException.notConnected();
     }
@@ -92,7 +79,7 @@ final class HttpProfileRepository implements ProfileRepository {
     final displayName = _asString(body['displayName']);
     final username = _asString(body['username']);
     final email = _asString(body['email']);
-    final bio = body['bio']; // bio may be an explicitly-cleared empty string.
+    final bio = body['bio'];
     if (displayName == null || username == null || email == null || bio is! String) {
       throw const ProfileException.unknown();
     }

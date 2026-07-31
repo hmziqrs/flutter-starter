@@ -8,17 +8,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// A floating announcements banner composed in the top `Column` of the
-/// overlay `Stack` in `MaterialApp.router`'s `builder:`. Floating — it
-/// overlaps the router content's top edge instead of reserving layout space,
-/// so it never pushes a page's content down. Composing it in the global
-/// overlay keeps the banner visible across every route, including the
-/// top-level auth/onboarding routes outside `AppShell`.
-///
-/// Watches [announcementsControllerProvider] and renders the active
-/// [Announcement] via [AnnouncementBannerView]. Enter/exit motion is sourced
-/// from [AppMotion] and guarded by [MediaQuery.disableAnimationsOf] with a
-/// non-animated fallback that still toggles visibility.
 class AnnouncementBanner extends ConsumerStatefulWidget {
   const AnnouncementBanner({super.key});
 
@@ -30,8 +19,6 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   @override
   void initState() {
     super.initState();
-    // Surface a transient toast when a dismiss fails to persist, then clear
-    // the status so the transition can re-fire.
     ref.listenManual<AnnouncementsState>(
       announcementsControllerProvider,
       (previous, next) {
@@ -82,11 +69,6 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
   }
 }
 
-/// The animated banner slot — renders [AnnouncementBannerView] for an active
-/// announcement, or a zero-height placeholder when there is nothing to show.
-/// Motion is sourced from [AppMotion] and guarded by
-/// [MediaQuery.disableAnimationsOf] with a non-animated fallback that still
-/// toggles visibility (so the message is never gated on the animation).
 class _AnnouncementBannerSlot extends StatelessWidget {
   const _AnnouncementBannerSlot({required this.active, this.onDismiss, this.onAction});
 
@@ -106,7 +88,6 @@ class _AnnouncementBannerSlot extends StatelessWidget {
           );
 
     if (MediaQuery.disableAnimationsOf(context)) {
-      // Non-animated fallback: visibility still toggles, just instantly.
       return content;
     }
     return AnimatedSize(
@@ -118,12 +99,6 @@ class _AnnouncementBannerSlot extends StatelessWidget {
   }
 }
 
-/// The pure visual for one announcement. Rendered by [AnnouncementBanner]
-/// and by the dev-gallery fixture, so the preview is fully deterministic.
-///
-/// [FAlert] exposes no trailing/actions slot, so the dismiss and action
-/// controls are embedded in its `title` row. The title [Row] honors
-/// `Directionality` with no manual mirroring.
 class AnnouncementBannerView extends StatelessWidget {
   const AnnouncementBannerView({
     required this.announcement,
@@ -155,8 +130,6 @@ class AnnouncementBannerView extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.sm,
             ),
-            // Full width so FAlert's title/subtitle wrap against the screen
-            // edge regardless of the parent's cross-axis alignment.
             child: SizedBox(
               width: double.infinity,
               child: FAlert(
@@ -211,9 +184,6 @@ class AnnouncementBannerView extends StatelessWidget {
   }
 }
 
-/// Resolves the [FAlert] variant, leading icon, and accessible severity label
-/// for [severity]. Exhaustive over [AnnouncementSeverity]. `info` / `success`
-/// use the primary style; `warning` / `critical` use the destructive style.
 ({FAlertVariant variant, IconData icon, String severityLabel}) _presentationFor(
   AnnouncementSeverity severity,
   Translations translations,

@@ -1,7 +1,6 @@
 import 'dart:async';
 
-// Public constructor keeps fields private, so `this._x` initializing formals
-// (which would expose the private name) aren't usable here.
+// Initializing formals would expose private field names, so parameters stay explicit.
 // ignore_for_file: prefer_initializing_formals
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,18 +12,6 @@ import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/notifications/notifications_registration.dart';
 
-/// Optional real [NotificationsRepository] backed by `firebase_messaging`
-/// (FCM / APNs delivery) and `flutter_local_notifications` (foreground banner
-/// rendering).
-///
-/// Only constructed after Firebase credentials are wired and
-/// `Firebase.initializeApp` has run (`bootstrap.dart`, guarded by the
-/// `notifications` config flag); `AppDependencies.production` otherwise
-/// constructs `NoopNotificationsRepository`.
-///
-/// Token registration is delegated to `registrationClient` (a thin HTTP
-/// adapter); message delivery can't be mocked by a plain HTTP server, so the
-/// foreground / tap paths wrap the plugin SDKs directly.
 class FirebaseNotificationsRepository implements NotificationsRepository {
   FirebaseNotificationsRepository({
     required FirebaseMessaging messaging,
@@ -47,8 +34,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   final String _platform;
   final String _deviceId;
 
-  /// Stable id so a subsequent foreground message replaces the previous
-  /// banner rather than stacking.
   static const int _foregroundNotificationId = 0xb19e;
 
   static const AndroidNotificationChannel _androidChannel = AndroidNotificationChannel(
@@ -124,7 +109,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   @override
   Stream<NotificationMessage> get onMessage {
     return FirebaseMessaging.onMessage.map(_toMessage).where((message) {
-      // Rendering failures never break the message stream.
       unawaited(_renderForeground(message));
       return true;
     });
@@ -132,8 +116,7 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
 
   @override
   Stream<NotificationTap> get onNotificationTap {
-    // Folds the cold-start initial message with the live tap stream so taps
-    // are observed in arrival order regardless of process state.
+    // onMessageOpenedApp misses cold-start taps, so getInitialMessage is merged in.
     final controller = StreamController<NotificationTap>.broadcast();
     unawaited(_wireInitialMessage(controller));
     FirebaseMessaging.onMessageOpenedApp
@@ -176,7 +159,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
 
   Future<void> _renderForeground(NotificationMessage message) async {
     try {
-      // Idempotent on Android; no-op elsewhere.
       await _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_androidChannel);
@@ -200,7 +182,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
         ),
       );
     } on Object catch (error, stackTrace) {
-      // Best-effort; never breaks the foreground message stream above.
       _logger.error(
         'notifications.foreground render failed',
         error: error,
@@ -225,8 +206,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   }
 }
 
-/// Route constants a push payload may target; fallback when a payload omits
-/// a target.
 @immutable
 final class AppNotificationRoute {
   const AppNotificationRoute._();

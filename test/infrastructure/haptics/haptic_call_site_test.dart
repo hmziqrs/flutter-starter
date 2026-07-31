@@ -19,9 +19,6 @@ Widget _hapticApp({
   return ProviderScope(
     overrides: [
       hapticServiceProvider.overrideWithValue(service),
-      // Pin the controller's seed (its `build()` watches this provider) so the
-      // preview reads a deterministic `hapticsEnabled` without subclassing the
-      // final SettingsController.
       initialSettingsProvider.overrideWithValue(settings),
     ],
     child: TranslationProvider(
@@ -54,10 +51,7 @@ Widget _hapticApp({
 
 const ValueKey<String> _selectionKey = ValueKey('haptics-trigger-selection');
 
-/// Advances a bounded number of frames. Mirrors the integration harness's
-/// `pumpAppFrames` rule: a focused editable or forui entrance animation may
-/// keep scheduling frames after the state under test is ready, so
-/// [WidgetTester.pumpAndSettle] is avoided.
+/// forui entrance animations keep scheduling frames, so pumpAndSettle would hang.
 Future<void> _settleFrames(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));
@@ -84,8 +78,6 @@ void main() {
     await _settleFrames(tester);
 
     await tester.tap(find.byKey(_selectionKey));
-    // Pump past forui's FTappable press-feedback timer (a bounded loop, never
-    // pumpAndSettle) before asserting + tearing down.
     await _settleFrames(tester);
 
     expect(service.lastKind, HapticKind.selection);

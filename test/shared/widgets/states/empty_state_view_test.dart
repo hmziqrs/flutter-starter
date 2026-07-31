@@ -86,7 +86,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // The centered stack is direction-neutral; ar glyphs render under RTL.
       expect(find.byType(FCard), findsOneWidget);
       expect(
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).states.emptyTitle),

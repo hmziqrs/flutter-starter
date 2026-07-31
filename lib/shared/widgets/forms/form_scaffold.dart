@@ -6,15 +6,6 @@ import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 
-/// A reusable form shell: a ForUI [FScaffold] with optional [FCard] grouping,
-/// a submit [FButton] that stays disabled until [isValid], and a modal
-/// [BusyOverlay] mounted while [isSubmitting].
-///
-/// The caller owns the [Form] state (via [formKey]), the typed field values,
-/// validation, and the first-invalid reveal; this widget only standardizes the
-/// chrome and the submit/busy affordance. The submit callback ([onSubmit]) is
-/// feature-supplied and performs the `validate()` → reveal → `save()` → async
-/// submit sequence from the feature's own presentation state.
 class FormScaffold extends StatelessWidget {
   const FormScaffold({
     required this.formKey,
@@ -31,42 +22,26 @@ class FormScaffold extends StatelessWidget {
     super.key,
   });
 
-  /// The key of the [Form] that parents [fields]; reach it from [onSubmit] via
-  /// `formKey.currentState` to `validate()` / `save()`.
   final GlobalKey<FormState> formKey;
 
-  /// The form-field widgets placed inside the mounted [Form].
   final Widget fields;
 
-  /// Invoked when the submit button is pressed while enabled. The caller
-  /// performs validation, first-invalid reveal, save, and the async submit.
   final FutureOr<void> Function() onSubmit;
 
-  /// Caption shown on the submit [FButton].
   final String submitLabel;
 
-  /// Gates the submit button's enabled state. `false` keeps the button
-  /// disabled so an incomplete form cannot be submitted.
   final bool isValid;
 
-  /// Mounts the modal [BusyOverlay] over the form when `true`, blocking
-  /// duplicate submits while the in-flight callback runs.
   final bool isSubmitting;
 
-  /// Optional caption forwarded to [BusyOverlay.label]. Defaults to the
-  /// localized `common.saving` when omitted.
   final String? busyLabel;
 
-  /// Optional heading rendered above [fields].
   final Widget? heading;
 
-  /// Optional subheading rendered beneath [heading].
   final Widget? subheading;
 
-  /// Whether to wrap the form body in an [FCard]. Defaults to `true`.
   final bool groupInCard;
 
-  /// Stable identity for the submit [FButton] (widget/integration tests).
   final Key submitKey;
 
   @override

@@ -17,7 +17,6 @@ void main() {
     await server.close(force: true);
   });
 
-  /// Status code and body the stub server returns on the next request.
   int? nextStatus;
   Object? nextBody;
 
@@ -126,7 +125,6 @@ void main() {
   });
 
   test('load caches the last successful value for later degrade', () async {
-    // First request: serve a populated flags slice.
     nextStatus = HttpStatus.ok;
     nextBody = payload(const <String, Object?>{'checkout_v2': true});
     await startServer();
@@ -136,8 +134,6 @@ void main() {
       FeatureFlags.fromSlice(const <String, Object?>{'checkout_v2': true}),
     );
 
-    // Second request: the server now fails. The source returns the cached
-    // value rather than reverting to defaults or throwing.
     nextStatus = HttpStatus.internalServerError;
     await expectLoad(
       source,
@@ -169,8 +165,6 @@ void main() {
   });
 
   test('InMemoryFeatureFlagsSource is the no-backend peer (sanity)', () async {
-    // Documents the C4 contract: three peer sources, one shared client. The
-    // in-memory default needs no backend and returns the honest baseline.
     final inMemory = InMemoryFeatureFlagsSource();
     addTearDown(inMemory.dispose);
     expect(await inMemory.load(), const FeatureFlags.defaults());

@@ -3,10 +3,6 @@ import 'package:starter/features/auth/otp_page.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 
-/// Builds the MFA/OTP gallery cases: the same static fixtures as the
-/// registration/password-reset OTP cases, plus a pinned countdown and the
-/// rate-limit `locked` handoff. The countdown/lockout values are fixed
-/// fields, not running timers, so the gallery stays deterministic.
 List<GalleryCase> buildMfaOtpGalleryCases() {
   return buildTypedGalleryCases<OtpPresentationState>(
     idPrefix: 'auth.otp.mfa',

@@ -7,10 +7,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
-/// The ten-foot shell shared by Android TV and tvOS presentations.
-///
-/// Navigation remains callback-driven so branch ownership stays with the
-/// composition root and go_router never leaks into this presentation.
 class TelevisionAppShell extends StatefulWidget {
   const TelevisionAppShell({
     required this.selectedIndex,

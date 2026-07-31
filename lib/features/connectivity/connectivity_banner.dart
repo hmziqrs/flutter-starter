@@ -9,15 +9,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// A floating connectivity banner composed in the top `Column` of the overlay
-/// `Stack` in `MaterialApp.router`'s `builder:`. Floating — it overlaps the
-/// router content's top edge instead of reserving layout space.
-///
-/// Surfaces a full-width row for degraded states ([ConnectivityState.offline]
-/// / [ConnectivityState.limited]) and fires a transient "back online" toast
-/// on the recovery edge (degraded → [ConnectivityState.online]). Composing it
-/// in the global overlay keeps the signal alive across every route,
-/// including the top-level auth/onboarding routes outside `AppShell`.
 class ConnectivityBanner extends ConsumerStatefulWidget {
   const ConnectivityBanner({super.key});
 
@@ -29,8 +20,6 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   @override
   void initState() {
     super.initState();
-    // Detect the degraded → online recovery edge and fire the transient
-    // toast. Not in build: build must stay free of side effects.
     ref.listenManual<AsyncValue<ConnectivityState>>(
       connectivityStatusProvider,
       (previous, next) {
@@ -70,10 +59,6 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   }
 }
 
-/// The animated banner slot — renders the row for degraded states and an empty
-/// zero-height placeholder otherwise. Enter/exit motion is sourced from
-/// [AppMotion] and guarded by [MediaQuery.disableAnimationsOf] with a
-/// non-animated fallback that still toggles visibility.
 class _BannerSlot extends StatelessWidget {
   const _BannerSlot({required this.state});
 
@@ -86,7 +71,6 @@ class _BannerSlot extends StatelessWidget {
         : _ConnectivityBannerContent(state: state!);
 
     if (MediaQuery.disableAnimationsOf(context)) {
-      // Non-animated fallback: visibility still toggles, just instantly.
       return content;
     }
     return AnimatedSize(
@@ -119,8 +103,6 @@ class _ConnectivityBannerContent extends StatelessWidget {
         FLucideIcons.wifiLow,
         translations.connectivity.limited,
       ),
-      // Unreachable: the banner only renders for degraded states. Kept to
-      // stay exhaustive over ConnectivityState.
       ConnectivityState.online => (
         context.theme.colors.background,
         context.theme.colors.foreground,
@@ -167,11 +149,6 @@ class _ConnectivityBannerContent extends StatelessWidget {
   }
 }
 
-/// An opacity-pulsing status icon for the offline state.
-///
-/// Motion-guarded: the pulse runs only when [MediaQuery.disableAnimationsOf] is
-/// false; otherwise a static icon renders. The pulse duration is sourced from
-/// [AppMotion] so it tracks the shared motion vocabulary.
 class _PulsingIcon extends StatefulWidget {
   const _PulsingIcon({required this.icon, required this.color});
 
@@ -198,7 +175,6 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
   void _sync(bool enabled) {
     if (enabled && !_running) {
       _running = true;
-      // TickerFuture is intentionally fire-and-forget for a repeating pulse.
       unawaited(_controller.repeat(reverse: true));
     } else if (!enabled && _running) {
       _running = false;
@@ -209,9 +185,6 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Drive the pulse from the lifecycle, not build(): TickerMode / MediaQuery
-    // changes re-run this callback, so enable/disable stays in sync without
-    // starting/stopping the ticker during build.
     _sync(!MediaQuery.disableAnimationsOf(context));
   }
 

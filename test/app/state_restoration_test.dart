@@ -5,21 +5,9 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_store.dart';
 
-/// State-restoration spec — last-route persistence + restoration-scope wiring.
-///
-/// These tests cover the OPTIONAL last-route sub-feature: the
-/// [LastRouteObserver] writes the latest restorable route path to a
-/// [SettingsStore] key, and [pathForLastRouteName] maps the route name a
-/// `NavigatorObserver` sees back to that path. The C5 redirect chain
-/// (update/onboarding/session/biometric) re-evaluates after `initialLocation` is
-/// set in bootstrap, so a saved route never overrides a hard block or a fresh
-/// install's onboarding — that precedence is covered by the existing redirect
-/// tests in test/app/routing/.
 void main() {
   group('lastRouteKey', () {
     test('is a stable, namespaced settings key', () {
-      // The key must stay stable across releases: changing it orphans any saved
-      // last-route value (the same contract as SoftUpdateSnooze.key).
       expect(lastRouteKey, 'nav.last_route');
     });
   });
@@ -99,7 +87,6 @@ void main() {
       LastRouteObserver(store: store)
         ..didPush(_route(AppRoutes.login), null)
         ..didPush(_route(AppRoutes.register), _route(AppRoutes.login))
-        // Pop register -> back to login. The observer should persist login.
         ..didPop(_route(AppRoutes.register), _route(AppRoutes.login));
 
       expect(store.snapshot[lastRouteKey], AppRoutes.loginPath);
@@ -112,7 +99,6 @@ void main() {
         ..didPush(_route(AppRoutes.login), null)
         ..didPush(_route(AppRoutes.splash), _route(AppRoutes.login));
 
-      // Splash is excluded; the previously-saved login path stays.
       expect(store.snapshot[lastRouteKey], AppRoutes.loginPath);
     });
 
@@ -133,7 +119,6 @@ void main() {
         ..didPush(_route(AppRoutes.home), null);
 
       expect(store.snapshot[lastRouteKey], AppRoutes.homePath);
-      // Two consecutive identical pushes produced exactly one write.
       expect(counting.writes, 1);
     });
 
@@ -141,8 +126,6 @@ void main() {
       final store = InMemorySettingsStore()..failWrites = true;
       final observer = LastRouteObserver(store: store);
 
-      // A failing write degrades honestly to "no saved route" and must not
-      // propagate (navigation is never blocked by persistence).
       expect(() => observer.didPush(_route(AppRoutes.login), null), returnsNormally);
     });
   });
@@ -155,7 +138,6 @@ Route<dynamic> _route(String? name) {
   );
 }
 
-/// Counts [SettingsStore.writeString] invocations by delegating to a real store.
 class _CountingSettingsStore implements SettingsStore {
   _CountingSettingsStore(this._inner);
 

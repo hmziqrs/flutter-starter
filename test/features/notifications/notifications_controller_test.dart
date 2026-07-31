@@ -51,8 +51,6 @@ void main() {
         );
         final container = _buildContainer(repository: repository);
         addTearDown(container.dispose);
-        // Seed the controller state as registered by mutating the initial
-        // providers, then call unregister.
         await container.read(notificationsControllerProvider.notifier).register();
         expect(container.read(notificationsControllerProvider).token, isNotNull);
         await container.read(notificationsControllerProvider.notifier).unregister();
@@ -80,18 +78,12 @@ void main() {
       });
 
       test('lands in failed when the repository throws', () async {
-        // Denied seed short-circuits permission to denied without throwing.
-        // To exercise the failure path, swap to the Noop repo: its permission
-        // return is `denied` (no exception); the failed landing is reached by
-        // a denied-seeded in-memory repo via the register() state machine.
         final repository = InMemoryNotificationsRepository(
           permission: NotificationPermissionStatus.denied,
         );
         final container = _buildContainer(repository: repository);
         addTearDown(container.dispose);
         await container.read(notificationsControllerProvider.notifier).register();
-        // register sees !canDeliver, calls requestPermission (denied), and
-        // lands in failed without attempting the registration call.
         expect(
           container.read(notificationsControllerProvider).registration,
           NotificationsRegistrationState.failed,
@@ -106,14 +98,9 @@ void main() {
       final repository = InMemoryNotificationsRepository();
       final container = _buildContainer(repository: repository);
       addTearDown(container.dispose);
-      // Reading the queue builds the provider and subscribes to the repo's tap
-      // stream. The cold-start ordering contract (spec Risks) is that the
-      // plugin init runs before the queue is constructed; here the queue is
-      // constructed first, then a tap is injected — equivalent ordering.
       container.read(notificationTapQueueProvider);
       const tap = NotificationTap(targetRoute: 'home');
       repository.deliverTap(tap);
-      // Pump the microtask queue so the stream listener enqueues the tap.
       await Future<void>.delayed(Duration.zero);
       expect(container.read(notificationTapQueueProvider), [tap]);
       addTearDown(repository.dispose);

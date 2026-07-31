@@ -6,8 +6,6 @@ import 'package:starter/shared/widgets/refresh/refreshable_list_view.dart';
 
 enum PullRefreshGalleryState { refreshableList, responsiveGrid }
 
-/// Builds the pull-refresh gallery cases: a refreshable lazy list and a
-/// responsive grid. The `onRefresh` callback completes a no-op Future.
 List<GalleryCase> buildPullRefreshGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<PullRefreshGalleryState>(
@@ -29,7 +27,6 @@ List<GalleryCase> buildPullRefreshGalleryCases() {
   ];
 }
 
-/// A preview item rendered as a themed card cell.
 final class _PreviewItem {
   const _PreviewItem(this.id, this.label);
   final String id;

@@ -6,10 +6,6 @@ import 'package:starter/features/force_update/soft_update_dialog.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Builds the update-blocker gallery cases: the non-dismissible hard-block
-/// [ForceUpdatePage] and the dismissible soft-deprecation [SoftUpdateCard].
-/// The soft card is rendered directly (not inside [showSoftUpdateDialog]) so
-/// the preview is stable without a tap to open the dialog.
 List<GalleryCase> buildForceUpdateGalleryCases() {
   return [
     TypedGalleryCase<ForceUpdateState>(

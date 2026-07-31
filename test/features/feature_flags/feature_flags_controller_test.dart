@@ -7,14 +7,9 @@ import 'package:starter/features/feature_flags/feature_flags_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 
-/// A test-only [FeatureFlagsSource] whose [load] returns a mutable "next" value
-/// and whose [changes] never emits. It isolates the controller's load-based
-/// refresh path (initial hydrate + resume-refresh) from the changes-stream path.
 class _LoadOnlySource implements FeatureFlagsSource {
   _LoadOnlySource(this.next);
 
-  /// The flags returned by the next [load]; mutable so a test can swap the
-  /// served value to exercise the resume-refresh path.
   FeatureFlags next;
 
   @override
@@ -118,11 +113,9 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      // Force the controller to build and the initial refresh to settle.
       container.read(featureFlagsControllerProvider);
       await _until(container, (flags) => flags == const FeatureFlags.defaults());
 
-      // Background the app, swap the served flags, then resume.
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.paused);
       source.next = FeatureFlags.fromSlice(const <String, Object?>{'checkout_v2': true});
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.resumed);
@@ -137,7 +130,6 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      // Building and resuming must not throw; state stays at the baseline.
       container.read(featureFlagsControllerProvider);
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.paused);
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.resumed);
@@ -151,8 +143,6 @@ void main() {
   });
 }
 
-/// A test-only source whose [load] always throws, to verify the controller's
-/// try/on Object degrade path never surfaces an error or fabricates a flag.
 class _ThrowingSource implements FeatureFlagsSource {
   @override
   Future<FeatureFlags> load() async => throw const FeatureFlagsException(operation: 'load');

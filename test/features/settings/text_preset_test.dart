@@ -5,9 +5,6 @@ import 'package:starter/features/settings/text_preset.dart';
 void main() {
   group('AppTextPreset.toSettings', () {
     test('maps every preset to a (fontScale, fontFamily) tuple', () {
-      // Exhaustive over AppTextPreset.values — adding a variant without
-      // extending this loop fails the test (strict analysis already enforces
-      // the toSettings() switch; this guards the contract from the caller side).
       for (final preset in AppTextPreset.values) {
         final settings = preset.toSettings();
         expect(settings.fontScale, greaterThanOrEqualTo(SettingsState.minimumFontScale));
@@ -23,9 +20,6 @@ void main() {
     });
 
     test('large stays inside the [0.85, 1.6] font-scale clamp', () {
-      // The load-bearing clamp invariant: the large preset must resolve to a
-      // value inside SettingsState's clamp range so _parseFontScale never
-      // rejects it on reload.
       final resolved = AppTextPreset.large.toSettings();
       expect(resolved.fontScale, greaterThan(1));
       expect(
@@ -44,9 +38,6 @@ void main() {
     });
 
     test('dyslexia font family is the documented placeholder (asset optional)', () {
-      // The Latin-only dyslexia family. Non-Latin locales keep Noto Sans
-      // Arabic / Noto Sans SC via ForuiThemeFactory.scriptFontFamilies — the
-      // dyslexia family is never swapped wholesale (feature spec Risks).
       expect(AppTextPreset.dyslexiaFontFamily, 'OpenDyslexic');
     });
 

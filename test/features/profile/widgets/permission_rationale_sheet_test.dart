@@ -7,9 +7,6 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 void main() {
-  // The body reads copy via `context.t`, which delegates to the same
-  // LocaleSettings instance as the top-level `t` getter. Reset to the base
-  // locale after each test so an ar-switch never leaks into sibling suites.
   tearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
   group('PermissionRationaleBody', () {
@@ -28,11 +25,9 @@ void main() {
 
       expect(find.text(t.permission.camera.title), findsOneWidget);
       expect(find.text(t.permission.camera.rationale), findsOneWidget);
-      // Promptable -> Continue + Not now. Open settings must NOT be offered.
       expect(find.text(t.permission.continueRequest), findsOneWidget);
       expect(find.text(t.permission.notNow), findsOneWidget);
       expect(find.text(t.permission.openSettings), findsNothing);
-      // Permanently-denied alert must not render in the promptable state.
       expect(find.text(t.permission.permanentlyDenied), findsNothing);
     });
 
@@ -50,11 +45,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 250));
 
-      // One-way door: Open settings is offered, Continue (re-prompt) is not.
       expect(find.text(t.permission.openSettings), findsOneWidget);
       expect(find.text(t.permission.continueRequest), findsNothing);
-      // The blocked-state alert renders so the user understands why a re-prompt
-      // is unavailable.
       expect(find.text(t.permission.permanentlyDenied), findsOneWidget);
     });
 
@@ -75,8 +67,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
 
       await tester.tap(find.text(t.permission.continueRequest));
-      // Pump a bounded frame sequence (never pumpAndSettle) so the ForUI button
-      // press feedback timer resolves before the widget tree is disposed.
       await _pumpFrames(tester);
 
       expect(continued, isTrue);
@@ -100,8 +90,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
 
       await tester.tap(find.text(t.permission.openSettings));
-      // Pump a bounded frame sequence (never pumpAndSettle) so the ForUI button
-      // press feedback timer resolves before the widget tree is disposed.
       await _pumpFrames(tester);
 
       expect(openedSettings, isTrue);
@@ -124,9 +112,6 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 250));
 
-      // The ar translation title renders (RTL copy loaded) and the body does
-      // not throw under a right-to-left Directionality — the leading icon +
-      // title Row mirrors via the ambient Directionality.
       expect(find.text(t.permission.camera.title), findsOneWidget);
     });
   });
@@ -142,9 +127,6 @@ void main() {
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {
-  // Bounded frame sequence (mirrors integration_test_support.pumpAppFrames) so a
-  // pending ForUI button feedback timer resolves without pumpAndSettle, which
-  // can hang on a focused editable / platform animation.
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }

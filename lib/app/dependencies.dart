@@ -100,9 +100,7 @@ final class AppDependencies {
       settings: SettingsDependencies(
         settingsRepository: SettingsRepository(effectiveSettingsStore),
         settingsStore: effectiveSettingsStore,
-        // Defaults to a returning user who has completed onboarding, so shell /
-        // navigation / gallery suites boot straight to home. The fresh-install
-        // redirect is covered independently by app_router_onboarding_redirect_test.dart.
+        // Onboarding-complete so suites boot to home; fresh-install redirect covered by app_router_onboarding_redirect_test.dart.
         initialSettings:
             initialSettings ??
             const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
@@ -152,16 +150,12 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: platformCapabilities,
         buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-        // Real local connectivity_plus sensor, not a Noop: safe in integration
-        // tests on a real platform; widget tests override the provider instead.
         connectivityService: ConnectivityPlusService(),
         hapticService: NoopHapticService(),
         permissionService: const NoopPermissionService(),
         mediaPicker: const NoopMediaPicker(),
         shareService: const NoopShareService(),
         appUpdateService: const NoopAppUpdateService(),
-        // Tests don't drive inbound URIs; a test that needs to overrides the
-        // provider directly with a stream-backed service.
         appLinkHandler: const _NoOpDeepLinkService(),
       ),
       appStartupResult: const AppStartupResult(
@@ -169,8 +163,6 @@ final class AppDependencies {
         settingsLoaded: true,
         localeApplied: true,
       ),
-      // No dismissed announcements by default, so the first fixture surfaces
-      // and exercises the floating banner in a full-app pump.
       initialDismissedAnnouncementIds: dismissedAnnouncementIds,
     );
   }
@@ -184,22 +176,11 @@ final class AppDependencies {
   final FeedbackDependencies feedback;
   final PlatformDependencies platform;
 
-  /// Summary of work `createApplication` already performs (build-info load,
-  /// settings load, locale apply) so SplashPage can observe it without
-  /// re-running any of it. `localeApplied` is finalized via [copyWith] once
-  /// the locale apply runs, since that happens after this factory returns.
   final AppStartupResult appStartupResult;
 
-  /// Cold-start seed of dismissed announcement ids, pre-loaded so the
-  /// controller resolves synchronously.
   final Set<String> initialDismissedAnnouncementIds;
 
-  /// Dev-only HTTP inspector host, chosen by the build entrypoint: production
-  /// wires [StubInspectorHost] (no `dio_request_inspector` import, so the
-  /// package is absent from release AOT — avoids the flutter/flutter#188060
-  /// snapshotter crash); development wires a `RealInspectorHost`. Threaded to
-  /// `bootstrap` (overlay wrapper), [buildAppDio] (interceptor), and `App`
-  /// (navigator observers).
+  /// Production uses [StubInspectorHost]: `dio_request_inspector` trips the flutter/flutter#188060 AOT snapshotter crash.
   final InspectorHost inspectorHost;
 
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
@@ -224,9 +205,7 @@ final class AppDependencies {
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
     AppBuildInfo? buildInfo,
-    // Null uses the production FlutterSecureStorageStore; a headless
-    // integration test (no secret-service daemon) injects an in-memory store
-    // so the flow never touches libsecret.
+    // A headless test (no secret-service daemon) injects an in-memory store to avoid libsecret.
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
@@ -260,8 +239,6 @@ final class AppDependencies {
       settings = const SettingsState.defaults();
       settingsLoaded = false;
     }
-    // Pre-loaded so AnnouncementsController resolves synchronously; malformed
-    // storage degrades to "nothing dismissed" rather than throwing.
     final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(
       await settingsStore.readString(DismissedAnnouncements.key),
     );
@@ -269,8 +246,6 @@ final class AppDependencies {
     final versionCheck = buildInfo == null
         ? const UpdateRequirementNone()
         : await versionGateStore.check(buildInfo);
-    // Shared by the session repository and the analytics opt-in pre-load so
-    // the keychain is opened once.
     final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
     var initialAnalyticsOptIn = false;
     try {
@@ -301,8 +276,7 @@ final class AppDependencies {
     } on Object {
       initialFeedbackShakeEnabled = false;
     }
-    // Web falls back to in-memory (path_provider is unsupported); a
-    // directory-resolution failure also degrades to in-memory.
+    // path_provider is unsupported on web.
     CacheStore cacheStore;
     if (capabilities.isWeb) {
       cacheStore = InMemoryCacheStore();
@@ -320,14 +294,10 @@ final class AppDependencies {
       platform: capabilities.platform,
       locale: settings.localeOverride?.languageTag ?? 'en',
     );
-    // When a backend URL is configured the real HTTP adapters are constructed
-    // against it; otherwise the no-backend defaults surface notConnected.
     final AuthRepository authRepository;
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
     if (backendBaseUrl != null) {
-      // One shared Dio (connection pooling + a single dev overlay) for all
-      // three session-coupled adapters.
       final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
@@ -357,8 +327,7 @@ final class AppDependencies {
         profileRepository: profileRepository,
       ),
       telemetry: TelemetryDependencies(
-        // Firebase adapters self-disable on unsupported/uninitialized targets,
-        // so both composites remain safe with their Noop arms.
+        // Firebase adapters self-disable on unsupported targets, so both composites stay safe with Noop arms.
         crashReporter: CompositeCrashReporter(<CrashReporter>[
           const NoopCrashReporter(),
           FirebaseCrashlyticsCrashReporter(verbose: false),
@@ -375,13 +344,9 @@ final class AppDependencies {
         versionGateStore: versionGateStore,
         versionCheck: versionCheck,
         featureFlagsSource: InMemoryFeatureFlagsSource(),
-        // Keep the cross-family coupling explicit: experiment assignment and
-        // settings persistence intentionally share this store.
         experimentSource: DeterministicExperimentSource(store: settingsStore),
       ),
       notifications: const NotificationDependencies(
-        // Firebase messaging remains a consumer override on mobile builds with
-        // credentials; the starter's default degrades honestly.
         notificationsRepository: NoopNotificationsRepository(),
         notificationsBackend: NoopNotificationsBackend(),
         initialNotificationPermission: NotificationPermissionStatus.notRequested,
@@ -402,15 +367,11 @@ final class AppDependencies {
         mediaPicker: _selectMediaPicker(capabilities),
         shareService: _selectShareService(capabilities),
         appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
-        // Web is handled by MaterialApp.router's browser URL bar instead; the
-        // cold-start getInitialLink is captured in bootstrap.dart.
         appLinkHandler: AppLinksDeepLinkService(
           handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
         ),
       ),
-      // `localeApplied` is optimistic here; `createApplication` finalizes it
-      // via copyWith once the locale apply (which runs after this returns)
-      // is known to have failed.
+      // `localeApplied` is optimistic; `createApplication` finalizes via copyWith if the locale apply fails.
       appStartupResult: AppStartupResult(
         buildInfo: buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: settingsLoaded,
@@ -424,7 +385,6 @@ final class AppDependencies {
   static PermissionService _selectPermissionService(PlatformCapabilities caps) {
     if (caps.isWeb) return const NoopPermissionService();
     return switch (caps.platform) {
-      // `permission_handler` is supported on iOS / Android only.
       'ios' || 'android' => DevicePermissionService(),
       _ => const NoopPermissionService(),
     };
@@ -433,8 +393,6 @@ final class AppDependencies {
   static MediaPicker _selectMediaPicker(PlatformCapabilities caps) {
     if (caps.isWeb) return const NoopMediaPicker();
     return switch (caps.platform) {
-      // `image_picker` is supported on iOS / Android only (macOS / Windows /
-      // Linux would need a different adapter; degrade honestly for now).
       'ios' || 'android' => ImagePickerMediaPicker(),
       _ => const NoopMediaPicker(),
     };
@@ -451,9 +409,6 @@ final class AppDependencies {
   }) {
     if (caps.isWeb) return const NoopAppUpdateService();
     return switch (caps.platform) {
-      // `in_app_update` is Android-only (Play Store). iOS uses `url_launcher`
-      // against the App Store listing (Apple ID from compile-time config).
-      // Both are non-blocking; the server `VersionGateStore` owns hard/soft.
       'android' => const AndroidAppUpdateService(),
       'ios' => IosAppUpdateService(appleId: iosAppleId),
       _ => const NoopAppUpdateService(),
@@ -461,11 +416,6 @@ final class AppDependencies {
   }
 }
 
-/// Honest no-op [DeepLinkService] for test harnesses and platforms that don't
-/// drive inbound URIs. The stream is empty and the cold-start initial link is
-/// `null`; a test that needs to drive deep links overrides
-/// [appLinkHandlerProvider] with a `StreamDeepLinkService` driven by a
-/// `StreamController<Uri>`. Never the production default.
 class _NoOpDeepLinkService implements DeepLinkService {
   const _NoOpDeepLinkService();
 

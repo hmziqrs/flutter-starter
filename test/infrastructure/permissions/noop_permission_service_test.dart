@@ -24,14 +24,10 @@ void main() {
     });
 
     test('openSystemSettings completes (no platform surface to open)', () async {
-      // Should not throw — the hermetic harness has no settings page, so the
-      // call is a silent no-op rather than surfacing an error.
       await expectLater(service.openSystemSettings(), completes);
     });
 
     test('is a const-constructible honest default (no backend wiring)', () async {
-      // Two independent const instances behave identically — the no-backend
-      // default is stateless and deterministic.
       const a = NoopPermissionService();
       const b = NoopPermissionService();
       expect(
@@ -43,8 +39,6 @@ void main() {
 
   group('PermissionStatus sealed hierarchy', () {
     test('exposes exactly the four documented variants', () {
-      // Adding a fifth subtype would silently break the exhaustive switches in
-      // the device adapter and rationale flow; this asserts the closed set.
       expect(permissionStatusVariants, hasLength(4));
       expect(permissionStatusVariants.whereType<PermissionGranted>(), hasLength(1));
       expect(permissionStatusVariants.whereType<PermissionDenied>(), hasLength(1));

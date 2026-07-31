@@ -82,8 +82,6 @@ void main() {
 
   group('cooldownSecondsFor', () {
     test('mirrors the const schedule exactly (1-indexed by failure)', () {
-      // cooldownSecondsFor(N) returns the cooldown imposed by the N-th failure.
-      // The leading two zeros grant two free attempts; the 3rd failure locks.
       expect(cooldownSecondsFor(0), 0);
       expect(cooldownSecondsFor(1), 0);
       expect(cooldownSecondsFor(2), 0);
@@ -152,29 +150,24 @@ void main() {
       final tracker = buildTracker();
       const identifier = 'person@example.com';
 
-      // 1st failure: still unlocked, one free attempt left, next lock is 0s
-      // (the 2nd is still free).
       final first = tracker.recordFailure(identifier);
       expect(first.attempts, 1);
       expect(first.lockedUntil, isNull);
       expect(first.attemptsRemaining, 1);
       expect(first.nextCooldownSeconds, 0);
 
-      // 2nd failure: still unlocked, no free attempts left, next lock is 30s.
       final second = tracker.recordFailure(identifier);
       expect(second.attempts, 2);
       expect(second.lockedUntil, isNull);
       expect(second.attemptsRemaining, 0);
       expect(second.nextCooldownSeconds, 30);
 
-      // 3rd failure: locked for 30s, attemptsRemaining exhausted.
       final third = tracker.recordFailure(identifier);
       expect(third.attempts, 3);
       expect(third.attemptsRemaining, 0);
       expect(third.lockedUntil, now.add(const Duration(seconds: 30)));
       expect(third.nextCooldownSeconds, 60);
 
-      // 4th → 60s, 5th → 300s, 6th → 900s.
       final fourth = tracker.recordFailure(identifier);
       expect(fourth.lockedUntil, now.add(const Duration(seconds: 60)));
       expect(fourth.nextCooldownSeconds, 300);
@@ -185,7 +178,6 @@ void main() {
       expect(sixth.lockedUntil, now.add(const Duration(seconds: 900)));
       expect(sixth.nextCooldownSeconds, 900);
 
-      // Tail stays at the max.
       final overTheTail = tracker.recordFailure(identifier);
       expect(overTheTail.lockedUntil, now.add(const Duration(seconds: 900)));
       expect(overTheTail.nextCooldownSeconds, 900);
@@ -217,10 +209,8 @@ void main() {
       tracker
         ..recordFailure(identifier)
         ..recordFailure(identifier)
-        // 3rd failure locks for 30s.
         ..recordFailure(identifier);
 
-      // The lockout has expired. read is read-only and keeps attempts.
       final locked = tracker.read(identifier)!;
       expect(locked.attempts, 3);
       expect(locked.isLockedAt(now), isTrue);
@@ -229,7 +219,6 @@ void main() {
         isFalse,
       );
 
-      // After expiry, the next failure escalates rather than forgiving.
       final after = tracker.recordFailure(identifier);
       expect(after.attempts, 4);
       expect(after.lockedUntil, now.add(const Duration(seconds: 60)));
@@ -269,9 +258,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      // Riverpod wraps the provider-build throw in a ProviderException; assert
-      // the underlying StateError message surfaces regardless of the wrapper
-      // (mirrors connectivityServiceProvider's test).
+      // Riverpod wraps the throw in a ProviderException; assert on error.toString() so the message surfaces.
       expect(
         () => container.read(attemptTrackerProvider),
         throwsA(

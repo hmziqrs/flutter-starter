@@ -76,17 +76,10 @@ final class AppConfig {
   final bool enableVerboseLogging;
   final bool enableDevTools;
 
-  /// Builds the App Store deep-link for in-app-update on iOS. Empty when
-  /// unconfigured; the update adapter degrades honestly to a no-op launch.
   final String iosAppleId;
 
-  /// Compile-time allowlist of hosts accepted for inbound deep-link URIs.
-  /// Empty resolves every inbound URI to `null`.
   final AllowedDeepLinkHosts allowedDeepLinkHosts;
 
-  /// Base URL of the optional backend used for auth/OTP/register/profile
-  /// integration tests. `null` keeps the no-backend composition (InMemory
-  /// adapters degrade to `notConnected`); non-null wires the HTTP adapters.
   final Uri? backendBaseUrl;
 
   bool get verboseLoggingEnabled =>

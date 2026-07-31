@@ -11,9 +11,7 @@ import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
-/// Bounded frame pump — mirrors `pumpAppFrames` (integration_test_support.dart).
-/// Required here because the offline banner runs an infinite pulse, so
-/// `pumpAndSettle` would hang.
+/// Bounded pumps: the offline banner pulses forever, so `pumpAndSettle` hangs.
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -47,8 +45,6 @@ Widget _harness({
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Router content (home) is the overlay base; the banner floats
-                      // over its top edge. Mirrors the production mount in app.dart.
                       Positioned.fill(child: routerChild ?? const SizedBox.shrink()),
                       const Positioned(
                         top: 0,
@@ -125,9 +121,7 @@ void main() {
     service.emit(ConnectivityState.online);
     await _pumpFrames(tester);
 
-    // Banner dismissed on recovery...
     expect(find.text(t.connectivity.offline), findsNothing);
-    // ...and the transient toast fired exactly once.
     expect(find.text(t.connectivity.backOnline), findsOneWidget);
   });
 

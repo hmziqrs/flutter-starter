@@ -4,39 +4,15 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// The intent of an `AppConfirmationDialog`. Selects the action-button variant
-/// and the localized action label — `confirm` for an affirmative primary
-/// action, `destroy` for an irreversible / destructive one.
 enum ConfirmationIntent {
-  /// An affirmative, non-destructive action. Default action label is
-  /// `common.confirm`; cancel is `common.cancel`.
   confirm,
 
-  /// An irreversible / destructive action (e.g. discard unsaved edits, delete
-  /// a row). Default action label is `common.discard`; cancel is
-  /// `common.cancel`.
   destroy,
 }
 
-/// A thin ergonomic wrapper over `showFDialog` + `FDialog` that pins intent →
-/// `FButton` variant and localizes the confirm / cancel labels.
-///
-/// Wraps the dialog in `EscapeDismissibleOverlay` so Escape dismisses
-/// consistently with every other modal in the app.
-///
-/// Returns `true` if the user confirmed/destroyed, `false` if they cancelled,
-/// and `null` if the dialog was dismissed via Escape. Callers that only care
-/// about confirmation treat `null` and `false` identically.
 class AppConfirmationDialog {
   const AppConfirmationDialog._();
 
-  /// Shows a modal confirmation dialog.
-  ///
-  /// [intent] selects the action-button variant and the default action label.
-  /// [title] is also used as the dialog's `semanticsLabel` unless
-  /// [semanticsLabel] is supplied. [confirmLabel] / [cancelLabel] override the
-  /// defaults. The dialog is not barrier-dismissible on tap; Escape still
-  /// dismisses via `EscapeDismissibleOverlay`.
   static Future<bool?> show(
     BuildContext context, {
     required ConfirmationIntent intent,

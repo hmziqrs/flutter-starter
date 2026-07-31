@@ -2,11 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// Exercises the [SecureStore] contract (round-trip read/write/delete plus
-/// [SecureStoreException] wrapping) through the in-memory fake. Unit tests
-/// never hit the real OS keychain; the production adapter applies the same
-/// `try/on Object -> SecureStoreException` shape, verified by structural
-/// parity with `SharedPreferencesSettingsStore`.
 void main() {
   group('SecureStore contract', () {
     late InMemorySecureStore store;

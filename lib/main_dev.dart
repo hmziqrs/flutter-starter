@@ -6,13 +6,7 @@ import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/devtools/real_inspector_host.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
-/// Development entrypoint (`flutter run --target=lib/main_dev.dart`, used by
-/// `just run <device>`). Wires a [RealInspectorHost] so the dio_request_inspector
-/// overlay works in development; it self-disables without dev tools/backend.
-///
-/// Kept unreachable from `lib/main.dart` so `package:dio_request_inspector` is
-/// excluded from release AOT, avoiding the Flutter AOT snapshotter crash
-/// (flutter/flutter#188060).
+/// Separated from lib/main.dart to exclude dio_request_inspector from release AOT (flutter/flutter#188060).
 Future<void> main() async {
   final fallbackLogger = AppLogger.bootstrap();
   final guardedMain = runZonedGuarded<Future<void>>(

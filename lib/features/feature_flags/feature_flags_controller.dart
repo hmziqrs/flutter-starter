@@ -5,13 +5,6 @@ import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 
-/// Publishes the resolved `FeatureFlags` as a handwritten `Notifier`.
-///
-/// A flag read on the UI thread must never block on a network call: `build`
-/// hydrates `FeatureFlags.defaults` synchronously, then refreshes
-/// asynchronously from `FeatureFlagsSource.load`. Live updates flow through
-/// `FeatureFlagsSource.changes`; resume re-loads on foreground
-/// (`inactive`/`hidden` never trigger a refresh).
 final featureFlagsControllerProvider = NotifierProvider<FeatureFlagsController, FeatureFlags>(
   FeatureFlagsController.new,
 );
@@ -19,10 +12,6 @@ final featureFlagsControllerProvider = NotifierProvider<FeatureFlagsController, 
 final class FeatureFlagsController extends Notifier<FeatureFlags> {
   FeatureFlagsSource get _source => ref.read(featureFlagsSourceProvider);
 
-  /// Monotonic counter bumped on every `changes()` event. A load-based
-  /// refresh captures the counter before its await and commits only if no
-  /// live change arrived while it was loading, so a stale load can never
-  /// overwrite a fresher value delivered through `changes()`.
   int _liveEpoch = 0;
 
   @override
@@ -36,7 +25,6 @@ final class FeatureFlagsController extends Notifier<FeatureFlags> {
       }
     });
 
-    // Re-load when the app returns to the foreground.
     ref
       ..onDispose(subscription.cancel)
       ..listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
@@ -61,6 +49,5 @@ final class FeatureFlagsController extends Notifier<FeatureFlags> {
     }
   }
 
-  /// Typed, dynamic lookup delegating to the current `FeatureFlags.isEnabled`.
   bool isEnabled(FeatureFlag flag) => state.isEnabled(flag);
 }

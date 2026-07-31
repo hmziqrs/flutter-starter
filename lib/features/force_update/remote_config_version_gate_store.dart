@@ -5,13 +5,7 @@ import 'package:starter/features/force_update/version_gate_store.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/remote_config/remote_config_client.dart';
 
-/// Optional remote-config-backed [VersionGateStore]. Reads only the
-/// `versionPolicy` slice from the shared [RemoteConfigClient]. Every backend
-/// interaction degrades to [UpdateRequirementNone] on failure — a policy that
-/// cannot be fetched or parsed must never fabricate a hard or soft block.
 final class RemoteConfigVersionGateStore implements VersionGateStore {
-  /// Reads the `versionPolicy` slice from a [RemoteConfigClient] configured
-  /// with [baseUrl], [deviceId], and [timeout].
   RemoteConfigVersionGateStore({
     required Uri baseUrl,
     String? deviceId,
@@ -20,8 +14,6 @@ final class RemoteConfigVersionGateStore implements VersionGateStore {
          RemoteConfigClient(baseUrl: baseUrl, deviceId: deviceId, timeout: timeout),
        );
 
-  /// Constructs a store backed by an explicit [client]; tests inject a stub
-  /// client through this form.
   @visibleForTesting
   RemoteConfigVersionGateStore.withClient(this.client);
 
@@ -48,8 +40,6 @@ final class RemoteConfigVersionGateStore implements VersionGateStore {
     final hardBelow = _parseVersion(policy['hardBlockBelow']);
     final softBelow = _parseVersion(policy['softBlockBelow']);
     final storeUrl = policy['storeUrl'];
-    // A block without a store deep-link cannot offer an update path; treat as
-    // none rather than trapping the user with no escape.
     if (storeUrl is! String) {
       return const UpdateRequirementNone();
     }

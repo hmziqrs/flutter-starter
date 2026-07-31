@@ -35,7 +35,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // Pull the list down past the top edge to trigger the indicator.
       await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
       await tester.pump();
       await _pumpFrames(tester);
@@ -122,8 +121,6 @@ Widget _harness({
             if (!disableAnimations) {
               return content;
             }
-            // Simulate the platform reduce-motion setting so the indicator takes
-            // its non-animated fallback path (audit #5).
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(disableAnimations: true),
               child: content,

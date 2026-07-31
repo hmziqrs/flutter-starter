@@ -83,9 +83,6 @@ void main() {
     const animation = AlwaysStoppedAnimation<double>(0.5);
     const secondary = AlwaysStoppedAnimation<double>(0);
 
-    // Invoke buildTransitions inside a real widget tree so it receives a live
-    // BuildContext, then assert what it emits — without a Navigator or any
-    // platform resolution.
     Widget? built;
     await tester.pumpWidget(
       Directionality(

@@ -9,9 +9,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 
 part 'permissions_gallery_cases.freezed.dart';
 
-/// Preview state for the permission rationale gallery cases. The gallery
-/// renders [PermissionRationaleBody] directly in a card, since sheets are
-/// modal and this keeps the preview hermetic.
 @freezed
 abstract class PermissionGalleryState with _$PermissionGalleryState {
   const factory PermissionGalleryState({
@@ -19,14 +16,8 @@ abstract class PermissionGalleryState with _$PermissionGalleryState {
     required bool permanentlyDenied,
     required bool showDeniedAlert,
   }) = _PermissionGalleryState;
-
-  /// Prepends a "denied" alert so the denied case is visually distinct from the
-  /// promptable rationale case (both are otherwise the same body).
 }
 
-/// Builds the permission rationale gallery cases: the promptable rationale,
-/// the denied state, and the permanently-denied (one-way-door) state — all
-/// for the avatar flow's `photos` permission so the states are comparable.
 List<GalleryCase> buildPermissionsGalleryCases() {
   return buildTypedGalleryCases<PermissionGalleryState>(
     idPrefix: 'permissions',

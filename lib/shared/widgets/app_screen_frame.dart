@@ -1,10 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
-/// Shared readable-width and optional scrolling frame for route content.
-///
-/// The root presentation viewport owns system and TV edge insets. This
-/// widget deliberately adds no safe area or route background.
 class AppScreenFrame extends StatelessWidget {
   const AppScreenFrame({
     required this.child,

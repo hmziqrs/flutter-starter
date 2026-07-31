@@ -12,18 +12,12 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// The animated in-app splash screen. Watches the existing init future
-/// exposed by [appStartupResultProvider] and hands off to the router the
-/// moment it resolves; it never re-runs settings, locale, or package_info
-/// load. The branded reveal and spinner are cosmetic — navigation is never
-/// gated on their completion.
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({
     required this.onComplete,
     super.key,
   });
 
-  /// Invoked exactly once with the resolved startup result.
   final void Function(AppStartupResult result) onComplete;
 
   @override
@@ -36,9 +30,6 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // fireImmediately covers the case where createApplication completes
-    // before the widget mounts. The handoff is deferred to the next frame
-    // (not an animation completion) so the router is never mutated mid-build.
     ref.listenManual<AsyncValue<AppStartupResult>>(
       appStartupResultProvider,
       (_, next) {
@@ -73,9 +64,6 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 }
 
-/// The branded splash visual for a fixed [SplashViewData]. Public so the
-/// development gallery can compose deterministic loading/done/error previews
-/// without the async provider.
 class SplashScene extends StatelessWidget {
   const SplashScene({required this.viewData, super.key});
 
@@ -220,8 +208,6 @@ class _SplashError extends StatelessWidget {
   }
 }
 
-/// A circular brand placeholder. Real brand assets replace this glyph without
-/// touching the surrounding layout.
 class _BrandMark extends StatelessWidget {
   const _BrandMark();
 
@@ -244,9 +230,6 @@ class _BrandMark extends StatelessWidget {
   }
 }
 
-/// A small indeterminate activity indicator for the loading phase. Carries a
-/// [semanticsLabel] so the loading state is announced to assistive tech
-/// (without it `CircularProgressIndicator` emits no semantics node).
 class _Spinner extends StatelessWidget {
   const _Spinner({required this.semanticsLabel});
 
@@ -266,9 +249,6 @@ class _Spinner extends StatelessWidget {
   }
 }
 
-/// A one-shot logo reveal: opacity 0 -> 1 and scale 0.92 -> 1. Under
-/// [MediaQuery.disableAnimationsOf] the child renders statically (fully
-/// revealed) and the controller never runs; navigation never waits on it.
 class _LogoReveal extends StatefulWidget {
   const _LogoReveal({required this.child});
 
@@ -305,7 +285,6 @@ class _LogoRevealState extends State<_LogoReveal> with SingleTickerProviderState
     if (animate) {
       unawaited(_controller.forward());
     } else {
-      // Reduced motion: jump straight to the revealed end state.
       _controller.value = 1;
     }
   }

@@ -6,10 +6,7 @@ import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// State-restoration spec — the login email draft survives a simulated process
-/// death via Flutter's RestorationMixin under the constant 'app' restoration
-/// scope. The password is intentionally NOT restored (secrets never
-/// participate in restoration).
+/// The password is intentionally NOT restored: secrets never participate in restoration.
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -32,7 +29,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // Enter an in-progress email draft (the user backgrounded before submit).
     await tester.enterText(
       find.byKey(const ValueKey('auth-login-email')),
       'person@example.com',
@@ -41,13 +37,9 @@ void main() {
 
     expect(_emailText(tester), 'person@example.com');
 
-    // Simulate the OS reclaiming the process and the app relaunching with
-    // restoration data. restartAndRestore re-attaches the same root widget and
-    // replays the saved restoration bucket into the RestorableString.
     await tester.restartAndRestore();
     await tester.pump();
 
-    // The email draft is restored; the (secret) password is not.
     expect(_emailText(tester), 'person@example.com');
     expect(_passwordText(tester), '');
     expect(tester.takeException(), isNull);
@@ -60,8 +52,6 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
-    // No restorationScopeId: RestorationMixin.restoreState is never called and
-    // the page must render its default (empty) state.
     await tester.pumpWidget(
       _NoRestorationTestApp(
         home: LoginPage(

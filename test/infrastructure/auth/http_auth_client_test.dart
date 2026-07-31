@@ -1,11 +1,3 @@
-// End-to-end coverage for the real HTTP auth + OTP adapters
-// (`HttpAuthClient`, `HttpOtpClient`) against the LIVE in-repo Hono server
-// (`tools/hono_server`). No client is stubbed: the adapters speak to a real
-// Hono backend over a loopback socket. Shares `HonoServerHandle` with
-// `test/e2e/hono_server_e2e_test.dart`. The whole group is SKIPPED (not failed)
-// on hosts without a JS runtime so a host lacking bun/Node does not go red; it
-// runs and must pass wherever bun is installed, which the repo documents.
-
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -36,14 +28,10 @@ void main() {
     late HttpOtpClient otpClient;
 
     var emailSeq = 0;
-    // Each test mutates server-side account / token state; unique emails keep
-    // tests independent within the single booted server process.
     String uniqueEmail() => 'auth-${emailSeq++}@e2e.test';
 
     setUpAll(() async {
       server = await HonoServerHandle.start(runtime: runtime);
-      // A single shared Dio (the composition-root shape) is injected into both
-      // adapters so they exercise the real Dio <-> shelf loopback path.
       final dio = buildAppDio(server.baseUri);
       authClient = HttpAuthClient(baseUrl: server.baseUri, dio: dio);
       otpClient = HttpOtpClient(baseUrl: server.baseUri, dio: dio);
@@ -75,9 +63,6 @@ void main() {
 
     test('registration verify with the dev code returns a valid, non-null session', () async {
       final email = uniqueEmail();
-      // register creates the pending account; the OTP client then issues a
-      // fresh code it can verify (the register + OTP clients hold their own
-      // attempt-token state).
       await authClient.register(
         credentials: AuthCredentials(email: email, password: 'hunter2'),
         displayName: 'Alex Morgan',
@@ -108,10 +93,6 @@ void main() {
     });
 
     test('passwordReset purpose round-trips (wire value is the hyphenated segment)', () async {
-      // OtpPurpose.pathSegment is the wire value, NOT `.name`: the enum's
-      // `passwordReset.name` is 'passwordReset' but the server accepts only
-      // 'password-reset'. This test pins the contract so a future swap to
-      // `.name` would fail loudly against the live server's 400.
       final email = uniqueEmail();
       final issued = await otpClient.issue(
         purpose: OtpPurpose.passwordReset,
@@ -128,8 +109,6 @@ void main() {
       await otpClient.issue(purpose: OtpPurpose.mfa, identifier: email);
       final resent = await otpClient.resend(identifier: email);
       expect(resent.attemptToken, isNotEmpty);
-      // The resent code is still the dev code; verifying it succeeds under mfa
-      // (no session — non-registration).
       final result = await otpClient.verify(identifier: email, code: '123456');
       expect(result.outcome, OtpVerifyOutcome.valid);
       expect(result.session, isNull);
@@ -182,10 +161,6 @@ void main() {
   });
 }
 
-/// Resolves an address that is guaranteed to refuse connections: bind a free
-/// port, read it, close the socket. Reliable across hosts (no privileged-port
-/// assumptions). Mirrors the pattern in
-/// `http_notifications_registration_client_test.dart`.
 Future<Uri> _deadAddress() async {
   final sink = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
   final port = sink.port;

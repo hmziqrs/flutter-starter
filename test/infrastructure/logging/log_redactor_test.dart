@@ -69,7 +69,6 @@ void main() {
   });
 
   test('preserves Luhn-invalid digit runs to keep diagnostics readable', () {
-    // Same as the Visa test card with the check digit bumped, so it fails Luhn.
     final redacted = redactor.redactText('ref 4111111111111112 done');
 
     expect(redacted, 'ref 4111111111111112 done');

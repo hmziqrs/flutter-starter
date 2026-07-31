@@ -27,7 +27,6 @@ void main() {
     expect(find.byKey(const ValueKey('a11y-preset-large')), findsOneWidget);
     expect(find.byKey(const ValueKey('a11y-preset-dyslexia')), findsOneWidget);
 
-    // Comfortable is selected initially.
     final comfortableTile = tester.widget<FTile>(
       find.byKey(const ValueKey('a11y-preset-comfortable')),
     );
@@ -50,10 +49,8 @@ void main() {
     );
     final state = container.read(settingsControllerProvider);
     expect(state.textPreset, AppTextPreset.large);
-    // The controller applies the preset's fontScale to SettingsState.
     expect(state.fontScale, AppTextPreset.large.toSettings().fontScale);
 
-    // Selection highlight follows the new preset.
     final largeTile = tester.widget<FTile>(
       find.byKey(const ValueKey('a11y-preset-large')),
     );
@@ -63,8 +60,6 @@ void main() {
   testWidgets('surfaces common.notConnected when persistence fails (never fakes success)', (
     tester,
   ) async {
-    // failWrites makes the optimistic save roll back AND the page surface the
-    // honest notConnected notice (guardrail 13).
     await tester.pumpWidget(
       _harness(initialPreset: AppTextPreset.comfortable, failWrites: true),
     );
@@ -95,9 +90,7 @@ void main() {
   });
 }
 
-/// Bounded frame pump (checklist #5 — never pumpAndSettle). The accessibility
-/// page has no persistent animations, but the shared FThemeMotion duration
-/// (AppMotion.standard) covers the tile selection transition deterministically.
+/// Bounded pump; pumpAndSettle never settles these motion-driven tile transitions.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));

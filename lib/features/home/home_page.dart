@@ -293,8 +293,6 @@ class _RecentActivity extends StatelessWidget {
             body: translations.recentEmptyBody,
           )
         else
-          // shrinkWrap + NeverScrollableScrollPhysics keep this inline within
-          // the outer home ListView.
           DataListView<HomeActivityViewData>(
             key: const ValueKey('home-activity-list'),
             items: viewData.recentActivity,

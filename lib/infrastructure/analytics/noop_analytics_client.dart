@@ -2,10 +2,6 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
-/// Production default [AnalyticsClient]: records nothing remotely, never
-/// throws. Events route through `AppLogger.debug` (a no-op when verbose
-/// logging is disabled) so `LogRedactor` scrubs any token/email formats
-/// before they reach the log.
 final class NoopAnalyticsClient implements AnalyticsClient {
   NoopAnalyticsClient({required this.logger});
 
@@ -32,8 +28,6 @@ final class NoopAnalyticsClient implements AnalyticsClient {
     );
   }
 
-  /// Carries only stable identifiers (route name / target / funnel name +
-  /// step), never raw route args.
   static Map<String, Object?> _describeEvent(AnalyticsEvent event) {
     return switch (event) {
       ScreenView(:final routeName) => <String, Object?>{

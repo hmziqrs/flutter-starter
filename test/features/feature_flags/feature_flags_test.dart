@@ -64,10 +64,10 @@ void main() {
 
     test('malformed values fall back to the baseline (never fabricate enabled)', () {
       final flags = FeatureFlags.fromSlice(const <String, Object?>{
-        'onboarding_revamp': 'yes', // wrong type -> baseline false
-        'checkout_v2': 1, // wrong type -> baseline false
-        'search_backend': 7, // wrong type -> baseline 'local'
-        'checkout_rollout_percent': 'half', // wrong type -> baseline 0
+        'onboarding_revamp': 'yes',
+        'checkout_v2': 1,
+        'search_backend': 7,
+        'checkout_rollout_percent': 'half',
       });
       expect(flags, const FeatureFlags.defaults());
     });

@@ -11,19 +11,13 @@ import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// Opens the feedback sheet as a bottom modal (`FSheet`).
-///
-/// Wraps [FeedbackSheetBody] in [EscapeDismissibleOverlay] so Escape / barrier
-/// tap dismiss without submitting (the draft is already persisted). Returns
-/// `true` when a submission was accepted; `false` / `null` otherwise.
 Future<bool> showFeedbackSheet({required BuildContext context}) async {
   final accepted = await showFSheet<bool>(
     context: context,
     side: FLayout.btt,
     useSafeArea: true,
     builder: (sheetContext) => ColoredBox(
-      // FSheet paints no surface of its own; give it an opaque background so
-      // the form doesn't show through the dimmed app behind it.
+      // FSheet paints no surface of its own.
       color: sheetContext.theme.colors.background,
       child: EscapeDismissibleOverlay(
         child: FeedbackSheetBody(
@@ -36,10 +30,6 @@ Future<bool> showFeedbackSheet({required BuildContext context}) async {
   return accepted ?? false;
 }
 
-/// The form body of the feedback sheet, extracted from the modal so the
-/// dev-gallery can render it deterministically in a card. When
-/// [FeedbackSheetBody.presentation] is non-null the body renders that fixture
-/// state and the live controller is not driven.
 class FeedbackSheetBody extends ConsumerStatefulWidget {
   const FeedbackSheetBody({
     required this.onDismiss,
@@ -49,19 +39,12 @@ class FeedbackSheetBody extends ConsumerStatefulWidget {
     super.key,
   });
 
-  /// Invoked when the user dismisses the sheet (Cancel / Escape / barrier).
   final VoidCallback onDismiss;
 
-  /// Invoked when the transport accepts the submission.
   final VoidCallback onAccepted;
 
-  /// Optional fixture presentation state for the dev-gallery. When non-null,
-  /// the body renders this state directly and the live controller is not
-  /// driven.
   final FeedbackPresentationState? presentation;
 
-  /// Initial include-screenshot toggle value for the fixture / gallery path.
-  /// Ignored when [presentation] is null.
   final bool includeScreenshot;
 
   @override
@@ -89,8 +72,6 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     _applySeedIfNeeded();
   }
 
-  /// Seeds the local controllers from the draft once so the persisted
-  /// half-written report is visible on open.
   void _applySeedIfNeeded() {
     if (_seedsApplied) return;
     if (widget.presentation != null) {

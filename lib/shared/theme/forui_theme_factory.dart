@@ -218,10 +218,7 @@ abstract final class ForuiThemeFactory {
     required double sizeScalar,
     String? fontFamily,
   }) {
-    // The optional Latin-only dyslexia family overrides the primary family when
-    // set; scriptFontFamilies stays as fontFamilyFallback on every token so
-    // non-Latin glyphs (Arabic / CJK) still render. A null fontFamily leaves the
-    // generated Noto Sans family untouched (comfortable / large presets).
+    // Dyslexia family is Latin-only; keep scriptFontFamilies as fallback so non-Latin glyphs render.
     final resolvedFontFamily = fontFamily ?? typeface.fontFamily;
     TextStyle token(TextStyle style, int index) {
       final token = tokens[index];
@@ -254,12 +251,6 @@ abstract final class ForuiThemeFactory {
     );
   }
 
-  /// Derives the [SystemUiOverlayStyle] for the given [brightness] + [accent].
-  /// Kept conservative (edge-to-edge default) so transparent bars render behind
-  /// app content regardless of accent; a future brand-tinted variant can resolve
-  /// an accent color here via [_accentColors] without touching call sites. This
-  /// is the single source of truth consulted by `SystemUiController` so the
-  /// overlay style and the theme colors never drift (system-ui feature).
   static SystemUiOverlayStyle overlayStyle({
     required Brightness brightness,
     required AppAccent accent,

@@ -38,8 +38,6 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(fontScale: normalized));
   }
 
-  /// Resolves [preset] to its clamped `(fontScale, fontFamily)` tuple; the
-  /// manual [setFontScale] slider is untouched so a user can fine-tune after.
   Future<void> setTextPreset(AppTextPreset preset) {
     final resolved = preset.toSettings();
     return _replace(state.copyWith(textPreset: preset, fontScale: resolved.fontScale));
@@ -49,8 +47,6 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(hapticsEnabled: enabled));
   }
 
-  /// The synchronous write inside [_replace] happens before the first await,
-  /// so a same-tick navigation to home never observes a stale onboarding flag.
   Future<void> markOnboardingComplete() {
     return _replace(state.copyWith(hasCompletedOnboarding: true));
   }
@@ -59,14 +55,10 @@ final class SettingsController extends Notifier<SettingsState> {
     return _replace(state.copyWith(biometricUnlockEnabled: enabled));
   }
 
-  /// Enabling pushes the passcode-setup route; the gate doesn't arm until a
-  /// passcode is actually configured there.
   Future<void> setPasscodeEnabled({required bool enabled}) {
     return _replace(state.copyWith(passcodeEnabled: enabled));
   }
 
-  /// Idle auto-lock delay in seconds (0 = off); only meaningful with a
-  /// passcode configured.
   Future<void> setAutoLockDelaySeconds(int seconds) {
     return _replace(state.copyWith(autoLockDelaySeconds: seconds < 0 ? 0 : seconds));
   }

@@ -8,7 +8,6 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/system/system_overlay_fixture.dart';
 import 'package:starter/i18n/translations.g.dart';
 
-/// Builds stable system-surface and ForUI-overlay cases for the development gallery.
 List<GalleryCase> buildSystemGalleryCases({required AppConfig config}) {
   return <GalleryCase>[
     TypedGalleryCase<String>(

@@ -1,9 +1,6 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
 
-/// Production [MediaPicker] backed by the `image_picker` OS plugin. A
-/// cancelled pick or a plugin error both return `null` rather than an error
-/// or a fabricated image.
 class ImagePickerMediaPicker implements MediaPicker {
   ImagePickerMediaPicker({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
 
@@ -19,7 +16,6 @@ class ImagePickerMediaPicker implements MediaPicker {
       }
       return PickedMedia(
         path: result.path,
-        // XFile.mimeType is nullable in some plugin versions.
         mimeType: result.mimeType ?? '',
         fromCamera: fromCamera,
       );

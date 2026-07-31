@@ -7,8 +7,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Standalone accessibility-settings surface (gallery/tests). The live app
-/// renders the same [AccessibilityPresetSelector] in-pane on `SettingsPage`.
 class AccessibilitySettingsPage extends StatelessWidget {
   const AccessibilitySettingsPage({super.key});
 
@@ -24,9 +22,6 @@ class AccessibilitySettingsPage extends StatelessWidget {
   }
 }
 
-/// Named text-preset selector (comfortable / large / dyslexia). Selecting a
-/// preset persists via `SettingsController.setTextPreset`, surfacing
-/// `common.notConnected` on failure.
 class AccessibilityPresetSelector extends ConsumerStatefulWidget {
   const AccessibilityPresetSelector({super.key});
 
@@ -116,8 +111,6 @@ class _PresetTile extends StatelessWidget {
   }
 }
 
-/// Localized labels for [AppTextPreset]. Exhaustive switch keeps strict
-/// analysis happy when a new variant is added.
 final class _PresetLabels {
   const _PresetLabels._();
 

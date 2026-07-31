@@ -25,7 +25,6 @@ import 'package:starter/features/dev_gallery/cases/toast_dialogs_gallery_cases.d
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/system/system_gallery_cases.dart';
 
-/// Builds the complete development-only registry and rejects ambiguous IDs.
 List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
   final cases = <GalleryCase>[
     ...buildProductionGalleryCases(),

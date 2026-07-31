@@ -15,7 +15,6 @@ enum OtpPresentationStatus {
   locked,
 }
 
-/// Immutable, screen-specific fixture data for OTP verification.
 @freezed
 class OtpPresentationState with _$OtpPresentationState {
   const OtpPresentationState({
@@ -85,9 +84,6 @@ class OtpPresentationState with _$OtpPresentationState {
       assert(resendSeconds >= 0, 'resendSeconds must not be negative.'),
       assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
-  /// Live expiry countdown fixture, pinned by the dev-gallery/golden so a
-  /// deterministic value renders without a Timer. Distinct from
-  /// [lockedSeconds] (the lockout cooldown) — never aliased.
   const OtpPresentationState.countdown({this.remainingSeconds = 0})
     : status = OtpPresentationStatus.empty,
       resendSeconds = 0,
@@ -95,8 +91,6 @@ class OtpPresentationState with _$OtpPresentationState {
       lockedSeconds = 0,
       assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
-  /// Locked out after too many failed OTP attempts. [lockedSeconds] drives the
-  /// live countdown and submit gate; [attemptsRemaining] surfaces the plural.
   const OtpPresentationState.locked({this.lockedSeconds = 0, this.remainingSeconds = 0})
     : status = OtpPresentationStatus.locked,
       resendSeconds = 0,
@@ -109,18 +103,12 @@ class OtpPresentationState with _$OtpPresentationState {
   @override
   final int resendSeconds;
 
-  /// Failed attempts the user may still make before the next lockout. Surfaced
-  /// via a non-destructive alert while not locked; zero once locked.
   @override
   final int attemptsRemaining;
 
-  /// Whole seconds in the active lockout at construction. The page runs a live
-  /// countdown from this value and disables submit while it is positive.
   @override
   final int lockedSeconds;
 
-  /// Whole seconds before the issued code expires (static-fixture field; the
-  /// runtime countdown lives on `OtpControllerState.remainingSeconds`).
   @override
   final int remainingSeconds;
 
@@ -137,8 +125,6 @@ class OtpPresentationState with _$OtpPresentationState {
        assert(lockedSeconds >= 0, 'lockedSeconds must not be negative.'),
        assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
-  /// Returns a copy with `remainingSeconds` overridden. Merges the
-  /// controller's live value into the static-fixture presentation.
   OtpPresentationState copyWithRemainingSeconds(int remainingSeconds) {
     return OtpPresentationState._(
       status: status,

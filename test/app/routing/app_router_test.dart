@@ -34,10 +34,6 @@ void main() {
       await tester.pumpWidget(
         App(
           config: _productionConfig,
-          // /profile/edit is the only auth-required production route (C5 session
-          // gate); seed an authenticated session so the redirect does not bounce
-          // it to /auth/login. Other routes are unaffected (auth routes are
-          // exempt; shell tabs need no session).
           dependencies: AppDependencies.inMemory(
             initialSession: location == AppRoutes.updateProfilePath ? _authenticatedSession : null,
           ),
@@ -111,8 +107,6 @@ final _productionConfig = AppConfig(
   allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
-/// Seeded session for the auth-required /profile/edit route case. Tokens are
-/// deterministic placeholders; the redirect only checks `isAuthenticated`.
 final _authenticatedSession = AuthAuthenticated(
   accessToken: 'test-access-token',
   refreshToken: 'test-refresh-token',

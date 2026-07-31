@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Applies the app-wide vertical rhythm to a group of sidebar actions.
 class AppSidebarItemGroup extends StatelessWidget {
   const AppSidebarItemGroup({
     required this.children,

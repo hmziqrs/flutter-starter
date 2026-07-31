@@ -108,7 +108,6 @@ void main() {
         ),
       );
 
-      // field-1 and field-3 are invalid; field-1 is earlier in visual order.
       final invalid = <FormFieldState<Object?>>{
         key1.currentState!,
         key3.currentState!,
@@ -206,8 +205,6 @@ void main() {
         ),
       );
 
-      // The first target's field is null (simulating an unmounted key); the
-      // reveal must fall through to the next invalid target.
       final invalid = <FormFieldState<Object?>>{key2.currentState!};
       await revealFirstInvalid(
         invalid,
@@ -265,16 +262,12 @@ void main() {
       );
       await tester.pump(Duration.zero);
 
-      // ensureVisible still ran, but the focus request was guarded out.
       expect(focus1.hasFocus, isFalse);
       focus1.dispose();
     });
   });
 }
 
-/// A minimal [FormField] that owns no value and renders a focusable tile inside
-/// a scrollable. Used only by these tests so [revealFirstInvalid] has real
-/// [FormFieldState]s and [BuildContext]s to operate on.
 class _RevealField extends FormField<Object?> {
   _RevealField({
     required FocusNode focusNode,

@@ -9,26 +9,8 @@ import 'package:starter/shared/widgets/states/empty_state_view.dart';
 import 'package:starter/shared/widgets/states/error_state_view.dart';
 import 'package:starter/shared/widgets/states/loading_state_view.dart';
 
-/// When the viewport is within this many pixels of the bottom and the notifier
-/// still has more pages, [PagedListView.onLoadNext] fires.
 const double _loadNextThresholdPixels = 240;
 
-/// A lazily-building, virtualized paged list driven by a [PagedState].
-///
-/// Renders a `ListView.builder` whose tiles keep a stable `ValueKey` derived
-/// from [keyOf] so widget/state identity survives page appends. A
-/// `NotificationListener` fires [onLoadNext] when the viewport approaches the
-/// end and the state reports more pages available, and a trailing
-/// `_LoadNextFooter` is appended while a subsequent page is in flight.
-///
-/// State mapping:
-/// - `loading` (first page / refresh) → centered [LoadingStateView].
-/// - `error` → [ErrorStateView] with a retry action wired to [onRefresh] (a
-///   failed first page) or [onLoadNext] (a failed subsequent page). The body
-///   defaults to `common.notConnected`.
-/// - `ready` + empty → [EmptyStateView] (feature-supplied title/body).
-/// - `ready` + items → the builder; a `_LoadNextFooter` is appended while
-///   `loadingNext` is true.
 class PagedListView<T> extends StatelessWidget {
   const PagedListView({
     required this.state,
@@ -45,39 +27,26 @@ class PagedListView<T> extends StatelessWidget {
     super.key,
   });
 
-  /// The paged state to render. Usually `ref.watch(pagedControllerProvider)`.
   final PagedState<T> state;
 
-  /// Builds the tile for a single item.
   final Widget Function(BuildContext context, T item) itemBuilder;
 
-  /// Returns the stable identifier for an item, used as the `ValueKey` seed.
   final String Function(T item) keyOf;
 
-  /// Fired when the viewport approaches the end and [PagedState.hasMore] is
-  /// true. The consumer forwards this to its paged notifier's `loadNext()`.
   final Future<void> Function() onLoadNext;
 
-  /// Fired when the user pulls to refresh (or retries a failed first page). The
-  /// consumer forwards this to its paged notifier's `refresh()`.
   final Future<void> Function() onRefresh;
 
-  /// Localized empty-state title (e.g. `search.emptyTitle`).
   final String emptyTitle;
 
-  /// Localized empty-state body (e.g. `search.emptyBody`).
   final String emptyBody;
 
-  /// Localized error-state title (e.g. `search.errorTitle`).
   final String errorTitle;
 
-  /// Optional localized error-state body. Defaults to `common.notConnected`.
   final String? errorBody;
 
-  /// List padding. Defaults to the repo's `AppSpacing.lg` content gutter.
   final EdgeInsetsGeometry? padding;
 
-  /// Optional widget inserted between adjacent items.
   final Widget? separator;
 
   @override
@@ -138,7 +107,6 @@ class PagedListView<T> extends StatelessWidget {
     );
   }
 
-  /// Fires [onLoadNext] once the viewport nears the end.
   bool _onScroll(ScrollNotification notification) {
     if (!state.hasMore || state.isLoadingNext || state.isLoading) {
       return false;
@@ -154,7 +122,6 @@ class PagedListView<T> extends StatelessWidget {
   }
 }
 
-/// A small centered spinner rendered while a subsequent page is in flight.
 class _LoadNextFooter extends StatelessWidget {
   const _LoadNextFooter();
 

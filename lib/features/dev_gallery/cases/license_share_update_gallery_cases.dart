@@ -8,9 +8,6 @@ import 'package:starter/infrastructure/updates/app_update_service.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Builds the license, share-result, and app-update-availability gallery
-/// cases. Share and update previews render the typed result/availability
-/// state directly, without popping a real OS share sheet or store plugin.
 List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
   return [
     TypedGalleryCase<void>(
@@ -86,8 +83,6 @@ IconData _updateIcon(UpdateAvailability availability) {
   };
 }
 
-/// Shared card layout for the share/update-availability previews: an icon
-/// beside a screen label and case label.
 class _IconLabelCard extends StatelessWidget {
   const _IconLabelCard({
     required this.screenLabel,

@@ -4,9 +4,6 @@ import 'package:starter/features/feedback/feedback_presentation_state.dart';
 import 'package:starter/features/feedback/feedback_sheet.dart';
 import 'package:starter/i18n/translations.g.dart';
 
-/// Builds the feedback-sheet gallery cases: `drafting` / `submitting` /
-/// `failed` / `success`. Cases embed [FeedbackSheetBody] directly (sheets are
-/// modal, so the gallery renders the body in a card) with no-op callbacks.
 List<GalleryCase> buildFeedbackGalleryCases() {
   return const <GalleryCase>[
     TypedGalleryCase<FeedbackPresentationState>(

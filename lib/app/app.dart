@@ -88,8 +88,7 @@ class App extends StatelessWidget {
           dependencies.telemetry.crashReporterBackend,
         ),
         versionGateStoreProvider.overrideWithValue(dependencies.remoteConfig.versionGateStore),
-        // Precomputed in createApplication so the redirect reads a ready
-        // AsyncData and the check never re-fires on rebuild.
+        // Precomputed so the version-check redirect reads a ready AsyncData and never re-fires.
         versionCheckProvider.overrideWith((ref) async => dependencies.remoteConfig.versionCheck),
         connectivityServiceProvider.overrideWithValue(
           dependencies.platform.connectivityService,
@@ -116,7 +115,6 @@ class App extends StatelessWidget {
           dependencies.auth.biometricAuthenticator,
         ),
         attemptTrackerProvider.overrideWithValue(dependencies.auth.attemptTracker),
-        // Every port provider throws StateError until overridden here.
         hapticServiceProvider.overrideWithValue(dependencies.platform.hapticService),
         otpRepositoryProvider.overrideWithValue(dependencies.auth.otpRepository),
         profileRepositoryProvider.overrideWithValue(dependencies.auth.profileRepository),
@@ -145,8 +143,6 @@ class App extends StatelessWidget {
           dependencies.feedback.initialFeedbackShakeEnabled,
         ),
         feedbackAppMetadataProvider.overrideWithValue(dependencies.feedback.feedbackAppMetadata),
-        // Reads live settings state so user preferences drive AutoLockController
-        // directly; the feature defaults both to 0/false (inert) until wired here.
         autoLockDelaySecondsProvider.overrideWith(
           (ref) => ref.watch(settingsControllerProvider).autoLockDelaySeconds,
         ),
@@ -178,8 +174,6 @@ class _AppView extends ConsumerStatefulWidget {
   final AppConfig config;
   final String? initialLocation;
 
-  /// Dev-only HTTP inspector host; the stub exposes no navigator observers so
-  /// no dev tooling is wired in production/release/no-backend builds.
   final InspectorHost inspectorHost;
 
   @override
@@ -189,10 +183,7 @@ class _AppView extends ConsumerStatefulWidget {
 class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver {
   late final GoRouter _router = buildAppRouter(
     config: widget.config,
-    // Explicit initialLocation (tests, deep links) bypasses the splash.
     initialLocation: widget.initialLocation ?? AppRoutes.splashPath,
-    // Fallback for harnesses that build the router without a ProviderScope;
-    // the redirect itself reads live settingsControllerProvider state.
     hasCompletedOnboarding: ref.read(initialSettingsProvider).hasCompletedOnboarding,
     observers: [
       AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
@@ -206,17 +197,11 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Post-frame so the freshly created ProviderScope is used. On the
-    // no-backend default, hydration surfaces AuthException.notConnected and
-    // stays anonymous; the redirect reads live controller state so navigation
-    // reacts the moment it resolves.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
       _drainNotificationTapQueue();
       _listenAppLinkStream();
-      // On a cold-start deep link, go_router can evaluate the redirect before
-      // the version-check future resolves, missing the update-blocker on the
-      // first pass; refresh once it resolves so the redirect re-runs.
+      // Refresh on version-check resolve: the cold-start redirect can run before it resolves.
       ref.listenManual(
         versionCheckProvider,
         (_, _) => _router.refresh(),
@@ -251,8 +236,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   }
 
   void _listenAppLinkStream() {
-    // Handles foreground links; the cold-start initial link is captured in
-    // createApplication and threaded as initialLocation instead.
+    // Foreground links only; the cold-start initial link is threaded as initialLocation in createApplication.
     ref.listenManual<AsyncValue<ResolvedLink>>(
       appLinkStreamProvider,
       (previous, next) {
@@ -281,8 +265,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     ref.read(appLifecyclePhaseProvider.notifier).transitionTo(state);
-    // BiometricUnlockController relocks on pause; refresh on resume so the
-    // redirect re-sends the user to /lock instead of the prior protected shell.
+    // Refresh on resume so the redirect re-sends the user to /lock after a pause-relock.
     if (state == AppLifecycleState.resumed) {
       _router.refresh();
     }
@@ -317,8 +300,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.t.app.name,
-      // Must stay constant across releases: changing it invalidates every
-      // user's restorable draft state on upgrade.
+      // Must stay constant across releases: changing it invalidates every user's restorable state.
       restorationScopeId: 'app',
       routerConfig: _router,
       locale: localeData.flutterLocale,
@@ -342,9 +324,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           presentationPolicy: presentationPolicy,
         );
 
-        // Flips status/navigation bar icons with the active brightness + accent.
-        // Synchronous (SystemChrome.setSystemUIOverlayStyle is synchronous) and
-        // idempotent; desktop/web short-circuit inside the controller.
         SystemUiController.applyOverlayStyle(
           brightness: Theme.of(context).brightness,
           accent: settings.accent,
@@ -399,21 +378,15 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                // Router content is the overlay base so each page's own
-                                // SafeArea clears the status bar normally; banners below
-                                // float over its top edge with no space reserved.
                                 Positioned.fill(
                                   child: Builder(
                                     builder: (sheetContext) => ShakeFeedbackTrigger(
-                                      // Off on web/desktop: no accelerometer, so the
-                                      // sensors_plus factory throws and this disables honestly.
+                                      // Off on web/desktop: no accelerometer, so the sensors_plus factory throws.
                                       enabled:
                                           ref.watch(feedbackShakeEnabledControllerProvider) &&
                                           !PlatformCapabilities.current().isWeb,
                                       onShake: ({required magnitude}) =>
                                           unawaited(showFeedbackSheet(context: sheetContext)),
-                                      // Postpones idle auto-lock on activity; extend() and
-                                      // this guard are both no-ops when the delay is <= 0.
                                       child: Listener(
                                         behavior: HitTestBehavior.translucent,
                                         onPointerDown: (_) => _maybeExtendAutoLock(),
@@ -424,9 +397,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                                     ),
                                   ),
                                 ),
-                                // Connectivity first => topmost ("offline wins over any
-                                // announcement"); both animate their own height so the
-                                // Column collapses any hidden banner.
                                 const Positioned(
                                   top: 0,
                                   left: 0,
@@ -463,8 +433,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return true;
   }
 
-  /// Postpones the idle auto-lock on any pointer activity. No-op when idle
-  /// locking is disabled (delay <= 0), so the default install is inert.
   void _maybeExtendAutoLock() {
     if (ref.read(autoLockDelaySecondsProvider) > 0) {
       ref.read(autoLockControllerProvider.notifier).extend();

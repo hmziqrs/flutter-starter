@@ -44,8 +44,6 @@ List<RouteBase> buildOnboardingRoutes() => [
   ),
 ];
 
-/// Marks onboarding complete (optimistic write) and navigates to home so the
-/// redirect's live read does not bounce back into onboarding on the same tick.
 void _completeOnboardingAndGoHome(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   unawaited(container.read(settingsControllerProvider.notifier).markOnboardingComplete());

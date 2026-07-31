@@ -5,10 +5,6 @@ import 'package:starter/features/onboarding/onboarding_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// State-restoration spec — the onboarding page index survives a simulated
-/// process death via RestorationMixin (RestorableIntN) under the constant 'app'
-/// restoration scope, so a user who left off mid-onboarding returns to the
-/// same slide.
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -32,21 +28,15 @@ void main() {
 
     expect(find.text('Step 1 of 3'), findsOneWidget);
 
-    // Advance to slide 2 (index 1) -> progress reads "Step 2 of 3".
     await tester.tap(find.byKey(const ValueKey('onboarding-continue')));
-    // Pump bounded frames (never pumpAndSettle) to let the ForUI tap-feedback
-    // timer and the AppMotion page transition complete so onPageChanged fires
-    // and the restorable page index is updated before we capture state.
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
     expect(find.text('Step 2 of 3'), findsOneWidget);
 
-    // Simulate process death + relaunch with restoration data.
     await tester.restartAndRestore();
     await tester.pump();
 
-    // The page index is restored: the user lands back on slide 2.
     expect(find.text('Step 2 of 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -69,7 +59,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // Restores to the default initial page (0 -> "Step 1 of 3").
     expect(find.text('Step 1 of 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -135,9 +135,6 @@ void main() {
     });
 
     test('does not trim the secret: a space-preserved value is still accepted', () {
-      // Leading/trailing spaces are kept; the value still contains an uppercase
-      // letter and a digit and meets the length rule, so it stays valid. This
-      // documents the no-trim guarantee for passwords.
       expect(
         validatePassword(' Abcdefg1 ', requiredMessage: required, weakMessage: weak),
         isNull,

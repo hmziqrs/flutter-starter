@@ -6,12 +6,6 @@ import 'package:starter/infrastructure/analytics/firebase_analytics_client.dart'
 
 void main() {
   group('FirebaseAnalyticsClient', () {
-    // Firebase is intentionally NOT initialized in this suite (no
-    // Firebase.initializeApp), so resolving FirebaseAnalytics.instance throws
-    // [core/no-app]. The adapter's guarded _resolve swallows that and the emit
-    // becomes a no-op; the contract under test is that every method stays total
-    // — analytics must never break the UX it measures — on every platform.
-
     test('is an AnalyticsClient', () {
       expect(FirebaseAnalyticsClient(), isA<AnalyticsClient>());
     });
@@ -34,9 +28,6 @@ void main() {
     });
 
     test('a property name outside GA4 rules never throws', () async {
-      // GA4 requires 1–24 alphanumeric keys with a leading alpha; the adapter
-      // swallows the ArgumentError so a product key that violates the rule
-      // never breaks the emit path.
       final client = FirebaseAnalyticsClient();
       await expectLater(
         client.setUserProperty(const UserProperty(key: '_invalid key!', value: 'x')),

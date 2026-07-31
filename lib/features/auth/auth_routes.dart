@@ -33,9 +33,6 @@ List<RouteBase> buildAuthRoutes() => [
     name: AppRoutes.register,
     path: AppRoutes.registerPath,
     builder: (context, state) => RegisterPage(
-      // The no-backend default throws AuthException.notConnected and
-      // surfaces the dialog; a real backend creates the pending account,
-      // issues the registration OTP, and we navigate to the OTP step.
       onSubmit: (value) async {
         final container = ProviderScope.containerOf(context, listen: false);
         try {
@@ -96,8 +93,6 @@ List<RouteBase> buildAuthRoutes() => [
           message: context.t.routeError.invalidOtpPurpose,
         );
       }
-      // MFA and registration are controller-driven: the page reads live state
-      // from otpControllerProvider. Password reset keeps the static fixture.
       if (purpose == OtpPurpose.mfa || purpose == OtpPurpose.registration) {
         return OtpRoutePage(
           purpose: purpose,
@@ -154,8 +149,6 @@ class LoginRoutePage extends ConsumerStatefulWidget {
 class _LoginRoutePageState extends ConsumerState<LoginRoutePage> {
   late bool _passwordResetComplete = widget.passwordResetComplete;
   LoginPresentationStatus _status = LoginPresentationStatus.idle;
-  // Driven by the shared AttemptTracker (login, OTP, and pin-autolock share
-  // one lockout schedule).
   int _lockedSeconds = 0;
   int _attemptsRemaining = 0;
 
@@ -200,12 +193,7 @@ class _LoginRoutePageState extends ConsumerState<LoginRoutePage> {
     return LoginPage(
       presentation: _presentation(),
       onSubmit: (value) async {
-        // Navigation to home fires only on a real AuthAuthenticated result;
-        // the no-backend default throws AuthException.notConnected instead.
         final router = GoRouter.of(context);
-        // Gate the submit on a live lock check: if the identifier is
-        // mid-lockout, re-surface the locked presentation rather than burning
-        // a request the server would 429 anyway.
         final tracker = ref.read(attemptTrackerProvider);
         final existing = tracker.read(value.email);
         final now = clock.now();
@@ -228,13 +216,9 @@ class _LoginRoutePageState extends ConsumerState<LoginRoutePage> {
           if (!mounted) return;
           final session = ref.read(sessionControllerProvider);
           if (session is AuthAuthenticated) {
-            // Clear the shared tracker so an eventual typo is not one failure
-            // away from a lockout.
             tracker.recordSuccess(value.email);
             router.goNamed(AppRoutes.home);
           } else {
-            // Returned without error but did not authenticate — never navigate
-            // as if it did.
             setState(() => _status = LoginPresentationStatus.globalFailure);
           }
         } on AuthException {
@@ -303,17 +287,11 @@ void _returnToLogin(BuildContext context) {
   context.goNamed(AppRoutes.login);
 }
 
-/// Wires the static [OtpPage] to the live [OtpController] family for the
-/// MFA / registration runtime path (verify/resend state machine, lockout).
 class OtpRoutePage extends ConsumerStatefulWidget {
   const OtpRoutePage({required this.purpose, required this.identifier, super.key});
 
-  /// `mfa` verifies and navigates home; `registration` additionally publishes
-  /// the session the backend issued inline on a valid verify.
   final OtpPurpose purpose;
 
-  /// The account identifier the code was issued for, sourced from the
-  /// `identifier` query parameter.
   final String identifier;
 
   @override
@@ -324,8 +302,6 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
   @override
   void initState() {
     super.initState();
-    // Post-frame, fire-and-forget: the controller surfaces the outcome
-    // (success / globalFailure) through state.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final key = (purpose: widget.purpose, identifier: widget.identifier);
@@ -346,9 +322,6 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
         if (!ok || !mounted) {
           return;
         }
-        // Registration returns a session inline on a valid verify — publish it
-        // before navigating home so the auth-required gates (/profile/edit)
-        // pass. MFA carries no session (authenticated via login, not here).
         if (widget.purpose == OtpPurpose.registration) {
           final session = ref.read(otpControllerProvider(key)).session;
           if (session != null) {

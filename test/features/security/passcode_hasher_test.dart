@@ -8,15 +8,12 @@ void main() {
       final salts = <String>{
         for (var i = 0; i < 64; i++) hasher.generateSalt(),
       };
-      // 64 distinct salts from a 16-byte CSPRNG is overwhelmingly likely; a
-      // constant or shared seed would collide here.
       expect(salts.length, 64);
     });
 
     test('salt is lowercase hex of the expected length', () {
       const hasher = CryptoPasscodeHasher();
       final salt = hasher.generateSalt();
-      // 16 bytes -> 32 hex chars.
       expect(salt.length, 32);
       expect(RegExp(r'^[0-9a-f]{32}$').hasMatch(salt), isTrue);
     });
@@ -50,7 +47,6 @@ void main() {
       final hash = hasher.saltAndHash(pin, salt);
       expect(salt.contains(pin), isFalse, reason: 'salt must not leak the cleartext pin');
       expect(hash.contains(pin), isFalse, reason: 'hash must not leak the cleartext pin');
-      // A sha256 hex digest is 64 chars.
       expect(hash.length, 64);
     });
 

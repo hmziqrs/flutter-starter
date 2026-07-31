@@ -18,19 +18,14 @@ void main() {
     });
 
     test('persists the stable id and reuses it across instances', () async {
-      // First instance generates + persists the id under the canonical key.
       final store = InMemorySettingsStore();
       final first = DeterministicExperimentSource(store: store);
       final firstAssignment = await first.assignmentFor(ExperimentKey.paywallLayout);
 
-      // The id was persisted.
       final persisted = await store.readString(DeterministicExperimentSource.defaultStableIdKey);
       expect(persisted, isNotNull);
-      expect(persisted!.length, 32); // 128-bit hex
+      expect(persisted!.length, 32);
 
-      // A second source over the SAME store reads the same id and resolves the
-      // same assignment (sticky-assignment contract: no re-bucket across
-      // rebuilds).
       final second = DeterministicExperimentSource(store: store);
       final secondAssignment = await second.assignmentFor(ExperimentKey.paywallLayout);
       expect(secondAssignment, firstAssignment);
@@ -39,17 +34,12 @@ void main() {
     test('bucketing is a pure function of (stableId, key.wireKey)', () {
       final source = DeterministicExperimentSource(store: InMemorySettingsStore());
       const id = 'deadbeefdeadbeefdeadbeefdeadbeef';
-      // Same inputs -> same arm, deterministically, across repeated calls.
       final a1 = source.bucket(ExperimentKey.paywallLayout, id);
       final a2 = source.bucket(ExperimentKey.paywallLayout, id);
       expect(a1, a2);
-      // Different keys hash independently (the bucket input is scoped per
-      // wireKey, so adding a new experiment never re-buckets an existing one).
       final paywall = source.bucket(ExperimentKey.paywallLayout, id);
       final onboarding = source.bucket(ExperimentKey.onboardingCta, id);
-      // We do NOT assert the arms differ (they coincidentally could match); we
-      // assert each is a valid variant resolved independently without cross-key
-      // coupling.
+      // Arms may coincidentally match; assert each resolves independently, not that they differ.
       expect(paywall, isA<ExperimentVariant>());
       expect(onboarding, isA<ExperimentVariant>());
     });
@@ -60,9 +50,6 @@ void main() {
         store: InMemorySettingsStore(),
         salt: 'alt-rollout.v2',
       );
-      // Across a wide id set, the two salts must disagree on at least one id
-      // for some key (else the salt is a no-op, which would defeat the
-      // re-bucketing escape hatch).
       var disagreed = false;
       for (var i = 0; i < 200; i++) {
         final synthetic = i.toRadixString(16).padLeft(32, '0');
@@ -76,8 +63,6 @@ void main() {
     });
 
     test('allocation percentages hold within a loose tolerance over many ids', () {
-      // Statistical sanity, not a hard assertion (per the spec). Bucket a 50/50
-      // experiment over 2000 synthetic ids and expect control within 40-60%.
       const key = ExperimentKey.paywallLayout;
       final source = DeterministicExperimentSource(store: InMemorySettingsStore());
       var control = 0;
@@ -101,7 +86,6 @@ void main() {
     test('a read failure degrades honestly to a generated in-memory id', () async {
       final store = InMemorySettingsStore()..failReads = true;
       final source = DeterministicExperimentSource(store: store);
-      // Never throws; resolves a real local assignment despite the read failure.
       final assignment = await source.assignmentFor(ExperimentKey.homeFeedOrder);
       expect(assignment.source, ExperimentAssignmentSource.local);
       expect(assignment.sticky, isTrue);
@@ -122,7 +106,6 @@ void main() {
       );
       final source = DeterministicExperimentSource(store: store);
       final assignment = await source.assignmentFor(ExperimentKey.paywallLayout);
-      // The empty id was treated as missing and replaced.
       final after = await store.readString(DeterministicExperimentSource.defaultStableIdKey);
       expect(after, isNot(''));
       expect(after, isNotNull);

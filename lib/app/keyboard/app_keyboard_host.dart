@@ -22,10 +22,6 @@ final class AppKeyboardBinding {
   final AppKeyboardShortcutCallback onInvoke;
 }
 
-/// The app's single focus-independent keyboard listener and shortcut preview.
-///
-/// Mount this once at the root. Feature screens register no global hardware
-/// handlers of their own; new app-wide bindings belong in root composition.
 class AppKeyboardHost extends StatefulWidget {
   const AppKeyboardHost({
     required this.interactionPolicy,

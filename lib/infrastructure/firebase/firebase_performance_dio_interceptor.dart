@@ -4,23 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:starter/infrastructure/firebase/performance_supported.dart';
 
-/// A Dio [Interceptor] that reports every HTTP round-trip to Firebase
-/// Performance Monitoring as an [HttpMetric].
-///
-/// On [onRequest] an [HttpMetric] is created and started; on [onResponse] /
-/// [onError] the response code (+ payload size / content type when
-/// available) is recorded and the metric is stopped. The in-flight metric is
-/// associated with its [RequestOptions] via an [Expando] rather than the
-/// request's `extra` map (which the dev inspector may serialize).
-///
-/// Always safe to attach: on unsupported hosts ([firebasePerformanceSupported]
-/// is `false` on macOS / Linux / Windows) every handler is a no-op, and each
-/// Firebase call is wrapped in `try/on Object`.
+/// Keyed via [Expando]: the request `extra` map may be serialized by the dev inspector.
 final class FirebasePerformanceDioInterceptor extends Interceptor {
   FirebasePerformanceDioInterceptor();
 
-  /// In-flight metrics keyed by [RequestOptions] identity; cleared on the
-  /// first of [onResponse] / [onError] to fire.
   final Expando<HttpMetric> _metrics = Expando<HttpMetric>();
 
   @override
@@ -60,7 +47,6 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
       final metric = _metrics[options];
       if (metric != null) {
         _metrics[options] = null;
-        // A transport failure carries no response; stopped without a code.
         _stop(metric, response: err.response);
       }
     }
@@ -89,8 +75,6 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
     }
   }
 
-  /// Prefers `Content-Length`; falls back to the decoded body length only
-  /// when already a byte list (no allocation).
   int? _responsePayloadSize(Response<dynamic> response) {
     final contentLength = response.headers.value(Headers.contentLengthHeader);
     if (contentLength != null) {
@@ -106,8 +90,6 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
     return null;
   }
 
-  /// Maps a Dio HTTP method string to [HttpMethod], defaulting to `Get` for
-  /// an unrecognized verb.
   HttpMethod _httpMethod(String method) => switch (method.toUpperCase()) {
     'POST' => HttpMethod.Post,
     'PUT' => HttpMethod.Put,

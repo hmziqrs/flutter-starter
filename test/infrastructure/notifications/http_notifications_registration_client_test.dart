@@ -6,11 +6,7 @@ import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/http_notifications_registration_client.dart';
 
-/// Boots a tiny `dart:io` `HttpServer` that mimics the backend's push
-/// contract (C9) for the registration / unregister / permission-revoked path.
-/// Lives entirely inside this test (no `package:shelf` / in-repo backend
-/// dependency on the app) so the production dependency tree stays clean. The
-/// client under test exercises the real HTTP path against a live endpoint.
+/// Backend push contract (C9).
 Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})> _bootServer({
   int statusCode = 204,
 }) async {
@@ -22,7 +18,6 @@ Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})
       if (path == '/v1/notifications/register-token') {
         registered.add(request.uri.toString());
       }
-      // Drain so the request body is consumed before responding.
       try {
         await request.drain<void>();
       } on Object {
@@ -114,7 +109,6 @@ void main() {
     });
 
     test('an unreachable server surfaces notConnected (SocketException)', () async {
-      // Bind then immediately close to grab a port that is guaranteed free.
       final sink = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       final port = sink.port;
       await sink.close();

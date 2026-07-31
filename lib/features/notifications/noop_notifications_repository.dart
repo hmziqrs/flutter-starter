@@ -2,16 +2,7 @@ import 'package:starter/features/notifications/notification_permission_status.da
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
 
-/// Production default [NotificationsRepository]: reports
-/// [NotificationPermissionStatus.denied] for permission requests, publishes
-/// empty foreground / tap streams, and throws
-/// [NotificationsException.notConnected] for the token-registration actions.
-/// Never fakes a granted token or a delivered message.
-///
-/// Constructed in `AppDependencies.production`. The optional real Firebase
-/// adapter overrides the provider only when the consumer wires Firebase
-/// credentials. Selected for desktop / web via `PlatformCapabilities`
-/// (`firebase_messaging` has no desktop / web support).
+/// Production default; selected for desktop/web because `firebase_messaging` has no support there.
 final class NoopNotificationsRepository implements NotificationsRepository {
   const NoopNotificationsRepository();
 

@@ -13,8 +13,6 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      // Riverpod wraps the provider-build throw in a ProviderException; assert
-      // the underlying StateError message surfaces regardless of the wrapper.
       expect(
         () => container.read(connectivityServiceProvider),
         throwsA(
@@ -86,8 +84,6 @@ void main() {
       addTearDown(container.dispose);
       addTearDown(service.dispose);
 
-      // Subscribe so the StreamProvider builds and registers its lifecycle
-      // listener.
       container.listen(connectivityStatusProvider, (_, _) {});
       await container.pump();
 
@@ -102,15 +98,11 @@ void main() {
         expect(service.refreshCount, expectedRefreshCount);
       }
 
-      // Noisy transitions (inactive/paused) never trigger a refresh.
       await transitionAndExpect(AppLifecycleState.inactive, 0);
       await transitionAndExpect(AppLifecycleState.paused, 0);
 
-      // The resumed edge re-arms the sensor exactly once.
       await transitionAndExpect(AppLifecycleState.resumed, 1);
 
-      // A second resumed transition with no intervening non-resumed phase does
-      // not re-fire (the edge guard).
       await transitionAndExpect(AppLifecycleState.resumed, 1);
     });
   });

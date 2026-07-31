@@ -14,15 +14,8 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// Entry is the full-screen challenge gate; setup is pushed from settings to
-/// configure a new passcode.
 enum PasscodePageMode { entry, setup }
 
-/// Full-screen passcode gate (entry) and configuration surface (setup).
-///
-/// The entry surface is a hard gate: no back/escape navigation until verified
-/// or disabled — the redirect re-sends any protected destination back here
-/// while [PasscodeState.requiresChallenge] holds, so Escape dismissal is safe.
 class PasscodePage extends ConsumerWidget {
   const PasscodePage({
     required this.mode,
@@ -37,14 +30,10 @@ class PasscodePage extends ConsumerWidget {
 
   static const defaultPasscodeLength = 4;
 
-  /// Fires on a successful entry-surface verify, or setup completion.
   final VoidCallback onUnlocked;
 
-  /// Fires when the setup surface accepts a confirmed passcode.
   final VoidCallback? onSetupComplete;
 
-  /// Optional escape hatch: disables the passcode from the entry screen.
-  /// Hidden when null.
   final VoidCallback? onDisable;
 
   final PasscodePageMode mode;
@@ -133,8 +122,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   }
 
   Widget _buildForm(BuildContext context, {required PasscodeState passcodeState}) {
-    // AuthPageScaffold has no implicit Material ancestor; the raw TextFields
-    // below need one, so provide a transparent one.
     return Material(
       type: MaterialType.transparency,
       child: Column(
@@ -207,8 +194,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             autofocus: true,
           ),
         const SizedBox(height: AppSpacing.lg),
-        // Shake nudges the whole surface on an incorrect attempt; under
-        // reduce-motion the field clear + error text still surface the failure.
         _ShakeGuard(
           shaking: _shake,
           child: Column(
@@ -345,7 +330,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             _entryError = translations.lockedOut(n: secs, seconds: secs);
           });
         case PasscodeVerifyResult.notConfigured:
-          // Nothing to verify against; treat as unlocked rather than trapping.
           widget.onUnlocked();
       }
     } finally {
@@ -376,7 +360,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
       }
       await ref.read(passcodeControllerProvider.notifier).setPasscode(entry);
       if (!mounted) return;
-      // Clear auto-lock in case a prior session had armed it.
       ref.read(autoLockControllerProvider.notifier).unlock();
       widget.onSetupComplete?.call();
     } finally {
@@ -387,8 +370,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   void _signalIncorrect({required String message}) {
     _entryController.clear();
     if (mounted) setState(() {});
-    // Shake is skipped under reduce-motion; the error text + cleared field
-    // still surface the failure.
     if (!MediaQuery.disableAnimationsOf(context)) {
       setState(() {
         _shake = true;
@@ -404,8 +385,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   }
 }
 
-/// Row of passcode dots; fill is driven by controller text length (no
-/// timing-sensitive cursor).
 class _PasscodeDots extends StatelessWidget {
   const _PasscodeDots({required this.filled, required this.total, required this.pulse});
 
@@ -491,8 +470,6 @@ class _LockedOutNotice extends StatelessWidget {
   }
 }
 
-/// Optional horizontal shake; renders [child] untouched when [shaking] is
-/// false or reduce-motion is on.
 class _ShakeGuard extends StatelessWidget {
   const _ShakeGuard({required this.shaking, required this.child});
 

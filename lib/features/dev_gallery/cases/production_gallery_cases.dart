@@ -54,7 +54,6 @@ class PricingGalleryState with _$PricingGalleryState {
   final PricingAvailability availability;
 }
 
-/// Builds every production-page case contributed by the static feature wave.
 List<GalleryCase> buildProductionGalleryCases() => [
   ..._buildOnboardingCases(),
   ..._buildPaywallCases(),

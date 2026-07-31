@@ -34,8 +34,6 @@ List<RouteBase> buildSettingsRoutes() => [
   GoRoute(
     name: AppRoutes.accessibilitySettings,
     path: AppRoutes.accessibilitySettingsPath,
-    // Renders via SettingsPage (like appearance/language) so the wide
-    // two-pane sidebar stays put on desktop.
     builder: (context, state) => buildSettingsPage(context, SettingsSection.accessibility),
   ),
   GoRoute(
@@ -72,8 +70,6 @@ SettingsPage buildSettingsPage(BuildContext context, SettingsSection? section) {
 }
 
 void _openSettingsSection(BuildContext context, SettingsSection section) {
-  // Compact drills into a dedicated path where one exists; wide always selects
-  // the pane in place via ?section=, keeping the /settings page key.
   final (String name, Map<String, dynamic> queryParameters) = switch (section) {
     SettingsSection.appearance => (AppRoutes.appearanceSettings, const {}),
     SettingsSection.language => (AppRoutes.languageSettings, const {}),

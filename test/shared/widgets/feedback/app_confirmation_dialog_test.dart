@@ -176,8 +176,6 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await _pumpFrames(tester);
 
-      // The future resolved exactly once with `null` — Escape is a dismiss,
-      // not a confirm (audit #5: maybePop completes regardless of animation).
       expect(capture.callCount, 1);
       expect(capture.value, isNull);
       expect(find.byKey(_dialogKey), findsNothing);
@@ -205,10 +203,6 @@ void main() {
   });
 }
 
-/// Mutable recorder for the dialog result + how many times the listener fired.
-///
-/// Wrapping the `bool?` in a small class dodges `avoid_positional_boolean_parameters`
-/// on the listener typedef while keeping the call sites readable.
 class _ResultCapture {
   bool? value;
   int callCount = 0;

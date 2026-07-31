@@ -15,10 +15,7 @@ import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 export 'package:starter/i18n/translations.g.dart' show AppLocale;
 
-/// The single, reviewed render instant used by every canonical baseline.
-///
-/// Gallery motion is disabled as well, but advancing to one explicit timestamp
-/// also completes post-frame focus requests and font/layout stabilization.
+/// Reviewed render instant; one timestamp also completes focus and font/layout stabilization.
 const canonicalGoldenSettleTime = Duration(milliseconds: 500);
 
 const ValueKey<String> canonicalGoldenBoundaryKey = ValueKey(
@@ -98,8 +95,7 @@ Future<void> expectCanonicalGolden(
     await LocaleSettings.setLocale(previousLocale);
   });
 
-  // Desktop fixtures keep a mouse connected but deterministically parked
-  // outside the logical viewport, so no control accidentally captures hover.
+  // Park the mouse outside the viewport so no desktop control accidentally captures hover.
   TestPointer? pointer;
   if (fixture.interactionPolicy == AppInteractionPolicy.precisionPointer) {
     pointer = TestPointer(1, PointerDeviceKind.mouse);

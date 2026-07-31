@@ -1,41 +1,18 @@
 import 'dart:convert';
 
-// Doc comments intentionally reference sibling session/otp types.
-// ignore_for_file: comment_references
-
 import 'package:dio/dio.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [OtpRepository] against the test-server OTP contract. Constructed
-/// only when a consumer provides an endpoint; the `InMemoryOtpRepository`
-/// default surfaces `OtpRepositoryException.notConnected` instead.
-///
-/// Stateful: the backend keys verify off an opaque `attempt_token` returned by
-/// `issue`, but the port presents verify/resend in terms of the user-facing
-/// [identifier]. This client holds the `identifier -> attemptToken` (and
-/// `identifier -> OtpPurpose` for resend) mapping in memory, per-process,
-/// never persisted — a cold start must re-issue.
-///
-/// Transport failures (a [DioException] without a response) surface
-/// [OtpRepositoryException.notConnected]; an unknown attempt token or any
-/// other `4xx` surfaces [OtpRepositoryException.invalid]; verify maps
-/// `409 -> expired`, `429 -> locked`, `{valid:false} -> invalid`, and
-/// `{valid:true}` (tokens only on registration-purpose success) to the
-/// matching [OtpVerifyResult].
 final class HttpOtpClient implements OtpRepository {
   HttpOtpClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
   final Dio _dio;
 
-  /// identifier -> last issued attempt token. Seeded by `issue` / `resend`;
-  /// consumed (removed) on a successful verify.
   final Map<String, String> _attemptTokens = <String, String>{};
 
-  /// identifier -> last used purpose, so `resend` (which takes no purpose) can
-  /// re-issue under the same flow as the original `issue`.
   final Map<String, OtpPurpose> _purposes = <String, OtpPurpose>{};
 
   @override
@@ -68,8 +45,6 @@ final class HttpOtpClient implements OtpRepository {
       if (valid is! bool || !valid) {
         return const OtpVerifyResult.invalid();
       }
-      // Tokens arrive only for a registration-purpose success; every other
-      // purpose returns {valid: true} with no tokens.
       final accessToken = _asString(body['access_token']);
       final refreshToken = _asString(body['refresh_token']);
       final expiresAt = _parseDate(body['expires_at']);
@@ -92,7 +67,6 @@ final class HttpOtpClient implements OtpRepository {
 
   @override
   Future<OtpIssueResult> resend({required String identifier}) {
-    // resend takes no purpose; re-issue under the last known purpose.
     final purpose = _purposes[identifier] ?? OtpPurpose.registration;
     return _issue(path: '/v1/otp/resend', purpose: purpose, identifier: identifier);
   }
@@ -115,8 +89,6 @@ final class HttpOtpClient implements OtpRepository {
     return envelope;
   }
 
-  /// Posts a JSON body; sends `X-Api-Key: dev` so the dev path's fixed code
-  /// (`123456`) is issued (test/dev adapter only).
   Future<({int status, Map<String, Object?> body})> _send({
     required String path,
     required Map<String, Object> body,

@@ -1,9 +1,5 @@
 import 'dart:async';
 
-// Doc cross-references to sibling-class names in the feature package are
-// intentional `comment_references`.
-// ignore_for_file: comment_references
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
@@ -12,28 +8,18 @@ import 'package:starter/features/notifications/notifications_repository.dart';
 
 part 'notifications_controller.freezed.dart';
 
-/// Coarse lifecycle of the token-registration state machine, surfaced on the
-/// rationale sheet and diagnostics page without leaking the underlying
-/// exception.
 enum NotificationsRegistrationState {
-  /// No registration attempt has been made yet (the default).
   idle,
 
-  /// A `registerToken` call is in flight.
   registering,
 
-  /// A token was successfully registered with the backend.
   registered,
 
-  /// The registration path surfaced [NotificationsException.notConnected].
   unavailable,
 
-  /// A non-notConnected failure (denied / unknown). The rationale sheet
-  /// surfaces `notifications.disabled` or the generic error copy.
   failed,
 }
 
-/// Immutable, value-equal snapshot of the notifications controller state.
 @Freezed(copyWith: false)
 class NotificationsState with _$NotificationsState {
   const NotificationsState({
@@ -50,16 +36,12 @@ class NotificationsState with _$NotificationsState {
   @override
   final NotificationPermissionStatus permission;
 
-  /// The currently registered backend token (or `null`). Never logged raw —
-  /// the [LogRedactor] scrubs token-shaped strings.
   @override
   final String? token;
 
   @override
   final NotificationsRegistrationState registration;
 
-  /// True when the rationale sheet should surface `notifications.disabled` /
-  /// `common.notConnected`.
   bool get isUnavailable => registration == NotificationsRegistrationState.unavailable;
 
   NotificationsState copyWith({
@@ -76,21 +58,12 @@ class NotificationsState with _$NotificationsState {
   }
 }
 
-/// Cold-start seed for the persisted permission status. Overridden at the
-/// `ProviderScope` so the controller resolves synchronously on first frame.
 final initialNotificationPermissionProvider = Provider<NotificationPermissionStatus>(
   (ref) => NotificationPermissionStatus.notRequested,
 );
 
-/// Cold-start seed for the persisted registered token, if any.
 final initialNotificationTokenProvider = Provider<String?>((ref) => null);
 
-/// Handwritten Riverpod `Notifier<NotificationsState>` for the notifications
-/// permission + token-registration state machine. Optimistic state
-/// transitions with typed exceptions surfaced as
-/// [NotificationsRegistrationState.unavailable] rather than faking success.
-/// Permission status and the last-registered token are persisted under
-/// [persistedPermissionKey] / [persistedTokenKey].
 final notificationsControllerProvider =
     NotifierProvider<NotificationsController, NotificationsState>(NotificationsController.new);
 
@@ -104,9 +77,6 @@ final class NotificationsController extends Notifier<NotificationsState> {
         : NotificationsRegistrationState.registered,
   );
 
-  /// Requests notification authorization from the OS via the repository. A
-  /// failure rolls back to the previous value and lands the registration
-  /// state in [NotificationsRegistrationState.failed].
   Future<NotificationPermissionStatus> requestPermission({bool provisional = false}) async {
     final previous = state;
     final repository = ref.read(notificationsRepositoryProvider);
@@ -120,14 +90,6 @@ final class NotificationsController extends Notifier<NotificationsState> {
     }
   }
 
-  /// Requests permission if needed, then registers the token. The Noop
-  /// default throws [NotificationsException.notConnected] inside
-  /// `registerToken`; the controller catches it and lands the state in
-  /// [NotificationsRegistrationState.unavailable]. Permission gating is
-  /// delegated to the repository: `registerToken` throws a typed exception
-  /// when authorization is missing (`denied`) or no backend is reachable
-  /// (`notConnected`) — the exception kind, not the controller's local
-  /// permission view, drives the final landing state.
   Future<void> register({bool provisional = false}) async {
     state = state.copyWith(registration: NotificationsRegistrationState.registering);
     final repository = ref.read(notificationsRepositoryProvider);
@@ -163,9 +125,6 @@ final class NotificationsController extends Notifier<NotificationsState> {
     };
   }
 
-  /// Unregisters the current token (best-effort). Local state clears
-  /// regardless of whether the backend call succeeds, so a network failure
-  /// during opt-out never strands the user in a "registered" state.
   Future<void> unregister() async {
     final previousToken = state.token;
     if (previousToken == null) {
@@ -181,18 +140,11 @@ final class NotificationsController extends Notifier<NotificationsState> {
   }
 }
 
-/// `SettingsStore` keys persisting the notifications state across launches.
-/// The token is a delivery address, not a credential, so `SettingsStore`
-/// (plaintext) is appropriate.
+/// The token is a delivery address, not a credential, so plaintext is appropriate.
 const String persistedPermissionKey = 'notifications.permission';
 const String persistedTokenKey = 'notifications.token';
 
-/// Handwritten Riverpod `Notifier<List<NotificationTap>>` that buffers
-/// notification taps (foreground + cold-start) in arrival order until the
-/// router drains them. Subscribes to
-/// [NotificationsRepository.onNotificationTap] inside [build] so the
-/// subscription is alive the moment the provider is first read, capturing the
-/// cold-start tap before `_AppViewState` mounts its drain listener.
+/// The cold-start tap must be captured before `_AppViewState` mounts its drain listener.
 final notificationTapQueueProvider = NotifierProvider<NotificationTapQueue, List<NotificationTap>>(
   NotificationTapQueue.new,
 );
@@ -203,8 +155,6 @@ final class NotificationTapQueue extends Notifier<List<NotificationTap>> {
   @override
   List<NotificationTap> build() {
     final repository = ref.watch(notificationsRepositoryProvider);
-    // Subscribe immediately so a foreground tap arriving between queue
-    // creation and the first read is still captured.
     _subscription = repository.onNotificationTap.listen(_enqueue);
     ref.onDispose(() {
       unawaited(_subscription?.cancel());
@@ -217,8 +167,6 @@ final class NotificationTapQueue extends Notifier<List<NotificationTap>> {
     state = [...state, tap];
   }
 
-  /// Removes [tap] from the queue after the router has resolved it. No-op
-  /// when the tap is not present.
   void consume(NotificationTap tap) {
     if (!state.contains(tap)) {
       return;
@@ -226,7 +174,6 @@ final class NotificationTapQueue extends Notifier<List<NotificationTap>> {
     state = state.where((entry) => entry != tap).toList(growable: false);
   }
 
-  /// Drops every queued tap.
   void clear() {
     if (state.isEmpty) return;
     state = const <NotificationTap>[];

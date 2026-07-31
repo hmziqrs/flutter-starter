@@ -13,10 +13,6 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// Full-screen biometric lock gate, rendered whenever the composition-root
-/// redirect sees `BiometricLockLocked` on a protected destination. Escape
-/// dismissal is harmless: the redirect re-sends the destination back here
-/// while the state stays locked.
 class BiometricLockPage extends ConsumerWidget {
   const BiometricLockPage({
     required this.onUnlocked,
@@ -26,7 +22,6 @@ class BiometricLockPage extends ConsumerWidget {
 
   final VoidCallback onUnlocked;
 
-  /// PIN / device-credential handoff seam.
   final VoidCallback onUseFallback;
 
   @override
@@ -120,9 +115,6 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
             onPress: _unlocking ? null : () => unawaited(_unlock()),
             child: Text(_unlocking ? translations.unlocking : translations.unlock),
           ),
-        // Fallback is shown only when unavailable: in the locked+available case
-        // it would route to /passcode-entry without clearing the biometric lock
-        // state, bouncing the redirect straight back to /lock.
       ],
     );
   }
@@ -154,7 +146,6 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
 final _motionScale = MovieTweenProperty<double>();
 final _motionOpacity = MovieTweenProperty<double>();
 
-/// Lock icon with a guarded entrance; shown statically under reduce-motion.
 class _BiometricLockIcon extends StatelessWidget {
   const _BiometricLockIcon({required this.unavailable});
 
@@ -188,8 +179,6 @@ class _BiometricLockIcon extends StatelessWidget {
     return PlayAnimationBuilder<Movie>(
       tween: tween,
       duration: tween.duration,
-      // Re-key on availability so the entrance replays when the state flips
-      // between locked and unavailable (deterministic in the dev-gallery).
       child: KeyedSubtree(key: ValueKey(unavailable), child: icon),
       builder: (context, movie, child) {
         return Opacity(

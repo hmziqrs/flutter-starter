@@ -113,8 +113,6 @@ void main() {
   });
 
   test('pre-release is ordered below the release of the same version', () async {
-    // pub_semver: 2.4.0-dev < 2.4.0, so a dev build below softBlockBelow 2.4.0
-    // is softly deprecated even though the release numbers match.
     await startServer(
       status: 200,
       body: payload({
@@ -180,7 +178,6 @@ void main() {
         'latestVersion': '2.5.0',
       }),
     );
-    // 1.0.0 is below both -> hard takes precedence.
     expect(
       await storeFor(server).check(buildInfo('1.0.0')),
       isA<UpdateRequirementHard>(),

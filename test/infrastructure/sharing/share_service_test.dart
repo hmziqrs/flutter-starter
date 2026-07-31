@@ -9,8 +9,6 @@ void main() {
     test('throws until overridden at the composition root', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      // riverpod wraps the inner StateError; assert on the surfaced message so
-      // the test is stable across riverpod error-wrapper changes.
       expect(
         () => container.read(shareServiceProvider),
         throwsA(
@@ -22,8 +20,6 @@ void main() {
 
   group('shareTargetAvailable', () {
     test('true on Android and iOS (native share target)', () {
-      // The platform strings come from the same enum the implementation reads,
-      // so the case ('iOS' vs 'android') is always correct.
       expect(
         shareTargetAvailable(
           PlatformCapabilities(

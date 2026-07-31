@@ -2,16 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// Verifies the `failReads` / `failWrites` toggles and `snapshot` accessor of
-/// [InMemorySecureStore] — the test fake that drives [SecureStore] contract
-/// tests.
 void main() {
   group('InMemorySecureStore toggles', () {
     test('failReads surfaces SecureStoreException on read only', () async {
       final store = InMemorySecureStore()..failReads = true;
       await store.write('session.refreshToken', 'abc-123');
 
-      // Writes and deletes still succeed while only failReads is set.
       expect(store.snapshot, containsPair('session.refreshToken', 'abc-123'));
       expect(
         () => store.read('session.refreshToken'),
@@ -33,7 +29,6 @@ void main() {
         () => store.delete('session.refreshToken'),
         throwsA(isA<SecureStoreException>()),
       );
-      // Reads still succeed while only failWrites is set.
       expect(await store.read('session.refreshToken'), 'abc-123');
       expect(store.snapshot, containsPair('session.refreshToken', 'abc-123'));
     });

@@ -4,18 +4,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 
-/// A modal busy overlay that blocks duplicate submits while [isBusy] is true.
-///
-/// Wraps [child] in a [Stack]; when [isBusy] mounts a translucent scrim plus a
-/// centered [BusyIndicator] that absorbs pointer events, so the wrapped submit
-/// action cannot be triggered again. The overlay is purely visual — the action
-/// still completes even when the spinner is replaced by a static label under
-/// reduce-motion.
-///
-/// Pass a [value] of `null` for an indeterminate spinner or a fraction in
-/// `0.0..1.0` for a determinate bar. The visible [label] defaults to the
-/// localized `common.saving`; an explicit [semanticsLabel] overrides the
-/// spinner's accessibility label (defaulting to [label]).
 class BusyOverlay extends StatelessWidget {
   const BusyOverlay({
     required this.isBusy,
@@ -26,21 +14,14 @@ class BusyOverlay extends StatelessWidget {
     super.key,
   });
 
-  /// Whether the modal scrim is mounted over [child].
   final bool isBusy;
 
-  /// The content covered by the scrim while [isBusy] is true.
   final Widget child;
 
-  /// Visible caption shown beneath the spinner and as the static reduce-motion
-  /// label. Defaults to the localized `common.saving`.
   final String? label;
 
-  /// Accessibility label forwarded to the spinner. Defaults to [label] (or
-  /// `common.saving` when both are null).
   final String? semanticsLabel;
 
-  /// Determinate progress fraction (`0.0..1.0`); `null` is indeterminate.
   final double? value;
 
   @override
@@ -99,8 +80,6 @@ class _BusyBarrier extends StatelessWidget {
       );
     }
 
-    // AbsorbPointer blocks duplicate submits; BlockSemantics hides the
-    // underlying form from assistive tech while the scrim is mounted.
     return AbsorbPointer(
       child: ColoredBox(
         color: context.theme.colors.barrier,

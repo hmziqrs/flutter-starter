@@ -8,8 +8,6 @@ import 'package:starter/features/experiments/experiment_variant.dart';
 import 'package:starter/features/experiments/experiments_controller.dart';
 import 'package:starter/features/experiments/in_memory_experiment_source.dart';
 
-/// A test-only [ExperimentSource] whose [assignmentFor] always throws, to
-/// verify the controller's try/on Object degrade path never surfaces an error.
 class _ThrowingSource implements ExperimentSource {
   @override
   Future<ExperimentAssignment> assignmentFor(ExperimentKey key) async =>
@@ -24,8 +22,6 @@ Future<void> _untilData(
   Duration timeout = const Duration(seconds: 1),
 }) async {
   final deadline = DateTime.now().add(timeout);
-  // The controller seeds AsyncLoading synchronously, then resolves the snapshot
-  // asynchronously from the source. Poll until it leaves the loading state.
   while (container.read(experimentsControllerProvider).isLoading) {
     if (DateTime.now().isAfter(deadline)) {
       fail(
@@ -54,7 +50,6 @@ void main() {
       await _untilData(container);
 
       final snapshot = container.read(experimentsControllerProvider).requireValue;
-      // One assignment per known key, in ExperimentKey index order.
       expect(snapshot.assignments.length, ExperimentKey.values.length);
       for (var i = 0; i < ExperimentKey.values.length; i++) {
         expect(snapshot.assignments[i].key, ExperimentKey.values[i]);
@@ -100,7 +95,6 @@ void main() {
       addTearDown(container.dispose);
       addTearDown(source.dispose);
 
-      // While loading, the list is empty (honest, never fabricates).
       expect(container.read(experimentAssignmentsProvider), isEmpty);
       await _untilData(container);
       expect(
@@ -126,7 +120,6 @@ void main() {
         source: ExperimentAssignmentSource.remote,
       );
 
-      // Wait for the change to land.
       final deadline = DateTime.now().add(const Duration(seconds: 1));
       while (container
               .read(experimentsControllerProvider)
@@ -160,7 +153,6 @@ void main() {
       container.read(experimentsControllerProvider);
       await _untilData(container);
 
-      // Background, mutate the source, then resume.
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.paused);
       source.assign(ExperimentKey.onboardingCta, const ExperimentVariantTreatmentB());
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.resumed);
@@ -186,13 +178,10 @@ void main() {
       addTearDown(container.dispose);
 
       container.read(experimentsControllerProvider);
-      // Resuming must not throw; the controller stays in its initial state.
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.paused);
       container.read(appLifecyclePhaseProvider.notifier).transitionTo(AppLifecycleState.resumed);
 
       await Future<void>.delayed(const Duration(milliseconds: 30));
-      // The controller never reached a data state (every refresh threw); the
-      // per-key family therefore reports loading. It never errors.
       final value = container.read(experimentsProvider(ExperimentKey.paywallLayout));
       expect(value.hasError, isFalse);
     });

@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 
-/// A themed wrapper over Flutter's Material [RefreshIndicator].
-///
-/// The spinner is colored with the active accent
-/// (`context.theme.colors.primary`) so the indicator tracks the user's chosen
-/// accent. Under `MediaQuery.disableAnimationsOf` the spinner is rendered
-/// transparent (no visible animation) and a localized `Semantics` live region
-/// announces the refresh progress instead; [onRefresh] still always resolves.
 class AppRefreshIndicator extends StatefulWidget {
   const AppRefreshIndicator({
     required this.onRefresh,
@@ -19,21 +12,14 @@ class AppRefreshIndicator extends StatefulWidget {
     super.key,
   });
 
-  /// Feature-supplied refresh callback.
   final Future<void> Function() onRefresh;
 
-  /// The scrollable this indicator wraps. Must report overscroll notifications
-  /// (e.g. `ListView`, `GridView`, `CustomScrollView`).
   final Widget child;
 
-  /// Distance from the top edge where the spinner rests while refreshing.
   final double displacement;
 
-  /// Offset from the top edge before the indicator can be dragged.
   final double edgeOffset;
 
-  /// Optional localized label announced while refreshing. Defaults to
-  /// `common.loading`.
   final String? refreshingLabel;
 
   @override

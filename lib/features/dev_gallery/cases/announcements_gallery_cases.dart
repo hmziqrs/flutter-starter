@@ -6,8 +6,6 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Builds the announcements banner gallery cases: one per severity. Each case
-/// mounts the production [AnnouncementBannerView] with no-op callbacks.
 List<GalleryCase> buildAnnouncementsGalleryCases() {
   return [
     for (final severity in AnnouncementSeverity.values)
@@ -29,8 +27,6 @@ String _caseLabel(Translations t, AnnouncementSeverity severity) => switch (seve
   AnnouncementSeverity.critical => t.devGallery.caseAnnouncementsCritical,
 };
 
-/// Frames [AnnouncementBannerView] above a placeholder body, mirroring the
-/// production mount (banner slot above content).
 class _AnnouncementsPreview extends StatelessWidget {
   const _AnnouncementsPreview({required this.severity});
 

@@ -39,9 +39,7 @@ void main() {
     test('ships a backend-free fixture corpus large enough to paginate', () {
       final corpus = SearchViewData.defaults().results;
       expect(corpus, isNotEmpty);
-      // Larger than the search page size (8) so pagination is exercised.
       expect(corpus.length, greaterThan(8));
-      // Stable ids so the list ValueKeys are deterministic.
       final ids = corpus.map((item) => item.id).toSet();
       expect(ids.length, corpus.length);
     });

@@ -13,9 +13,6 @@ import 'package:starter/shared/widgets/search/search_field.dart';
 
 enum SearchPaginationGalleryState { searchField, pagedList, pagedListNoBackend }
 
-/// Builds the search + pagination gallery cases: the search field, a paged
-/// list over a local fixture corpus, and a paged list using the no-backend
-/// [noopPageFetcher] (surfaces `common.notConnected`).
 List<GalleryCase> buildSearchPaginationGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<SearchPaginationGalleryState>(
@@ -151,9 +148,6 @@ class _GallerySearchFieldPreviewState extends State<_GallerySearchFieldPreview> 
   }
 }
 
-/// Mounts a [PagedListView] driven by one of the gallery-local paged
-/// providers. The first load kicks off post-frame so the preview resolves to
-/// its real state (ready / error) rather than the idle seed.
 class _GalleryPagedPreview extends ConsumerStatefulWidget {
   const _GalleryPagedPreview({required this.noop});
 

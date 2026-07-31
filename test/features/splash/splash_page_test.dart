@@ -12,10 +12,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// Bounded frame pump mirroring `pumpAppFrames` (integration_test_support.dart).
-/// The splash logo reveal runs a one-shot animation, so `pumpAndSettle` is
-/// avoided — the handoff must complete within the bounded window regardless of
-/// the reveal's progress (audit checklist #5).
+/// Bounded pump; the indeterminate spinner never settles, so never pumpAndSettle.
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -52,8 +49,6 @@ Widget _harness({
               if (!disableAnimations) {
                 return content;
               }
-              // Simulate the platform reduce-motion setting so the logo reveal
-              // takes its non-animated fallback path.
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(disableAnimations: true),
                 child: content,
@@ -73,9 +68,6 @@ const _successResult = AppStartupResult(
   localeApplied: true,
 );
 
-/// Mounts a [SplashScene] for a fixed fixture so the deterministic loading /
-/// done / error visuals can be asserted without the async provider. The
-/// production [SplashPage] renders this same widget from the watched future.
 Widget _sceneHarness(SplashViewData viewData) {
   return TranslationProvider(
     child: Builder(
@@ -107,7 +99,6 @@ void main() {
   final en = AppLocale.en.buildSync();
 
   testWidgets('renders the tagline and app name while loading', (tester) async {
-    // Never-completing future keeps the provider in AsyncLoading.
     final completer = Completer<AppStartupResult>();
     await tester.pumpWidget(
       _harness(future: completer.future, onComplete: (_) {}),
@@ -135,7 +126,6 @@ void main() {
     await _pumpFrames(tester);
 
     expect(captured, _successResult);
-    // The handoff fires exactly once even across additional frames.
     await _pumpFrames(tester);
     expect(callCount, 1);
   });
@@ -143,15 +133,10 @@ void main() {
   testWidgets('error phase renders the startup-error styling from a fixture', (
     tester,
   ) async {
-    // The production appStartupResultProvider never errors in practice —
-    // createApplication swallows init failures and resolves with flags set to
-    // false. The error visual is therefore verified deterministically through
-    // the same SplashScene fixture the gallery exposes.
     await tester.pumpWidget(_sceneHarness(SplashFixtures.error));
     await _pumpFrames(tester);
 
     expect(find.text(en.splash.error), findsOneWidget);
-    // The error path reuses startupDiagnosticIdFor → 'STARTUP-UNKNOWN'.
     expect(
       find.text(en.startupFailure.diagnosticId(id: 'STARTUP-UNKNOWN')),
       findsOneWidget,
@@ -168,8 +153,6 @@ void main() {
   testWidgets('reduce-motion still completes handoff without waiting on the reveal', (
     tester,
   ) async {
-    // Disable animations globally; the logo reveal renders statically but the
-    // handoff must still fire on resolve (navigation never gates on animation).
     AppStartupResult? captured;
     await tester.pumpWidget(
       _harness(
@@ -184,8 +167,6 @@ void main() {
   });
 
   testWidgets('reduce-motion loading phase shows the static loading label', (tester) async {
-    // A never-completing future pins AsyncLoading; under reduce-motion the
-    // spinner is replaced by the localized loading label (non-animated fallback).
     final completer = Completer<AppStartupResult>();
     await tester.pumpWidget(
       _harness(

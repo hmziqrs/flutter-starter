@@ -7,13 +7,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// Builds the haptics dev-gallery case: a single "Haptics" screen whose preview
-/// is a button row that triggers each [HapticKind].
-///
-/// The preview inherits `hapticServiceProvider` from the surrounding app scope
-/// (device service in production, no-op in tests/goldens) rather than nesting
-/// its own override, so every consumer goes through the same gate: fire only
-/// when haptics opt-in is on and reduce-motion is off.
 List<GalleryCase> buildHapticsGalleryCases() {
   return [
     TypedGalleryCase<List<HapticKind>>(

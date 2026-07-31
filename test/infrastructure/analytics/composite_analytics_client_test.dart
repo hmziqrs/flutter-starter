@@ -4,9 +4,6 @@ import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/analytics/composite_analytics_client.dart';
 import 'package:starter/infrastructure/analytics/recording_analytics_client.dart';
 
-/// A [RecordingAnalyticsClient] double whose every call throws. Used to prove
-/// the composite isolates a failing backend: a throwing backend must never
-/// block the remaining backends from receiving the same emit.
 class _ThrowingAnalyticsClient implements AnalyticsClient {
   @override
   Future<void> track(AnalyticsEvent event) async {
@@ -66,8 +63,6 @@ void main() {
         _ThrowingAnalyticsClient(),
       ]);
 
-      // Every call must complete despite the throwing backends surrounding the
-      // healthy one; the healthy backend still receives every emit.
       await expectLater(
         composite.track(const Tap(target: 'cta')),
         completes,

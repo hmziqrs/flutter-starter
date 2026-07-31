@@ -3,8 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/shared/state/paged_state.dart';
 import 'package:starter/shared/state/paged_state_notifier.dart';
 
-/// Test-only paged notifier over a controllable in-memory source. Lives in the
-/// test file (never in lib/) — production never fakes a backend page.
 final class _ScriptedPagedNotifier extends PagedStateNotifierBase<int> {
   _ScriptedPagedNotifier(this.fetcher);
 
@@ -12,8 +10,6 @@ final class _ScriptedPagedNotifier extends PagedStateNotifierBase<int> {
   final PageFetcher<int> fetcher;
 }
 
-/// Builds pages of integers. `failOn` (a cursor value) makes the fetcher throw
-/// [PagedFetchException.notConnected] so the error path is exercised.
 PageFetcher<int> _sequenced({
   required int total,
   required int pageSize,
@@ -45,8 +41,6 @@ ProviderContainer _container(PageFetcher<int> fetcher) {
   return container;
 }
 
-// A test-only provider family the container overrides. Keyed by identity per
-// test; the fetcher is injected via override.
 final _testPagedProvider = NotifierProvider<_ScriptedPagedNotifier, PagedState<int>>(
   () => _ScriptedPagedNotifier(_sequenced(total: 0, pageSize: 1)),
 );
@@ -76,8 +70,6 @@ void main() {
       final container = _container(_sequenced(total: 20, pageSize: 8));
       final controller = container.read(_testPagedProvider.notifier);
       expect(container.read(_testPagedProvider).status, PagedStateStatus.idle);
-      // From the idle seed, loadNext performs the first load with the
-      // loadingNext status (spec: "idle -> loadingNext -> appended").
       await controller.loadNext();
       final afterFirst = container.read(_testPagedProvider);
       expect(afterFirst.status, PagedStateStatus.ready);
@@ -105,7 +97,6 @@ void main() {
       final first = container.read(_testPagedProvider);
       expect(first.items, [0, 1, 2]);
       expect(first.hasMore, isFalse);
-      // A further call must not change state or throw.
       await controller.loadNext();
       expect(container.read(_testPagedProvider), first);
     });
@@ -113,7 +104,6 @@ void main() {
     test('concurrent loadNext calls do not double-fetch', () async {
       final container = _container(_sequenced(total: 20, pageSize: 8));
       final controller = container.read(_testPagedProvider.notifier);
-      // Fire two loads concurrently; the guard collapses them to one fetch.
       await Future.wait<void>([controller.loadNext(), controller.loadNext()]);
       expect(container.read(_testPagedProvider).items, List.generate(8, (i) => i));
     });
@@ -135,8 +125,8 @@ void main() {
         _sequenced(total: 20, pageSize: 8, failOn: 8),
       );
       final controller = container.read(_testPagedProvider.notifier);
-      await controller.loadNext(); // page one OK
-      await controller.loadNext(); // second page throws notConnected
+      await controller.loadNext();
+      await controller.loadNext();
       final state = container.read(_testPagedProvider);
       expect(state.status, PagedStateStatus.error);
       expect(state.error, isA<PagedFetchException>());
@@ -144,8 +134,6 @@ void main() {
         (state.error! as PagedFetchException).kind,
         PagedFetchFailureKind.notConnected,
       );
-      // The first page is retained so the user does not lose context on a
-      // transient next-page failure.
       expect(state.items, List.generate(8, (i) => i));
     });
 

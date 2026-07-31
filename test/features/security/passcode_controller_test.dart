@@ -6,10 +6,6 @@ import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
-/// Writes a past lockout expiry into the store, then invalidates the passcode
-/// controller so its hydrate step re-reads it. The monotonic totalFailures
-/// counter is persisted across this cycle, so the next failure escalates per
-/// the schedule.
 Future<void> _expireLockout(InMemorySecureStore store, ProviderContainer container) async {
   await store.write(
     PasscodeController.lockedUntilKey,
@@ -35,8 +31,6 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      // Trigger build so the controller is live, then let the no-op hydrate on
-      // an empty store settle before assertions drive it.
       container.listen(passcodeControllerProvider, (_, _) {}, fireImmediately: true);
       await Future<void>.delayed(const Duration(milliseconds: 5));
     });
@@ -51,10 +45,8 @@ void main() {
       await container.read(passcodeControllerProvider.notifier).setPasscode('1234');
       final state = container.read(passcodeControllerProvider);
       expect(state.isSet, isTrue);
-      // Just-configured: not armed within this session (no cold-start re-challenge).
       expect(state.enabled, isFalse);
       expect(state.requiresChallenge, isFalse);
-      // The cleartext is never persisted; only salt + hash are.
       expect(store.snapshot.containsKey(PasscodeController.saltKey), isTrue);
       expect(store.snapshot.containsKey(PasscodeController.hashKey), isTrue);
       for (final entry in store.snapshot.entries) {
@@ -63,7 +55,6 @@ void main() {
     });
 
     test('arm() arms the gate only after a passcode is set', () {
-      // No passcode set: arm is a no-op.
       container.read(passcodeControllerProvider.notifier).arm();
       expect(container.read(passcodeControllerProvider).requiresChallenge, isFalse);
     });
@@ -92,58 +83,46 @@ void main() {
       await notifier.setPasscode('1234');
       notifier.arm();
 
-      // Two free attempts (freeAttemptsBeforeLockout == 2).
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       expect(container.read(passcodeControllerProvider).attemptsRemaining, 1);
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       expect(container.read(passcodeControllerProvider).attemptsRemaining, 0);
 
-      // Third failure imposes the 30s cooldown from the auth-ratelimit table.
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       final lockedState = container.read(passcodeControllerProvider);
       expect(lockedState.lockedUntil, isNotNull);
       expect(lockedState.isLockedAt(DateTime.now()), isTrue);
 
-      // A further attempt while locked is refused before hashing.
       expect(await notifier.verify('0000'), PasscodeVerifyResult.lockedOut);
     });
 
     test('lockout escalates across expiry per the auth-ratelimit schedule', () async {
-      // The monotonic failure counter must persist across lockout expiry so the
-      // schedule escalates 30s -> 60s -> 300s -> 900s. A brute-forcer who never
-      // succeeds must NOT face only the first tier forever.
       var notifier = container.read(passcodeControllerProvider.notifier);
       await notifier.setPasscode('1234');
       notifier.arm();
 
-      // Burn the free budget and trigger the first lockout (30s, 3rd failure).
       await notifier.verify('0000');
       await notifier.verify('0000');
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       final firstLock = container.read(passcodeControllerProvider).lockedUntil!;
-      // cooldownSecondsFor(3) == 30.
       expect(
         firstLock.difference(DateTime.now()).inSeconds,
         inInclusiveRange(29, 30),
       );
 
-      // Expire the lockout, then fail again -> the 4th failure escalates to 60s.
       await _expireLockout(store, container);
       notifier = container.read(passcodeControllerProvider.notifier);
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       final secondLock = container.read(passcodeControllerProvider).lockedUntil!;
-      // cooldownSecondsFor(4) == 60.
       expect(
         secondLock.difference(DateTime.now()).inSeconds,
         inInclusiveRange(58, 60),
       );
 
-      // Expire and fail again -> the 5th failure escalates to 300s (5m).
       await _expireLockout(store, container);
       notifier = container.read(passcodeControllerProvider.notifier);
       expect(await notifier.verify('0000'), PasscodeVerifyResult.incorrect);
       final thirdLock = container.read(passcodeControllerProvider).lockedUntil!;
-      // cooldownSecondsFor(5) == 300.
       expect(
         thirdLock.difference(DateTime.now()).inSeconds,
         inInclusiveRange(298, 300),
@@ -154,18 +133,15 @@ void main() {
       final notifier = container.read(passcodeControllerProvider.notifier);
       await notifier.setPasscode('1234');
       notifier.arm();
-      // Burn the free attempts and trigger the lockout.
       await notifier.verify('0000');
       await notifier.verify('0000');
       await notifier.verify('0000');
       expect(container.read(passcodeControllerProvider).lockedUntil, isNotNull);
 
-      // Manually expire the lockout by writing a past timestamp, then verify.
       await store.write(
         PasscodeController.lockedUntilKey,
         DateTime.now().subtract(const Duration(seconds: 1)).toIso8601String(),
       );
-      // Reload the controller so the expired lockout is observed.
       container
         ..invalidate(passcodeControllerProvider)
         ..listen(passcodeControllerProvider, (_, _) {}, fireImmediately: true);
@@ -193,7 +169,6 @@ void main() {
     });
 
     test('cold-start hydrate with a stored hash arms the gate', () async {
-      // Seed the keychain with a real salted hash, then build a fresh container.
       const hasher = CryptoPasscodeHasher();
       final salt = hasher.generateSalt();
       final hash = hasher.saltAndHash('1234', salt);
@@ -218,7 +193,6 @@ void main() {
       expect(state.enabled, isTrue, reason: 'a stored hash arms on cold start');
       expect(state.requiresChallenge, isTrue);
 
-      // The correct passcode unlocks and disarms.
       expect(
         await fresh.read(passcodeControllerProvider.notifier).verify('1234'),
         PasscodeVerifyResult.success,

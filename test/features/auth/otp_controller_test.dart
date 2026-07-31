@@ -19,9 +19,6 @@ const ({OtpPurpose purpose, String identifier}) _key = (
 );
 
 OtpIssueResult _issue({required Duration expiresIn}) {
-  // Uses clock.now() (overridden by FakeAsync's zone) so the issued expiresAt
-  // and the controller's countdown read the SAME fake clock — no sub-second
-  // drift between issue and countdown start.
   return OtpIssueResult(
     expiresAt: clock.now().add(expiresIn),
     channel: _channel,
@@ -29,9 +26,6 @@ OtpIssueResult _issue({required Duration expiresIn}) {
   );
 }
 
-/// Test-only [OtpRepository] fake. Drives the controller's typed transitions
-/// deterministically. Lives in the test file (never in lib/) per the no-backend
-/// rule — production never fakes a verify result.
 class _FakeOtpRepository implements OtpRepository {
   _FakeOtpRepository({this.issueResult, this.verifyResult, this.resendResult});
 
@@ -67,8 +61,6 @@ class _FakeOtpRepository implements OtpRepository {
   }
 }
 
-/// [_FakeOtpRepository] variant that throws `notConnected` from verify to
-/// exercise the controller's no-backend error path on the verify step.
 class _ThrowingVerifyRepo extends _FakeOtpRepository {
   _ThrowingVerifyRepo({super.issueResult});
 
@@ -97,9 +89,6 @@ ProviderContainer _container({
   return container;
 }
 
-/// Fires a Future-returning controller call inside FakeAsync without tripping
-/// `discarded_futures`. Completion is driven by `async.flushMicrotasks()` at the
-/// call site. Accepts any result type (verify/resend return `bool`).
 void fire<T>(Future<T> future) => unawaited(future.then((_) {}));
 
 void main() {
@@ -150,7 +139,6 @@ void main() {
         final container = _container(repository: repo);
         fire(container.read(otpControllerProvider(_key).notifier).requestIssue());
         async.flushMicrotasks();
-        // 3.9s floors to 3; the countdown never shows a negative / fractional.
         expect(container.read(otpControllerProvider(_key)).remainingSeconds, 3);
       });
     });
@@ -173,8 +161,7 @@ void main() {
   group('OtpController.verify', () {
     test('valid clears the tracker and emits success', () {
       FakeAsync().run((async) {
-        final tracker = InMemoryAttemptTracker()
-          ..recordFailure(_identifier); // pre-load so recordSuccess is observable
+        final tracker = InMemoryAttemptTracker()..recordFailure(_identifier);
         final repo = _FakeOtpRepository(
           issueResult: _issue(expiresIn: const Duration(seconds: 60)),
           verifyResult: const OtpVerifyResult.valid(),
@@ -240,8 +227,6 @@ void main() {
         fire(container.read(otpControllerProvider(_key).notifier).requestIssue());
         async.flushMicrotasks();
 
-        // freeAttemptsBeforeLockout (2) free, then the next failure locks for
-        // the schedule's first non-zero cooldown (30s).
         for (var i = 0; i <= freeAttemptsBeforeLockout; i++) {
           fire(container.read(otpControllerProvider(_key).notifier).verify('000000'));
           async.flushMicrotasks();
@@ -250,11 +235,8 @@ void main() {
         final state = container.read(otpControllerProvider(_key));
         expect(state.presentation.status, OtpPresentationStatus.locked);
         expect(state.isLocked, isTrue);
-        // The lockout carries the tracker's cooldown seconds (30) so the page
-        // countdown agrees with the auth-ratelimit schedule.
         expect(state.presentation.lockedSeconds, 30);
 
-        // While locked, verify is a no-op that never reaches the repository.
         final callsBefore = repo.verifyCalls;
         var result = true;
         unawaited(
@@ -279,8 +261,6 @@ void main() {
         fire(container.read(otpControllerProvider(_key).notifier).requestIssue());
         async.flushMicrotasks();
 
-        // Exhaust the free attempts first so the schedule's cooldown applies
-        // when the server-locked result records one more failure.
         for (var i = 0; i < freeAttemptsBeforeLockout; i++) {
           tracker.recordFailure(_identifier);
         }
@@ -312,8 +292,6 @@ void main() {
         expect(state.isExpired, isTrue);
         expect(state.remainingSeconds, 0);
 
-        // The countdown timer was cancelled — elapsing time triggers no extra
-        // verify calls.
         async.elapse(const Duration(seconds: 30));
         expect(repo.verifyCalls, 1);
       });
@@ -359,7 +337,6 @@ void main() {
         );
         async.flushMicrotasks();
         expect(ok, isTrue);
-        // The countdown restarted from the resend's refreshed 90s window.
         expect(container.read(otpControllerProvider(_key)).remainingSeconds, 90);
         expect(repo.resendCalls, 1);
       });
@@ -368,7 +345,6 @@ void main() {
     test('resend while locked is a no-op (gated by the lockout)', () {
       FakeAsync().run((async) {
         final tracker = InMemoryAttemptTracker();
-        // Force a locked tracker state.
         for (var i = 0; i <= freeAttemptsBeforeLockout; i++) {
           tracker.recordFailure(_identifier);
         }
@@ -379,7 +355,6 @@ void main() {
         final container = _container(repository: repo, tracker: tracker);
         fire(container.read(otpControllerProvider(_key).notifier).requestIssue());
         async.flushMicrotasks();
-        // Drive a locked verify so the controller state reflects the lock.
         fire(container.read(otpControllerProvider(_key).notifier).verify('000000'));
         async.flushMicrotasks();
         expect(container.read(otpControllerProvider(_key)).isLocked, isTrue);
@@ -400,19 +375,15 @@ void main() {
   group('OtpController family isolation', () {
     test('distinct (purpose, identifier) keys keep independent countdowns', () {
       FakeAsync().run((async) {
-        // No pre-computed issueResult: the fake computes a fresh expiresAt from
-        // clock.now() on EACH issue call, so A (issued at T0) and B (issued at
-        // T0+10) get distinct, correctly-stamped expiries.
         final repo = _FakeOtpRepository();
         final container = _container(repository: repo);
-        // The record type annotation is required for the family key to resolve
-        // (without it the local infers dynamically and the family call breaks).
+        // Record type annotation is required for the family key to resolve.
         // ignore: omit_local_variable_types
         const ({OtpPurpose purpose, String identifier}) a = (
           purpose: OtpPurpose.registration,
           identifier: 'a@b.c',
         );
-        // See `a` above: the record annotation is load-bearing for family keying.
+        // Same load-bearing record annotation as `a` above.
         // ignore: omit_local_variable_types
         const ({OtpPurpose purpose, String identifier}) b = (
           purpose: OtpPurpose.passwordReset,
@@ -420,7 +391,6 @@ void main() {
         );
 
         fire(container.read(otpControllerProvider(a).notifier).requestIssue());
-        // Elapse 10s on A only — B has no timer running.
         async
           ..flushMicrotasks()
           ..elapse(const Duration(seconds: 10));

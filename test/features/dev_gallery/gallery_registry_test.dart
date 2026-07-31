@@ -20,24 +20,20 @@ void main() {
         'profile.update.discardPrompt',
         'system.startupFailure',
         'overlays.keyboardInset',
-        // Wave-2 feature surfaces registered by their gallery contributors.
         'connectivity.offline',
         'forceUpdate.hard',
         'softUpdate.card',
         'busy.overlay',
-        // Wave-3 feature surfaces registered by their gallery contributors.
         'splash.loading',
         'stateViews.empty',
         'formScaffold.enabled',
         'announcements.critical',
-        // Wave-4 feature surfaces registered by their gallery contributors.
         'session.loggedOut',
         'session.loggedIn',
         'analytics.optIn.on',
         'analytics.optIn.off',
         'biometric.locked',
         'biometric.unavailable',
-        // Wave-5a feature surfaces registered by their gallery contributors.
         'pullRefresh.list',
         'pullRefresh.grid',
         'skeleton.staticList',
@@ -46,7 +42,6 @@ void main() {
         'accessibility.comfortable',
         'accessibility.large',
         'accessibility.dyslexia',
-        // Wave-6 feature surfaces registered by their gallery contributors.
         'searchPagination.field',
         'searchPagination.paged',
         'searchPagination.pagedNoBackend',

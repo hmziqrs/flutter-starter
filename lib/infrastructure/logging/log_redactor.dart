@@ -1,12 +1,4 @@
-/// Single choke point that scrubs PII from log messages and structured
-/// context before they reach Talker / crash reporters.
-///
-/// [redactText] runs its passes in a deliberate order so the most specific
-/// patterns win: bearer tokens, then `key=value` assignments, then query
-/// params, then email (before phone, so a `+`-alias local part isn't
-/// partially redacted), then Luhn-gated card numbers (non-Luhn digit runs
-/// survive, to avoid eating order/diagnostic IDs), then E.164 phone numbers,
-/// then standalone JWT bodies last (so a `Bearer <jwt>` is already gone).
+/// Pass order matters (patterns overlap); card runs are Luhn-gated so non-card digit IDs survive.
 final class LogRedactor {
   const LogRedactor();
 
@@ -34,22 +26,14 @@ final class LogRedactor {
     caseSensitive: false,
   );
 
-  /// Email address: `local@domain.tld`. The delimiter-framed [_sensitiveKey]
-  /// handles structured keys; this catches emails embedded in free text.
   static final RegExp _email = RegExp(
     r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b',
   );
 
-  /// E.164 phone number: `+` then 7-15 digits (leading digit non-zero).
   static final RegExp _phoneE164 = RegExp(r'\+[1-9]\d{6,14}');
 
-  /// PAN candidate: 13-19 digits with optional single space/dash separators,
-  /// Luhn-checked in the callback so non-card digit runs survive. `\b`
-  /// anchoring prevents matches inside larger tokens.
   static final RegExp _pan = RegExp(r'\b(?:\d[ -]?){12,18}\d\b');
 
-  /// JWT body: three dot-separated base64url segments, anchored on `eyJ`
-  /// (the base64 of `{"`) to avoid matching version strings like `1.2.3`.
   static final RegExp _jwtPayload = RegExp(
     r'\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b',
   );
@@ -95,8 +79,6 @@ final class LogRedactor {
 
   static final RegExp _separator = RegExp('[ -]');
 
-  /// Luhn checksum used to gate [_pan] matches so non-card digit runs
-  /// (order IDs, diagnostic codes) survive redaction.
   static bool _isLuhnValid(String digits) {
     var sum = 0;
     var alternate = false;

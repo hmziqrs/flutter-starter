@@ -34,15 +34,12 @@ class UpdateProfilePage extends StatefulWidget {
   final ProfilePresentationState presentationState;
   final ProfileSaveCallback onSave;
 
-  /// `null` means cancelled, denied, or no media backend configured.
   final AvatarPickedCallback onAvatarPicked;
 
   @override
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
 }
 
-/// Circular avatar placeholder shared by the editor and the wide-layout
-/// preview panel.
 class _AvatarPlaceholder extends StatelessWidget {
   const _AvatarPlaceholder({required this.size, required this.iconSize, required this.label});
 
@@ -92,9 +89,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
   String _savedDisplayName = '';
   String _savedUsername = '';
   String _savedBio = '';
-  // Null means "no restored value, leave the controller as-is" so a fresh
-  // launch keeps the initial draft verbatim. Email is read-only, so it has no
-  // restorable counterpart.
   final RestorableStringN _displayNameDraft = RestorableStringN(null);
   final RestorableStringN _usernameDraft = RestorableStringN(null);
   final RestorableStringN _bioDraft = RestorableStringN(null);
@@ -140,8 +134,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     registerForRestoration(_displayNameDraft, 'display_name');
     registerForRestoration(_usernameDraft, 'username');
     registerForRestoration(_bioDraft, 'bio');
-    // Seed only fields with a saved value; a fresh launch leaves the
-    // initial-draft controllers untouched.
     _synchronizing = true;
     for (final (draft, controller) in [
       (_displayNameDraft, _displayNameController),
@@ -156,8 +148,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     _restored = true;
   }
 
-  /// Persists live controller text to the restorable drafts. Guarded by
-  /// [_restored]: the setters are only safe after restoreState registers them.
   void _syncDrafts() {
     for (final (draft, controller) in [
       (_displayNameDraft, _displayNameController),
@@ -655,9 +645,6 @@ class _AvatarEditor extends StatefulWidget {
 class _AvatarEditorState extends State<_AvatarEditor> {
   bool _avatarFlowInProgress = false;
 
-  /// Checks the permission, shows the rationale sheet (always before the OS
-  /// prompt), requests if continued, then picks. Any refusal or a no-backend
-  /// default calls back with `null` rather than faking a grant.
   Future<void> _runAvatarFlow() async {
     if (_avatarFlowInProgress) return;
     setState(() => _avatarFlowInProgress = true);

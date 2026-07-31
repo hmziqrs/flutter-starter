@@ -22,12 +22,7 @@ void main() {
     }
 
     test('is exhaustive over every ConnectivityResult value', () {
-      // Guards the contract: if connectivity_plus adds a new transport, this
-      // count check (and the analyzer's exhaustive-switch check) fails until it
-      // is classified above.
       expect(ConnectivityResult.values.length, 8);
-      // Every value must map without throwing; a new unclassified transport
-      // would surface here as well as at compile time.
       expect(
         ConnectivityResult.values.map(ConnectivityState.fromResult).toSet(),
         isNotEmpty,

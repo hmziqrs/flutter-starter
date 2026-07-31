@@ -5,13 +5,6 @@ import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 
-/// Controllable [ExperimentSource] for unit tests and the dev-gallery. Holds
-/// a per-key assignment map that tests drive through [assign], and publishes
-/// the full snapshot on [changes]. A key with no seeded assignment resolves
-/// to a local control variant.
-///
-/// Not the production default (that is `DeterministicExperimentSource`).
-/// Never constructed in `AppDependencies.production`.
 final class InMemoryExperimentSource implements ExperimentSource {
   InMemoryExperimentSource({
     Map<ExperimentKey, ExperimentAssignment>? initial,
@@ -25,7 +18,6 @@ final class InMemoryExperimentSource implements ExperimentSource {
   final Map<ExperimentKey, ExperimentAssignment> _current;
   final StreamController<List<ExperimentAssignment>> _controller;
 
-  /// The current full snapshot (read-only test/diagnostics handle).
   @visibleForTesting
   List<ExperimentAssignment> get snapshot => List<ExperimentAssignment>.unmodifiable(
     _current.values,
@@ -48,8 +40,6 @@ final class InMemoryExperimentSource implements ExperimentSource {
   @override
   Stream<List<ExperimentAssignment>> changes() => _controller.stream;
 
-  /// Sets the assignment for [key] to [variant] and emits the full snapshot
-  /// on [changes].
   @visibleForTesting
   void assign(
     ExperimentKey key,
@@ -68,7 +58,6 @@ final class InMemoryExperimentSource implements ExperimentSource {
     }
   }
 
-  /// Closes the backing [StreamController]. Tests call this in `tearDown`.
   @visibleForTesting
   void dispose() {
     if (!_controller.isClosed) {

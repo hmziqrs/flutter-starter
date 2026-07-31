@@ -4,7 +4,6 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-/// The repeated adaptive shell shared by the starter's authentication forms.
 class AuthPageScaffold extends StatelessWidget {
   const AuthPageScaffold({
     required this.screenId,

@@ -20,8 +20,6 @@ void main() {
         ),
       );
 
-      // The X must be a descendant of FAlert — i.e. inside the bordered card,
-      // not a sibling floating beside it.
       expect(
         find.descendant(of: find.byType(FAlert), matching: find.byIcon(FLucideIcons.x)),
         findsOneWidget,
@@ -42,8 +40,6 @@ void main() {
       );
 
       await tester.tap(find.byIcon(FLucideIcons.x));
-      // pumpAndSettle drains FButton's long-press timer so no Timer is pending
-      // at teardown. The banner has no repeating animation, so this settles.
       await tester.pumpAndSettle();
 
       expect(dismissed, 1);
@@ -51,7 +47,6 @@ void main() {
 
     testWidgets('renders the action control inside the card and invokes onAction', (tester) async {
       var acted = 0;
-      // The changelog fixture carries an actionRoute, so the CTA is shown.
       await tester.pumpWidget(
         _harness(
           child: AnnouncementBannerView(
@@ -68,8 +63,6 @@ void main() {
       );
 
       await tester.tap(find.text('Learn more'));
-      // pumpAndSettle drains FButton's long-press timer so no Timer is pending
-      // at teardown. The banner has no repeating animation, so this settles.
       await tester.pumpAndSettle();
 
       expect(acted, 1);
@@ -96,7 +89,6 @@ void main() {
       );
 
       expect(find.byIcon(FLucideIcons.x), findsNothing);
-      // The card itself still renders.
       expect(find.byType(FAlert), findsOneWidget);
       expect(find.text('Pinned'), findsOneWidget);
     });
@@ -117,9 +109,6 @@ void main() {
   });
 }
 
-/// Mirrors the production mount: [TranslationProvider] above a [MaterialApp]
-/// whose builder wraps content in [FTheme], so [FAlert]/[FButton] resolve their
-/// styles and `context.t` resolves translations.
 Widget _harness({required Widget child}) {
   return TranslationProvider(
     child: Builder(

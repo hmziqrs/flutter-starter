@@ -14,20 +14,15 @@ import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 import 'package:starter/shared/widgets/lists/paged_list_view.dart';
 import 'package:starter/shared/widgets/search/search_field.dart';
 
-/// The local corpus the search field filters. A consumer with a real source
-/// can override this at the composition root.
 final searchCorpusProvider = Provider<List<SearchResultViewData>>(
   (ref) => SearchViewData.defaults().results,
 );
 
-/// Filters [searchCorpusProvider] by the live debounced query
-/// ([debouncedQueryProvider]) and slices matches into fixed-size pages.
 final searchResultsControllerProvider =
     NotifierProvider<SearchResultsController, PagedState<SearchResultViewData>>(
       SearchResultsController.new,
     );
 
-/// Page size the local fetcher slices the corpus into.
 const searchPageSize = 8;
 
 final class SearchResultsController extends PagedStateNotifierBase<SearchResultViewData> {
@@ -39,7 +34,6 @@ final class SearchResultsController extends PagedStateNotifierBase<SearchResultV
 
   @override
   PagedState<SearchResultViewData> build() {
-    // Re-fetch page one whenever the debounced query settles to a new value.
     ref.listen<String>(debouncedQueryProvider, (previous, next) {
       if (previous != next) {
         unawaited(refresh());
@@ -60,11 +54,6 @@ final class SearchResultsController extends PagedStateNotifierBase<SearchResultV
   }
 }
 
-/// Full-screen in-app search route (top-level `GoRoute`, outside the shell).
-///
-/// Composes [SearchField] (debounced via [debouncedQueryProvider]) and
-/// [PagedListView] (driven by [searchResultsControllerProvider]). Escape
-/// dismisses the route via [EscapeDismissibleOverlay].
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({
     required this.onBack,
@@ -72,10 +61,8 @@ class SearchPage extends ConsumerStatefulWidget {
     super.key,
   });
 
-  /// Dismisses the search route. The router wires this to `context.pop()`.
   final VoidCallback onBack;
 
-  /// Whether to focus the search field on mount.
   final bool autofocus;
 
   @override
@@ -198,7 +185,6 @@ class _SearchHeader extends StatelessWidget {
             variant: .ghost,
             semanticsLabel: context.t.common.back,
             onPress: onBack,
-            // RTL: 'back' points toward the start edge, which is right in RTL.
             child: Icon(
               Directionality.of(context) == TextDirection.rtl
                   ? FLucideIcons.arrowRight

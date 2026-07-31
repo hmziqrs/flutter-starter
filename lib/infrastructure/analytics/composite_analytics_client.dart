@@ -1,10 +1,6 @@
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 
-/// [AnalyticsClient] that fans every call out to a list of backends,
-/// sequentially, each isolated in its own `try/on Object` so one failing or
-/// unavailable backend never blocks the rest. Constructed at the composition
-/// root to dual-report analytics (e.g. PostHog and Firebase Analytics).
 final class CompositeAnalyticsClient implements AnalyticsClient {
   CompositeAnalyticsClient(List<AnalyticsClient> clients)
     : _clients = List<AnalyticsClient>.unmodifiable(clients);

@@ -13,7 +13,6 @@ void main() {
 
     test('launchUpdate completes without throwing or faking a success state', () async {
       const service = NoopAppUpdateService();
-      // Both flags should be accepted for port parity and resolve cleanly.
       await expectLater(service.launchUpdate(), completes);
       await expectLater(service.launchUpdate(immediate: true), completes);
     });
@@ -58,8 +57,6 @@ void main() {
     test('throws until overridden at the composition root', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      // riverpod wraps the inner StateError; assert on the surfaced message so
-      // the test is stable across riverpod error-wrapper changes.
       expect(
         () => container.read(appUpdateServiceProvider),
         throwsA(

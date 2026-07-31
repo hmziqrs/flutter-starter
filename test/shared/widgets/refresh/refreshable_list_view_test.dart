@@ -31,8 +31,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // A 600px viewport at 80px tiles builds only the visible window plus the
-      // cache extent — never all 50.
       expect(built.length, lessThan(50));
       expect(built, contains('item-0'));
       expect(built, isNot(contains('item-49')));
@@ -93,11 +91,7 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // The Cupertino branch uniquely produces a CustomScrollView sliver host
-      // (the Material branch produces an AppRefreshIndicator + ListView).
       expect(find.byType(CustomScrollView), findsOneWidget);
-      // The Material path is not taken when Cupertino is requested (and motion is
-      // on).
       expect(find.byType(RefreshIndicator), findsNothing);
     });
 
@@ -118,8 +112,6 @@ void main() {
         );
         await _pumpFrames(tester);
 
-        // The Cupertino spinner cannot be motion-guarded in place, so the Material
-        // path (with its transparent-spinner fallback) takes over (audit #5).
         expect(find.byType(RefreshIndicator), findsOneWidget);
         expect(find.byType(CupertinoSliverRefreshControl), findsNothing);
       },

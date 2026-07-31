@@ -8,9 +8,6 @@ import 'package:starter/shared/widgets/states/loading_state_view.dart';
 
 enum StateViewsGalleryState { empty, error, loading }
 
-/// Builds the state-views gallery cases: an [EmptyStateView], an
-/// [ErrorStateView], and a [LoadingStateView], each wired to deterministic,
-/// localized copy. The retry action is a no-op preview callback.
 List<GalleryCase> buildStateViewsGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<StateViewsGalleryState>(

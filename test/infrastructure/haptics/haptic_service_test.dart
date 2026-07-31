@@ -4,11 +4,6 @@ import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 
-/// The expected `HapticFeedbackType` argument string each [HapticKind] must
-/// forward over the `HapticFeedback.vibrate` platform channel. Covering every
-/// kind asserts the device adapter's switch is exhaustive and one-to-one —
-/// adding a kind without a branch is a compile error, and remapping one is a
-/// test failure.
 const _expectedChannelArgs = <HapticKind, String>{
   HapticKind.selection: 'HapticFeedbackType.selectionClick',
   HapticKind.impactLight: 'HapticFeedbackType.lightImpact',
@@ -65,7 +60,6 @@ void main() {
     }
 
     test('covers every HapticKind in the mapping table', () {
-      // Guard against a future kind landing without a channel-arg expectation.
       expect(_expectedChannelArgs.keys.toSet(), HapticKind.values.toSet());
     });
 
@@ -98,7 +92,6 @@ void main() {
         HapticKind.notificationSuccess,
         HapticKind.impactHeavy,
       ]);
-      // Hermeticity: the noop never reaches the platform channel.
       expect(lastChannelArgs, isNull);
     });
 

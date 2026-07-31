@@ -61,8 +61,6 @@ void main() {
     ];
 
     for (final entry in cases) {
-      // /profile/edit is auth-required (C5 session gate); seed an authenticated
-      // session so the quick action is not bounced to /auth/login.
       await _pumpApp(
         tester,
         AppRoutes.homePath,
@@ -109,9 +107,6 @@ void main() {
     );
     await _tapVisible(tester, 'auth-login-submit');
 
-    // The no-backend default (InMemoryAuthRepository.login) throws
-    // AuthException.notConnected — the page surfaces globalFailure honestly
-    // rather than navigating to Home as if authentication succeeded (C13).
     expect(find.byKey(const ValueKey('auth-login-global-failure')), findsOneWidget);
   });
 
@@ -128,11 +123,6 @@ void main() {
       'Password1',
     );
 
-    // The no-backend InMemoryAuthRepository throws AuthException on every call.
-    // The default schedule [0, 0, 30, ...] grants two free attempts, then locks
-    // for 30s on the third failure. The shared AttemptTracker is the same one
-    // the OTP surface consumes, so this is the login-named-consumer wiring the
-    // auth-ratelimit spec requires (login, OTP, pin-autolock = 3 consumers).
     for (var attempt = 1; attempt <= 2; attempt++) {
       await _tapVisible(tester, 'auth-login-submit');
       expect(
@@ -142,9 +132,7 @@ void main() {
       );
     }
 
-    // Third failure escalates to a 30s lockout. Tap + bounded pumps (NOT
-    // pumpAndSettle) because the lockout Timer.periodic fires every 1s and
-    // would otherwise keep pumpAndSettle alive past its timeout.
+    // Bounded pumps, not pumpAndSettle: the lockout Timer.periodic (1s) would keep pumpAndSettle alive.
     final submit = find.byKey(const ValueKey('auth-login-submit'));
     await tester.ensureVisible(submit);
     await tester.pump();
@@ -159,8 +147,7 @@ void main() {
       reason: 'submit is disabled while the lockout countdown is active',
     );
 
-    // Expire the 30s lockout so the countdown Timer.periodic self-cancels and
-    // the test binding's no-pending-timers invariant holds at teardown.
+    // Expire the lockout so the Timer.periodic self-cancels (no pending timers at teardown).
     await tester.pump(const Duration(seconds: 31));
   });
 
@@ -185,9 +172,6 @@ void main() {
     await _tapVisible(tester, 'auth-register-accept-terms');
     await _tapVisible(tester, 'auth-register-submit');
 
-    // Registration is backend-dependent; the no-backend default surfaces
-    // common.notConnected rather than navigating to OTP as if the account was
-    // created (C13).
     expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
     expect(find.text('This action is not connected yet.'), findsOneWidget);
   });
@@ -259,8 +243,6 @@ Future<void> _pumpApp(
       config: _productionConfig,
       dependencies: AppDependencies.inMemory(
         initialSession: initialSession,
-        // The floating announcement banner overlaps the top of the screen; dismiss
-        // the whole feed so it never occludes the routing targets these cases tap.
         dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
       ),
       initialLocation: initialLocation,
@@ -277,8 +259,6 @@ final _productionConfig = AppConfig(
   allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );
 
-/// Seeded authenticated session for auth-required destinations (/profile/edit,
-/// C5 session gate). Deterministic placeholders; the gate checks isAuthenticated.
 final _authenticatedSession = AuthAuthenticated(
   accessToken: 'test-access-token',
   refreshToken: 'test-refresh-token',

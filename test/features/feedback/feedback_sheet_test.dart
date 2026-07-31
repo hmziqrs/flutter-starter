@@ -63,7 +63,6 @@ void main() {
       await tester.tap(find.text(t.feedback.submit));
       await _pumpFrames(tester);
 
-      // The honest no-backend copy surfaces notConnected; the success copy does not.
       expect(find.text(t.common.notConnected), findsOneWidget);
       expect(find.text(t.feedback.successTitle), findsNothing);
     });
@@ -104,8 +103,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // No text entered: tapping submit runs the validator, which rejects the
-      // empty message. The transport never records a submission.
       await tester.tap(find.text(t.feedback.submit));
       await _pumpFrames(tester);
 
@@ -136,15 +133,8 @@ void main() {
       await _pumpFrames(tester);
 
       expect(dismissed, isTrue);
-      // No submission reached the transport: Cancel does not fire submit.
       expect(_transportOf(tester).submissions, isEmpty);
     });
-
-    // Escape dismissal is provided by the shared `EscapeDismissibleOverlay`
-    // (which wraps the body inside `showFeedbackSheet`); the FSheet slide
-    // animation under the ForUI motion theme is not deterministically pumpable
-    // in a widget test without pumpAndSettle, so the Escape path is covered by
-    // the overlay's own contract + code inspection of `showFeedbackSheet`.
 
     testWidgets('screenshot toggle is reachable and flips intent', (tester) async {
       await tester.pumpWidget(
@@ -163,7 +153,6 @@ void main() {
       await tester.tap(toggle);
       await _pumpFrames(tester);
 
-      // The FSwitch value reads the live draft; toggling flips includeScreenshot.
       final fsSwitch = tester.widget<FSwitch>(toggle);
       expect(fswitchValue(fsSwitch), isTrue);
     });
@@ -171,7 +160,6 @@ void main() {
     testWidgets('fixture presentation renders failed alert without a controller', (tester) async {
       await tester.pumpWidget(
         _harness(
-          // No transport wiring needed: the fixture path renders directly.
           transport: const NoopFeedbackTransport(),
           child: const FeedbackSheetBody(
             presentation: FeedbackPresentationState.failed(),
@@ -222,9 +210,6 @@ void main() {
 void _noop() {}
 
 InMemoryFeedbackTransport _transportOf(WidgetTester tester) {
-  // The harness overrides feedbackTransportProvider with an InMemory instance;
-  // reach it via the element's ProviderContainer so the test can assert on
-  // recorded submissions.
   final scope = ProviderScope.containerOf(
     tester.element(find.byType(FeedbackSheetBody)),
   );
@@ -232,15 +217,11 @@ InMemoryFeedbackTransport _transportOf(WidgetTester tester) {
 }
 
 bool fswitchValue(FSwitch widget) {
-  // FSwitch exposes its value via the `value` field; read it directly so the
-  // test asserts the live intent without depending on private state.
   return widget.value;
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {
-  // Bounded frame sequence (mirrors integration_test_support.pumpAppFrames) so
-  // pending ForUI button / text-field feedback timers resolve without
-  // pumpAndSettle, which can hang on a focused editable.
+  // Bounded pumps: pumpAndSettle hangs on a focused editable while ForUI timers resolve.
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }

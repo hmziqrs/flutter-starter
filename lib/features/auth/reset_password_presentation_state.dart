@@ -12,7 +12,6 @@ enum ResetPasswordPresentationStatus {
   success,
 }
 
-/// Immutable, screen-specific fixture data for Reset Password.
 @freezed
 class ResetPasswordPresentationState with _$ResetPasswordPresentationState {
   const ResetPasswordPresentationState({

@@ -6,9 +6,6 @@ import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
 enum SkeletonGalleryState { staticList, shimmerList }
 
-/// Builds the skeleton gallery cases: a static reduce-motion list (the golden
-/// baseline) and an animated shimmer list. Both preview the same mirrored
-/// layout (three [SkeletonTile]s inside a [SkeletonView]).
 List<GalleryCase> buildSkeletonGalleryCases() {
   return <GalleryCase>[
     TypedGalleryCase<SkeletonGalleryState>(
@@ -32,9 +29,6 @@ List<GalleryCase> buildSkeletonGalleryCases() {
   ];
 }
 
-/// The static variant forces `disableAnimations` so the non-shimmering
-/// fallback paints deterministically for goldens; the shimmer variant
-/// inherits the gallery environment's animation setting.
 class _SkeletonPreview extends StatelessWidget {
   const _SkeletonPreview({required this.state});
 

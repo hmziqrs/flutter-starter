@@ -18,11 +18,6 @@ import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
   testWidgets('avatar action runs the permission rationale flow deterministically', (tester) async {
-    // permissions-media: tapping "Change profile image" now opens the
-    // rationale sheet (always before the OS prompt). With the Noop permission
-    // service, dismissing the sheet fires onAvatarPicked(null) — the honest
-    // "denied / unavailable" surface. The flow never reaches a platform
-    // channel; it stays deterministic for the test harness.
     var feedbackCount = 0;
     await _pumpProfile(
       tester,
@@ -35,10 +30,8 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('profile-avatar-feedback')));
     await tester.pumpAndSettle();
-    // Rationale sheet is shown.
     expect(find.text('Photo library access'), findsOneWidget);
 
-    // Dismiss via "Not now" → onAvatarPicked(null) fires.
     await tester.tap(find.byKey(const ValueKey('permission-rationale-dismiss')));
     await tester.pumpAndSettle();
 
@@ -288,10 +281,6 @@ Future<void> _pumpProfile(
   );
   await tester.pumpWidget(
     ProviderScope(
-      // permissions-media: the avatar flow reads the permission + media
-      // providers via `ProviderScope.containerOf`. Override both with the
-      // Noop defaults so the flow surfaces an honest `null` (denied / no
-      // pick) without reaching a platform channel.
       overrides: [
         permissionServiceProvider.overrideWithValue(const NoopPermissionService()),
         mediaPickerProvider.overrideWithValue(const NoopMediaPicker()),

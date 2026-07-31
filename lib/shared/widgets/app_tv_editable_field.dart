@@ -15,12 +15,6 @@ typedef AppTvEditableFieldBuilder =
 
 typedef AppTvEditingComplete = void Function({FocusNode? nextFocusNode});
 
-/// Keeps television traversal on an inert summary until text entry is chosen.
-///
-/// The [focusNode] represents the logical field in feature-owned validation
-/// and traversal. On a television it attaches to the activation surface; the
-/// real editor receives a private focus node only while editing. Near-field
-/// presentations build the real field directly with [focusNode].
 class AppTvEditableField extends StatefulWidget {
   const AppTvEditableField({
     required this.activationKey,
@@ -43,11 +37,8 @@ class AppTvEditableField extends StatefulWidget {
   final bool secure;
   final bool autofocus;
 
-  /// Whether the primary focus is inside a television editor rather than its
-  /// directional activation surface.
   static bool get editorHasPrimaryFocus => _primaryEditor != null;
 
-  /// Ends the active television editing session before route-level Back runs.
   static bool dismissPrimaryEditor() {
     final editor = _primaryEditor;
     if (editor == null || !editor._editing) {

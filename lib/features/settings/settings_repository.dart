@@ -56,11 +56,8 @@ final class SettingsRepository {
         fontScale: _parseFontScale(values[2]),
         textPreset: textPreset,
         localeOverride: _parseLocale(values[4]),
-        // Treat any non-"true" value (missing, "false", legacy) as incomplete so
-        // fresh installs and pre-flag installs both gate through onboarding.
         hasCompletedOnboarding: values[5] == 'true',
         biometricUnlockEnabled: values[6] == 'true',
-        // Default-on semantics: missing/legacy -> true, explicit 'false' -> false.
         hapticsEnabled: values[7] != 'false',
         passcodeEnabled: values[8] == 'true',
         autoLockDelaySeconds: _parseAutoLockDelay(values[9]),
@@ -77,8 +74,6 @@ final class SettingsRepository {
         _store.writeString(themeModeKey, state.themeMode.name),
         _store.writeString(accentKey, state.accent.name),
         _store.writeString(fontScaleKey, state.fontScale.toStringAsFixed(2)),
-        // Persist the preset name only; fontFamily is always derivable from
-        // textPreset.toSettings() (no separate key).
         _store.writeString(textPresetKey, state.textPreset.name),
         switch (state.localeOverride) {
           final locale? => _store.writeString(localeKey, locale.languageTag),
@@ -92,7 +87,6 @@ final class SettingsRepository {
           true => _store.writeString(biometricUnlockKey, 'true'),
           false => _store.remove(biometricUnlockKey),
         },
-        // Persist only the opt-out so a missing key reads as default-on.
         switch (state.hapticsEnabled) {
           false => _store.writeString(hapticsEnabledKey, 'false'),
           true => _store.remove(hapticsEnabledKey),
@@ -101,7 +95,6 @@ final class SettingsRepository {
           true => _store.writeString(passcodeEnabledKey, 'true'),
           false => _store.remove(passcodeEnabledKey),
         },
-        // 0 is the default (idle locking off); persist only non-default values.
         switch (state.autoLockDelaySeconds) {
           0 => _store.remove(autoLockDelayKey),
           final seconds => _store.writeString(autoLockDelayKey, seconds.toString()),
@@ -139,9 +132,6 @@ final class SettingsRepository {
     return parsed;
   }
 
-  /// Parses the auto-lock delay. A missing/malformed/negative value reads as 0
-  /// (idle locking off). Clamped to >= 0 so a corrupted negative value cannot
-  /// crash the AutoLockController timer.
   static int _parseAutoLockDelay(String? savedValue) {
     final parsed = int.tryParse(savedValue ?? '');
     if (parsed == null || parsed < 0) {

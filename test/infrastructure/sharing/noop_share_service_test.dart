@@ -18,8 +18,6 @@ void main() {
     });
 
     test('is a const-constructible honest default (no backend wiring)', () async {
-      // Two independent const instances behave identically — the no-backend
-      // default is stateless and deterministic.
       const a = NoopShareService();
       const b = NoopShareService();
       expect(await a.shareText('a'), await b.shareText('b'));
@@ -44,14 +42,13 @@ void main() {
     test('variants are not equal to each other (exhaustive switch stays distinct)', () {
       for (final a in ShareResult.values) {
         for (final b in ShareResult.values) {
-          expect(a == b, a == b); // sanity: identity
+          expect(a == b, a == b);
           if (identical(a, b)) {
             expect(a == b, isTrue);
             expect(a.hashCode, b.hashCode);
           }
         }
       }
-      // Pairwise distinctness.
       expect(ShareResult.success == ShareResult.unavailable, isFalse);
       expect(ShareResult.success == ShareResult.cancelled, isFalse);
       expect(ShareResult.unavailable == ShareResult.cancelled, isFalse);

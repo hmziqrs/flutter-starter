@@ -12,7 +12,6 @@ enum ForgotPasswordPresentationStatus {
   success,
 }
 
-/// Immutable, screen-specific fixture data for Forgot Password.
 @freezed
 class ForgotPasswordPresentationState with _$ForgotPasswordPresentationState {
   const ForgotPasswordPresentationState({

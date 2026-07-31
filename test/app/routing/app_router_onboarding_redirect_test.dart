@@ -22,8 +22,6 @@ void main() {
   ) async {
     await _pumpApp(tester, _freshInstallDependencies());
 
-    // The router's top-level redirect sends / -> /onboarding when the live
-    // settingsControllerProvider flag is unset.
     expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-greeting')), findsNothing);
   });
@@ -42,9 +40,6 @@ void main() {
 
   testWidgets('in-session Skip marks onboarding complete and reaches home WITHOUT a '
       'relaunch (regresses the captured-bool loop)', (tester) async {
-    // A captured-bool redirect would re-evaluate against the stale pre-mark
-    // value on the subsequent goNamed(home) and bounce home -> onboarding.
-    // The live read must observe the optimistic write on the same tick.
     await _pumpApp(tester, _freshInstallDependencies());
     expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
 
@@ -127,15 +122,12 @@ void main() {
       initialLocation: AppRoutes.loginPath,
     );
 
-    // Login renders directly — auth flows are not bounced into onboarding.
     expect(find.byKey(const ValueKey('onboarding-skip')), findsNothing);
   });
 
   testWidgets('detail routes reachable from the shell do not redirect independently', (
     tester,
   ) async {
-    // /profile/edit is not a shell-tab destination; the onboarding gate leaves
-    // it alone (the shell itself guards entry).
     await _pumpApp(
       tester,
       _freshInstallDependencies(),
@@ -147,24 +139,19 @@ void main() {
 
   testWidgets('after markOnboardingComplete + relaunch (reload from the same store), '
       'boots straight to home', (tester) async {
-    // Share an InMemorySettingsStore across both App instances so the persisted
-    // "true" survives the relaunch.
     final store = InMemorySettingsStore();
 
-    // First boot: fresh install -> onboarding.
     await _pumpApp(
       tester,
       _dependencies(store: store),
     );
     expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
 
-    // Skip -> optimistic write hits the shared store -> home in-session.
     await _tapVisible(tester, const ValueKey('onboarding-skip'));
     await _pumpAppFrames(tester);
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     expect(store.snapshot[SettingsRepository.onboardingKey], 'true');
 
-    // Tear down the first widget tree, then reload from the same store.
     await tester.pumpWidget(const SizedBox.shrink());
     await _pumpAppFrames(tester);
 
@@ -176,7 +163,6 @@ void main() {
       _dependencies(store: store, initialSettings: reloadedSettings),
     );
 
-    // Returning-user boot: home directly, no onboarding redirect.
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     expect(find.byKey(const ValueKey('onboarding-skip')), findsNothing);
   });
@@ -200,8 +186,6 @@ AppDependencies _dependencies({
   return AppDependencies.inMemory(
     settingsStore: settingsStore,
     initialSettings: initialSettings ?? const SettingsState.defaults(),
-    // The floating announcement banner overlaps the top of the screen; dismiss
-    // the whole feed so it never occludes the routing targets these cases tap.
     dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
   );
 }
@@ -221,18 +205,13 @@ Future<void> _pumpApp(
   await _pumpAppFrames(tester);
 }
 
-/// Bounded frame pump mirroring integration_test_support.dart's pumpAppFrames.
-/// pumpAndSettle is avoided: focused editables or platform animations can keep
-/// scheduling frames indefinitely while the state under test is already ready.
+/// Avoid pumpAndSettle: focused editables/animations schedule frames indefinitely.
 Future<void> _pumpAppFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
 
-/// Scrolls the target into view, unfocuses any active editable, then taps.
-/// Mirrors `tapVisible` from integration_test_support.dart — the onboarding /
-/// paywall CTAs sit below the fold on the default 800x600 test viewport.
 Future<void> _tapVisible(WidgetTester tester, Key key) async {
   final target = find.byKey(key);
   tester.binding.focusManager.primaryFocus?.unfocus();

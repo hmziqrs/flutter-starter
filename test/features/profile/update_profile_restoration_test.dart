@@ -7,10 +7,6 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// State-restoration spec — the in-progress profile draft (display name,
-/// username, bio) survives a simulated process death via RestorationMixin under
-/// the constant 'app' restoration scope. Email is read-only so it is not
-/// restored separately.
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -33,8 +29,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // The defaults seed the fields; overwrite with an in-progress draft that
-    // the user has not saved yet.
     await tester.enterText(
       find.byKey(const ValueKey('profile-display-name')),
       'Jordan Lee',
@@ -53,11 +47,9 @@ void main() {
     expect(_fieldText(tester, 'profile-username'), 'jordan.lee');
     expect(_fieldText(tester, 'profile-bio'), 'Restoring my draft after a cold start.');
 
-    // Simulate process death + relaunch with restoration data.
     await tester.restartAndRestore();
     await tester.pump();
 
-    // The in-progress draft is restored across the simulated process death.
     expect(_fieldText(tester, 'profile-display-name'), 'Jordan Lee');
     expect(_fieldText(tester, 'profile-username'), 'jordan.lee');
     expect(_fieldText(tester, 'profile-bio'), 'Restoring my draft after a cold start.');
@@ -83,7 +75,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // With restoration disabled the page renders the initial draft verbatim.
     expect(_fieldText(tester, 'profile-display-name'), 'Alex Morgan');
     expect(find.byKey(const ValueKey('profile-save')), findsOneWidget);
     expect(tester.takeException(), isNull);

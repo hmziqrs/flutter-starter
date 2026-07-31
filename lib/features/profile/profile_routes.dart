@@ -14,13 +14,10 @@ List<RouteBase> buildProfileRoutes() => [
   GoRoute(
     name: AppRoutes.updateProfile,
     path: AppRoutes.updateProfilePath,
-    // Auth-gated (see route_guards.dart): a session is held when this builds.
     builder: (context, state) => const UpdateProfileRoutePage(),
   ),
 ];
 
-/// Auth-gated profile-edit route page. Loads the profile draft over the
-/// session's access token and degrades to [ProfileDraft.defaults] on failure.
 class UpdateProfileRoutePage extends StatefulWidget {
   const UpdateProfileRoutePage({super.key});
 
@@ -34,9 +31,6 @@ class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
   @override
   void initState() {
     super.initState();
-    // Auth-gated route, so a session is held; read its access token and kick
-    // off the load once. Any failure resolves the future with an error and
-    // the FutureBuilder degrades to ProfileDraft.defaults().
     final container = ProviderScope.containerOf(context, listen: false);
     final session = container.read(sessionControllerProvider);
     final accessToken = session is AuthAuthenticated ? session.accessToken : '';
@@ -48,7 +42,6 @@ class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
     return FutureBuilder<ProfileDraft>(
       future: _initialDraftLoad,
       builder: (context, snapshot) {
-        // Degrade to the local default on pending or error — never crash.
         final draft = snapshot.hasData ? snapshot.data! : const ProfileDraft.defaults();
         return UpdateProfilePage(
           initialDraft: draft,

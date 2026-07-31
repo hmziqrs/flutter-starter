@@ -32,7 +32,6 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
-  /// Restored slide index; null means fall back to [OnboardingPage.initialPage].
   final RestorableIntN _restoredPage = RestorableIntN(null);
   late PageController _controller = PageController(initialPage: widget.initialPage);
   late int _page = widget.initialPage;
@@ -47,8 +46,6 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
     registerForRestoration(_restoredPage, 'page');
     _restored = true;
     final restored = _restoredPage.value;
-    // Re-bind the controller + live page to the restored slide, before the
-    // first build, so the PageView mounts the recreated controller.
     if (restored != null && restored != _page) {
       _page = restored;
       if (_controller.initialPage != restored) {
@@ -175,8 +172,6 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
   void _previous() => _moveTo(_page - 1);
 
   void _onPageChanged(int page) {
-    // _restored guards this: RestorableProperty.value is only writable once
-    // registered.
     if (_restored) {
       _restoredPage.value = page;
     }

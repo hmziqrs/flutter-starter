@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
-/// Owns the hard application background and the single ten-foot safe frame.
 class AppPresentationViewport extends StatelessWidget {
   const AppPresentationViewport({
     required this.child,

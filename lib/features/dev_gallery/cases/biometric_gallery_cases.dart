@@ -7,10 +7,6 @@ import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 
-/// Builds the biometric lock gallery cases: the [BiometricLockLocked] prompt
-/// and the [BiometricLockUnavailable] fallback surface. Both pin the page via
-/// a gallery-only controller override with [NoopBiometricAuthenticator], so
-/// an accidental tap degrades to the failure alert instead of the OS prompt.
 List<GalleryCase> buildBiometricGalleryCases() {
   return [
     TypedGalleryCase<BiometricLockState>(
@@ -32,8 +28,6 @@ List<GalleryCase> buildBiometricGalleryCases() {
   ];
 }
 
-/// Pins [BiometricLockPage] to a fixed lock state, overriding the controller
-/// and authenticator so the preview never reaches the platform plugin.
 class _BiometricPreview extends StatelessWidget {
   const _BiometricPreview({required this.state});
 
@@ -56,8 +50,6 @@ class _BiometricPreview extends StatelessWidget {
   }
 }
 
-/// Gallery-only [BiometricUnlockController] that returns a fixed state and
-/// never reads the OS availability.
 class _PinnedBiometricUnlockController extends BiometricUnlockController {
   _PinnedBiometricUnlockController(this.pinnedState);
 

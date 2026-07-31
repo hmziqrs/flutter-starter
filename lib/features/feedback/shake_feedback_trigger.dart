@@ -4,9 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
-/// Pure-Dart shake detector over a stream of `AccelerometerEvent`s. Extracted
-/// from [ShakeFeedbackTrigger] so the threshold + debounce math is
-/// unit-testable without pumping a widget.
 final class ShakeDetector {
   ShakeDetector({
     required this.onShake,
@@ -17,18 +14,13 @@ final class ShakeDetector {
 
   final ShakeCallback onShake;
 
-  /// Per-sample magnitude threshold. Tuned for a deliberate gesture.
   final double magnitudeThreshold;
 
-  /// Minimum gap between consecutive shake fires.
   final Duration debounce;
 
   final DateTime Function() _now;
   DateTime? _lastFire;
 
-  /// Feeds one accelerometer reading. Call from the stream listener. Fires
-  /// [onShake] when the magnitude crosses [magnitudeThreshold] and the debounce
-  /// window has elapsed since the last fire.
   void handle(AccelerometerEvent event) {
     final magnitude = magnitudeOf(event);
     if (magnitude < magnitudeThreshold) return;
@@ -39,58 +31,27 @@ final class ShakeDetector {
     onShake(magnitude: magnitude);
   }
 
-  /// Resets the internal debounce timestamp (e.g. on re-enable).
   void reset() => _lastFire = null;
 }
 
-/// Computes the magnitude (m/s²) of an accelerometer reading: the sqrt of the
-/// squared-sum of the three axes. Top-level so tests + the detector share it.
 double magnitudeOf(AccelerometerEvent event) {
   return math.sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
 }
 
-/// Detects accelerometer shakes and fires the mounted [ShakeCallback]. Mounted
-/// by `_AppViewState` only when the platform has an accelerometer AND the user
-/// opted into the `feedback.shake_enabled` setting. Desktop / web platforms
-/// have no accelerometer; the default stream factory throws
-/// `MissingPluginException` there, which the trigger swallows and disables
-/// itself honestly.
-///
-/// `streamFactory` is the single seam to the plugin; tests inject a fake
-/// factory driven by a `StreamController<AccelerometerEvent>`. Production
-/// passes [defaultStreamFactory].
 typedef ShakeStreamFactory =
     Stream<AccelerometerEvent> Function({
       required Duration samplingPeriod,
     });
 
-/// Signature of a shake callback. Receives the magnitude (m/s², sqrt of the
-/// squared-sum of the three axes) so a caller can log / gate further.
 typedef ShakeCallback = void Function({required double magnitude});
 
-/// Threshold (m/s²) above which a single accelerometer reading counts as a
-/// shake. Gravity alone reads ~9.8; a deliberate shake spikes well past this.
-/// Tuned for a deliberate gesture — a casual carry does not fire.
+/// m/s²; gravity reads ~9.8, so going lower risks gravity-fires.
 const double _shakeMagnitudeThreshold = 18;
 
-/// Minimum gap between consecutive shake fires so one gesture does not fan out
-/// into many sheet opens. The debounce starts at the last fire, not the last
-/// sample.
 const Duration _shakeDebounce = Duration(milliseconds: 900);
 
-/// Sampling period for the accelerometer stream (a power / accuracy trade-off
-/// — `Game` reads ~20ms which is responsive enough for a deliberate gesture
-/// without burning battery).
 const Duration _shakeSamplingPeriod = SensorInterval.gameInterval;
 
-/// Wraps [child] with a shake detector that fires [onShake] on a deliberate
-/// device shake. The detector subscribes to the accelerometer stream only
-/// while [enabled] is true (so the opt-in toggle + platform gate can turn it
-/// off at runtime); the subscription is cancelled on dispose and whenever
-/// [enabled] flips to false.
-///
-/// Shake detection is a sensor input, not a visual animation, so
-/// `MediaQuery.disableAnimationsOf` does not gate it.
 class ShakeFeedbackTrigger extends StatefulWidget {
   const ShakeFeedbackTrigger({
     required this.enabled,
@@ -102,25 +63,16 @@ class ShakeFeedbackTrigger extends StatefulWidget {
     super.key,
   });
 
-  /// `false` disables the detector (no subscription). Wire to the
-  /// `feedbackShakeEnabledControllerProvider` value AND'd with
-  /// `PlatformCapabilities` (web / desktop have no accelerometer).
   final bool enabled;
 
-  /// Fired on a detected shake. The caller opens the feedback sheet.
   final ShakeCallback onShake;
 
-  /// The UI this detector wraps. Built exactly once.
   final Widget child;
 
-  /// Source of accelerometer events. Production uses [defaultStreamFactory];
-  /// tests inject a fake driven by a `StreamController<AccelerometerEvent>`.
   final ShakeStreamFactory streamFactory;
 
-  /// Per-sample magnitude threshold. Exposed for tests.
   final double magnitudeThreshold;
 
-  /// Minimum gap between fires. Exposed for tests.
   final Duration debounce;
 
   @override
@@ -131,8 +83,6 @@ class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
   StreamSubscription<AccelerometerEvent>? _subscription;
   late ShakeDetector _detector;
 
-  /// Whether the platform actually exposed a live accelerometer stream.
-  /// Flipped false if the factory throws (web / desktop).
   bool _sensorAvailable = true;
 
   @override
@@ -178,14 +128,12 @@ class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
     try {
       stream = widget.streamFactory(samplingPeriod: _shakeSamplingPeriod);
     } on Object {
-      // sensors_plus throws on platforms without an accelerometer.
       _sensorAvailable = false;
       return;
     }
     _subscription = stream.listen(
       _detector.handle,
       onError: (_) {
-        // Sensor detached mid-flight: disable further detection.
         _sensorAvailable = false;
       },
     );
@@ -200,8 +148,6 @@ class _ShakeFeedbackTriggerState extends State<ShakeFeedbackTrigger> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Production stream factory backed by `sensors_plus`. Throws on platforms
-/// without an accelerometer; the trigger swallows that and disables itself.
 @pragma('vm:entry-point')
 Stream<AccelerometerEvent> defaultStreamFactory({required Duration samplingPeriod}) {
   return accelerometerEventStream(samplingPeriod: samplingPeriod);

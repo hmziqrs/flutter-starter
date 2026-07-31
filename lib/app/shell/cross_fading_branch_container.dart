@@ -2,13 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 
-/// The [ShellNavigationContainerBuilder] used by the [StatefulShellRoute].
-///
-/// Keeps every branch proxy mounted in stable index order inside an expanding
-/// [Stack], cross-fading branches with [AppMotion] tokens, and gates each
-/// branch so only the current one is interactive, focusable, semantic, and
-/// ticking. Reduce-motion ([MediaQuery.disableAnimationsOf]) collapses the
-/// duration to [Duration.zero].
 Widget crossFadingBranchContainer(
   BuildContext context,
   StatefulNavigationShell shell,

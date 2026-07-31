@@ -4,7 +4,6 @@ import 'package:starter/i18n/translations.g.dart';
 
 part 'plan_view_data.freezed.dart';
 
-/// Stable identifiers for the static pricing fixtures.
 abstract final class PlanIds {
   static const basic = 'basic';
   static const pro = 'pro';
@@ -17,7 +16,6 @@ enum PricingAvailability { available, unavailable }
 
 typedef PlanSelectionCallback = void Function(PlanViewData plan, BillingPeriod billingPeriod);
 
-/// Immutable, presentation-only plan data.
 @freezed
 class PlanViewData with _$PlanViewData {
   PlanViewData({
@@ -68,7 +66,6 @@ class PlanViewData with _$PlanViewData {
   }
 }
 
-/// Deterministic plan fixtures used by production pages, tests, and the gallery.
 abstract final class PricingFixtures {
   static List<PlanViewData> standard(Translations translations) => [
     PlanViewData(
@@ -136,8 +133,6 @@ abstract final class PricingFixtures {
 bool hasUniquePlanIds(List<PlanViewData> plans) =>
     plans.map((plan) => plan.id).toSet().length == plans.length;
 
-/// Picks the plan to preselect: the recommended available plan, else the
-/// first available plan, else the recommended plan, else the first plan.
 PlanViewData preferredPlan(List<PlanViewData> plans) {
   final available = plans.where((plan) => plan.availability == PricingAvailability.available);
   return available.where((plan) => plan.isRecommended).firstOrNull ??

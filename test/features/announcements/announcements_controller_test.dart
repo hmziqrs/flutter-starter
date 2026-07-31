@@ -122,8 +122,6 @@ void main() {
 
     test('version window: ungated passes even before build info resolves', () {
       final ungated = _announcement(id: 'ungated');
-      // buildInfo is intentionally omitted (defaults to null): exercises the
-      // pre-resolution path where PackageInfo has not loaded yet.
       final active = resolveActiveAnnouncement(
         announcements: [ungated],
         dismissedIds: const <String>{},
@@ -134,8 +132,6 @@ void main() {
 
     test('version window: gated announcements are excluded until build info loads', () {
       final gated = _announcement(id: 'gated', minAppVersion: '1.0.0');
-      // buildInfo omitted (null): a gated announcement must not flash before
-      // the version check completes.
       final active = resolveActiveAnnouncement(
         announcements: [gated],
         dismissedIds: const <String>{},
@@ -145,7 +141,6 @@ void main() {
     });
 
     test('version comparison is numeric, not lexical', () {
-      // "1.10.0" must be greater than "1.2.0" (lexical would order them wrong).
       final gated = _announcement(id: 'gated', maxAppVersion: '1.2.0');
       final active = resolveActiveAnnouncement(
         announcements: [gated],
@@ -169,7 +164,6 @@ void main() {
       expect(DismissedAnnouncements.decode(''), isEmpty);
       expect(DismissedAnnouncements.decode('not json'), isEmpty);
       expect(DismissedAnnouncements.decode('42'), isEmpty);
-      // Non-string entries are dropped, string entries are kept.
       expect(DismissedAnnouncements.decode('["a", 1, true, "b"]'), <String>{'a', 'b'});
     });
   });
@@ -235,7 +229,6 @@ void main() {
         await store.readString(DismissedAnnouncements.key),
       );
 
-      // Simulate a cold start: a fresh container seeded from the persisted set.
       final second = buildContainer(store: store, initialDismissed: persisted);
       expect(
         second.read(announcementsControllerProvider).active?.id,
@@ -253,7 +246,7 @@ void main() {
       await container.read(announcementsControllerProvider.notifier).dismiss('welcome');
 
       final after = container.read(announcementsControllerProvider);
-      expect(after.active?.id, 'welcome'); // optimistic hide rolled back
+      expect(after.active?.id, 'welcome');
       expect(after.status, AnnouncementsStatus.dismissFailure);
     });
 

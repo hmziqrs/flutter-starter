@@ -5,8 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
 
-/// Handwritten fake for `ConnectivityPlatform` (no Mocktail). Drives the
-/// production adapter deterministically without a real platform channel.
 class _FakeConnectivityPlatform extends ConnectivityPlatform {
   _FakeConnectivityPlatform({
     List<ConnectivityResult> initial = const [ConnectivityResult.wifi],
@@ -130,7 +128,6 @@ void main() {
 
     await Future<void>.delayed(Duration.zero);
 
-    // The first emission to a new listener is the cached snapshot.
     expect(seen.first, ConnectivityState.online);
   });
 }

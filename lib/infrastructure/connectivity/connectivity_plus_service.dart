@@ -4,17 +4,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 
-/// Production [ConnectivityService] backed by the local `connectivity_plus`
-/// platform sensor. A `checkConnectivity` / stream error degrades the state
-/// to [ConnectivityState.offline] rather than faking a connection.
 final class ConnectivityPlusService implements ConnectivityService {
   ConnectivityPlusService({Connectivity? connectivity})
     : _connectivity = connectivity ?? Connectivity() {
-    // connectivity_plus -> `nm` -> D-Bus can fail asynchronously during init
-    // (e.g. headless Linux with no NetworkManager throws
-    // DBusServiceUnknownException from an internal unawaited `connect()`,
-    // which the stream's onError can't capture). Zone-guard the whole init so
-    // this degrades to offline instead of crashing the host.
+    // connectivity_plus -> nm -> D-Bus can fail in an internal unawaited
+    // connect() the stream's onError can't capture (headless Linux).
     runZonedGuarded(_init, _degradeToOffline);
   }
 
@@ -32,8 +26,6 @@ final class ConnectivityPlusService implements ConnectivityService {
 
   final Connectivity _connectivity;
 
-  // Optimistic initial seed so we don't flash an offline banner for a frame
-  // on a connected launch; the first checkConnectivity corrects this.
   ConnectivityState _current = ConnectivityState.online;
 
   final StreamController<ConnectivityState> _controller =
@@ -48,8 +40,7 @@ final class ConnectivityPlusService implements ConnectivityService {
 
   @override
   Stream<ConnectivityState> get states {
-    // Synchronous subscription (not an async* that yields-then-subscribes)
-    // closes the race where an event between seed and subscribe is lost.
+    // Sync controller (not async*) so no event is lost between seed and subscribe.
     final outgoing = StreamController<ConnectivityState>();
     void forward(ConnectivityState state) {
       if (!outgoing.isClosed) {
@@ -102,7 +93,6 @@ final class ConnectivityPlusService implements ConnectivityService {
     final changes = _changes;
     _changes = null;
     if (changes != null) {
-      // dispose must release listeners synchronously.
       unawaited(changes.cancel());
     }
     unawaited(_controller.close());

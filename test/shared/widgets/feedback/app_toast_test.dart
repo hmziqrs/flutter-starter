@@ -34,7 +34,6 @@ void main() {
       final translations = tester.element(find.byType(_TriggerHost)).t;
       expect(find.text(translations.common.error), findsOneWidget);
       expect(find.text(_bodyMessage), findsOneWidget);
-      // The destructive variant yields a resolved FToast in the tree.
       expect(find.byType(FToast), findsOneWidget);
     });
 
@@ -47,8 +46,6 @@ void main() {
       await tester.tap(find.byKey(_triggerKey));
       await _pumpFrames(tester);
 
-      // The message appears exactly once (as the title, not duplicated as a
-      // description).
       expect(find.text(_bodyMessage), findsOneWidget);
     });
 
@@ -107,7 +104,6 @@ void main() {
       final translations = tester.element(find.byType(_TriggerHost)).t;
       expect(find.text('Saved'), findsOneWidget);
       expect(find.text(_bodyMessage), findsOneWidget);
-      // The default common.success title is NOT rendered when overridden.
       expect(find.text(translations.common.success), findsNothing);
     });
 
@@ -125,13 +121,10 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.byKey(_triggerKey));
-      // Let the enter animation settle before dismiss() so ForUI's internal
-      // status-listener bookkeeping is not mid-notification. Bounded pumps,
-      // never pumpAndSettle (audit #5 / #6).
+      // dismiss() needs the enter animation settled; ForUI's status-listener breaks if interrupted.
       await _pumpFrames(tester);
 
       expect(entry, isNotNull);
-      // Dismissing completes regardless of any in-flight animation.
       entry!.dismiss();
       await _pumpFrames(tester);
     });
@@ -145,7 +138,6 @@ void main() {
       await tester.tap(find.byKey(_triggerKey));
       await _pumpFrames(tester);
 
-      // The toast mounts immediately even with animations disabled.
       expect(find.byType(FToast), findsOneWidget);
     });
   });

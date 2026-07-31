@@ -3,14 +3,6 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// Optional remote [AnalyticsClient] backed by the PostHog SDK. Constructed
-/// at the composition root only when the consumer wires PostHog credentials.
-/// Every SDK call is wrapped in `try/on Object` and any failure is dropped.
-///
-/// Every emit first reads the persisted [analyticsOptInKey] from
-/// [secureStore]; when not opted in, the event is dropped and PostHog is
-/// never called — toggling opt-in off in Settings takes effect on the next
-/// emit. A store read failure is treated as "not opted in".
 final class PosthogAnalyticsClient implements AnalyticsClient {
   PosthogAnalyticsClient({required this.secureStore});
 

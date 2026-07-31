@@ -7,26 +7,8 @@ import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 import 'package:starter/features/settings/settings_store.dart';
 
-/// Deterministic [ExperimentSource] — the no-backend production default.
-///
-/// Hashes a stable device id (read once from [store], persisted under
-/// [stableIdKey]) per [ExperimentKey] into a variant bucket using a fixed
-/// allocation table. This is a real local assignment (stable, reproducible
-/// across launches, no network), not a Noop.
-///
-/// Constructed in `AppDependencies.production`. The optional
-/// `RemoteConfigExperimentSource` degrades to this table when offline rather
-/// than throwing.
-///
-/// The hash is FNV-1a (32-bit) over `"$salt:$stableId:$wireKey"` — stable
-/// across Dart isolates and the web target (unlike `String.hashCode`); the
-/// salt keeps the bucket non-reversible to a device fingerprint. Do not
-/// change the hash function or salt scheme without accepting a re-bucketing
-/// of all existing assignments.
+/// FNV-1a, not `String.hashCode` (unstable on web/isolates).
 final class DeterministicExperimentSource implements ExperimentSource {
-  /// Constructs a deterministic source that persists the stable device id
-  /// under [stableIdKey] in [store], hashing with [salt]. [randomSeed] is
-  /// injectable for tests; defaults to [Random.secure] in production.
   DeterministicExperimentSource({
     required this.store,
     this.salt = defaultSalt,
@@ -34,28 +16,18 @@ final class DeterministicExperimentSource implements ExperimentSource {
     Random? randomSeed,
   }) : random = randomSeed ?? Random.secure();
 
-  /// SettingsStore key under which the stable device id is persisted.
   static const defaultStableIdKey = 'experiments.deviceStableId';
 
-  /// Default hash salt. Versioned so a future re-bucketing rollout can change
-  /// the mapping deliberately by bumping the suffix.
   static const defaultSalt = 'starter.abex.v1';
 
-  /// The backing key/value store the stable device id is persisted in.
   final SettingsStore store;
 
-  /// Hash salt mixed into every bucket input.
   final String salt;
 
-  /// SettingsStore key for the stable device id.
   final String stableIdKey;
 
-  /// The random generator used to mint a fresh stable id.
   final Random random;
 
-  /// Cached stable id for the lifetime of this source instance, so a single
-  /// session never re-hashes against a fresh id (the sticky-assignment
-  /// contract).
   String? _cachedStableId;
 
   @override
@@ -72,10 +44,6 @@ final class DeterministicExperimentSource implements ExperimentSource {
   @override
   Stream<List<ExperimentAssignment>> changes() => const Stream<List<ExperimentAssignment>>.empty();
 
-  /// Returns the stable device id, reading it from [store] (caching +
-  /// persisting a freshly generated id on first contact). A read or write
-  /// failure still returns a generated id for the session; it just won't
-  /// persist.
   Future<String> _stableId() async {
     final cached = _cachedStableId;
     if (cached != null) {
@@ -101,7 +69,6 @@ final class DeterministicExperimentSource implements ExperimentSource {
     return generated;
   }
 
-  /// Generates a fresh 128-bit stable id as a 32-char hex string.
   String _generateId() {
     final bytes = Uint8List(16);
     for (var i = 0; i < bytes.length; i++) {
@@ -110,13 +77,10 @@ final class DeterministicExperimentSource implements ExperimentSource {
     return _toHex(bytes);
   }
 
-  /// Buckets [stableId] into a variant arm for [key] using its allocation
-  /// table. A zero-weight table degrades to the control arm. The bucket
-  /// input is scoped per [ExperimentKey.wireKey], so adding a new experiment
-  /// never re-buckets an existing one.
   @visibleForTesting
   ExperimentVariant bucket(ExperimentKey key, String stableId) => _bucket(key, stableId);
 
+  // Changing the hash or salt re-buckets every user — bump deliberately.
   ExperimentVariant _bucket(ExperimentKey key, String stableId) {
     final total = key.totalWeight;
     if (total <= 0) {
@@ -130,13 +94,9 @@ final class DeterministicExperimentSource implements ExperimentSource {
         return ExperimentVariant.forKind(allocation.variant);
       }
     }
-    // Unreachable when weights are non-negative and sum > 0 (modulo keeps the
-    // bucket below `total`); kept as a type-safe fallback.
     return const ExperimentVariantControl();
   }
 
-  /// Stable FNV-1a (32-bit) hash of [input], returned as a non-negative
-  /// integer.
   static int _fnv1a32(String input) {
     const offsetBasis = 0x811c9dc5;
     const prime = 0x01000193;
@@ -146,12 +106,10 @@ final class DeterministicExperimentSource implements ExperimentSource {
       hash ^= byte;
       hash = (hash * prime) & mask;
     }
-    // Strip the sign bit so modulo arithmetic is clean and non-negative.
     return hash & 0x7FFFFFFF;
   }
 }
 
-/// Lowercase hex encoder for the 16-byte stable id.
 String _toHex(Uint8List bytes) {
   const alphabet = '0123456789abcdef';
   final out = StringBuffer();

@@ -29,7 +29,6 @@ void main() {
       final expectedHighlight = Color.lerp(expectedBase, const Color(0xFFFFFFFF), 0.35)!;
       expect(captured!.baseColor, expectedBase);
       expect(captured!.highlightColor, expectedHighlight);
-      // Highlight is perceptually lighter than the base.
       expect(
         _luminance(captured!.highlightColor),
         greaterThan(_luminance(captured!.baseColor)),
@@ -64,11 +63,9 @@ void main() {
       await _pumpFrames(tester);
 
       expect(find.byType(SkeletonView), findsOneWidget);
-      // 1 direct box + 1 from the line + 1 from the circle = 3 bone boxes.
       expect(find.byType(SkeletonBox), findsNWidgets(3));
       expect(find.byType(SkeletonLine), findsOneWidget);
       expect(find.byType(SkeletonCircle), findsOneWidget);
-      // Bones are measurable: the fixed-size box has the requested geometry.
       final box = tester.getSize(find.byType(SkeletonBox).first);
       expect(box.width, 120);
       expect(box.height, 12);
@@ -80,7 +77,6 @@ void main() {
           child: const SkeletonView(child: SkeletonBox(width: 100, height: 12)),
         ),
       );
-      // One frame to mount; the controller.repeat() ticker is now registered.
       await tester.pump(const Duration(milliseconds: 100));
       expect(tester.hasRunningAnimations, isTrue);
     });
@@ -94,9 +90,7 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // Static fallback: no shimmer ticker.
       expect(tester.hasRunningAnimations, isFalse);
-      // The subtree still lays out and is measurable.
       final box = tester.getSize(find.byType(SkeletonBox));
       expect(box.width, 100);
       expect(box.height, 12);
@@ -113,8 +107,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // Static fallback: the bone's CustomPaint has a painter but no ticker is
-      // driving it (the painter's repaint listenable is null under reduce-motion).
       expect(find.byType(CustomPaint), findsOneWidget);
       expect(tester.hasRunningAnimations, isFalse);
       expect(tester.takeException(), isNull);
@@ -179,7 +171,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // SkeletonLine with fixedWidth renders one SkeletonBox of that width.
       final box = tester.getSize(find.byType(SkeletonBox));
       expect(box.width, 64);
       expect(box.height, 10);
@@ -191,7 +182,6 @@ void main() {
       );
       await _pumpFrames(tester);
       expect(tester.takeException(), isNull);
-      // The fractional box never overflows the harness content width.
       final viewport = tester.getSize(find.byType(SkeletonLine));
       expect(viewport.width, lessThanOrEqualTo(800));
     });

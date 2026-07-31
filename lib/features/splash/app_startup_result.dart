@@ -1,11 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
-/// A typed, immutable summary of the startup work `createApplication` already
-/// performs (build-info load, settings load, locale apply), carried out of
-/// the composition root so SplashPage can observe the existing init future
-/// without re-running any of it. `error` is non-null only when a fatal init
-/// step could not be recovered.
 @immutable
 final class AppStartupResult {
   const AppStartupResult({
@@ -15,21 +10,14 @@ final class AppStartupResult {
     this.error,
   });
 
-  /// Build metadata loaded once in the composition root.
   final AppBuildInfo buildInfo;
 
-  /// Whether persisted settings loaded successfully (false when the repository
-  /// fell back to safe defaults after a read failure).
   final bool settingsLoaded;
 
-  /// Whether the persisted locale was applied (false when the device locale was
-  /// used instead, or the apply call failed).
   final bool localeApplied;
 
-  /// A fatal startup error, if one occurred. Null on success.
   final AppStartupError? error;
 
-  /// `true` when [error] is null.
   bool get isSuccess => error == null;
 
   AppStartupResult copyWith({
@@ -62,9 +50,6 @@ final class AppStartupResult {
       Object.hash(buildInfo.version, buildInfo.buildNumber, settingsLoaded, localeApplied, error);
 }
 
-/// A typed startup error surfaced from the composition root. The
-/// [diagnosticId] mirrors the codes produced by `startupDiagnosticIdFor` so the
-/// splash error state can reuse the startup-error styling verbatim.
 @immutable
 final class AppStartupError {
   const AppStartupError({required this.diagnosticId, this.message});

@@ -17,9 +17,6 @@ enum ToastDialogGalleryKind {
   dialogDestroy,
 }
 
-/// Builds the toast + confirmation-dialog gallery cases. Each case mounts a
-/// single trigger button; pressing it routes through the production
-/// [AppToast] / [AppConfirmationDialog] wrappers.
 List<GalleryCase> buildToastDialogsGalleryCases() {
   return ToastDialogGalleryKind.values
       .map(

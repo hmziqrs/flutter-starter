@@ -3,11 +3,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-/// Optional remote [CrashReporter] backed by the Sentry SDK. Constructed at
-/// the composition root only when a DSN is configured. Every SDK call is
-/// wrapped in `try/on Object` and any failure is dropped. Only the redacted
-/// [CrashReport] message leaves the device via [Sentry.captureException]; the
-/// stack trace is forwarded only when [verbose] is true.
 final class SentryCrashReporter implements CrashReporter {
   SentryCrashReporter({
     required this.verbose,
@@ -47,8 +42,7 @@ final class SentryCrashReporter implements CrashReporter {
   }
 
   Future<void> _capture(CrashReport report) async {
-    // captureException (not captureMessage) so the report lands in the crash
-    // stream with native stack-based grouping/fingerprinting.
+    // captureException (not captureMessage) so Sentry applies crash-stream grouping.
     await Sentry.captureException(
       Exception(report.message),
       stackTrace: report.stack != null ? StackTrace.fromString(report.stack!) : null,

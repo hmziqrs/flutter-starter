@@ -8,8 +8,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 
 part 'notifications_gallery_cases.freezed.dart';
 
-/// Preview state for the notifications permission rationale gallery cases:
-/// one variant per [NotificationPermissionStatus].
 @Freezed(copyWith: false)
 class NotificationsGalleryState with _$NotificationsGalleryState {
   const NotificationsGalleryState._({
@@ -40,9 +38,6 @@ class NotificationsGalleryState with _$NotificationsGalleryState {
   static final values = <NotificationsGalleryState>[notRequested, granted, denied];
 }
 
-/// Builds the notifications permission rationale gallery cases
-/// (not-requested / granted / denied) as static copy, previewable without a
-/// live `NotificationsRepository` or plugin.
 List<GalleryCase> buildNotificationsGalleryCases() {
   return [
     for (final entry in NotificationsGalleryState.values)

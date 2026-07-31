@@ -6,16 +6,8 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// The user's selection on the permission rationale sheet. [openSettings] is
-/// the one-way-door recovery path for permanently-denied; [continueRequest]
-/// proceeds to the OS prompt. [dismiss] is the default when the sheet
-/// returns no value.
 enum PermissionRationaleResult { continueRequest, openSettings, dismiss }
 
-/// Shows the permission rationale sheet. Call this *before*
-/// `PermissionService.requestStatus` — always rationale before prompt. Pass
-/// [permanentlyDenied] so a one-way-door permission offers "Open settings"
-/// rather than a re-prompt.
 Future<PermissionRationaleResult> showPermissionRationaleSheet({
   required BuildContext context,
   required AppPermission permission,
@@ -27,7 +19,6 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
     draggable: false,
     useSafeArea: true,
     builder: (sheetContext) => ColoredBox(
-      // FSheet paints no surface of its own; give it an opaque background.
       color: sheetContext.theme.colors.background,
       child: EscapeDismissibleOverlay(
         child: PermissionRationaleBody(
@@ -45,8 +36,6 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
   return result ?? PermissionRationaleResult.dismiss;
 }
 
-/// Reusable body of the permission rationale sheet; extracted so the
-/// dev-gallery can render it deterministically outside a real modal sheet.
 class PermissionRationaleBody extends StatelessWidget {
   const PermissionRationaleBody({
     required this.permission,
@@ -59,11 +48,8 @@ class PermissionRationaleBody extends StatelessWidget {
 
   final AppPermission permission;
 
-  /// Switches the primary action from "Continue" to "Open settings"; never
-  /// offers a re-prompt (the one-way-door rule).
   final bool permanentlyDenied;
 
-  /// Only offered when [permanentlyDenied] is false.
   final VoidCallback onContinue;
 
   final VoidCallback onOpenSettings;
@@ -83,7 +69,6 @@ class PermissionRationaleBody extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Row respects ambient Directionality, so the icon mirrors under RTL.
             Row(
               children: [
                 Icon(copy.icon, size: 28),

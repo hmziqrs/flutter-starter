@@ -114,9 +114,6 @@ void main() {
         codec: _stringCodec,
       );
 
-      // The entry is readable back through the port (the key round-trips by
-      // identity), but it is encoded as a sibling .json file, never as a real
-      // traversal. No file was created outside the temp directory.
       expect((await store.read<String>(hostile, codec: _stringCodec))!.value, 'trapped');
       expect(tempDir.listSync(recursive: true).whereType<File>().length, 1);
     });
@@ -127,7 +124,6 @@ void main() {
         const CacheEntry<String>(value: 'a', fetchedAt: 0, ttlSeconds: 60),
         codec: _stringCodec,
       );
-      // Overwrite the file with garbage out-of-band.
       final files = tempDir.listSync().whereType<File>().toList();
       expect(files, hasLength(1));
       await files.single.writeAsString('not json');
@@ -140,8 +136,6 @@ void main() {
 
     test('a payload missing numeric fields is wrapped as CacheStoreException', () async {
       final files = <File>[];
-      // Write a valid entry first to materialize the file path, then corrupt it
-      // with a JSON object that lacks fetchedAt/ttlSeconds.
       await store.write(
         'cache.greeting',
         const CacheEntry<String>(value: 'a', fetchedAt: 0, ttlSeconds: 60),

@@ -94,8 +94,6 @@ void main() {
         ),
       );
 
-      // The barrier sits on top of the gesture detector and absorbs the tap;
-      // warnIfMissed is expected here because the tap is deliberately blocked.
       await tester.tap(find.byKey(_submitKey), warnIfMissed: false);
       await tester.pump();
       expect(submits, 0);
@@ -140,9 +138,6 @@ void main() {
       await tester.pumpWidget(_harness(child: const _SubmitHost()));
 
       await tester.tap(find.byKey(_submitKey));
-      // The overlay mounts over the form, blocking the duplicate, but the action
-      // runs to completion because the overlay never gates callbacks. Bounded
-      // pumps (never pumpAndSettle) advance the finite in-flight future.
       await _pumpFrames(tester);
 
       expect(find.byKey(_barrierKey), findsNothing);

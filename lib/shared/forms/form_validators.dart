@@ -1,26 +1,7 @@
-/// Pure, locale-agnostic form validators shared across every starter form.
-///
-/// Each validator keeps the `(value, messages)` signature: it never trims a
-/// value it returns, and the feature supplies the localized message. Password
-/// values are intentionally **not** trimmed — the secret may contain
-/// leading/trailing spaces; only the email shape policy trims before checking.
-library;
-
-/// Validates a required field without normalizing its value.
-///
-/// Returns [message] when [value] is `null` or empty, otherwise `null`. A
-/// whitespace-only value is considered present (callers that want to reject
-/// whitespace trim before calling).
 String? validateRequired(String? value, String message) {
   return value == null || value.isEmpty ? message : null;
 }
 
-/// Validates the starter's deliberately small email-shape policy.
-///
-/// Trims [value] before checking that it contains an `@` (not at the start)
-/// followed by a `.` in the domain tail (not immediately after the `@` and not
-/// the final character). Returns [requiredMessage] for empty input and
-/// [invalidMessage] for a malformed shape.
 String? validateEmail(
   String? value, {
   required String requiredMessage,
@@ -36,11 +17,6 @@ String? validateEmail(
   return null;
 }
 
-/// Validates the starter's static password policy without trimming the secret.
-///
-/// Requires at least 8 characters, one uppercase letter, and one digit. Returns
-/// [requiredMessage] for empty input and [weakMessage] otherwise. The value is
-/// checked literally — a space is a legitimate password character.
 String? validatePassword(
   String? value, {
   required String requiredMessage,

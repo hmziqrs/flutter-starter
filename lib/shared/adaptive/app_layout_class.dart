@@ -1,14 +1,8 @@
-/// The structural layout selected from the logical width available to a UI.
 enum AppLayoutClass {
   compact,
   medium,
   expanded;
 
-  /// Selects a layout using breakpoint values supplied by the active theme.
-  ///
-  /// [compactMax] is inclusive for [medium], while [expandedMin] is inclusive
-  /// for [expanded]. Keeping the breakpoint values required here prevents this
-  /// application-owned type from defining a second breakpoint scale.
   static AppLayoutClass fromWidth(
     double width, {
     required double compactMax,

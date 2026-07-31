@@ -4,9 +4,6 @@ import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cache_store_exception.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 
-/// A small typed value + codec to exercise the generic [CacheEntry<T>] path
-/// and value equality (the [int] codec alone would not catch a regression that
-/// dropped the generic).
 @immutable
 final class _Point {
   const _Point(this.x, this.y);
@@ -80,7 +77,6 @@ void main() {
     test('freshSecondsRemainingAt is clamped at zero once stale', () {
       const entry = CacheEntry<int>(value: 1, fetchedAt: 1000, ttlSeconds: 5);
 
-      // expiresAt = 1000 + 5s = 6000ms; at 4000 → 2s left, at 6000 → 0.
       expect(entry.freshSecondsRemainingAt(DateTime.fromMillisecondsSinceEpoch(4000)), 2);
       expect(entry.freshSecondsRemainingAt(DateTime.fromMillisecondsSinceEpoch(6000)), 0);
     });
@@ -257,7 +253,7 @@ void main() {
     test('a corrupted seed payload wraps as CacheStoreException on read', () async {
       final corrupted = InMemoryCacheStore(
         seed: {
-          'cache.bad': <String, Object?>{'value': 1}, // missing numeric fields
+          'cache.bad': <String, Object?>{'value': 1},
         },
       );
 

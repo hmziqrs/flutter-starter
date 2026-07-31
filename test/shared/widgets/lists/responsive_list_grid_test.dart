@@ -82,8 +82,6 @@ void main() {
     testWidgets('assigns stable ValueKeys derived from keyOf', (tester) async {
       await tester.pumpWidget(
         _harness(
-          // Medium layout places both items in a single row so each cell is
-          // within the viewport and materializes.
           layout: AppLayoutClass.medium,
           child: ResponsiveListGrid<String>(
             items: const ['alpha', 'beta'],

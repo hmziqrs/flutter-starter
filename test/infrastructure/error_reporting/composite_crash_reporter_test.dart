@@ -4,10 +4,6 @@ import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/recording_crash_reporter.dart';
 
-/// A [CrashReporter] double whose every call throws. Used to prove the
-/// composite isolates a failing backend: a throwing backend must never block
-/// the remaining backends from receiving the same report, and must never break
-/// the error path it is observing.
 class _ThrowingCrashReporter implements CrashReporter {
   @override
   Future<void> recordError(

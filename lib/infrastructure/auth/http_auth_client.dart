@@ -6,15 +6,6 @@ import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 
-/// Real HTTP [AuthRepository] against the test-server session contract.
-/// Constructed only when a consumer provides an endpoint; the
-/// `InMemoryAuthRepository` default surfaces `AuthException.notConnected`
-/// instead.
-///
-/// Transport failures (a [DioException] without a response) surface
-/// [AuthException.notConnected]; `401`/`409` surface
-/// [AuthException.unauthorized]; other `4xx` surfaces [AuthException.unknown];
-/// `5xx`/unclassified surfaces [AuthException.notConnected].
 final class HttpAuthClient implements AuthRepository {
   HttpAuthClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
 
@@ -54,7 +45,6 @@ final class HttpAuthClient implements AuthRepository {
   @override
   Future<AuthSession> refresh(AuthSession session) async {
     if (session is! AuthAuthenticated) {
-      // Anonymous session carries no refresh token to present.
       throw const AuthException.unauthorized();
     }
     final body = await _request(
@@ -68,8 +58,6 @@ final class HttpAuthClient implements AuthRepository {
     if (accessToken == null || refreshToken == null || expiresAt == null) {
       throw const AuthException.unknown();
     }
-    // The refresh response omits `userId`; identity is inherited across
-    // token rotations.
     return AuthAuthenticated(
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -81,8 +69,6 @@ final class HttpAuthClient implements AuthRepository {
   @override
   Future<AuthSession> logout(AuthSession session) async {
     final refreshToken = session is AuthAuthenticated ? session.refreshToken : null;
-    // Idempotent and best-effort: the caller clears local state regardless of
-    // a transport failure here.
     final body = <String, Object>{};
     if (refreshToken != null) {
       body['refreshToken'] = refreshToken;
@@ -126,7 +112,6 @@ final class HttpAuthClient implements AuthRepository {
   }
 
   Never _classifyStatus(int status) {
-    // 401 (bad credentials) and 409 (account already exists) both map here.
     if (status == 401 || status == 409) {
       throw const AuthException.unauthorized();
     }

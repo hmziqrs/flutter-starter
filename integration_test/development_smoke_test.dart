@@ -20,48 +20,25 @@ import 'package:starter/i18n/translations.g.dart';
 
 import 'integration_test_support.dart';
 
-/// Running clock used only to timestamp each step so progress is visible in the
-/// `flutter test` console. Without this the smoke flow is silent for ~2 minutes
-/// and looks frozen.
-///
-/// Uses `debugPrint` rather than `dart:io` `stdout`: the test binding rebinds
-/// `stdout` to capture output, so writing to it directly throws
-/// "Bad state: StreamSink is bound to a stream". `debugPrint` is routed through
-/// the zone and streams live in the default reporter. If output ever appears
-/// swallowed until a test ends, run with `-r expanded` to force live streaming.
 final _clock = Stopwatch()..start();
 
 void _log(Object? message) {
+  // debugPrint only: the test binding rebinds stdout, so dart:io writes throw.
   debugPrint('   │ smoke · ${_clock.elapsed.toString().split('.').first.padLeft(8)} · $message');
 }
 
-/// When true, the flow runs in "watch mode" so a human can see the UI: it leaves
-/// the native macOS window at its default size (setting `tester.view.physicalSize`
-/// blanks the desktop window — flutter#149209, which is why the window only ever
-/// shows "Test starting..."), slows animations with `timeDilation`, and pauses
-/// briefly between steps. The layout-resize assertions are skipped in this mode
-/// because they require `physicalSize`.
-///
-/// Enable with `--dart-define=SMOKE_WATCH=true` alongside the config file. The
-/// canonical CI run does not set it, so coverage is unchanged.
+/// Watch mode keeps native window size: `physicalSize` blanks the desktop window (flutter#149209).
 const _watchMode = bool.fromEnvironment('SMOKE_WATCH');
 
-/// Animation slow-down factor in watch mode (1.0 = normal speed). Tune with
-/// `--dart-define=SMOKE_DILATION=3.0`. Higher = slower/prettier, lower = snappier.
 const _watchDilationString = String.fromEnvironment('SMOKE_DILATION', defaultValue: '2.0');
 final double _watchDilation = double.tryParse(_watchDilationString) ?? 2.0;
 
-/// Pause between steps in watch mode so the UI is observable; a no-op otherwise.
 Future<void> _watchPause(WidgetTester tester) async {
   if (_watchMode) {
     await tester.pump(const Duration(milliseconds: 600));
   }
 }
 
-/// Runs [action] with animations at normal speed, restoring watch-mode dilation
-/// afterwards. `timeDilation` slows entrance animations past the bounded pump
-/// windows, which breaks timing-sensitive input such as dismissing a dialog
-/// with Escape (the dialog ignores input until its entrance finishes).
 Future<void> _withoutDilation(Future<void> Function() action) async {
   final saved = timeDilation;
   if (_watchMode) {
@@ -104,11 +81,7 @@ void main() {
     _log(
       'building app graph + root widget (first run also compiles the macOS runner; this is the slow part)',
     );
-    // Inject a non-libsecret SecureStore so the headless Linux runner (no
-    // secret-service daemon) never touches FlutterSecureStorageStore/libsecret;
-    // a fresh in-memory store per createApplication is correct because the test
-    // asserts only settings persistence (SharedPreferencesStore, file-backed),
-    // not session survival across the rebuild.
+    // The headless Linux runner has no secret-service daemon (libsecret).
     await tester.pumpWidget(
       await createApplication(config, secureStore: InMemorySecureStore()),
     );
@@ -118,12 +91,6 @@ void main() {
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     _log('home rendered');
 
-    // Compact tab-switch detour: every other navigation in this smoke drives
-    // `GoRouter.of(rootContext).go(...)`, which never exercises `goBranch` or
-    // the cross-fading branch container that real bottom-nav taps use. Hop to
-    // Pricing and back through the compact navigation so the production
-    // composition is covered on-device. The detour ends on Home so the
-    // subsequent onboarding flow is unaffected.
     _log('navigating: home -> pricing (compact bottom-nav tap)');
     await tester.tap(
       find.descendant(
@@ -252,8 +219,6 @@ void main() {
     expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
     _log('dialog shown; dismissing with Escape');
     await _withoutDilation(() async {
-      // Let the (slowed) entrance finish at normal speed before dismissing —
-      // otherwise the dialog ignores the Escape key mid-transition.
       await pumpAppFrames(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await pumpAppFrames(tester);
@@ -300,7 +265,6 @@ void main() {
     _log('tearing app down, then rebuilding to verify persistence across restart');
     await tester.pumpWidget(const SizedBox.shrink());
     await pumpAppFrames(tester);
-    // Same libsecret-free injection as the first pump (see comment above).
     await tester.pumpWidget(
       await createApplication(config, secureStore: InMemorySecureStore()),
     );
@@ -309,20 +273,10 @@ void main() {
     final restoredState = _settingsState(tester);
     expect(restoredState, liveState);
     _log('settings restored after restart');
-    // The post-restart UI-application re-check (Theme.brightness / TextDirection
-    // read off the rebuilt MaterialApp) is intentionally omitted: the rebooted
-    // MaterialApp does not reliably settle to the persisted theme/locale in the
-    // live integration binding in time — a harness/rebuild quirk that affects
-    // only the second app instance, never the first. Settings persistence across
-    // restart is already proven by the `restoredState == liveState` assertion
-    // above (it carries themeMode=dark, accent=blue, fontScale=max,
-    // localeOverride=ar), so the UI re-check is dropped to avoid a flaky
-    // rebuild-only failure.
+    // Post-restart UI re-check omitted: the rebooted MaterialApp flakes on persisted theme/locale.
     _log('SMOKE FLOW COMPLETE — all assertions passed');
     if (_watchMode) {
-      // The binding asserts timeDilation is reset by end-of-test
-      // (debugAssertNoTimeDilation). Its invariant check runs before
-      // addTearDown, so reset synchronously here in the body.
+      // Reset synchronously: the binding's debugAssertNoTimeDilation runs before addTearDown.
       timeDilation = 1.0;
     }
   });

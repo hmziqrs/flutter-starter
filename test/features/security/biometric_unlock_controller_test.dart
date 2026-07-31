@@ -4,9 +4,6 @@ import 'package:starter/features/security/biometric_unlock_controller.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 
-/// Handwritten stub (no Mocktail) mirroring the spec's "tests override with a
-/// stub authenticator" instruction. Stateful so a test can flip the availability
-/// or the authenticate result between cases.
 class _StubBiometricAuthenticator implements BiometricAuthenticator {
   _StubBiometricAuthenticator({
     this.availability = const BiometricAvailability.available(supportedBiometrics: {}),
@@ -28,11 +25,7 @@ Future<ProviderContainer> _buildContainer(_StubBiometricAuthenticator authentica
     overrides: [biometricAuthenticatorProvider.overrideWithValue(authenticator)],
   );
   addTearDown(container.dispose);
-  // Keep the controller subscribed so watched-provider invalidations rebuild
-  // it eagerly across the availability resolution.
   container.listen(biometricUnlockControllerProvider, (_, _) {}, fireImmediately: true);
-  // Resolve the OS availability future before reading the lock state so the
-  // controller is past its conservative loading gate.
   await container.read(biometricAvailabilityProvider.future);
   return container;
 }
@@ -78,7 +71,6 @@ void main() {
           .authenticate(localizedReason: 'Unlock');
 
       expect(result, isTrue);
-      // The redirect reads this state: unlocked clears the gate to /lock.
       expect(container.read(biometricUnlockControllerProvider), isA<BiometricLockUnlocked>());
     });
 
@@ -126,9 +118,6 @@ void main() {
     });
 
     test('unavailable must NOT read as locked (redirect must not loop)', () async {
-      // The C5 redirect pattern-matches on `locked`. A device with no usable
-      // biometric reports unavailable, which must not be treated as locked —
-      // otherwise the user would loop into a prompt that can never succeed.
       final container = await _buildContainer(
         _StubBiometricAuthenticator(
           availability: const BiometricAvailability.unavailable(),

@@ -5,13 +5,6 @@ import 'package:starter/infrastructure/error_reporting/firebase_crashlytics_cras
 
 void main() {
   group('FirebaseCrashlyticsCrashReporter', () {
-    // Firebase is intentionally NOT initialized in this suite (no
-    // Firebase.initializeApp), so resolving FirebaseCrashlytics.instance throws
-    // [core/no-app]. The adapter's guarded _resolve swallows that and the report
-    // becomes a no-op. The contract under test is that recordError stays total —
-    // a reporter must never break the error path it observes — on every
-    // platform, mirroring SentryCrashReporter's discipline.
-
     test('is a CrashReporter', () {
       expect(
         FirebaseCrashlyticsCrashReporter(verbose: false),

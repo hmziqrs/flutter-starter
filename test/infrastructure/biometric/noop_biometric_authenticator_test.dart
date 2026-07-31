@@ -21,8 +21,6 @@ void main() {
     });
 
     test('is a const-constructible honest default (no backend wiring)', () async {
-      // Two independent const instances behave identically — the no-backend
-      // default is stateless and deterministic.
       const a = NoopBiometricAuthenticator();
       const b = NoopBiometricAuthenticator();
       expect((await a.checkAvailability()).canCheck, (await b.checkAvailability()).canCheck);
@@ -74,8 +72,6 @@ void main() {
         BiometricLockLocked(),
         BiometricLockUnavailable(),
       ];
-      // The redirect pattern-matches on `locked`; this asserts the exhaustive
-      // switch has all three cases to handle.
       expect(states.whereType<BiometricLockLocked>(), hasLength(1));
       expect(states.whereType<BiometricLockUnlocked>(), hasLength(1));
       expect(states.whereType<BiometricLockUnavailable>(), hasLength(1));

@@ -33,7 +33,6 @@ const nonTelevisionCapabilities = PlatformCapabilities.nonTelevision();
 
 const tvTestProbeKey = ValueKey<String>('tv-test-probe');
 
-/// Pins process-global widget-test state and restores it after the test.
 void configureTvTestView(
   WidgetTester tester, {
   Size size = const Size(1920, 1080),
@@ -58,10 +57,7 @@ void configureTvTestView(
   });
 }
 
-/// Advances a deterministic, finite frame budget.
-///
-/// TV focus highlights and platform animations can keep scheduling frames, so
-/// these tests must never wait for global quiescence.
+/// TV focus highlights and platform animations never quiesce; never pumpAndSettle here.
 Future<void> pumpTvFrames(
   WidgetTester tester, {
   int frames = 8,
@@ -73,10 +69,6 @@ Future<void> pumpTvFrames(
   }
 }
 
-/// Mounts the real capability, interaction, and presentation provider chain.
-///
-/// Supplying [policyOverride] models a deterministic gallery override. Omitting
-/// it exercises production policy resolution from [capabilities].
 Future<void> pumpTvPresentationHarness(
   WidgetTester tester, {
   required PlatformCapabilities capabilities,
@@ -147,8 +139,7 @@ Future<void> pumpTvPresentationHarness(
   await pumpTvFrames(tester);
 }
 
-/// Minimal host for root hardware-key tests, without WidgetsApp shortcuts that
-/// could consume otherwise-unhandled directional keys.
+/// Avoids WidgetsApp so directional keys reach the host unconsumed.
 Future<void> pumpTvKeyboardHarness(
   WidgetTester tester, {
   required AppInteractionPolicy interactionPolicy,

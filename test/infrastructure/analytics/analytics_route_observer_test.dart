@@ -71,14 +71,11 @@ void main() {
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await _pumpFrames(tester);
-      // The initial route push already emitted a screen view for 'home'.
       client.clear();
 
       router.goNamed('settings');
       await _pumpFrames(tester);
 
-      // Exactly one ScreenView, carrying the named route's name (go_router
-      // resolves route.settings.name to `state.name ?? state.path`).
       final screenViews = client.events.whereType<ScreenView>().toList();
       expect(screenViews, hasLength(1));
       expect(screenViews.single.routeName, 'settings');
@@ -86,19 +83,12 @@ void main() {
   });
 }
 
-/// Pumps a bounded number of frames (the observer fires synchronously during
-/// navigation, but routes settle over a few frames). Mirrors the integration
-/// helper without importing `integration_test/`. Never uses `pumpAndSettle`.
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
 
-/// Minimal concrete [Route] exposing a configurable [RouteSettings.name]. Lets
-/// the direct-callback tests drive the observer without a Navigator or widget
-/// tree. Uses [MaterialPageRoute] (fully concrete) so no abstract members are
-/// left unimplemented.
 class _NamedRoute extends MaterialPageRoute<void> {
   _NamedRoute(String? name)
     : super(

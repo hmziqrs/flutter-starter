@@ -9,10 +9,6 @@ import 'package:starter/features/experiments/experiment_variant.dart';
 
 part 'experiments_controller.freezed.dart';
 
-/// Immutable snapshot of every known experiment's current assignment. Built
-/// by [ExperimentsController] from one [ExperimentSource.assignmentFor] call
-/// per [ExperimentKey]; surfaced whole on the diagnostics page. Value
-/// equality so the controller's diff commits only on a real change.
 @freezed
 abstract class ExperimentsSnapshot with _$ExperimentsSnapshot {
   const factory ExperimentsSnapshot({
@@ -21,10 +17,6 @@ abstract class ExperimentsSnapshot with _$ExperimentsSnapshot {
 
   const ExperimentsSnapshot._();
 
-  /// Every known experiment's current assignment, in [ExperimentKey] index
-  /// order so the diagnostics read-out is stable.
-  /// The variant resolved for [key], or `null` if [key] has no assignment in
-  /// this snapshot (e.g. while loading).
   ExperimentVariant? variantFor(ExperimentKey key) {
     for (final assignment in assignments) {
       if (assignment.key == key) {
@@ -34,7 +26,6 @@ abstract class ExperimentsSnapshot with _$ExperimentsSnapshot {
     return null;
   }
 
-  /// The full assignment for [key], or `null` if absent.
   ExperimentAssignment? assignmentFor(ExperimentKey key) {
     for (final assignment in assignments) {
       if (assignment.key == key) {
@@ -45,18 +36,6 @@ abstract class ExperimentsSnapshot with _$ExperimentsSnapshot {
   }
 }
 
-/// Publishes the resolved experiment snapshot as a handwritten `Notifier`.
-///
-/// `build` seeds [AsyncValue.loading] synchronously (an experiment read must
-/// never block navigation), then resolves the full snapshot asynchronously
-/// from [ExperimentSource.assignmentFor] for every known key. Live updates
-/// flow through [ExperimentSource.changes]; poll-backed sources emit nothing
-/// there and instead refresh on app resume (`inactive`/`hidden` never
-/// trigger a refresh). A failing refresh keeps the current state rather than
-/// surfacing an error or fabricating an assignment.
-///
-/// Consumers read the per-key variant through `experimentsProvider` (family)
-/// or the whole snapshot through `experimentAssignmentsProvider`.
 final experimentsControllerProvider =
     NotifierProvider<ExperimentsController, AsyncValue<ExperimentsSnapshot>>(
       ExperimentsController.new,
@@ -65,10 +44,6 @@ final experimentsControllerProvider =
 final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapshot>> {
   ExperimentSource get _source => ref.read(experimentSourceProvider);
 
-  /// Monotonic counter bumped on every `changes()` event. A resume-driven
-  /// refresh captures the counter before its await and commits only if no
-  /// live change arrived while it was loading, so a stale refresh can never
-  /// overwrite a fresher value.
   int _liveEpoch = 0;
 
   @override
@@ -84,7 +59,6 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
       }
     });
 
-    // Re-load when the app returns to the foreground.
     ref
       ..onDispose(subscription.cancel)
       ..listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
@@ -118,17 +92,10 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
     }
   }
 
-  /// The variant resolved for [key], or `null` while loading / before the key
-  /// has an assignment.
   ExperimentVariant? variantFor(ExperimentKey key) => state.value?.variantFor(key);
 }
 
-/// Resolves a single experiment's variant reactively. Watches the snapshot
-/// controller and maps the whole-snapshot state to the per-key variant:
-/// `AsyncData` with an assignment maps to `AsyncData` with the variant;
-/// `AsyncData` without one, or `AsyncLoading`, maps to `AsyncLoading`.
-// The family builder returns a private Riverpod family type not part of
-// flutter_riverpod's public API, so the top-level type is inferred.
+// Family builder returns a private Riverpod family type; the top-level type is inferred.
 // ignore: specify_nonobvious_property_types
 final experimentsProvider = Provider.family<AsyncValue<ExperimentVariant>, ExperimentKey>((
   ref,
@@ -163,8 +130,6 @@ AsyncValue<ExperimentVariant> _dataVariant(
   return AsyncValue<ExperimentVariant>.data(variant);
 }
 
-/// The full assignment snapshot for the diagnostics page. Returns an empty
-/// list while the controller is loading.
 final experimentAssignmentsProvider = Provider<List<ExperimentAssignment>>((
   ref,
 ) {

@@ -58,7 +58,6 @@ void main() {
       await _pumpFrames(tester);
 
       expect(find.byKey(const ValueKey('search-field')), findsOneWidget);
-      // The default fixture's first result is 'Authentication'.
       expect(find.text('Authentication'), findsOneWidget);
       expect(find.byKey(const ValueKey('search-back')), findsOneWidget);
     });
@@ -73,18 +72,15 @@ void main() {
       expect(find.text('Authentication'), findsOneWidget);
 
       await tester.enterText(find.byType(EditableText), 'biometric');
-      // Before the debounce window elapses the published query is still empty.
       await tester.pump(const Duration(milliseconds: 100));
       expect(
         tester.widget<EditableText>(find.byType(EditableText)).controller.text,
         'biometric',
       );
 
-      // Cross the debounce boundary so the controller publishes 'biometric'.
       await tester.pump(debounceQueryDuration);
       await _pumpFrames(tester);
 
-      // Only the biometric result remains; Authentication is filtered out.
       expect(find.text('Biometric unlock'), findsOneWidget);
       expect(find.text('Authentication'), findsNothing);
     });

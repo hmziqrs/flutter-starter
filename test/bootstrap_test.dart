@@ -4,18 +4,6 @@ import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/error_reporting/recording_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
-/// The crash-reporting spec requires the `installErrorHandlers` install site
-/// (the load-bearing wiring that funnels BOTH FlutterError.onError AND
-/// PlatformDispatcher.onError to BOTH AppLogger.error AND the CrashReporter) to
-/// be under test. These tests drive the installed handlers directly with a
-/// [RecordingCrashReporter] and assert both error sources reach the reporter
-/// with the correct source tag, and that the platform handler swallows
-/// (returns true) so errors never re-propagate.
-///
-/// The reporter is called in the same closure as `logger.error`, immediately
-/// after it with no early return, so a passing reporter assertion transitively
-/// proves the logger path also executed. AppLogger is a concrete final class
-/// with no injectable sink, so the reporter is the observable seam.
 void main() {
   group('installErrorHandlers', () {
     void Function(FlutterErrorDetails)? previousFlutterOnError;
@@ -31,9 +19,6 @@ void main() {
       PlatformDispatcher.instance.onError = previousPlatformOnError;
     });
 
-    // The handler captures are fire-and-forget (unawaited inside the install);
-    // yield one event-loop turn so the reporter's async body completes before
-    // asserting.
     Future<void> settle() => Future<void>.delayed(Duration.zero);
 
     test('routes Flutter framework errors to the crash reporter', () async {
@@ -50,8 +35,6 @@ void main() {
 
       expect(reporter.reports, hasLength(1));
       expect(reporter.reports.single.context['source'], 'flutter_framework');
-      // The redacted message still carries the exception text (no tokens to
-      // scrub here), proving the payload flowed end to end.
       expect(reporter.reports.single.message, contains('Exception'));
     });
 
@@ -65,8 +48,6 @@ void main() {
       );
       await settle();
 
-      // The platform handler must return true so the framework treats the
-      // error as handled — never rethrows / propagates.
       expect(swallowed, true);
       expect(reporter.reports, hasLength(1));
       expect(reporter.reports.single.context['source'], 'platform');

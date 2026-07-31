@@ -107,7 +107,6 @@ void main() {
       );
       await _pumpFrames(tester);
       expect(find.byType(ErrorStateView), findsOneWidget);
-      // The honest no-backend body is surfaced (defaults to common.notConnected).
       final viewContext = tester.element(find.byType(ErrorStateView));
       expect(find.text(viewContext.t.common.notConnected), findsOneWidget);
 
@@ -192,7 +191,6 @@ void main() {
       await _pumpFrames(tester);
       expect(loadNextCalls, 0);
 
-      // Fling toward the end; the threshold listener should fire onLoadNext.
       await tester.fling(find.byType(ListView), const Offset(0, -2000), 2000);
       await _pumpFrames(tester);
       expect(loadNextCalls, greaterThanOrEqualTo(1));

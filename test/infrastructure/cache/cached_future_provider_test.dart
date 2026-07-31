@@ -16,8 +16,6 @@ int _encodeInt(int v) => v;
 
 int _decodeInt(Object? json) => json is int ? json : 0;
 
-/// Swappable fetch behavior. Tests reset these in [setUp] and assert against
-/// [fetchCallCount].
 int fetchCallCount = 0;
 Exception? fetchError;
 int fetchValue = 2;
@@ -35,10 +33,6 @@ final FutureProvider<CachedValue<int>> counterProvider = buildCachedFutureProvid
   const CachedFutureSpec<int>(key: _key, fetch: fetch, codec: _intCodec, ttlSeconds: 1000),
 );
 
-/// Flushes microtasks so the `connectivityStatusProvider` StreamProvider
-/// delivers the seeded state before the cached provider reads it. A one-shot
-/// FutureProvider reads `.value` once, so the connectivity stream must be
-/// settled at build time.
 Future<void> settle() async {
   for (var i = 0; i < 8; i++) {
     await Future<void>.delayed(Duration.zero);
@@ -49,8 +43,7 @@ ProviderContainer _container({
   required InMemoryCacheStore store,
   required FakeConnectivityService connectivity,
 }) {
-  // Subscribe to connectivity so its StreamProvider delivers the seed before
-  // the cached provider builds.
+  // Forcing a listen delivers the connectivity seed before the cached provider builds.
   return ProviderContainer(
     overrides: [
       cacheStoreProvider.overrideWithValue(store),
@@ -114,7 +107,6 @@ void main() {
     expect(result.updated, isTrue);
     expect(fetchCallCount, 1);
 
-    // The refreshed value was written back to the cache.
     final cached = await store.read<int>(_key, codec: _intCodec);
     expect(cached, isNotNull);
     expect(cached!.value, 2);
@@ -162,9 +154,7 @@ void main() {
       connectivity: FakeConnectivityService(initial: ConnectivityState.offline),
     );
     addTearDown(container.dispose);
-    // Subscribe so the provider stays alive through the error transition, then
-    // settle so the build runs and throws. Reading `.future` instead would race
-    // the container teardown; the AsyncValue is the stable read.
+    // Keep a subscription so the error transition survives; reading `.future` would race teardown.
     container.read(counterProvider);
     await settle();
 

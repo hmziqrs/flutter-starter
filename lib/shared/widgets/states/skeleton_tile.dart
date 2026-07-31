@@ -3,12 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
-/// A skeleton bone mirroring an [FTile] / [FCard] row: a leading circular
-/// avatar, a primary line, and an optional secondary line.
-///
-/// Built entirely from bone primitives ([SkeletonCircle], [SkeletonLine]) so
-/// it inherits the ancestor [SkeletonView] shimmer (or the static
-/// reduce-motion fill) with no extra wiring.
 class SkeletonTile extends StatelessWidget {
   const SkeletonTile({
     this.avatarSize = 32.0,
@@ -22,19 +16,14 @@ class SkeletonTile extends StatelessWidget {
     super.key,
   });
 
-  /// Leading avatar diameter.
   final double avatarSize;
 
-  /// Title-line width as a fraction of the available width.
   final double titleFraction;
 
-  /// Subtitle-line width as a fraction of the available width.
   final double subtitleFraction;
 
-  /// When `false`, only the title line is rendered.
   final bool includeSubtitle;
 
-  /// Interior padding around the tile content.
   final EdgeInsetsGeometry padding;
 
   @override
@@ -67,10 +56,6 @@ class SkeletonTile extends StatelessWidget {
   }
 }
 
-/// A skeleton bone mirroring a content [FCard]: a leading icon box, a title
-/// line, and one or more body lines. Like [SkeletonTile], it composes bone
-/// primitives and inherits the ancestor [SkeletonView] shimmer or the static
-/// reduce-motion fill.
 class SkeletonCard extends StatelessWidget {
   const SkeletonCard({
     this.iconSize = 20.0,
@@ -80,16 +65,12 @@ class SkeletonCard extends StatelessWidget {
     super.key,
   });
 
-  /// Leading icon bone edge length.
   final double iconSize;
 
-  /// Number of body lines rendered beneath the title.
   final int lineCount;
 
-  /// Title-line width fraction.
   final double titleFraction;
 
-  /// Interior padding around the card content.
   final EdgeInsetsGeometry padding;
 
   @override

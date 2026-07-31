@@ -79,7 +79,6 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      // Two separators between three items.
       expect(find.byKey(const ValueKey('sep')), findsNWidgets(2));
     });
 

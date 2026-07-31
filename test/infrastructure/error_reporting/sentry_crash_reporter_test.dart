@@ -5,11 +5,6 @@ import 'package:starter/infrastructure/error_reporting/sentry_crash_reporter.dar
 
 void main() {
   group('SentryCrashReporter', () {
-    // The Sentry SDK is intentionally not initialized in this suite. Before
-    // init, capture calls are a no-op (they return SentryId.empty); the
-    // try/on Object guard ensures recordError stays total even if the SDK
-    // throws. Either way the error path must never observe a rethrown failure.
-
     test('is a CrashReporter', () {
       expect(SentryCrashReporter(verbose: false), isA<CrashReporter>());
     });

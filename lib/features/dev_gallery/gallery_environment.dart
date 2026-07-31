@@ -214,7 +214,6 @@ class GalleryEnvironment with _$GalleryEnvironment {
   }
 }
 
-/// A deterministic nonlinear approximation of the platform's maximum text scale.
 final class GalleryMaximumTextScaler extends TextScaler {
   const GalleryMaximumTextScaler();
 

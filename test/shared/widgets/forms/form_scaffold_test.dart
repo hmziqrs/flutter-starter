@@ -30,8 +30,6 @@ void main() {
       );
 
       await tester.tap(find.byKey(_submitKey), warnIfMissed: false);
-      // ForUI's FTappable schedules a short press timer on tap; pump bounded
-      // frames (never pumpAndSettle) so it flushes before the test ends.
       await _pumpFrames(tester);
 
       expect(submitted, 0);
@@ -98,7 +96,6 @@ void main() {
         ),
       );
 
-      // The barrier absorbs the tap; the underlying submit does not fire.
       await tester.tap(find.byKey(_submitKey), warnIfMissed: false);
       await tester.pump();
 
@@ -160,8 +157,6 @@ void main() {
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {
-  // Bounded frame pump (mirrors the integration pumpAppFrames contract) so
-  // ForUI's short press timer flushes without pumpAndSettle.
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }

@@ -1,10 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 
-/// Production `HapticService` backed by the cross-platform `HapticFeedback`
-/// surface from `flutter/services`. A platform-call failure is wrapped in
-/// `HapticServiceException`; call sites treat haptics as fire-and-forget and
-/// swallow it. Tests/goldens override with `NoopHapticService` instead.
 final class DeviceHapticService implements HapticService {
   const DeviceHapticService();
 

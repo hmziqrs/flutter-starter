@@ -67,7 +67,6 @@ void main() {
       final source = InMemoryFeatureFlagsSource();
       final done = source.changes().isEmpty;
       source.dispose();
-      // A closed broadcast stream completes -> isEmpty resolves to true.
       expect(await done, isTrue);
     });
   });

@@ -28,15 +28,11 @@ Future<void> bootstrap(
   AppConfig config, {
   AppLogger? logger,
   ApplicationRunner runApplication = runApp,
-  // Defaults to the no-op stub so the production entrypoint compiles no
-  // dio_request_inspector code; lib/main_dev.dart overrides with the real host.
   InspectorHost inspectorHost = const StubInspectorHost(),
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  // FirebaseCrashlyticsCrashReporter self-disables on web/Linux/Windows and
-  // when Firebase is not initialized, so the composite is safe with no backend.
   final CrashReporter crashReporter = CompositeCrashReporter(<CrashReporter>[
     const NoopCrashReporter(),
     FirebaseCrashlyticsCrashReporter(verbose: config.verboseLoggingEnabled),
@@ -51,10 +47,6 @@ Future<void> bootstrap(
   runApplication(inspectorHost.wrap(app));
 }
 
-/// Creates the same production dependency graph and root widget used by [bootstrap].
-///
-/// [secureStore] overrides the production OS-keychain-backed store; a headless
-/// integration test injects an in-memory store to avoid the libsecret dependency.
 Future<App> createApplication(
   AppConfig config, {
   AppLogger? logger,
@@ -64,13 +56,10 @@ Future<App> createApplication(
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Android 15 enforces edge-to-edge; opt in before the first frame so it
-  // doesn't render with an opaque system bar flash. Desktop/web no-op inside.
+  // Android 15 enforces edge-to-edge; apply before the first frame to avoid a system-bar flash.
   await SystemUiController.applyEdgeToEdge(capabilities: PlatformCapabilities.current());
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  // Loaded once here (never inside a widget build) and carried on
-  // AppDependencies.versionCheck for the redirect / force-update route.
   final buildInfo = await AppBuildInfo.load();
   final dependencies = await AppDependencies.production(
     appLogger,
@@ -81,8 +70,6 @@ Future<App> createApplication(
     secureStore: secureStore,
     inspectorHost: inspectorHost,
   );
-  // Guarded so a failure flips AppStartupResult.localeApplied to false
-  // (surfaced on the splash) instead of tearing down startup.
   var localeApplied = true;
   if (dependencies.settings.initialSettings.localeOverride case final locale?) {
     try {
@@ -97,16 +84,12 @@ Future<App> createApplication(
       localeApplied = false;
     }
   }
-  // AppDependencies.production sets localeApplied=true optimistically since the
-  // apply runs after it returns; correct it here when the apply failed.
   final dependenciesWithStartup = localeApplied
       ? dependencies
       : dependencies.copyWith(
           appStartupResult: dependencies.appStartupResult.copyWith(localeApplied: localeApplied),
         );
 
-  // Captured before the router builds so a cold-start deep link isn't lost.
-  // The foreground link stream is wired in `_AppViewState.ref.listen`.
   String? coldStartInitialLocation;
   try {
     final initialLink = await dependencies.platform.appLinkHandler.getInitialLink();
@@ -117,10 +100,6 @@ Future<App> createApplication(
     coldStartInitialLocation = null;
   }
 
-  // Precedence: explicit initialLocation (tests/integration) > cold-start deep
-  // link > saved last-route. Deliberately weaker than the redirect chain, which
-  // re-evaluates after initialLocation is set so update/onboarding/session/
-  // biometric/passcode gates still win.
   var effectiveInitialLocation = initialLocation ?? coldStartInitialLocation;
   if (effectiveInitialLocation == null) {
     try {
@@ -140,10 +119,6 @@ Future<App> createApplication(
   );
 }
 
-/// Maps a cold-start [ResolvedLink] to the router's `initialLocation` string.
-/// Reuses the [AppRoutes] helper for the OTP dynamic route; static routes use
-/// their path constant directly. Used only at cold start — the foreground
-/// stream dispatches via `context.goNamed` / `pushNamed` from `_AppViewState`.
 String _initialLocationFromResolvedLink(ResolvedLink link) {
   switch (link.routeName) {
     case AppRoutes.home:
@@ -167,8 +142,6 @@ String _initialLocationFromResolvedLink(ResolvedLink link) {
       }
       return '/auth/otp/$purpose';
   }
-  // An unknown resolved route falls back to home so a stale / future link
-  // never strands the cold start.
   return AppRoutes.homePath;
 }
 
@@ -199,8 +172,6 @@ Future<void> showStartupFailure({
   );
 }
 
-/// Wires [FlutterError.onError] and `PlatformDispatcher.instance.onError` to
-/// [AppLogger.error] and [reporter].
 @visibleForTesting
 void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
   FlutterError.onError = (details) {
@@ -209,8 +180,6 @@ void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
       error: details.exception,
       stackTrace: details.stack,
     );
-    // Fire-and-forget: the handler is synchronous and must never block the
-    // framework error path.
     unawaited(reporter.recordFlutterError(details));
   };
 
@@ -227,6 +196,6 @@ void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
         context: <String, Object?>{'source': 'platform'},
       ),
     );
-    return true; // Marks the error handled so it isn't re-propagated.
+    return true;
   };
 }

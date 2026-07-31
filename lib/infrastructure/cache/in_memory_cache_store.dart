@@ -3,28 +3,17 @@ import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/cache_store_exception.dart';
 
-/// Deterministic in-memory [CacheStore]: the hermetic default for tests and
-/// dev-gallery isolation. Stores each entry as its canonical
-/// [CacheEntryJson] map so it round-trips through the codec exactly like
-/// `FileCacheStore` — the two adapters are behaviorally identical.
-///
-/// [failReads] / [failWrites] toggles let tests assert [CacheStoreException]
-/// wrapping without a mocking library.
 final class InMemoryCacheStore implements CacheStore {
   InMemoryCacheStore({Map<String, CacheEntryJson>? seed}) : _entries = {...?seed};
 
   final Map<String, CacheEntryJson> _entries;
 
-  /// When true, every [read] / [age] throws [CacheStoreException].
   bool failReads = false;
 
-  /// When true, every [write] / [remove] throws [CacheStoreException].
   bool failWrites = false;
 
-  /// Read-only snapshot of the raw stored payloads (for test assertions).
   Map<String, CacheEntryJson> get snapshot => Map.unmodifiable(_entries);
 
-  /// Number of keys currently stored.
   int get size => _entries.length;
 
   @override

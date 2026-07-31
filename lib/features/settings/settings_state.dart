@@ -50,7 +50,6 @@ class SettingsState with _$SettingsState {
   @override
   final AppTextPreset textPreset;
 
-  /// Derived from [textPreset] so it never drifts (null unless dyslexia).
   String? get fontFamily => textPreset.toSettings().fontFamily;
 
   @override
@@ -62,22 +61,15 @@ class SettingsState with _$SettingsState {
   @override
   final bool biometricUnlockEnabled;
 
-  /// Default true; only the opt-out is persisted. Reduce-motion is gated
-  /// per-consumer via `MediaQuery.disableAnimationsOf`, not centrally.
   @override
   final bool hapticsEnabled;
 
-  /// Whether a passcode is configured and armed; the secret itself lives only
-  /// as a salted hash in SecureStore.
   @override
   final bool passcodeEnabled;
 
-  /// Idle auto-lock delay in seconds; 0 = off.
   @override
   final int autoLockDelaySeconds;
 
-  /// Whether the app re-locks when backgrounded; meaningful only with
-  /// [passcodeEnabled].
   @override
   final bool lockOnBackground;
 

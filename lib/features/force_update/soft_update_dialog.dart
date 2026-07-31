@@ -7,8 +7,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-/// Shows the soft-update [FDialog]. Dismissible via Escape / barrier; the
-/// caller's [onUpdate] / [onLater] callbacks run after the dialog is dismissed.
 Future<void> showSoftUpdateDialog(
   BuildContext context, {
   required ForceUpdateState state,
@@ -46,8 +44,6 @@ Future<void> showSoftUpdateDialog(
   );
 }
 
-/// The soft-update dialog body: title, body (or server message), and the
-/// "Update" / "Later" actions.
 class SoftUpdateCard extends StatelessWidget {
   const SoftUpdateCard({
     required this.state,
@@ -108,23 +104,16 @@ class SoftUpdateCard extends StatelessWidget {
   }
 }
 
-/// Pure helpers for the soft-update snooze timestamp; the composition root
-/// owns the actual `SettingsStore` read/write.
 abstract final class SoftUpdateSnooze {
-  /// Settings key holding the snooze deadline (UTC ISO-8601).
   static const String key = 'update.snoozed_until';
 
-  /// How long a dismissed soft prompt stays suppressed.
   static const Duration defaultDuration = Duration(days: 1);
 
-  /// Encodes a snooze deadline [duration] from [at] (defaults to now).
   static String encode({DateTime? at, Duration duration = defaultDuration}) {
     final start = (at ?? DateTime.now()).toUtc();
     return start.add(duration).toIso8601String();
   }
 
-  /// Returns `true` when [stored] is a future timestamp relative to [now].
-  /// `null` / unparseable values are treated as not snoozed.
   static bool isSnoozed(String? stored, {DateTime? now}) {
     if (stored == null) {
       return false;

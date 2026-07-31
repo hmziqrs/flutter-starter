@@ -3,9 +3,6 @@ import 'package:starter/features/force_update/update_requirement.dart';
 
 part 'force_update_state.freezed.dart';
 
-/// Immutable view data for the update-block UI (the hard-block page and the
-/// soft-deprecation dialog), built from an [UpdateRequirement] via
-/// [ForceUpdateState.from]. [storeUrl] is empty for `none` (never rendered).
 @freezed
 class ForceUpdateState with _$ForceUpdateState {
   const ForceUpdateState({

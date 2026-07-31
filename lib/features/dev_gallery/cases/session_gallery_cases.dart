@@ -7,7 +7,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 
 part 'session_gallery_cases.freezed.dart';
 
-/// Preview state for the session gallery cases: logged out vs logged in.
 @Freezed(copyWith: false)
 class SessionGalleryState with _$SessionGalleryState {
   const SessionGalleryState._(this.viewData, this.labelBuilder);
@@ -29,7 +28,6 @@ class SessionGalleryState with _$SessionGalleryState {
   static final values = <SessionGalleryState>[loggedOut, loggedIn];
 }
 
-/// Builds the session gallery cases: logged out vs logged in.
 List<GalleryCase> buildSessionGalleryCases() {
   return [
     for (final entry in SessionGalleryState.values)

@@ -3,7 +3,6 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:starter/features/feedback/shake_feedback_trigger.dart';
 
 AccelerometerEvent _event(double x, double y, double z) {
-  // AccelerometerEvent requires a timestamp and is not const-constructible.
   return AccelerometerEvent(x, y, z, DateTime.utc(2026));
 }
 
@@ -14,7 +13,6 @@ void main() {
     });
 
     test('deliberate shake reads well above the threshold', () {
-      // sqrt(100 + 144 + 225) = sqrt(469) ~ 21.66
       expect(magnitudeOf(_event(10, 12, -15)), closeTo(21.66, 0.01));
     });
   });
@@ -28,11 +26,9 @@ void main() {
       );
       expect(shakes, 0);
 
-      // Sub-threshold (gravity alone) does not fire.
       detector.handle(_event(0, 0, 9.8));
       expect(shakes, 0);
 
-      // Deliberate shake fires once.
       detector.handle(_event(10, 12, -15));
       expect(shakes, 1);
     });
@@ -50,12 +46,10 @@ void main() {
       detector.handle(_event(20, 0, 0));
       expect(shakes, 1);
 
-      // 500ms later — still inside the 1s window — a second shake is suppressed.
       now = now.add(const Duration(milliseconds: 500));
       detector.handle(_event(20, 0, 0));
       expect(shakes, 1);
 
-      // Past the window — the next shake fires.
       now = now.add(const Duration(milliseconds: 600));
       detector.handle(_event(20, 0, 0));
       expect(shakes, 2);
@@ -65,16 +59,14 @@ void main() {
       var shakes = 0;
       final detector = ShakeDetector(
         onShake: ({required magnitude}) => shakes += 1,
-        magnitudeThreshold: 25, // higher than the default 18
+        magnitudeThreshold: 25,
         debounce: const Duration(milliseconds: 10),
       );
       expect(shakes, 0);
 
-      // Magnitude ~21.66 — below the custom threshold.
       detector.handle(_event(10, 12, -15));
       expect(shakes, 0);
 
-      // Magnitude ~34.64 — above the custom threshold.
       detector.handle(_event(20, 20, -20));
       expect(shakes, 1);
     });
@@ -92,15 +84,12 @@ void main() {
       detector.handle(_event(20, 0, 0));
       expect(shakes, 1);
 
-      // Inside the window — suppressed.
       now = now.add(const Duration(seconds: 1));
       detector.handle(_event(20, 0, 0));
       expect(shakes, 1);
 
-      // Reset clears the window — the next shake fires immediately.
       detector.reset();
-      // Cascade would read `..reset()..handle(..)` but we want the reset to be
-      // a distinct, observable step before the post-reset feed.
+      // Reset must be a distinct, observable step before the post-reset feed, not a cascade.
       // ignore: cascade_invocations
       detector.handle(_event(20, 0, 0));
       expect(shakes, 2);
@@ -120,9 +109,6 @@ void main() {
 
   group('defaultStreamFactory', () {
     test('is a function reference (does not throw at lookup)', () {
-      // The production factory is the single seam to sensors_plus. Referencing
-      // it must not throw on platforms without an accelerometer at lookup time
-      // — the trigger guards the call itself.
       expect(defaultStreamFactory, isA<Function>());
     });
   });

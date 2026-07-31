@@ -1,12 +1,3 @@
-// End-to-end coverage for the real HTTP profile adapter
-// (`HttpProfileRepository`) against the LIVE in-repo Hono server
-// (`tools/hono_server`). No client is stubbed: the adapter speaks to a real
-// Hono backend over a loopback socket. The authenticated access token is
-// obtained by driving the real registration -> verify flow through the auth +
-// OTP HTTP adapters, so the whole path (auth -> OTP -> profile) is exercised
-// against one booted server. Shares `HonoServerHandle` with the auth + e2e
-// tests. The whole group is SKIPPED (not failed) on hosts without a JS runtime.
-
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -41,14 +32,10 @@ void main() {
     late HttpProfileRepository profileRepo;
 
     var emailSeq = 0;
-    // Each registration creates server-side state; unique emails keep tests
-    // independent within the single booted server process.
     String uniqueEmail() => 'profile-${emailSeq++}@e2e.test';
 
     setUpAll(() async {
       server = await HonoServerHandle.start(runtime: runtime);
-      // A single shared Dio (the composition-root shape) is injected into all
-      // three adapters so the full auth -> OTP -> profile path runs over Dio.
       final dio = buildAppDio(server.baseUri);
       authClient = HttpAuthClient(baseUrl: server.baseUri, dio: dio);
       otpClient = HttpOtpClient(baseUrl: server.baseUri, dio: dio);
@@ -57,9 +44,6 @@ void main() {
 
     tearDownAll(() => server.close());
 
-    /// Drives the full registration -> verify flow and returns the session
-    /// issued inline on a successful registration verify. The pending account
-    /// is created with [displayName] so the subsequent profile load asserts it.
     Future<AuthAuthenticated> registerAndVerify({
       required String email,
       required String displayName,
@@ -83,9 +67,7 @@ void main() {
       final draft = await profileRepo.load(accessToken: session.accessToken);
       expect(draft.displayName, displayName);
       expect(draft.email, email);
-      // username is the email's local-part per the backend contract.
       expect(draft.username, email.substring(0, email.indexOf('@')));
-      // bio starts empty on a freshly registered account.
       expect(draft.bio, '');
     });
 
@@ -100,7 +82,6 @@ void main() {
       expect(saved.displayName, 'New Name');
       expect(saved.bio, 'Updated bio');
 
-      // Re-load to confirm the write persisted server-side.
       final reloaded = await profileRepo.load(accessToken: session.accessToken);
       expect(reloaded.displayName, 'New Name');
       expect(reloaded.bio, 'Updated bio');
@@ -110,7 +91,6 @@ void main() {
       final email = uniqueEmail();
       final session = await registerAndVerify(email: email, displayName: 'Bio Tester');
 
-      // Set a bio first, then clear it.
       await profileRepo.save(
         accessToken: session.accessToken,
         draft: const ProfileDraft.defaults().copyWith(bio: 'temporary'),
@@ -152,8 +132,6 @@ void main() {
   });
 }
 
-/// Resolves an address guaranteed to refuse connections (bind, read, close).
-/// Mirrors the pattern in `http_notifications_registration_client_test.dart`.
 Future<Uri> _deadAddress() async {
   final sink = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
   final port = sink.port;
