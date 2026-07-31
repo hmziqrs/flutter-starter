@@ -5,6 +5,8 @@ plugins:
 
 analyzer:
   exclude:
+    - "build/**"
+    - "**/*.freezed.dart"
     - "**/*.g.dart"
     # `tools/hono_server` is a standalone TypeScript package (Bun/Hono),
     # validated via `cd tools/hono_server && bun test` — not Dart-analyzed.

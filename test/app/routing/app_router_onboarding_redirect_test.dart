@@ -7,42 +7,10 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/announcements/announcement_fixtures.dart';
-import 'package:starter/features/auth/auth_attempt_tracker.dart';
-import 'package:starter/features/auth/in_memory_otp_repository.dart';
-import 'package:starter/features/experiments/deterministic_experiment_source.dart';
-import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
-import 'package:starter/features/feedback/feedback_form_value.dart';
-import 'package:starter/features/feedback/noop_feedback_transport.dart';
-import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
-import 'package:starter/features/force_update/update_requirement.dart';
-import 'package:starter/features/notifications/noop_notifications_repository.dart';
-import 'package:starter/features/notifications/notification_permission_status.dart';
-import 'package:starter/features/notifications/notifications_repository.dart';
-import 'package:starter/features/profile/noop_profile_repository.dart';
-import 'package:starter/features/security/in_memory_secure_store.dart';
-import 'package:starter/features/session/auth_session.dart';
-import 'package:starter/features/session/in_memory_auth_repository.dart';
-import 'package:starter/features/session/session_repository.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
-import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/infrastructure/analytics/analytics_client.dart';
-import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
-import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
-import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
-import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
-import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
-import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
-import 'package:starter/infrastructure/logging/app_logger.dart';
-import 'package:starter/infrastructure/media/noop_media_picker.dart';
-import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
-import 'package:starter/infrastructure/platform/app_build_info.dart';
-import 'package:starter/infrastructure/platform/platform_capabilities.dart';
-import 'package:starter/infrastructure/sharing/noop_share_service.dart';
-import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
-import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -229,89 +197,13 @@ AppDependencies _dependencies({
   InMemorySettingsStore? store,
 }) {
   final settingsStore = store ?? InMemorySettingsStore();
-  final secureStore = InMemorySecureStore();
-  return AppDependencies(
-    settingsRepository: SettingsRepository(settingsStore),
+  return AppDependencies.inMemory(
     settingsStore: settingsStore,
     initialSettings: initialSettings ?? const SettingsState.defaults(),
-    secureStore: secureStore,
-    crashReporter: const NoopCrashReporter(),
-    crashReporterBackend: const NoopCrashReporterBackend(),
-    // No-backend test defaults: the version gate never blocks (C2: never fake a
-    // block) and the connectivity sensor is online so the banner stays hidden.
-    versionGateStore: InMemoryVersionGateStore(),
-    versionCheck: const UpdateRequirementNone(),
-    connectivityService: FakeConnectivityService(),
-    // Wave-4 no-backend defaults mirror AppDependencies.inMemory: the auth repo
-    // surfaces notConnected unseeded, analytics is noop, feature-flags fall back
-    // to defaults, and the biometric authenticator is the honest noop.
-    authRepository: InMemoryAuthRepository(),
-    sessionRepository: SessionRepository(secureStore),
-    initialSession: const AuthAnonymous(),
-    analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
-    analyticsClientBackend: const NoopAnalyticsBackend(),
-    initialAnalyticsOptIn: false,
-    featureFlagsSource: InMemoryFeatureFlagsSource(),
-    biometricAuthenticator: const NoopBiometricAuthenticator(),
-    attemptTracker: InMemoryAttemptTracker(),
-    // Haptics: Noop keeps the redirect test hermetic (a tap never reaches the
-    // platform channel). Mirrors AppDependencies.inMemory.
-    hapticService: NoopHapticService(),
-    // Splash seed mirrors AppDependencies.inMemory: a resolved success so the
-    // onboarding-redirect path under test boots without re-running init.
-    appStartupResult: const AppStartupResult(
-      buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
-      settingsLoaded: true,
-      localeApplied: true,
-    ),
-    buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
     // The floating announcement banner overlaps the top of the screen; dismiss
     // the whole feed so it never occludes the routing targets these cases tap.
-    initialDismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
-    // Wave-5b no-backend test defaults: each port degrades honestly (never
-    // fakes a grant / pick / share / update / token); the deep-link service
-    // is a no-op so the redirect path under test is unaffected.
-    otpRepository: const InMemoryOtpRepository(),
-    // Profile port: honest no-backend default mirrors AppDependencies.inMemory
-    // (surfaces notConnected; the route is auth-gated and unreachable here).
-    profileRepository: const NoopProfileRepository(),
-    notificationsRepository: const NoopNotificationsRepository(),
-    notificationsBackend: const NoopNotificationsBackend(),
-    initialNotificationPermission: NotificationPermissionStatus.notRequested,
-    initialNotificationToken: null,
-    permissionService: const NoopPermissionService(),
-    mediaPicker: const NoopMediaPicker(),
-    shareService: const NoopShareService(),
-    appUpdateService: const NoopAppUpdateService(),
-    appLinkHandler: const _NoOpDeepLinkService(),
-    // Wave-6 no-backend test defaults: honest local/in-memory choices so the
-    // redirect path under test never fakes a backend success (C2). Mirrors
-    // AppDependencies.inMemory.
-    experimentSource: DeterministicExperimentSource(store: settingsStore),
-    cacheStore: InMemoryCacheStore(),
-    feedbackTransport: const NoopFeedbackTransport(),
-    initialFeedbackDraft: const FeedbackDraft.empty(),
-    initialFeedbackShakeEnabled: false,
-    feedbackAppMetadata: const FeedbackAppMetadata(
-      appVersion: '1.0.0+1',
-      platform: 'test',
-      locale: 'en',
-    ),
-    platformCapabilities: const PlatformCapabilities.nonTelevision(),
+    dismissedAnnouncementIds: AnnouncementFixtures.standard.map((a) => a.id).toSet(),
   );
-}
-
-class _NoOpDeepLinkService implements DeepLinkService {
-  const _NoOpDeepLinkService();
-
-  @override
-  Stream<ResolvedLink> get links => const Stream<ResolvedLink>.empty();
-
-  @override
-  Future<ResolvedLink?> getInitialLink() async => null;
-
-  @override
-  void dispose() {}
 }
 
 Future<void> _pumpApp(

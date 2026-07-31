@@ -20,6 +20,8 @@ deps:
 
 # Regenerate slang translations and other build_runner outputs.
 gen:
+    dart run build_runner clean
+    rm -f lib/i18n/translations.g.dart lib/i18n/translations_en.g.dart lib/i18n/translations_ar.g.dart lib/i18n/translations_zh_Hans.g.dart
     dart run build_runner build
 
 # Remove all build artifacts.
@@ -33,14 +35,16 @@ analyze:
 
 # Format the codebase in place.
 format:
-    dart format .
+    dart format lib test integration_test
 
 # Fail if anything is unformatted (CI gate).
 format-check:
-    dart format --output=none --set-exit-if-changed .
+    dart format --output=none --set-exit-if-changed lib test integration_test
 
 # Verify generated code is committed and in sync (CI gate).
 gen-check:
+    dart run build_runner clean
+    rm -f lib/i18n/translations.g.dart lib/i18n/translations_en.g.dart lib/i18n/translations_ar.g.dart lib/i18n/translations_zh_Hans.g.dart
     dart run build_runner build
     git diff --exit-code
 

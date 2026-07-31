@@ -79,58 +79,72 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       overrides: [
-        settingsRepositoryProvider.overrideWithValue(dependencies.settingsRepository),
-        initialSettingsProvider.overrideWithValue(dependencies.initialSettings),
-        settingsStoreProvider.overrideWithValue(dependencies.settingsStore),
-        secureStoreProvider.overrideWithValue(dependencies.secureStore),
-        crashReporterProvider.overrideWithValue(dependencies.crashReporter),
-        crashReporterBackendProvider.overrideWithValue(dependencies.crashReporterBackend),
-        versionGateStoreProvider.overrideWithValue(dependencies.versionGateStore),
+        settingsRepositoryProvider.overrideWithValue(dependencies.settings.settingsRepository),
+        initialSettingsProvider.overrideWithValue(dependencies.settings.initialSettings),
+        settingsStoreProvider.overrideWithValue(dependencies.settings.settingsStore),
+        secureStoreProvider.overrideWithValue(dependencies.storage.secureStore),
+        crashReporterProvider.overrideWithValue(dependencies.telemetry.crashReporter),
+        crashReporterBackendProvider.overrideWithValue(
+          dependencies.telemetry.crashReporterBackend,
+        ),
+        versionGateStoreProvider.overrideWithValue(dependencies.remoteConfig.versionGateStore),
         // Precomputed in createApplication so the redirect reads a ready
         // AsyncData and the check never re-fires on rebuild.
-        versionCheckProvider.overrideWith((ref) async => dependencies.versionCheck),
-        connectivityServiceProvider.overrideWithValue(dependencies.connectivityService),
+        versionCheckProvider.overrideWith((ref) async => dependencies.remoteConfig.versionCheck),
+        connectivityServiceProvider.overrideWithValue(
+          dependencies.platform.connectivityService,
+        ),
         appStartupResultProvider.overrideWith((ref) => dependencies.appStartupResult),
         initialDismissedAnnouncementIdsProvider.overrideWithValue(
           dependencies.initialDismissedAnnouncementIds,
         ),
-        appBuildInfoProvider.overrideWithValue(dependencies.buildInfo),
-        authRepositoryProvider.overrideWithValue(dependencies.authRepository),
-        sessionRepositoryProvider.overrideWithValue(dependencies.sessionRepository),
-        initialSessionProvider.overrideWithValue(dependencies.initialSession),
-        analyticsClientProvider.overrideWithValue(dependencies.analyticsClient),
-        analyticsClientBackendProvider.overrideWithValue(dependencies.analyticsClientBackend),
-        initialAnalyticsOptInProvider.overrideWithValue(dependencies.initialAnalyticsOptIn),
-        featureFlagsSourceProvider.overrideWithValue(dependencies.featureFlagsSource),
-        biometricAuthenticatorProvider.overrideWithValue(dependencies.biometricAuthenticator),
-        attemptTrackerProvider.overrideWithValue(dependencies.attemptTracker),
-        // Every port provider throws StateError until overridden here.
-        hapticServiceProvider.overrideWithValue(dependencies.hapticService),
-        otpRepositoryProvider.overrideWithValue(dependencies.otpRepository),
-        profileRepositoryProvider.overrideWithValue(dependencies.profileRepository),
-        notificationsRepositoryProvider.overrideWithValue(
-          dependencies.notificationsRepository,
+        appBuildInfoProvider.overrideWithValue(dependencies.platform.buildInfo),
+        authRepositoryProvider.overrideWithValue(dependencies.auth.authRepository),
+        sessionRepositoryProvider.overrideWithValue(dependencies.auth.sessionRepository),
+        initialSessionProvider.overrideWithValue(dependencies.auth.initialSession),
+        analyticsClientProvider.overrideWithValue(dependencies.telemetry.analyticsClient),
+        analyticsClientBackendProvider.overrideWithValue(
+          dependencies.telemetry.analyticsClientBackend,
         ),
-        notificationsBackendProvider.overrideWithValue(dependencies.notificationsBackend),
+        initialAnalyticsOptInProvider.overrideWithValue(
+          dependencies.telemetry.initialAnalyticsOptIn,
+        ),
+        featureFlagsSourceProvider.overrideWithValue(
+          dependencies.remoteConfig.featureFlagsSource,
+        ),
+        biometricAuthenticatorProvider.overrideWithValue(
+          dependencies.auth.biometricAuthenticator,
+        ),
+        attemptTrackerProvider.overrideWithValue(dependencies.auth.attemptTracker),
+        // Every port provider throws StateError until overridden here.
+        hapticServiceProvider.overrideWithValue(dependencies.platform.hapticService),
+        otpRepositoryProvider.overrideWithValue(dependencies.auth.otpRepository),
+        profileRepositoryProvider.overrideWithValue(dependencies.auth.profileRepository),
+        notificationsRepositoryProvider.overrideWithValue(
+          dependencies.notifications.notificationsRepository,
+        ),
+        notificationsBackendProvider.overrideWithValue(
+          dependencies.notifications.notificationsBackend,
+        ),
         initialNotificationPermissionProvider.overrideWithValue(
-          dependencies.initialNotificationPermission,
+          dependencies.notifications.initialNotificationPermission,
         ),
         initialNotificationTokenProvider.overrideWithValue(
-          dependencies.initialNotificationToken,
+          dependencies.notifications.initialNotificationToken,
         ),
-        permissionServiceProvider.overrideWithValue(dependencies.permissionService),
-        mediaPickerProvider.overrideWithValue(dependencies.mediaPicker),
-        shareServiceProvider.overrideWithValue(dependencies.shareService),
-        appUpdateServiceProvider.overrideWithValue(dependencies.appUpdateService),
-        appLinkHandlerProvider.overrideWithValue(dependencies.appLinkHandler),
-        experimentSourceProvider.overrideWithValue(dependencies.experimentSource),
-        cacheStoreProvider.overrideWithValue(dependencies.cacheStore),
-        feedbackTransportProvider.overrideWithValue(dependencies.feedbackTransport),
-        initialFeedbackDraftProvider.overrideWithValue(dependencies.initialFeedbackDraft),
+        permissionServiceProvider.overrideWithValue(dependencies.platform.permissionService),
+        mediaPickerProvider.overrideWithValue(dependencies.platform.mediaPicker),
+        shareServiceProvider.overrideWithValue(dependencies.platform.shareService),
+        appUpdateServiceProvider.overrideWithValue(dependencies.platform.appUpdateService),
+        appLinkHandlerProvider.overrideWithValue(dependencies.platform.appLinkHandler),
+        experimentSourceProvider.overrideWithValue(dependencies.remoteConfig.experimentSource),
+        cacheStoreProvider.overrideWithValue(dependencies.storage.cacheStore),
+        feedbackTransportProvider.overrideWithValue(dependencies.feedback.feedbackTransport),
+        initialFeedbackDraftProvider.overrideWithValue(dependencies.feedback.initialFeedbackDraft),
         initialFeedbackShakeEnabledProvider.overrideWithValue(
-          dependencies.initialFeedbackShakeEnabled,
+          dependencies.feedback.initialFeedbackShakeEnabled,
         ),
-        feedbackAppMetadataProvider.overrideWithValue(dependencies.feedbackAppMetadata),
+        feedbackAppMetadataProvider.overrideWithValue(dependencies.feedback.feedbackAppMetadata),
         // Reads live settings state so user preferences drive AutoLockController
         // directly; the feature defaults both to 0/false (inert) until wired here.
         autoLockDelaySecondsProvider.overrideWith(
@@ -139,7 +153,7 @@ class App extends StatelessWidget {
         lockOnBackgroundProvider.overrideWith(
           (ref) => ref.watch(settingsControllerProvider).lockOnBackground,
         ),
-        platformCapabilitiesProvider.overrideWithValue(dependencies.platformCapabilities),
+        platformCapabilitiesProvider.overrideWithValue(dependencies.platform.platformCapabilities),
       ],
       child: TranslationProvider(
         child: _AppView(

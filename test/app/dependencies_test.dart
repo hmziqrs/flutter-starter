@@ -56,13 +56,13 @@ void main() {
       localeOverride: AppLocale.zhHans,
     );
 
-    await first.settingsRepository.save(expected);
+    await first.settings.settingsRepository.save(expected);
     final reconstructed = await AppDependencies.production(
       AppLogger.bootstrap(),
       iosAppleId: '',
       allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
     );
 
-    expect(reconstructed.initialSettings, expected);
+    expect(reconstructed.settings.initialSettings, expected);
   });
 }

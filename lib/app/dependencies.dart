@@ -1,20 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:starter/app/dependencies/dependency_aggregates.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/in_memory_otp_repository.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/experiments/deterministic_experiment_source.dart';
-import 'package:starter/features/experiments/experiment_source.dart';
-import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/features/feature_flags/in_memory_feature_flags_source.dart';
 import 'package:starter/features/feedback/feedback_controller.dart';
 import 'package:starter/features/feedback/feedback_form_value.dart';
-import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/feedback/noop_feedback_transport.dart';
 import 'package:starter/features/force_update/in_memory_version_gate_store.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
-import 'package:starter/features/force_update/version_gate_store.dart';
 import 'package:starter/features/notifications/noop_notifications_repository.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
@@ -36,14 +33,12 @@ import 'package:starter/infrastructure/analytics/firebase_analytics_client.dart'
 import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
 import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
-import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/biometric/local_auth_authenticator.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/file_cache_store.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
-import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
@@ -51,7 +46,6 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/firebase_crashlytics_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
-import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
@@ -78,131 +72,117 @@ import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 
 final class AppDependencies {
   const AppDependencies({
-    required this.settingsRepository,
-    required this.settingsStore,
-    required this.initialSettings,
-    required this.secureStore,
-    required this.crashReporter,
-    required this.crashReporterBackend,
-    required this.versionGateStore,
-    required this.versionCheck,
-    required this.connectivityService,
+    required this.settings,
+    required this.storage,
+    required this.auth,
+    required this.telemetry,
+    required this.remoteConfig,
+    required this.notifications,
+    required this.feedback,
+    required this.platform,
     required this.appStartupResult,
-    required this.buildInfo,
     required this.initialDismissedAnnouncementIds,
-    required this.authRepository,
-    required this.sessionRepository,
-    required this.initialSession,
-    required this.analyticsClient,
-    required this.analyticsClientBackend,
-    required this.initialAnalyticsOptIn,
-    required this.featureFlagsSource,
-    required this.biometricAuthenticator,
-    required this.attemptTracker,
-    required this.hapticService,
-    required this.otpRepository,
-    required this.profileRepository,
-    required this.notificationsRepository,
-    required this.notificationsBackend,
-    required this.initialNotificationPermission,
-    required this.initialNotificationToken,
-    required this.permissionService,
-    required this.mediaPicker,
-    required this.shareService,
-    required this.appUpdateService,
-    required this.appLinkHandler,
-    required this.experimentSource,
-    required this.cacheStore,
-    required this.feedbackTransport,
-    required this.initialFeedbackDraft,
-    required this.initialFeedbackShakeEnabled,
-    required this.feedbackAppMetadata,
-    required this.platformCapabilities,
     this.inspectorHost = const StubInspectorHost(),
   });
 
   factory AppDependencies.inMemory({
     SettingsState? initialSettings,
+    SettingsStore? settingsStore,
     SecureStore? secureStore,
     AuthSession? initialSession,
     PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
     Set<String> dismissedAnnouncementIds = const <String>{},
   }) {
-    final settingsStore = InMemorySettingsStore();
+    final effectiveSettingsStore = settingsStore ?? InMemorySettingsStore();
     final versionGateStore = InMemoryVersionGateStore();
     final effectiveSecureStore = secureStore ?? InMemorySecureStore();
     return AppDependencies(
-      settingsRepository: SettingsRepository(settingsStore),
-      settingsStore: settingsStore,
-      // Defaults to a returning user who has completed onboarding, so shell /
-      // navigation / gallery suites boot straight to home. The fresh-install
-      // redirect is covered independently by app_router_onboarding_redirect_test.dart.
-      initialSettings:
-          initialSettings ?? const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
-      secureStore: effectiveSecureStore,
-      crashReporter: const NoopCrashReporter(),
-      crashReporterBackend: const NoopCrashReporterBackend(),
-      versionGateStore: versionGateStore,
-      versionCheck: const UpdateRequirementNone(),
-      // Real local connectivity_plus sensor, not a Noop: safe in integration
-      // tests on a real platform; widget tests override the provider instead.
-      connectivityService: ConnectivityPlusService(),
+      settings: SettingsDependencies(
+        settingsRepository: SettingsRepository(effectiveSettingsStore),
+        settingsStore: effectiveSettingsStore,
+        // Defaults to a returning user who has completed onboarding, so shell /
+        // navigation / gallery suites boot straight to home. The fresh-install
+        // redirect is covered independently by app_router_onboarding_redirect_test.dart.
+        initialSettings:
+            initialSettings ??
+            const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
+      ),
+      storage: StorageDependencies(
+        secureStore: effectiveSecureStore,
+        cacheStore: InMemoryCacheStore(),
+      ),
+      auth: AuthDependencies(
+        authRepository: InMemoryAuthRepository(),
+        sessionRepository: SessionRepository(effectiveSecureStore),
+        initialSession: initialSession ?? const AuthAnonymous(),
+        otpRepository: const InMemoryOtpRepository(),
+        attemptTracker: InMemoryAttemptTracker(),
+        biometricAuthenticator: const NoopBiometricAuthenticator(),
+        profileRepository: const NoopProfileRepository(),
+      ),
+      telemetry: TelemetryDependencies(
+        crashReporter: const NoopCrashReporter(),
+        crashReporterBackend: const NoopCrashReporterBackend(),
+        analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
+        analyticsClientBackend: const NoopAnalyticsBackend(),
+        initialAnalyticsOptIn: false,
+      ),
+      remoteConfig: RemoteConfigDependencies(
+        versionGateStore: versionGateStore,
+        versionCheck: const UpdateRequirementNone(),
+        featureFlagsSource: InMemoryFeatureFlagsSource(),
+        experimentSource: DeterministicExperimentSource(store: effectiveSettingsStore),
+      ),
+      notifications: const NotificationDependencies(
+        notificationsRepository: NoopNotificationsRepository(),
+        notificationsBackend: NoopNotificationsBackend(),
+        initialNotificationPermission: NotificationPermissionStatus.notRequested,
+        initialNotificationToken: null,
+      ),
+      feedback: const FeedbackDependencies(
+        feedbackTransport: NoopFeedbackTransport(),
+        initialFeedbackDraft: FeedbackDraft.empty(),
+        initialFeedbackShakeEnabled: false,
+        feedbackAppMetadata: FeedbackAppMetadata(
+          appVersion: '1.0.0+1',
+          platform: 'test',
+          locale: 'en',
+        ),
+      ),
+      platform: PlatformDependencies(
+        platformCapabilities: platformCapabilities,
+        buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
+        // Real local connectivity_plus sensor, not a Noop: safe in integration
+        // tests on a real platform; widget tests override the provider instead.
+        connectivityService: ConnectivityPlusService(),
+        hapticService: NoopHapticService(),
+        permissionService: const NoopPermissionService(),
+        mediaPicker: const NoopMediaPicker(),
+        shareService: const NoopShareService(),
+        appUpdateService: const NoopAppUpdateService(),
+        // Tests don't drive inbound URIs; a test that needs to overrides the
+        // provider directly with a stream-backed service.
+        appLinkHandler: const _NoOpDeepLinkService(),
+      ),
       appStartupResult: const AppStartupResult(
         buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: true,
         localeApplied: true,
       ),
-      buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
       // No dismissed announcements by default, so the first fixture surfaces
       // and exercises the floating banner in a full-app pump.
       initialDismissedAnnouncementIds: dismissedAnnouncementIds,
-      authRepository: InMemoryAuthRepository(),
-      sessionRepository: SessionRepository(effectiveSecureStore),
-      initialSession: initialSession ?? const AuthAnonymous(),
-      analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
-      analyticsClientBackend: const NoopAnalyticsBackend(),
-      initialAnalyticsOptIn: false,
-      featureFlagsSource: InMemoryFeatureFlagsSource(),
-      biometricAuthenticator: const NoopBiometricAuthenticator(),
-      attemptTracker: InMemoryAttemptTracker(),
-      hapticService: NoopHapticService(),
-      otpRepository: const InMemoryOtpRepository(),
-      profileRepository: const NoopProfileRepository(),
-      notificationsRepository: const NoopNotificationsRepository(),
-      notificationsBackend: const NoopNotificationsBackend(),
-      initialNotificationPermission: NotificationPermissionStatus.notRequested,
-      initialNotificationToken: null,
-      permissionService: const NoopPermissionService(),
-      mediaPicker: const NoopMediaPicker(),
-      shareService: const NoopShareService(),
-      appUpdateService: const NoopAppUpdateService(),
-      // Tests don't drive inbound URIs; a test that needs to overrides the
-      // provider directly with a stream-backed service.
-      appLinkHandler: const _NoOpDeepLinkService(),
-      experimentSource: DeterministicExperimentSource(store: settingsStore),
-      cacheStore: InMemoryCacheStore(),
-      feedbackTransport: const NoopFeedbackTransport(),
-      initialFeedbackDraft: const FeedbackDraft.empty(),
-      initialFeedbackShakeEnabled: false,
-      feedbackAppMetadata: const FeedbackAppMetadata(
-        appVersion: '1.0.0+1',
-        platform: 'test',
-        locale: 'en',
-      ),
-      platformCapabilities: platformCapabilities,
     );
   }
 
-  final SettingsRepository settingsRepository;
-  final SettingsStore settingsStore;
-  final SettingsState initialSettings;
-  final PlatformCapabilities platformCapabilities;
-  final SecureStore secureStore;
-  final CrashReporter crashReporter;
-  final CrashReporterBackend crashReporterBackend;
-  final VersionGateStore versionGateStore;
-  final UpdateRequirement versionCheck;
-  final ConnectivityService connectivityService;
+  final SettingsDependencies settings;
+  final StorageDependencies storage;
+  final AuthDependencies auth;
+  final TelemetryDependencies telemetry;
+  final RemoteConfigDependencies remoteConfig;
+  final NotificationDependencies notifications;
+  final FeedbackDependencies feedback;
+  final PlatformDependencies platform;
 
   /// Summary of work `createApplication` already performs (build-info load,
   /// settings load, locale apply) so SplashPage can observe it without
@@ -210,67 +190,9 @@ final class AppDependencies {
   /// the locale apply runs, since that happens after this factory returns.
   final AppStartupResult appStartupResult;
 
-  /// The installed build, reused for the announcements version window instead
-  /// of reading `PackageInfo` a second time.
-  final AppBuildInfo? buildInfo;
-
   /// Cold-start seed of dismissed announcement ids, pre-loaded so the
   /// controller resolves synchronously.
   final Set<String> initialDismissedAnnouncementIds;
-
-  final AuthRepository authRepository;
-  final SessionRepository sessionRepository;
-  final AuthSession initialSession;
-
-  final AnalyticsClient analyticsClient;
-  final AnalyticsClientBackend analyticsClientBackend;
-  final bool initialAnalyticsOptIn;
-
-  final FeatureFlagsSource featureFlagsSource;
-
-  final BiometricAuthenticator biometricAuthenticator;
-
-  /// Local per-identifier attempt/lockout tracker (UX-only, pure-Dart). Fresh
-  /// per launch; shared by login, OTP, and the future pin-autolock surface.
-  final AttemptTracker attemptTracker;
-
-  final HapticService hapticService;
-
-  final OtpRepository otpRepository;
-
-  final ProfileRepository profileRepository;
-
-  final NotificationsRepository notificationsRepository;
-  final NotificationsBackend notificationsBackend;
-  final NotificationPermissionStatus initialNotificationPermission;
-  final String? initialNotificationToken;
-
-  final PermissionService permissionService;
-
-  final MediaPicker mediaPicker;
-
-  final ShareService shareService;
-
-  /// Non-blocking OS-store update prompt; the server [VersionGateStore] owns
-  /// the hard/soft block, so this never double-blocks.
-  final AppUpdateService appUpdateService;
-
-  final DeepLinkService appLinkHandler;
-
-  /// Must share the production `settingsStore` so the stable device id used
-  /// for assignment stays consistent.
-  final ExperimentSource experimentSource;
-
-  final CacheStore cacheStore;
-
-  final FeedbackTransport feedbackTransport;
-
-  /// Pre-loaded so the controller resolves synchronously on the first frame.
-  final FeedbackDraft initialFeedbackDraft;
-
-  final bool initialFeedbackShakeEnabled;
-
-  final FeedbackAppMetadata feedbackAppMetadata;
 
   /// Dev-only HTTP inspector host, chosen by the build entrypoint: production
   /// wires [StubInspectorHost] (no `dio_request_inspector` import, so the
@@ -282,46 +204,16 @@ final class AppDependencies {
 
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
     return AppDependencies(
-      settingsRepository: settingsRepository,
-      settingsStore: settingsStore,
-      initialSettings: initialSettings,
-      secureStore: secureStore,
-      crashReporter: crashReporter,
-      crashReporterBackend: crashReporterBackend,
-      versionGateStore: versionGateStore,
-      versionCheck: versionCheck,
-      connectivityService: connectivityService,
+      settings: settings,
+      storage: storage,
+      auth: auth,
+      telemetry: telemetry,
+      remoteConfig: remoteConfig,
+      notifications: notifications,
+      feedback: feedback,
+      platform: platform,
       appStartupResult: appStartupResult ?? this.appStartupResult,
-      buildInfo: buildInfo,
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
-      authRepository: authRepository,
-      sessionRepository: sessionRepository,
-      initialSession: initialSession,
-      analyticsClient: analyticsClient,
-      analyticsClientBackend: analyticsClientBackend,
-      initialAnalyticsOptIn: initialAnalyticsOptIn,
-      featureFlagsSource: featureFlagsSource,
-      biometricAuthenticator: biometricAuthenticator,
-      attemptTracker: attemptTracker,
-      hapticService: hapticService,
-      otpRepository: otpRepository,
-      profileRepository: profileRepository,
-      notificationsRepository: notificationsRepository,
-      notificationsBackend: notificationsBackend,
-      initialNotificationPermission: initialNotificationPermission,
-      initialNotificationToken: initialNotificationToken,
-      permissionService: permissionService,
-      mediaPicker: mediaPicker,
-      shareService: shareService,
-      appUpdateService: appUpdateService,
-      appLinkHandler: appLinkHandler,
-      experimentSource: experimentSource,
-      cacheStore: cacheStore,
-      feedbackTransport: feedbackTransport,
-      initialFeedbackDraft: initialFeedbackDraft,
-      initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
-      feedbackAppMetadata: feedbackAppMetadata,
-      platformCapabilities: platformCapabilities,
       inspectorHost: inspectorHost,
     );
   }
@@ -446,21 +338,76 @@ final class AppDependencies {
       profileRepository = const NoopProfileRepository();
     }
     return AppDependencies(
-      settingsRepository: repository,
-      settingsStore: settingsStore,
-      initialSettings: settings,
-      secureStore: effectiveSecureStore,
-      // FirebaseCrashlyticsCrashReporter self-disables on web/Linux/Windows and
-      // when Firebase is not initialized, so the composite is safe with the
-      // Noop-only existing arm.
-      crashReporter: CompositeCrashReporter(<CrashReporter>[
-        const NoopCrashReporter(),
-        FirebaseCrashlyticsCrashReporter(verbose: false),
-      ]),
-      crashReporterBackend: const NoopCrashReporterBackend(),
-      versionGateStore: versionGateStore,
-      versionCheck: versionCheck,
-      connectivityService: ConnectivityPlusService(),
+      settings: SettingsDependencies(
+        settingsRepository: repository,
+        settingsStore: settingsStore,
+        initialSettings: settings,
+      ),
+      storage: StorageDependencies(
+        secureStore: effectiveSecureStore,
+        cacheStore: cacheStore,
+      ),
+      auth: AuthDependencies(
+        authRepository: authRepository,
+        sessionRepository: SessionRepository(effectiveSecureStore),
+        initialSession: const AuthAnonymous(),
+        otpRepository: otpRepository,
+        attemptTracker: InMemoryAttemptTracker(),
+        biometricAuthenticator: biometricAuthenticator,
+        profileRepository: profileRepository,
+      ),
+      telemetry: TelemetryDependencies(
+        // Firebase adapters self-disable on unsupported/uninitialized targets,
+        // so both composites remain safe with their Noop arms.
+        crashReporter: CompositeCrashReporter(<CrashReporter>[
+          const NoopCrashReporter(),
+          FirebaseCrashlyticsCrashReporter(verbose: false),
+        ]),
+        crashReporterBackend: const NoopCrashReporterBackend(),
+        analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
+          NoopAnalyticsClient(logger: logger),
+          FirebaseAnalyticsClient(),
+        ]),
+        analyticsClientBackend: const NoopAnalyticsBackend(),
+        initialAnalyticsOptIn: initialAnalyticsOptIn,
+      ),
+      remoteConfig: RemoteConfigDependencies(
+        versionGateStore: versionGateStore,
+        versionCheck: versionCheck,
+        featureFlagsSource: InMemoryFeatureFlagsSource(),
+        // Keep the cross-family coupling explicit: experiment assignment and
+        // settings persistence intentionally share this store.
+        experimentSource: DeterministicExperimentSource(store: settingsStore),
+      ),
+      notifications: const NotificationDependencies(
+        // Firebase messaging remains a consumer override on mobile builds with
+        // credentials; the starter's default degrades honestly.
+        notificationsRepository: NoopNotificationsRepository(),
+        notificationsBackend: NoopNotificationsBackend(),
+        initialNotificationPermission: NotificationPermissionStatus.notRequested,
+        initialNotificationToken: null,
+      ),
+      feedback: FeedbackDependencies(
+        feedbackTransport: const NoopFeedbackTransport(),
+        initialFeedbackDraft: initialFeedbackDraft,
+        initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
+        feedbackAppMetadata: feedbackAppMetadata,
+      ),
+      platform: PlatformDependencies(
+        platformCapabilities: capabilities,
+        buildInfo: buildInfo,
+        connectivityService: ConnectivityPlusService(),
+        hapticService: const DeviceHapticService(),
+        permissionService: _selectPermissionService(capabilities),
+        mediaPicker: _selectMediaPicker(capabilities),
+        shareService: _selectShareService(capabilities),
+        appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
+        // Web is handled by MaterialApp.router's browser URL bar instead; the
+        // cold-start getInitialLink is captured in bootstrap.dart.
+        appLinkHandler: AppLinksDeepLinkService(
+          handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
+        ),
+      ),
       // `localeApplied` is optimistic here; `createApplication` finalizes it
       // via copyWith once the locale apply (which runs after this returns)
       // is known to have failed.
@@ -469,48 +416,7 @@ final class AppDependencies {
         settingsLoaded: settingsLoaded,
         localeApplied: true,
       ),
-      buildInfo: buildInfo,
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
-      authRepository: authRepository,
-      sessionRepository: SessionRepository(effectiveSecureStore),
-      initialSession: const AuthAnonymous(),
-      // FirebaseAnalyticsClient self-disables on Linux/Windows and when
-      // Firebase is not initialized, so the composite is safe with the
-      // Noop-only existing arm.
-      analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
-        NoopAnalyticsClient(logger: logger),
-        FirebaseAnalyticsClient(),
-      ]),
-      analyticsClientBackend: const NoopAnalyticsBackend(),
-      initialAnalyticsOptIn: initialAnalyticsOptIn,
-      featureFlagsSource: InMemoryFeatureFlagsSource(),
-      biometricAuthenticator: biometricAuthenticator,
-      attemptTracker: InMemoryAttemptTracker(),
-      hapticService: const DeviceHapticService(),
-      otpRepository: otpRepository,
-      profileRepository: profileRepository,
-      // Firebase adapter is a consumer override on iOS/Android with
-      // credentials only; firebase_messaging has no desktop/web support.
-      notificationsRepository: const NoopNotificationsRepository(),
-      notificationsBackend: const NoopNotificationsBackend(),
-      initialNotificationPermission: NotificationPermissionStatus.notRequested,
-      initialNotificationToken: null,
-      permissionService: _selectPermissionService(capabilities),
-      mediaPicker: _selectMediaPicker(capabilities),
-      shareService: _selectShareService(capabilities),
-      appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
-      // Web is handled by MaterialApp.router's browser URL bar instead; the
-      // cold-start getInitialLink is captured in bootstrap.dart.
-      appLinkHandler: AppLinksDeepLinkService(
-        handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
-      ),
-      experimentSource: DeterministicExperimentSource(store: settingsStore),
-      cacheStore: cacheStore,
-      feedbackTransport: const NoopFeedbackTransport(),
-      initialFeedbackDraft: initialFeedbackDraft,
-      initialFeedbackShakeEnabled: initialFeedbackShakeEnabled,
-      feedbackAppMetadata: feedbackAppMetadata,
-      platformCapabilities: capabilities,
       inspectorHost: inspectorHost,
     );
   }

@@ -31,6 +31,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   flutter_tvos: ^1.1.2
   forui: ^0.24.1
+  freezed_annotation: ^3.1.0
   go_router: ^17.3.0
   image_picker: ^1.2.3
   in_app_update: ^4.2.3
@@ -62,6 +63,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   forui_cli: ^0.24.0
+  freezed: 3.2.5
   integration_test:
     sdk: flutter
   shared_preferences_platform_interface: ^2.4.2

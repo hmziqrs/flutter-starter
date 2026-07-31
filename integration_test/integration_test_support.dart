@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/last_route.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
 
@@ -8,6 +9,7 @@ Future<void> resetTestSettings() async {
   for (final key in SettingsRepository.persistedKeys) {
     await store.remove(key);
   }
+  await store.remove(lastRouteKey);
   // Seed a returning user who has completed onboarding so the production
   // composition boots straight past the onboarding redirect. Without this, a
   // freshly reset (or fresh-runner) store reads hasCompletedOnboarding=false

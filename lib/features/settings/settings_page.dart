@@ -3,9 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 import 'package:simple_animations/simple_animations.dart';
-import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/feedback/feedback_sheet.dart';
 import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
@@ -58,6 +56,7 @@ class SettingsPage extends ConsumerWidget {
     required this.onOpenProfile,
     required this.onOpenLogin,
     required this.onOpenPricing,
+    required this.onOpenPasscodeSetup,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
     required this.onOpenLicense,
@@ -75,6 +74,7 @@ class SettingsPage extends ConsumerWidget {
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenLogin;
   final VoidCallback onOpenPricing;
+  final VoidCallback onOpenPasscodeSetup;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenLicense;
@@ -98,6 +98,7 @@ class SettingsPage extends ConsumerWidget {
               onOpenPricing: onOpenPricing,
             ),
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
+              onOpenPasscodeSetup: onOpenPasscodeSetup,
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
               onOpenLicense: onOpenLicense,
@@ -123,6 +124,7 @@ class SettingsPage extends ConsumerWidget {
             onOpenProfile: onOpenProfile,
             onOpenLogin: onOpenLogin,
             onOpenPricing: onOpenPricing,
+            onOpenPasscodeSetup: onOpenPasscodeSetup,
             onOpenTerms: onOpenTerms,
             onOpenPrivacy: onOpenPrivacy,
             onOpenLicense: onOpenLicense,
@@ -217,6 +219,7 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.onOpenProfile,
     required this.onOpenLogin,
     required this.onOpenPricing,
+    required this.onOpenPasscodeSetup,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
     required this.onOpenLicense,
@@ -233,6 +236,7 @@ class _SettingsWideLayout extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenLogin;
   final VoidCallback onOpenPricing;
+  final VoidCallback onOpenPasscodeSetup;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenLicense;
@@ -328,6 +332,7 @@ class _SettingsWideLayout extends StatelessWidget {
               onOpenPricing: onOpenPricing,
             ),
             SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
+              onOpenPasscodeSetup: onOpenPasscodeSetup,
               onOpenTerms: onOpenTerms,
               onOpenPrivacy: onOpenPrivacy,
               onOpenLicense: onOpenLicense,
@@ -543,12 +548,14 @@ class _SubscriptionSettingsContent extends StatelessWidget {
 
 class _PrivacyAboutSettingsContent extends StatefulWidget {
   const _PrivacyAboutSettingsContent({
+    required this.onOpenPasscodeSetup,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
     required this.onOpenLicense,
     required this.loadBuildLabel,
   });
 
+  final VoidCallback onOpenPasscodeSetup;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenLicense;
@@ -588,7 +595,7 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 ),
               ),
               const _BiometricUnlockTile(),
-              const _PasscodeTile(),
+              _PasscodeTile(onOpenSetup: widget.onOpenPasscodeSetup),
               const _LockOnBackgroundTile(),
               const _AutoLockDelayTile(),
               const _AnalyticsOptInTile(),
@@ -700,7 +707,9 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> with
 /// Passcode opt-in: enabling pushes the setup route; the gate only arms once
 /// a hash is actually stored. Disabling clears the hash and the settings flag.
 class _PasscodeTile extends ConsumerStatefulWidget {
-  const _PasscodeTile();
+  const _PasscodeTile({required this.onOpenSetup});
+
+  final VoidCallback onOpenSetup;
 
   @override
   ConsumerState<_PasscodeTile> createState() => _PasscodeTileState();
@@ -719,7 +728,7 @@ class _PasscodeTileState extends ConsumerState<_PasscodeTile> with _SaveFailureS
       onChange: (value) async {
         if (value) {
           await _run(() => controller.setPasscodeEnabled(enabled: true));
-          if (context.mounted) context.goNamed(AppRoutes.passcodeSetup);
+          if (context.mounted) widget.onOpenSetup();
         } else {
           await _run(() async {
             await ref.read(passcodeControllerProvider.notifier).disable();

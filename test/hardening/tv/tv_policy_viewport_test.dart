@@ -25,7 +25,7 @@ void main() {
 
     await pumpTvPresentationHarness(
       tester,
-      capabilities: dependencies.platformCapabilities,
+      capabilities: dependencies.platform.platformCapabilities,
       child: const _PolicyProbe(),
     );
 
@@ -33,7 +33,7 @@ void main() {
     final container = ProviderScope.containerOf(probeContext);
     final providerPolicy = container.read(presentationPolicyProvider);
 
-    expect(dependencies.platformCapabilities, androidTvCapabilities);
+    expect(dependencies.platform.platformCapabilities, androidTvCapabilities);
     expect(
       container.read(platformCapabilitiesProvider),
       androidTvCapabilities,

@@ -84,7 +84,7 @@ Future<App> createApplication(
   // Guarded so a failure flips AppStartupResult.localeApplied to false
   // (surfaced on the splash) instead of tearing down startup.
   var localeApplied = true;
-  if (dependencies.initialSettings.localeOverride case final locale?) {
+  if (dependencies.settings.initialSettings.localeOverride case final locale?) {
     try {
       await LocaleSettings.setLocale(locale);
     } on Object {
@@ -109,7 +109,7 @@ Future<App> createApplication(
   // The foreground link stream is wired in `_AppViewState.ref.listen`.
   String? coldStartInitialLocation;
   try {
-    final initialLink = await dependencies.appLinkHandler.getInitialLink();
+    final initialLink = await dependencies.platform.appLinkHandler.getInitialLink();
     if (initialLink != null) {
       coldStartInitialLocation = _initialLocationFromResolvedLink(initialLink);
     }
@@ -124,7 +124,7 @@ Future<App> createApplication(
   var effectiveInitialLocation = initialLocation ?? coldStartInitialLocation;
   if (effectiveInitialLocation == null) {
     try {
-      final saved = await dependenciesWithStartup.settingsStore.readString(lastRouteKey);
+      final saved = await dependenciesWithStartup.settings.settingsStore.readString(lastRouteKey);
       if (saved != null && saved.isNotEmpty) {
         effectiveInitialLocation = saved;
       }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
 import 'package:starter/features/auth/forgot_password_presentation_state.dart';
@@ -27,15 +28,15 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
-@immutable
-final class OnboardingGalleryState {
-  const OnboardingGalleryState({required this.initialPage});
+part 'production_gallery_cases.freezed.dart';
 
-  final int initialPage;
+@freezed
+abstract class OnboardingGalleryState with _$OnboardingGalleryState {
+  const factory OnboardingGalleryState({required int initialPage}) = _OnboardingGalleryState;
 }
 
-@immutable
-final class PricingGalleryState {
+@freezed
+class PricingGalleryState with _$PricingGalleryState {
   PricingGalleryState({
     required Iterable<PlanViewData> plans,
     required this.billingPeriod,
@@ -43,9 +44,13 @@ final class PricingGalleryState {
     required this.availability,
   }) : plans = List.unmodifiable(plans);
 
+  @override
   final List<PlanViewData> plans;
+  @override
   final BillingPeriod billingPeriod;
+  @override
   final String initialPlanId;
+  @override
   final PricingAvailability availability;
 }
 
@@ -493,6 +498,7 @@ List<GalleryCase> _buildSettingsCases() {
       onOpenProfile: () => _showUnavailableFeedback(context),
       onOpenLogin: () => _showUnavailableFeedback(context),
       onOpenPricing: () => _showUnavailableFeedback(context),
+      onOpenPasscodeSetup: () => _showUnavailableFeedback(context),
       onOpenTerms: () => _showLegalDialog(context, context.t.settings.terms),
       onOpenPrivacy: () => _showLegalDialog(context, context.t.settings.privacy),
       onOpenLicense: () => _showLegalDialog(context, context.t.settings.about.license),
