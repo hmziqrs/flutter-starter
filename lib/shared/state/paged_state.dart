@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'paged_state.freezed.dart';
 
 /// Lifecycle status of a [PagedState].
 enum PagedStateStatus { idle, loading, ready, loadingNext, error }
@@ -23,27 +25,18 @@ final class PagedFetchException implements Exception {
 
 /// The result of a single [PageFetcher] call: one page of typed items plus the
 /// cursor to request the next page (`null` when there are no more).
-@immutable
-final class PagedResult<T> {
+@freezed
+class PagedResult<T> with _$PagedResult<T> {
   const PagedResult({required this.items, this.nextCursor});
 
   /// The typed items in this page.
+  @override
   final List<T> items;
 
   /// The offset the next page should start at, or `null` when this was the
   /// last page.
+  @override
   final int? nextCursor;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is PagedResult<T> &&
-            _listEquals(items, other.items) &&
-            nextCursor == other.nextCursor;
-  }
-
-  @override
-  int get hashCode => Object.hash(Object.hashAll(items), nextCursor);
 
   @override
   String toString() => 'PagedResult(items: ${items.length}, nextCursor: $nextCursor)';
@@ -56,8 +49,8 @@ typedef PageFetcher<T> = Future<PagedResult<T>> Function(int? cursor);
 /// Immutable paged-list state, owned by `PagedStateNotifierBase` and consumed
 /// by widgets (`PagedListView`) via `ref.watch`. Value-equal over [items] so
 /// watchers rebuild only on a real content change.
-@immutable
-final class PagedState<T> {
+@freezed
+class PagedState<T> with _$PagedState<T> {
   /// Creates a [PagedState]. Defaults to the `idle` first-build state.
   const PagedState({
     this.items = const [],
@@ -68,19 +61,24 @@ final class PagedState<T> {
   });
 
   /// The typed items accumulated across all loaded pages.
+  @override
   final List<T> items;
 
   /// The current lifecycle status.
+  @override
   final PagedStateStatus status;
 
   /// The offset the next page should start at, or `null` when the last page
   /// loaded was the final one.
+  @override
   final int? cursor;
 
   /// Whether another page may be available.
+  @override
   final bool hasMore;
 
   /// The exception captured by the last failed fetch, or `null`.
+  @override
   final Object? error;
 
   /// `true` while a subsequent page is in flight.
@@ -95,49 +93,8 @@ final class PagedState<T> {
   /// `true` when the first page has resolved to zero items.
   bool get isEmpty => status == PagedStateStatus.ready && items.isEmpty && error == null;
 
-  PagedState<T> copyWith({
-    List<T>? items,
-    PagedStateStatus? status,
-    int? cursor,
-    bool? hasMore,
-    Object? error,
-    bool clearCursor = false,
-    bool clearError = false,
-  }) {
-    return PagedState<T>(
-      items: items ?? this.items,
-      status: status ?? this.status,
-      cursor: clearCursor ? null : (cursor ?? this.cursor),
-      hasMore: hasMore ?? this.hasMore,
-      error: clearError ? null : (error ?? this.error),
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is PagedState<T> &&
-            _listEquals(items, other.items) &&
-            status == other.status &&
-            cursor == other.cursor &&
-            hasMore == other.hasMore &&
-            error == other.error;
-  }
-
-  @override
-  int get hashCode => Object.hash(Object.hashAll(items), status, cursor, hasMore, error);
-
   @override
   String toString() =>
       'PagedState(status: $status, items: ${items.length}, cursor: $cursor, '
       'hasMore: $hasMore, error: $error)';
-}
-
-bool _listEquals<T>(List<T> a, List<T> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i += 1) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

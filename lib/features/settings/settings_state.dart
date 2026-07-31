@@ -1,13 +1,15 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
+
+part 'settings_state.freezed.dart';
 
 enum AppThemeMode { system, light, dark }
 
 enum AppAccent { neutral, green, blue, amber, rose, violet }
 
-@immutable
-final class SettingsState {
+@Freezed(copyWith: false)
+class SettingsState with _$SettingsState {
   const SettingsState({
     required this.themeMode,
     required this.accent,
@@ -39,33 +41,44 @@ final class SettingsState {
   static const maximumFontScale = 1.6;
   static const fontScaleStep = 0.05;
 
+  @override
   final AppThemeMode themeMode;
+  @override
   final AppAccent accent;
+  @override
   final double fontScale;
+  @override
   final AppTextPreset textPreset;
 
   /// Derived from [textPreset] so it never drifts (null unless dyslexia).
   String? get fontFamily => textPreset.toSettings().fontFamily;
 
+  @override
   final AppLocale? localeOverride;
 
+  @override
   final bool hasCompletedOnboarding;
 
+  @override
   final bool biometricUnlockEnabled;
 
   /// Default true; only the opt-out is persisted. Reduce-motion is gated
   /// per-consumer via `MediaQuery.disableAnimationsOf`, not centrally.
+  @override
   final bool hapticsEnabled;
 
   /// Whether a passcode is configured and armed; the secret itself lives only
   /// as a salted hash in SecureStore.
+  @override
   final bool passcodeEnabled;
 
   /// Idle auto-lock delay in seconds; 0 = off.
+  @override
   final int autoLockDelaySeconds;
 
   /// Whether the app re-locks when backgrounded; meaningful only with
   /// [passcodeEnabled].
+  @override
   final bool lockOnBackground;
 
   SettingsState copyWith({
@@ -96,36 +109,4 @@ final class SettingsState {
       lockOnBackground: lockOnBackground ?? this.lockOnBackground,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is SettingsState &&
-            themeMode == other.themeMode &&
-            accent == other.accent &&
-            fontScale == other.fontScale &&
-            textPreset == other.textPreset &&
-            localeOverride == other.localeOverride &&
-            hasCompletedOnboarding == other.hasCompletedOnboarding &&
-            biometricUnlockEnabled == other.biometricUnlockEnabled &&
-            hapticsEnabled == other.hapticsEnabled &&
-            passcodeEnabled == other.passcodeEnabled &&
-            autoLockDelaySeconds == other.autoLockDelaySeconds &&
-            lockOnBackground == other.lockOnBackground;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    themeMode,
-    accent,
-    fontScale,
-    textPreset,
-    localeOverride,
-    hasCompletedOnboarding,
-    biometricUnlockEnabled,
-    hapticsEnabled,
-    passcodeEnabled,
-    autoLockDelaySeconds,
-    lockOnBackground,
-  );
 }

@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'text_preset.freezed.dart';
 
 /// Named accessibility text presets. Each maps to a clamped `fontScale` and
 /// an optional Latin-only `fontFamily`; non-Latin locales keep their bundled
@@ -27,21 +29,8 @@ enum AppTextPreset {
 }
 
 /// Resolved preset settings; `fontFamily` is null except for dyslexia.
-@immutable
-final class AppTextPresetSettings {
-  const AppTextPresetSettings({required this.fontScale, this.fontFamily});
-
-  final double fontScale;
-  final String? fontFamily;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AppTextPresetSettings &&
-            fontScale == other.fontScale &&
-            fontFamily == other.fontFamily;
-  }
-
-  @override
-  int get hashCode => Object.hash(fontScale, fontFamily);
+@freezed
+abstract class AppTextPresetSettings with _$AppTextPresetSettings {
+  const factory AppTextPresetSettings({required double fontScale, String? fontFamily}) =
+      _AppTextPresetSettings;
 }
