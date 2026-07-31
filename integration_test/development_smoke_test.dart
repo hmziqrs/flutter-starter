@@ -9,8 +9,11 @@ import 'package:integration_test/integration_test.dart';
 import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/bootstrap.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
+import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -80,6 +83,7 @@ void main() {
     final config = AppConfig.fromEnvironment();
     expect(config.environment, AppEnvironment.development);
     expect(config.developmentToolsEnabled, isTrue);
+    final hasBackend = config.backendBaseUrl != null;
     _log(
       'config ok: environment=${config.environment.value} devTools=${config.developmentToolsEnabled}',
     );
@@ -177,6 +181,17 @@ void main() {
     await tapVisible(tester, const ValueKey('auth-register-accept-terms'));
     _log('submitting registration');
     await tapVisible(tester, const ValueKey('auth-register-submit'));
+    if (!hasBackend) {
+      _log('no backend configured; expecting honest unavailable feedback');
+      expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
+      await tapVisible(tester, const ValueKey('information-dialog-close'));
+      expect(find.byKey(const ValueKey('auth-register-submit')), findsOneWidget);
+      _log('opening registration OTP route directly to exercise its no-backend state');
+      await _go(
+        tester,
+        '${AppRoutes.otpLocation(OtpPurpose.registration)}?identifier=sam%40example.com',
+      );
+    }
     _log('expecting OTP page');
     expect(find.byKey(const ValueKey('auth-otp-page')), findsOneWidget);
     _log('OTP page rendered');
@@ -184,8 +199,29 @@ void main() {
     _log('entering OTP code 123456');
     await tester.enterText(find.byKey(const ValueKey('auth-otp-code')), '123456');
     await tapVisible(tester, const ValueKey('auth-otp-submit'));
+    if (!hasBackend) {
+      _log('OTP verification degraded honestly; continuing navigation coverage at home');
+      expect(find.byKey(const ValueKey('auth-otp-page')), findsOneWidget);
+      await _go(tester, AppRoutes.homePath);
+      _log('seeding a test-only session for protected-route smoke coverage');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('home-greeting'))),
+        listen: false,
+      );
+      await container
+          .read(sessionControllerProvider.notifier)
+          .establish(
+            AuthAuthenticated(
+              accessToken: 'smoke-access-token',
+              refreshToken: 'smoke-refresh-token',
+              expiresAt: DateTime.now().add(const Duration(hours: 1)),
+              userId: 'smoke-user',
+            ),
+          );
+      await pumpAppFrames(tester);
+    }
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
-    _log('OTP accepted; back on home');
+    _log('registration/OTP route coverage complete; back on home');
 
     _log('navigating: home -> edit profile');
     await _go(tester, AppRoutes.updateProfilePath);
