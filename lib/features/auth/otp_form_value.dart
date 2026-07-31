@@ -1,6 +1,9 @@
-/// The exact six-digit code emitted by the OTP screen.
-final class OtpFormValue {
-  const OtpFormValue({required this.code});
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  final String code;
+part 'otp_form_value.freezed.dart';
+
+/// The exact six-digit code emitted by the OTP screen.
+@freezed
+abstract class OtpFormValue with _$OtpFormValue {
+  const factory OtpFormValue({required String code}) = _OtpFormValue;
 }

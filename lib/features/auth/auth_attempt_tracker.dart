@@ -11,8 +11,10 @@ library;
 
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'auth_attempt_tracker.freezed.dart';
 
 /// Cooldown seconds per failure count (1-indexed); counts past the table tail
 /// clamp to the final entry. `[0, 0, 30, 60, 300, 900]`: two free attempts,
@@ -31,8 +33,8 @@ int get _maxCooldownSeconds => attemptCooldownSeconds.last;
 /// returns `false` but [attempts]/[attemptsRemaining] are unchanged so a
 /// follow-up failure keeps escalating. Only [AttemptTracker.recordSuccess]
 /// clears the record.
-@immutable
-final class AttemptState {
+@Freezed(copyWith: false)
+class AttemptState with _$AttemptState {
   const AttemptState({
     required this.attempts,
     required this.lockedUntil,
@@ -49,15 +51,19 @@ final class AttemptState {
        );
 
   /// Total failed attempts since the last [AttemptTracker.recordSuccess].
+  @override
   final int attempts;
 
   /// Absolute expiry of the active lockout, or `null` when not locked.
+  @override
   final DateTime? lockedUntil;
 
   /// Failed attempts still allowed before the next lockout.
+  @override
   final int attemptsRemaining;
 
   /// Lockout seconds the *next* failure will impose.
+  @override
   final int nextCooldownSeconds;
 
   /// Whether the lock is still active at [now].
@@ -89,19 +95,6 @@ final class AttemptState {
       nextCooldownSeconds: nextCooldownSeconds ?? this.nextCooldownSeconds,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AttemptState &&
-            attempts == other.attempts &&
-            lockedUntil == other.lockedUntil &&
-            attemptsRemaining == other.attemptsRemaining &&
-            nextCooldownSeconds == other.nextCooldownSeconds;
-  }
-
-  @override
-  int get hashCode => Object.hash(attempts, lockedUntil, attemptsRemaining, nextCooldownSeconds);
 }
 
 /// Local per-identifier attempt counter and lockout scheduler.

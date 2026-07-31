@@ -1,3 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'register_presentation_state.freezed.dart';
+
 /// Deterministic states supported by the Register screen and development gallery.
 enum RegisterPresentationStatus {
   idle,
@@ -10,7 +14,8 @@ enum RegisterPresentationStatus {
 }
 
 /// Immutable, screen-specific fixture data for Register.
-final class RegisterPresentationState {
+@freezed
+class RegisterPresentationState with _$RegisterPresentationState {
   const RegisterPresentationState({
     this.status = RegisterPresentationStatus.idle,
   });
@@ -28,5 +33,6 @@ final class RegisterPresentationState {
 
   const RegisterPresentationState.success() : status = RegisterPresentationStatus.success;
 
+  @override
   final RegisterPresentationStatus status;
 }

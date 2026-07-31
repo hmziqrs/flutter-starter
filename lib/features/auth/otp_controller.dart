@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:clock/clock.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
+
+part 'otp_controller.freezed.dart';
 
 /// Family key for [otpControllerProvider]: `(purpose, identifier)` resolves to
 /// the same controller instance, keeping a registration OTP and an MFA OTP for
@@ -21,27 +23,23 @@ typedef OtpControllerKey = ({OtpPurpose purpose, String identifier});
 /// controller-owned fields a static fixture cannot carry: [remainingSeconds]
 /// (live expiry countdown), [attemptsRemaining] (read from the shared
 /// [AttemptTracker]), and [isExpired].
-@immutable
-final class OtpControllerState {
-  const OtpControllerState({
-    this.presentation = const OtpPresentationState(),
-    this.remainingSeconds = 0,
-    this.attemptsRemaining = 0,
-    this.isExpired = false,
-    this.session,
-  }) : assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.'),
-       assert(attemptsRemaining >= 0, 'attemptsRemaining must not be negative.');
+@freezed
+abstract class OtpControllerState with _$OtpControllerState {
+  @Assert('remainingSeconds >= 0', 'remainingSeconds must not be negative.')
+  @Assert('attemptsRemaining >= 0', 'attemptsRemaining must not be negative.')
+  const factory OtpControllerState({
+    @Default(OtpPresentationState()) OtpPresentationState presentation,
+    @Default(0) int remainingSeconds,
+    @Default(0) int attemptsRemaining,
+    @Default(false) bool isExpired,
+    AuthAuthenticated? session,
+  }) = _OtpControllerState;
 
-  final OtpPresentationState presentation;
-  final int remainingSeconds;
-  final int attemptsRemaining;
-  final bool isExpired;
+  const OtpControllerState._();
 
   /// The session a registration-purpose verify issued inline; `null` for
   /// every other outcome/purpose. The registration OTP page publishes this via
   /// `SessionController.establish` before navigating home.
-  final AuthAuthenticated? session;
-
   /// `true` while the shared tracker has locked this identifier out.
   bool get isLocked => presentation.status == OtpPresentationStatus.locked;
 
@@ -49,37 +47,6 @@ final class OtpControllerState {
   bool get isBusy =>
       presentation.status == OtpPresentationStatus.submitting ||
       presentation.status == OtpPresentationStatus.resending;
-
-  OtpControllerState copyWith({
-    OtpPresentationState? presentation,
-    int? remainingSeconds,
-    int? attemptsRemaining,
-    bool? isExpired,
-    AuthAuthenticated? session,
-  }) {
-    return OtpControllerState(
-      presentation: presentation ?? this.presentation,
-      remainingSeconds: remainingSeconds ?? this.remainingSeconds,
-      attemptsRemaining: attemptsRemaining ?? this.attemptsRemaining,
-      isExpired: isExpired ?? this.isExpired,
-      session: session ?? this.session,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is OtpControllerState &&
-            presentation == other.presentation &&
-            remainingSeconds == other.remainingSeconds &&
-            attemptsRemaining == other.attemptsRemaining &&
-            isExpired == other.isExpired &&
-            session == other.session;
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(presentation, remainingSeconds, attemptsRemaining, isExpired, session);
 }
 
 /// Handwritten Riverpod family [NotifierProvider] over [OtpControllerState].

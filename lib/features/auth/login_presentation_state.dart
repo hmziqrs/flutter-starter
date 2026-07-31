@@ -1,3 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'login_presentation_state.freezed.dart';
+
 /// Deterministic states supported by the Login screen and development gallery.
 enum LoginPresentationStatus {
   idle,
@@ -11,7 +15,8 @@ enum LoginPresentationStatus {
 }
 
 /// Immutable, screen-specific fixture data for Login.
-final class LoginPresentationState {
+@freezed
+class LoginPresentationState with _$LoginPresentationState {
   const LoginPresentationState({
     this.status = LoginPresentationStatus.idle,
     this.successMessage,
@@ -65,14 +70,18 @@ final class LoginPresentationState {
        assert(attemptsRemaining >= 0, 'attemptsRemaining must not be negative.'),
        assert(lockedSeconds >= 0, 'lockedSeconds must not be negative.');
 
+  @override
   final LoginPresentationStatus status;
+  @override
   final String? successMessage;
 
   /// Failed attempts the user may still make before the next lockout. Surfaced
   /// via a non-destructive alert while not locked; zero once locked.
+  @override
   final int attemptsRemaining;
 
   /// Whole seconds in the active lockout at construction. The page runs a live
   /// countdown from this value and disables submit while it is positive.
+  @override
   final int lockedSeconds;
 }

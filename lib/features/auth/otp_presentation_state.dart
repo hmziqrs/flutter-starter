@@ -1,3 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'otp_presentation_state.freezed.dart';
+
 enum OtpPresentationStatus {
   empty,
   partial,
@@ -12,7 +16,8 @@ enum OtpPresentationStatus {
 }
 
 /// Immutable, screen-specific fixture data for OTP verification.
-final class OtpPresentationState {
+@freezed
+class OtpPresentationState with _$OtpPresentationState {
   const OtpPresentationState({
     this.status = OtpPresentationStatus.empty,
     this.resendSeconds = 0,
@@ -99,19 +104,24 @@ final class OtpPresentationState {
       assert(lockedSeconds >= 0, 'lockedSeconds must not be negative.'),
       assert(remainingSeconds >= 0, 'remainingSeconds must not be negative.');
 
+  @override
   final OtpPresentationStatus status;
+  @override
   final int resendSeconds;
 
   /// Failed attempts the user may still make before the next lockout. Surfaced
   /// via a non-destructive alert while not locked; zero once locked.
+  @override
   final int attemptsRemaining;
 
   /// Whole seconds in the active lockout at construction. The page runs a live
   /// countdown from this value and disables submit while it is positive.
+  @override
   final int lockedSeconds;
 
   /// Whole seconds before the issued code expires (static-fixture field; the
   /// runtime countdown lives on `OtpControllerState.remainingSeconds`).
+  @override
   final int remainingSeconds;
 
   // Placed after the named constructors so the public API reads top-down.

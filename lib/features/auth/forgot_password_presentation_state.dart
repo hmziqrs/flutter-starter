@@ -1,3 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'forgot_password_presentation_state.freezed.dart';
+
 enum ForgotPasswordPresentationStatus {
   idle,
   focused,
@@ -9,7 +13,8 @@ enum ForgotPasswordPresentationStatus {
 }
 
 /// Immutable, screen-specific fixture data for Forgot Password.
-final class ForgotPasswordPresentationState {
+@freezed
+class ForgotPasswordPresentationState with _$ForgotPasswordPresentationState {
   const ForgotPasswordPresentationState({
     this.status = ForgotPasswordPresentationStatus.idle,
   });
@@ -32,5 +37,6 @@ final class ForgotPasswordPresentationState {
   const ForgotPasswordPresentationState.success()
     : status = ForgotPasswordPresentationStatus.success;
 
+  @override
   final ForgotPasswordPresentationStatus status;
 }
