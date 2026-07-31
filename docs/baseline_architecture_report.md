@@ -8,9 +8,9 @@ decisions, not empty interfaces or fake services.
 
 - **Feature-first source ownership.** Auth, onboarding, pricing, home, profile, and settings own
   their pages, typed values, validators, and deterministic presentation fixtures.
-- **Root composition.** `app/dependencies.dart`, `app/routing/app_router.dart`, and `bootstrap.dart`
-  remain the only places that construct concrete adapters, compose cross-feature navigation, and
-  create the production application graph.
+- **Composition seams.** `app/dependencies.dart` and `bootstrap.dart` construct concrete adapters;
+  `app/routing/**` composes cross-feature navigation while feature `*_routes.dart` modules own
+  route registration and wrappers. Pages remain callback-driven.
 - **Handwritten settings boundary.** `SettingsStore`, `SettingsRepository`, and
   `SettingsController` are small enough to remain handwritten. The in-memory store serves tests;
   `SharedPreferencesSettingsStore` is the sole production preferences adapter.
@@ -45,8 +45,8 @@ decisions, not empty interfaces or fake services.
 
 - Generic `core/`, `utils/`, service-locator, use-case, base-repository, base-page, and feature-barrel
   layers were rejected because the implemented callers do not need them.
-- Dartx, Riverpod code generation, Mocktail, a second form engine, a second component system, and a
-  second localization or dependency-injection framework were not installed.
+- Dartx, Riverpod provider generation, Mocktail, a second form engine, a second component system,
+  and a second localization or dependency-injection framework were not installed.
 - Fake auth, OTP, purchase, restore, upload, network, database, secure-storage, telemetry, audio,
   download, and notification services were rejected. Static callbacks provide honest local
   navigation or unavailable feedback without claiming backend success.
@@ -55,6 +55,20 @@ decisions, not empty interfaces or fake services.
 - Signing, final identifiers, brand assets, telemetry/consent, real backend contracts, native
   workflows, store delivery, and device/screen-reader sign-off remain release work. Owners and
   required evidence are listed in [release readiness](release_readiness.md).
+
+## Revisited
+
+- **Root-only route registration.** Route registration moved to feature-owned `*_routes.dart`
+  modules after the root table grew beyond a useful review boundary. `app_router.dart` still owns
+  shell assembly and composes exactly one app-level redirect from `route_guards.dart`; feature
+  pages still know nothing about `go_router` or route constants.
+- **Data-class code generation.** Freezed is now used for immutable state, view-data, form values,
+  presentation fixtures, and sealed unions. Generated `*.freezed.dart` stays committed and is
+  covered by the existing build-runner generation gate. Riverpod providers remain handwritten,
+  so this does not revisit the rejection of provider code generation.
+- **Flat dependency aggregate.** The composition root now groups settings, storage, auth,
+  telemetry, remote-config, notifications, feedback, and platform dependencies into const domain
+  aggregates. `AppDependencies` keeps startup result and other root-only seeds at the top level.
 
 ## Result
 

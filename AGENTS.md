@@ -10,6 +10,10 @@ preferences adapters live in `lib/infrastructure/`. Mirror source areas under
 `test/`; desktop smoke coverage belongs in `integration_test/`. Fonts and other
 bundled resources live in `assets/`. Read `docs/architecture.md` and
 `plans/feature_roadmap/contracts.md` before changing public feature boundaries.
+Routed features own their `*_routes.dart` registration modules and callback-to-navigation
+wrappers; pages never import `go_router` or route constants. App-wide redirects and shell
+composition stay under `lib/app/routing/`. Immutable model codegen uses committed Freezed
+`*.freezed.dart`; Riverpod providers remain handwritten.
 
 ## Build, Test, and Development Commands
 
@@ -34,7 +38,7 @@ indentation, 100-column formatting, strict casts, inference, and raw types. Run
 `dart format .` before committing. Name files `snake_case.dart`, types
 `UpperCamelCase`, and members `lowerCamelCase`. Keep feature logic within its
 owner; do not introduce generic `core/` or `utils/` buckets. Never edit generated
-`*.g.dart` or ForUI theme files directly—change their sources and regenerate.
+`*.g.dart`, `*.freezed.dart`, or ForUI theme files directly—change their sources and regenerate.
 
 ## Testing Guidelines
 

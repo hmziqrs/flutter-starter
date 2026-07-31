@@ -9,8 +9,11 @@ The architecture decisions live in [`plans/completed/initial.md`](../plans/compl
 ## How to read this
 
 - **Feature-first ownership.** Each feature owns its pages, view-data, and tests. There is no `core/` or `utils/` layer.
-- **Root composition lives in only 3 files:** `lib/app/dependencies.dart`, `lib/app/routing/app_router.dart`, `lib/bootstrap.dart`. Wire providers here, not globally.
-- **Generated code is committed.** slang `*.g.dart` and ForUI theme tokens are checked in; edit only the JSON/CLI sources and regenerate (`just gen` / `forui_cli`).
+- **Composition has explicit seams.** `lib/app/dependencies.dart` + `lib/app/dependencies/**` build
+  domain aggregates, `lib/bootstrap.dart` owns startup, `lib/app/routing/**` composes routing, and
+  feature `*_routes.dart` modules own route registration. Wire providers here, not globally.
+- **Generated code is committed.** slang `*.g.dart`, Freezed `*.freezed.dart`, and ForUI theme
+  tokens are checked in; edit only their sources and regenerate (`just gen` / `forui_cli`).
 - **Config is compile-time only.** `--dart-define-from-file=config/<env>.json` feeds `AppConfig.fromEnvironment()`; no runtime env-var fallback, no secrets.
 - **Settings are handwritten Riverpod (no codegen).** Override `settingsRepositoryProvider` + `initialSettingsProvider` at the `ProviderScope`; mutate only via `SettingsController`.
 
@@ -20,7 +23,7 @@ The architecture decisions live in [`plans/completed/initial.md`](../plans/compl
 |---|---|---|
 | bootstrap-startup | Zone guard, error handlers, dependency graph, root App | `lib/bootstrap.dart` |
 | configuration-environments | Compile-time defines select env, gate logging/dev routes | `lib/app/config/app_config.dart` |
-| routing | go_router tree mapping AppRoutes to screens, one StatefulShellRoute | `lib/app/routing/app_router.dart` |
+| routing | App shell composition, one redirect chain, feature-owned route lists | `lib/app/routing/app_router.dart` + `lib/features/*/*_routes.dart` |
 | state-settings | Handwritten Riverpod accent/fontScale/themeMode/locale | `lib/features/settings/settings_controller.dart` |
 | internationalization | slang v4 codegen: en + ar + zh-Hans via context.t | `lib/i18n/en.i18n.json` |
 | shell-adaptive-layout | AppShell picks compact/expanded nav by width | `lib/app/shell/app_shell.dart` |
@@ -76,6 +79,8 @@ Notes:
 
 Files:
 - `lib/app/routing/app_router.dart` — buildAppRouter wires GoRoutes
+- `lib/app/routing/route_guards.dart` — the single app-level redirect chain and live gate reads
+- `lib/app/routing/route_support.dart` — cross-feature tab, dialog, and route-error helpers
 - `lib/app/routing/app_routes.dart` — name/path constants + otpLocation
 - `lib/app/routing/otp_purpose.dart` — OtpPurpose enum disambiguates OTP
 - `lib/app/routing/route_error_page.dart` — unknown-route fallback
@@ -84,6 +89,10 @@ Files:
 
 Notes:
 - Declare every route as paired name+path constants; navigate by name via `context.goNamed`/`pushNamed`; build parameterized paths via helpers like `AppRoutes.otpLocation(purpose)`.
+- Each routed feature owns a `<feature>_routes.dart` module exporting its `RouteBase` list and
+  route-page wrappers. Pages remain callback-driven and never import `go_router` or route
+  constants. Feature route modules never declare redirects; `appRedirect` is composed exactly
+  once by `buildAppRouter`.
 - Chrome-bearing destinations live inside one `StatefulShellRoute` with three branches (home, pricing, settings) and a cross-fading navigator container builder (`crossFadingBranchContainer`); full-screen flows (auth, onboarding) are top-level; gate dev routes behind `if (config.developmentToolsEnabled)` with `/dev/*` paths.
 - Branch GoRoutes keep absolute paths (a `StatefulShellBranch` is not a `ShellRouteBase`); `settings` must precede its detail routes so reset-on-retap lands on `/settings`. In-shell tab switches go through `goBranch` with reset-on-retap (`initialLocation: index == shell.currentIndex`). Top-level flows (onboarding, paywall, auth, profile, route-error) stay siblings of the shell: a `go` to one unmounts the shell and resets every branch stack, while a `pushNamed` overlay preserves branch stacks. Router is rebuilt, not reactive. `ProductionPageFactory<TState>` is a typedef in `lib/app/presentation/production_page_factory.dart`, not a class.
 - Password reset is a stack-preserving, typed-result flow: Forgot, reset OTP, and Reset Password
@@ -306,11 +315,11 @@ Notes:
 
 ## Where do I...
 
-- **Add a screen/route:** Add name+path constants in `lib/app/routing/app_routes.dart`; add a GoRoute in `lib/app/routing/app_router.dart` (inside the matching `StatefulShellBranch` — home/pricing/settings — for nav chrome, top-level for full-screen flows). Branch GoRoutes keep absolute paths; in the settings branch the index `/settings` route must precede its `/settings/*` detail routes so reset-on-retap lands on the overview. Switch tabs in-shell via `_goTab`/`goBranch`, not `goNamed`. For a dev route, add inside `if (config.developmentToolsEnabled)` with a `/dev/*` path.
+- **Add a screen/route:** Add name+path constants in `lib/app/routing/app_routes.dart`; add the `GoRoute` and wrapper to the owning feature's `<feature>_routes.dart`; compose a new feature list in `app_router.dart`. Branch routes stay absolute and settings keeps `/settings` before detail routes. Switch tabs through `goAppTab`/`goBranch`, not `goNamed`. Gate dev routes in `dev_gallery_routes.dart` with `developmentToolsEnabled`. Add gates only to `appRedirect`.
 - **Add a translation:** Add the key to `lib/i18n/en.i18n.json`, `ar.i18n.json`, and `zh-Hans.i18n.json` in sync; run `just gen` (`dart run build_runner build`); commit all `*.g.dart`. Use `context.t` in widgets.
 - **Change a color/theme token:** Accent colors live in `lib/shared/theme/forui_theme_factory.dart` (`_accentColors`). Do NOT edit generated `colors.dart`/`typography.dart`/`style.dart`/`icons.dart`/`generated_forui_theme.dart` — regenerate via `forui_cli`. Use `AppSpacing`/`AppSizes` for layout numbers.
 - **Add a setting:** Extend `SettingsState` in `lib/features/settings/settings_state.dart`; add a key to `persistedKeys` + load/save in `lib/features/settings/settings_repository.dart`; add a controller setter in `settings_controller.dart`; render it in `lib/features/settings/settings_page.dart`.
-- **Add a feature:** Create `lib/features/<name>/` with `<name>_page.dart` + typed `<name>_view_data.dart`; add a route constant in `app_routes.dart` + a GoRoute in `app_router.dart` injecting static callbacks; mirror under `test/features/<name>/`. For an auth-style form, copy the page + `*_form_value` + `*_presentation_state` trio from `lib/features/auth/` (and reuse `auth_form_support.dart`). Before freezing its public API, check `plans/feature_roadmap/contracts.md`.
+- **Add a feature:** Create `lib/features/<name>/` with `<name>_page.dart`, typed Freezed `<name>_view_data.dart`, and (when routed) `<name>_routes.dart`. Add route constants in `app_routes.dart`; the route module injects callbacks into a page that has no routing imports. Mirror under `test/features/<name>/`. For an auth form, use the page + `*_form_value` + `*_presentation_state` pattern and regenerate `*.freezed.dart` with `just gen`.
 - **Change page transitions/motion:** Source durations/curves from `lib/shared/motion/app_motion.dart`; native transitions live in `lib/shared/motion/app_page_transitions.dart` (`nativePageTransitionsTheme`, applied via `pageTransitionsTheme` copyWith in `app.dart`). Guard custom animations with `MediaQuery.disableAnimationsOf(context)`.
 - **Run tests (unit vs golden vs integration):** Unit/widget: `just test`. Goldens: `just test-goldens` (macOS only; regenerate with `--update-goldens`). Integration smoke: `just smoke` (adds `--dart-define-from-file=config/development.json`). Prod routes: `flutter test integration_test/production_routes_test.dart --dart-define-from-file=config/production.json`. Analyze: `just analyze`.
 - **Build for release:** `flutter build <apk|ios|macos|linux|windows|web> --dart-define-from-file=config/production.json`. iOS uses `--no-codesign` in CI. Never set `ENABLE_*` flags true when `APP_ENV=production`.
@@ -318,10 +327,10 @@ Notes:
 ## Conventions & guardrails
 
 - No `core/`, `utils/`, service-locator, use-case, base-repository/base-page/feature-barrel layers. Feature-first ownership only.
-- Root composition lives ONLY in `lib/app/dependencies.dart`, `lib/app/routing/app_router.dart`, `lib/bootstrap.dart`. Add providers via `AppDependencies` + ProviderScope overrides, not globals/singletons.
+- Construct adapters through the domain aggregates in `lib/app/dependencies.dart` and `lib/app/dependencies/**`; add providers via `AppDependencies` + `ProviderScope` overrides. Compose routing in `lib/app/routing/**` plus feature `*_routes.dart`, never in pages.
 - Settings boundary is handwritten Riverpod (no codegen): override `settingsRepositoryProvider` + `initialSettingsProvider` at the ProviderScope; mutate only via `SettingsController` setters.
 - ForUI owns controls + the committed generated theme; never hand-edit slang `*.g.dart` or theme `colors`/`typography`/`style`/`icons`/`generated_forui_theme`. Regenerate, don't patch.
-- No backend: static callbacks give honest navigation or unavailable feedback (`common.notConnected` / `globalError`); never fake success. No fake backend services, Mocktail, or Riverpod codegen.
+- No backend: static callbacks give honest navigation or unavailable feedback (`common.notConnected` / `globalError`); never fake success. No fake backend services, Mocktail, or Riverpod provider codegen. Freezed data-class codegen is allowed and committed.
 - Config via `--dart-define-from-file=config/<env>.json` only — compile-time, string values, no secrets. Gate behavior through `verboseLoggingEnabled`/`developmentToolsEnabled`, not raw `enable*` flags.
 - Goldens separate from the default suite (`just test` excludes them); compare ONLY on the macOS pinned runner (`just test-goldens`); regenerate with `--update-goldens`.
 - Logging through `AppLogger` only (auto-redacts structured context); no pre-redaction, no direct Talker calls. `debug`/stacks gated behind verbose.

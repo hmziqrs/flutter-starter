@@ -87,7 +87,8 @@ Two more plug into **existing** seams rather than adding wiring:
 
 ## C5 — One `go_router` redirect pattern, reused
 
-The router already wires **one** top-level redirect — `_redirectSettingsDeepLinks` in
+The router wires **one** top-level redirect — `appRedirect` in
+[`route_guards.dart`](../../lib/app/routing/route_guards.dart), composed once by
 [`buildAppRouter`](../../lib/app/routing/app_router.dart) (settings deep-link normalization).
 `go_router` accepts exactly one redirect callback, so every gating feature **composes its
 predicate into that single helper** rather than adding a new one. The first feature that needs a
@@ -187,11 +188,12 @@ no designated consumers.
 ### 4. Composition root confined
 
 Providers wired only via `AppDependencies` + `ProviderScope` overrides in
-[`lib/app/app.dart`](../../lib/app/app.dart). Concrete adapters constructed only in
-[`lib/app/dependencies.dart`](../../lib/app/dependencies.dart),
-[`lib/app/routing/app_router.dart`](../../lib/app/routing/app_router.dart), or
-[`lib/bootstrap.dart`](../../lib/bootstrap.dart). No globals, no singletons, no plugin init
-outside these three files (plus `main.dart`'s zone guard).
+[`lib/app/app.dart`](../../lib/app/app.dart). Concrete adapters are constructed only in
+[`lib/app/dependencies.dart`](../../lib/app/dependencies.dart) and its `dependencies/`
+submodules, or [`lib/bootstrap.dart`](../../lib/bootstrap.dart). Cross-feature route composition
+is confined to `lib/app/routing/**`; feature-owned `<feature>_routes.dart` modules may construct
+their feature's `GoRoute` objects and route-page wrappers. No globals, no singletons, no plugin
+initialization outside these composition seams (plus `main.dart`'s zone guard).
 
 ### 5. Motion guarded
 
@@ -210,14 +212,16 @@ direction-sensitive UI (banners, toasts, progress, chevrons). No hardcoded strin
 
 ### 7. Strict analysis clean
 
-Typed value objects, exhaustive `switch`, no `dynamic`/raw types. Handwritten Riverpod only —
-**no** `riverpod_generator` / provider codegen introduced. `flutter analyze --fatal-infos`
+Typed value objects, exhaustive `switch`, no `dynamic`/raw types. Freezed code generation is
+allowed for immutable data classes and sealed unions; Riverpod providers/notifiers stay
+handwritten — **no** `riverpod_generator` / provider codegen. `flutter analyze --fatal-infos`
 passes (very_good_analysis + strict-casts/inference/raw-types + riverpod_lint).
 
 ### 8. Generated code untouched
 
-Never hand-edit slang `*.g.dart` or ForUI `colors`/`typography`/`style`/`icons`/
-`generated_forui_theme`. Change JSON/CLI sources and regenerate (`just gen` / `forui_cli`).
+Never hand-edit slang `*.g.dart`, Freezed `*.freezed.dart`, or ForUI
+`colors`/`typography`/`style`/`icons`/`generated_forui_theme`. Change source models or JSON/CLI
+sources and regenerate (`just gen` / `forui_cli`).
 Accent colors via [`ForuiThemeFactory._accentColors`](../../lib/shared/theme/forui_theme_factory.dart).
 
 ### 9. Native entitlements flagged
@@ -263,11 +267,14 @@ The frozen public API boundaries of the implemented baseline features (the freez
 
 ### Shared rules
 
-- Features may import `app/routing/otp_purpose.dart`, generated translations, and existing
-  `shared/**` APIs. They must not import another feature, route constants, the gallery, or plugin
-  adapters.
-- Pages receive navigation and deterministic feedback callbacks. They never call `go_router`
-  directly.
+- Pages may import `app/routing/otp_purpose.dart`, generated translations, and existing
+  `shared/**` APIs. Pages must not import another feature, route constants, `go_router`, the
+  gallery, or plugin adapters.
+- A feature's `<feature>_routes.dart` module may import public `app/routing/**` APIs and owns that
+  feature's `GoRoute` list plus route-page wrappers. Redirects remain app-owned and are never
+  declared by feature route modules.
+- Pages receive navigation and deterministic feedback callbacks; route modules translate those
+  callbacks into navigation.
 - Every form uses Flutter `Form`/`FormField` with native ForUI controls, constructs a handwritten
   typed value after validation/save, and never trims passwords or OTP values.
 - Presentation fixtures are feature-owned, immutable, and screen-specific. Normal route usage
