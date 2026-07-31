@@ -1,24 +1,28 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 
+part 'experiments_controller.freezed.dart';
+
 /// Immutable snapshot of every known experiment's current assignment. Built
 /// by [ExperimentsController] from one [ExperimentSource.assignmentFor] call
 /// per [ExperimentKey]; surfaced whole on the diagnostics page. Value
 /// equality so the controller's diff commits only on a real change.
-@immutable
-final class ExperimentsSnapshot {
-  const ExperimentsSnapshot({this.assignments = const <ExperimentAssignment>[]});
+@freezed
+abstract class ExperimentsSnapshot with _$ExperimentsSnapshot {
+  const factory ExperimentsSnapshot({
+    @Default(<ExperimentAssignment>[]) List<ExperimentAssignment> assignments,
+  }) = _ExperimentsSnapshot;
+
+  const ExperimentsSnapshot._();
 
   /// Every known experiment's current assignment, in [ExperimentKey] index
   /// order so the diagnostics read-out is stable.
-  final List<ExperimentAssignment> assignments;
-
   /// The variant resolved for [key], or `null` if [key] has no assignment in
   /// this snapshot (e.g. while loading).
   ExperimentVariant? variantFor(ExperimentKey key) {
@@ -38,30 +42,6 @@ final class ExperimentsSnapshot {
       }
     }
     return null;
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is ExperimentsSnapshot && _listEquals(assignments, other.assignments);
-  }
-
-  @override
-  int get hashCode => Object.hashAll(assignments);
-
-  /// Order-sensitive list equality (assignments are produced in
-  /// [ExperimentKey] index order, so order is part of the snapshot's
-  /// identity).
-  static bool _listEquals(
-    List<ExperimentAssignment> a,
-    List<ExperimentAssignment> b,
-  ) {
-    if (identical(a, b)) return true;
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
   }
 }
 

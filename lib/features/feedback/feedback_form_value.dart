@@ -1,37 +1,22 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'feedback_form_value.freezed.dart';
 
 /// Read-only app environment attached to every feedback submission (no PII —
 /// version / platform / locale only, never account identifiers). Built once
 /// at the composition root from `AppBuildInfo` + `PlatformCapabilities` + the
 /// active locale.
-@immutable
-final class FeedbackAppMetadata {
-  const FeedbackAppMetadata({
-    required this.appVersion,
-    required this.platform,
-    required this.locale,
-  });
+@freezed
+abstract class FeedbackAppMetadata with _$FeedbackAppMetadata {
+  const factory FeedbackAppMetadata({
+    required String appVersion,
+    required String platform,
+    required String locale,
+  }) = _FeedbackAppMetadata;
 
   /// Installed build version (for example `1.0.0+1`).
-  final String appVersion;
-
   /// Lowercase platform name (`ios`, `android`, `macos`, ...).
-  final String platform;
-
   /// Active BCP-47 locale tag (for example `en`, `ar`, `zh-Hans`).
-  final String locale;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is FeedbackAppMetadata &&
-            appVersion == other.appVersion &&
-            platform == other.platform &&
-            locale == other.locale;
-  }
-
-  @override
-  int get hashCode => Object.hash(appVersion, platform, locale);
 }
 
 /// The user-editable feedback draft. Owned by `FeedbackController`, persisted
@@ -41,8 +26,8 @@ final class FeedbackAppMetadata {
 /// [email] is trimmed at the controller boundary before reaching this value.
 /// [includeScreenshot] is the user's intent only — the Noop transport never
 /// captures bytes, so the toggle is inert without a real backend.
-@immutable
-final class FeedbackDraft {
+@Freezed(copyWith: false)
+class FeedbackDraft with _$FeedbackDraft {
   const FeedbackDraft({
     this.message = '',
     this.email,
@@ -51,12 +36,15 @@ final class FeedbackDraft {
 
   const FeedbackDraft.empty() : message = '', email = null, includeScreenshot = false;
 
+  @override
   final String message;
 
   /// Optional reply-to address; `null` when the field was left blank.
+  @override
   final String? email;
 
   /// User intent to attach a screenshot. Inert under the Noop transport.
+  @override
   final bool includeScreenshot;
 
   /// `true` when there is nothing worth persisting.
@@ -79,52 +67,20 @@ final class FeedbackDraft {
       includeScreenshot: includeScreenshot ?? this.includeScreenshot,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is FeedbackDraft &&
-            message == other.message &&
-            email == other.email &&
-            includeScreenshot == other.includeScreenshot;
-  }
-
-  @override
-  int get hashCode => Object.hash(message, email, includeScreenshot);
 }
 
 /// The normalized value emitted by the feedback sheet after form validation,
 /// built from `save()` + the live draft plus the `appMetadata` snapshot so
 /// the transport payload (`FeedbackSubmission`) is derived in one step.
-@immutable
-final class FeedbackFormValue {
-  const FeedbackFormValue({
-    required this.message,
-    required this.includeScreenshot,
-    required this.appMetadata,
-    this.email,
-  });
-
-  final String message;
+@freezed
+abstract class FeedbackFormValue with _$FeedbackFormValue {
+  const factory FeedbackFormValue({
+    required String message,
+    required bool includeScreenshot,
+    required FeedbackAppMetadata appMetadata,
+    String? email,
+  }) = _FeedbackFormValue;
 
   /// Trimmed reply-to address, or `null` when the optional field was blank.
-  final String? email;
-
-  final bool includeScreenshot;
-
   /// Snapshot of the app environment at submit time.
-  final FeedbackAppMetadata appMetadata;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is FeedbackFormValue &&
-            message == other.message &&
-            email == other.email &&
-            includeScreenshot == other.includeScreenshot &&
-            appMetadata == other.appMetadata;
-  }
-
-  @override
-  int get hashCode => Object.hash(message, email, includeScreenshot, appMetadata);
 }

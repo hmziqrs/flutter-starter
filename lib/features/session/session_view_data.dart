@@ -1,11 +1,13 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/session/auth_session.dart';
+
+part 'session_view_data.freezed.dart';
 
 /// Typed presentation state for session UI surfaces (banners, profile chips,
 /// the dev-gallery preview). Derived from [AuthSession] and never owns tokens
 /// — only the user-facing summary (signed-in vs signed-out, display identity).
-@immutable
-final class SessionViewData {
+@freezed
+class SessionViewData with _$SessionViewData {
   const SessionViewData({required this.isSignedIn, this.userId});
 
   /// Anonymous presentation: signed out, no identity.
@@ -22,17 +24,10 @@ final class SessionViewData {
   }
 
   /// Whether an authenticated session is held.
+  @override
   final bool isSignedIn;
 
   /// The signed-in user's stable identity, or `null` when signed out.
+  @override
   final String? userId;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is SessionViewData && isSignedIn == other.isSignedIn && userId == other.userId;
-  }
-
-  @override
-  int get hashCode => Object.hash(isSignedIn, userId);
 }

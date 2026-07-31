@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/profile/widgets/permission_rationale_sheet.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
+part 'permissions_gallery_cases.freezed.dart';
+
 /// Preview state for the permission rationale gallery cases. The gallery
 /// renders [PermissionRationaleBody] directly in a card, since sheets are
 /// modal and this keeps the preview hermetic.
-final class PermissionGalleryState {
-  const PermissionGalleryState({
-    required this.permission,
-    required this.permanentlyDenied,
-    required this.showDeniedAlert,
-  });
-
-  final AppPermission permission;
-  final bool permanentlyDenied;
+@freezed
+abstract class PermissionGalleryState with _$PermissionGalleryState {
+  const factory PermissionGalleryState({
+    required AppPermission permission,
+    required bool permanentlyDenied,
+    required bool showDeniedAlert,
+  }) = _PermissionGalleryState;
 
   /// Prepends a "denied" alert so the denied case is visually distinct from the
   /// promptable rationale case (both are otherwise the same body).
-  final bool showDeniedAlert;
 }
 
 /// Builds the permission rationale gallery cases: the promptable rationale,

@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
+
+part 'experiment_source.freezed.dart';
 
 /// Where an [ExperimentAssignment] was resolved: [local] is the deterministic
 /// table (no-backend default, or the offline degrade of the remote source);
@@ -13,8 +15,8 @@ enum ExperimentAssignmentSource { local, remote }
 /// `true` when the assignment is stable across launches for this device
 /// (always `true` for the deterministic local source; carried from the
 /// backend for the remote source). Value equality over every field.
-@immutable
-final class ExperimentAssignment {
+@Freezed(toStringOverride: false)
+class ExperimentAssignment with _$ExperimentAssignment {
   const ExperimentAssignment({
     required this.key,
     required this.variant,
@@ -23,29 +25,20 @@ final class ExperimentAssignment {
   });
 
   /// The experiment this assignment resolves.
+  @override
   final ExperimentKey key;
 
   /// The resolved variant (and its payload).
+  @override
   final ExperimentVariant variant;
 
   /// Whether the assignment is stable across launches for this device.
+  @override
   final bool sticky;
 
   /// Whether the assignment came from the local table or the remote backend.
+  @override
   final ExperimentAssignmentSource source;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is ExperimentAssignment &&
-            key == other.key &&
-            variant == other.variant &&
-            sticky == other.sticky &&
-            source == other.source;
-  }
-
-  @override
-  int get hashCode => Object.hash(key, variant, sticky, source);
 
   @override
   String toString() =>

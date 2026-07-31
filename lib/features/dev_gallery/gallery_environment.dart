@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -6,12 +7,14 @@ import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 
+part 'gallery_environment.freezed.dart';
+
 enum GallerySystemTextScale { normal, maximumNonlinear }
 
 enum GalleryDisplayFeature { none, verticalFold }
 
-@immutable
-final class GalleryViewportPreset {
+@Freezed(copyWith: false)
+class GalleryViewportPreset with _$GalleryViewportPreset {
   const GalleryViewportPreset({
     required this.id,
     required this.size,
@@ -19,9 +22,13 @@ final class GalleryViewportPreset {
     this.devicePixelRatio = 1,
   });
 
+  @override
   final String id;
+  @override
   final Size size;
+  @override
   final GalleryLabelBuilder labelBuilder;
+  @override
   final double devicePixelRatio;
 
   String label(Translations translations) => labelBuilder(translations);
@@ -97,8 +104,8 @@ abstract final class GalleryViewportPresets {
   }
 }
 
-@immutable
-final class GalleryEnvironment {
+@Freezed(copyWith: false)
+class GalleryEnvironment with _$GalleryEnvironment {
   const GalleryEnvironment({
     required this.viewport,
     required this.brightness,
@@ -134,20 +141,35 @@ final class GalleryEnvironment {
       keyboardInsetsEnabled = false,
       displayFeature = GalleryDisplayFeature.none;
 
+  @override
   final GalleryViewportPreset viewport;
+  @override
   final Brightness brightness;
+  @override
   final AppAccent accent;
+  @override
   final AppLocale locale;
+  @override
   final double appFontScale;
+  @override
   final GallerySystemTextScale systemTextScale;
+  @override
   final AppInteractionPolicy interactionPolicy;
+  @override
   final AppViewingEnvironment viewingEnvironment;
+  @override
   final AppTvPlatform tvPlatform;
+  @override
   final bool animationsEnabled;
+  @override
   final bool highContrast;
+  @override
   final bool boldText;
+  @override
   final bool safeAreaEnabled;
+  @override
   final bool keyboardInsetsEnabled;
+  @override
   final GalleryDisplayFeature displayFeature;
 
   TextScaler get textScaler => switch (systemTextScale) {

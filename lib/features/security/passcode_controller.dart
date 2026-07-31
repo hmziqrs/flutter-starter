@@ -11,12 +11,14 @@ library;
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
+
+part 'passcode_controller.freezed.dart';
 
 /// Outcome of a [PasscodeController.verify] call.
 enum PasscodeVerifyResult {
@@ -38,8 +40,8 @@ enum PasscodeVerifyResult {
 /// [enabled] is the transient "armed" flag (challenge required now); the
 /// user's on/off preference lives separately in `SettingsState.passcodeEnabled`.
 /// [isSet] means a salted hash exists in `SecureStore`.
-@immutable
-final class PasscodeState {
+@Freezed(copyWith: false)
+class PasscodeState with _$PasscodeState {
   const PasscodeState({
     required this.enabled,
     required this.isSet,
@@ -56,14 +58,19 @@ final class PasscodeState {
       lockedUntil = null,
       totalFailures = 0;
 
+  @override
   final bool enabled;
+  @override
   final bool isSet;
+  @override
   final int attemptsRemaining;
+  @override
   final DateTime? lockedUntil;
 
   /// Monotonic failure count since the last success (the escalation-schedule
   /// index); unlike [attemptsRemaining] it never clamps at 0, so cooldowns keep
   /// escalating 30s -> 60s -> 5m -> 15m across repeated lockouts.
+  @override
   final int totalFailures;
 
   bool get requiresChallenge => isSet && enabled && lockedUntil == null;
@@ -97,20 +104,6 @@ final class PasscodeState {
       totalFailures: totalFailures ?? this.totalFailures,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is PasscodeState &&
-            enabled == other.enabled &&
-            isSet == other.isSet &&
-            attemptsRemaining == other.attemptsRemaining &&
-            lockedUntil == other.lockedUntil &&
-            totalFailures == other.totalFailures;
-  }
-
-  @override
-  int get hashCode => Object.hash(enabled, isSet, attemptsRemaining, lockedUntil, totalFailures);
 }
 
 /// Cold-start seed, overridden at the composition root with the hydrated

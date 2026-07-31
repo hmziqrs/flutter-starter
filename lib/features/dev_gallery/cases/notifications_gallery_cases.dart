@@ -1,19 +1,25 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
+part 'notifications_gallery_cases.freezed.dart';
+
 /// Preview state for the notifications permission rationale gallery cases:
 /// one variant per [NotificationPermissionStatus].
-final class NotificationsGalleryState {
+@Freezed(copyWith: false)
+class NotificationsGalleryState with _$NotificationsGalleryState {
   const NotificationsGalleryState._({
     required this.permission,
     required this.labelBuilder,
   });
 
+  @override
   final NotificationPermissionStatus permission;
+  @override
   final String Function(Translations translations) labelBuilder;
 
   static final notRequested = NotificationsGalleryState._(

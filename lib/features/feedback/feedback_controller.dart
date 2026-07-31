@@ -1,12 +1,14 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/feedback/feedback_form_value.dart';
 import 'package:starter/features/feedback/feedback_presentation_state.dart';
 import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+
+part 'feedback_controller.freezed.dart';
 
 /// `SettingsStore` keys for the persisted feedback draft. Cleared only on a
 /// confirmed `accepted` result.
@@ -52,36 +54,12 @@ final feedbackLoggerProvider = Provider<AppLogger>((ref) => AppLogger.bootstrap(
 /// Immutable runtime state surfaced by [FeedbackController] to the feedback
 /// sheet: the fixture-friendly [FeedbackPresentationState] plus the live
 /// [FeedbackDraft] the sheet's `TextEditingController`s read from / write to.
-@immutable
-final class FeedbackControllerState {
-  const FeedbackControllerState({
-    this.draft = const FeedbackDraft.empty(),
-    this.presentation = const FeedbackPresentationState(),
-  });
-
-  final FeedbackDraft draft;
-  final FeedbackPresentationState presentation;
-
-  FeedbackControllerState copyWith({
-    FeedbackDraft? draft,
-    FeedbackPresentationState? presentation,
-  }) {
-    return FeedbackControllerState(
-      draft: draft ?? this.draft,
-      presentation: presentation ?? this.presentation,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is FeedbackControllerState &&
-            draft == other.draft &&
-            presentation == other.presentation;
-  }
-
-  @override
-  int get hashCode => Object.hash(draft, presentation);
+@freezed
+abstract class FeedbackControllerState with _$FeedbackControllerState {
+  const factory FeedbackControllerState({
+    @Default(FeedbackDraft.empty()) FeedbackDraft draft,
+    @Default(FeedbackPresentationState()) FeedbackPresentationState presentation,
+  }) = _FeedbackControllerState;
 }
 
 /// Handwritten Riverpod `Notifier` owning the feedback draft + presentation

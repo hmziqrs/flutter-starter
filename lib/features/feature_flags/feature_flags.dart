@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'feature_flags.freezed.dart';
 
 /// The primitive a known flag decodes to from the remote-config `flags`
 /// slice: a boolean gate, a string config value, or an integer rollout
@@ -52,8 +54,8 @@ enum FeatureFlag {
 /// No `Map<String, Object>` accessor — every flag is a typed field; dynamic
 /// lookup goes through `isEnabled`, whose exhaustive switch keeps the typed
 /// and dynamic views in lockstep.
-@immutable
-final class FeatureFlags {
+@freezed
+class FeatureFlags with _$FeatureFlags {
   const FeatureFlags({
     required this.onboardingRevamp,
     required this.homeRedesign,
@@ -127,24 +129,6 @@ final class FeatureFlags {
     );
   }
 
-  FeatureFlags copyWith({
-    bool? onboardingRevamp,
-    bool? homeRedesign,
-    bool? checkoutV2,
-    bool? profileSync,
-    String? searchBackend,
-    int? checkoutRolloutPercent,
-  }) {
-    return FeatureFlags(
-      onboardingRevamp: onboardingRevamp ?? this.onboardingRevamp,
-      homeRedesign: homeRedesign ?? this.homeRedesign,
-      checkoutV2: checkoutV2 ?? this.checkoutV2,
-      profileSync: profileSync ?? this.profileSync,
-      searchBackend: searchBackend ?? this.searchBackend,
-      checkoutRolloutPercent: checkoutRolloutPercent ?? this.checkoutRolloutPercent,
-    );
-  }
-
   /// Search backend value meaning "no remote backend configured".
   static const _defaultSearchBackend = 'local';
 
@@ -153,11 +137,17 @@ final class FeatureFlags {
   static const minimumRolloutPercent = 0;
   static const maximumRolloutPercent = 100;
 
+  @override
   final bool onboardingRevamp;
+  @override
   final bool homeRedesign;
+  @override
   final bool checkoutV2;
+  @override
   final bool profileSync;
+  @override
   final String searchBackend;
+  @override
   final int checkoutRolloutPercent;
 
   /// Dynamic, typed lookup of whether `flag` is "active". For boolean flags
@@ -204,26 +194,4 @@ final class FeatureFlags {
     }
     return numeric.toInt().clamp(minimumRolloutPercent, maximumRolloutPercent);
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is FeatureFlags &&
-            onboardingRevamp == other.onboardingRevamp &&
-            homeRedesign == other.homeRedesign &&
-            checkoutV2 == other.checkoutV2 &&
-            profileSync == other.profileSync &&
-            searchBackend == other.searchBackend &&
-            checkoutRolloutPercent == other.checkoutRolloutPercent;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    onboardingRevamp,
-    homeRedesign,
-    checkoutV2,
-    profileSync,
-    searchBackend,
-    checkoutRolloutPercent,
-  );
 }

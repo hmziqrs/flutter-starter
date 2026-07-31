@@ -1,5 +1,8 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
 import 'package:starter/i18n/translations.g.dart';
+
+part 'plan_view_data.freezed.dart';
 
 /// Stable identifiers for the static pricing fixtures.
 abstract final class PlanIds {
@@ -15,7 +18,8 @@ enum PricingAvailability { available, unavailable }
 typedef PlanSelectionCallback = void Function(PlanViewData plan, BillingPeriod billingPeriod);
 
 /// Immutable, presentation-only plan data.
-class PlanViewData {
+@freezed
+class PlanViewData with _$PlanViewData {
   PlanViewData({
     required this.id,
     required this.name,
@@ -33,15 +37,25 @@ class PlanViewData {
        assert(currencyCode.length == 3, 'Use an ISO 4217 currency code.'),
        benefits = List.unmodifiable(benefits);
 
+  @override
   final String id;
+  @override
   final String name;
+  @override
   final String description;
+  @override
   final num monthlyPrice;
+  @override
   final num annualPrice;
+  @override
   final String currencyCode;
+  @override
   final List<String> benefits;
+  @override
   final bool isRecommended;
+  @override
   final bool isCurrent;
+  @override
   final PricingAvailability availability;
 
   num priceFor(BillingPeriod period) => switch (period) {

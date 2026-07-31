@@ -1,8 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'search_view_data.freezed.dart';
 
 /// A single typed search result matched over a local, feature-supplied corpus.
-@immutable
-final class SearchResultViewData {
+@Freezed(toStringOverride: false)
+class SearchResultViewData with _$SearchResultViewData {
   const SearchResultViewData({
     required this.id,
     required this.title,
@@ -10,9 +12,12 @@ final class SearchResultViewData {
   });
 
   /// Stable identifier used as the list `ValueKey` seed.
+  @override
   final String id;
 
+  @override
   final String title;
+  @override
   final String subtitle;
 
   /// Case-insensitive, trimmed substring match over [title] and [subtitle]. An
@@ -24,24 +29,12 @@ final class SearchResultViewData {
   }
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is SearchResultViewData &&
-            id == other.id &&
-            title == other.title &&
-            subtitle == other.subtitle;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, title, subtitle);
-
-  @override
   String toString() => 'SearchResultViewData(id: $id, title: $title)';
 }
 
 /// The page-level view-data: the local corpus the search field filters.
-@immutable
-final class SearchViewData {
+@freezed
+class SearchViewData with _$SearchViewData {
   SearchViewData({required Iterable<SearchResultViewData> results})
     : results = List<SearchResultViewData>.unmodifiable(results);
 
@@ -49,6 +42,7 @@ final class SearchViewData {
   /// consumers override `searchCorpusProvider`.
   factory SearchViewData.defaults() => SearchViewData(results: _fixtureResults);
 
+  @override
   final List<SearchResultViewData> results;
 
   static const _fixtureResults = <SearchResultViewData>[

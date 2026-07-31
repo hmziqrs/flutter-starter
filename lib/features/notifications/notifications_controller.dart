@@ -4,11 +4,13 @@ import 'dart:async';
 // intentional `comment_references`.
 // ignore_for_file: comment_references
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+
+part 'notifications_controller.freezed.dart';
 
 /// Coarse lifecycle of the token-registration state machine, surfaced on the
 /// rationale sheet and diagnostics page without leaking the underlying
@@ -32,8 +34,8 @@ enum NotificationsRegistrationState {
 }
 
 /// Immutable, value-equal snapshot of the notifications controller state.
-@immutable
-final class NotificationsState {
+@Freezed(copyWith: false)
+class NotificationsState with _$NotificationsState {
   const NotificationsState({
     this.permission = NotificationPermissionStatus.notRequested,
     this.token,
@@ -45,12 +47,15 @@ final class NotificationsState {
       token = null,
       registration = NotificationsRegistrationState.idle;
 
+  @override
   final NotificationPermissionStatus permission;
 
   /// The currently registered backend token (or `null`). Never logged raw —
   /// the [LogRedactor] scrubs token-shaped strings.
+  @override
   final String? token;
 
+  @override
   final NotificationsRegistrationState registration;
 
   /// True when the rationale sheet should surface `notifications.disabled` /
@@ -69,18 +74,6 @@ final class NotificationsState {
       registration: registration ?? this.registration,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is NotificationsState &&
-        other.permission == permission &&
-        other.token == token &&
-        other.registration == registration;
-  }
-
-  @override
-  int get hashCode => Object.hash(permission, token, registration);
 }
 
 /// Cold-start seed for the persisted permission status. Overridden at the

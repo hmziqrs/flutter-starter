@@ -1,19 +1,19 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
+
+part 'experiment_key.freezed.dart';
 
 /// A weighted entry in an [ExperimentKey]'s allocation table. [weight] is a
 /// non-negative, relative share of the bucket space (a 50/50 split and a 5/5
 /// split bucket identically) and need not sum to 100.
-@immutable
-final class ExperimentAllocation {
-  const ExperimentAllocation(this.variant, this.weight)
-    : assert(weight >= 0, 'ExperimentAllocation weight must be non-negative.');
+@freezed
+abstract class ExperimentAllocation with _$ExperimentAllocation {
+  @Assert('weight >= 0', 'ExperimentAllocation weight must be non-negative.')
+  const factory ExperimentAllocation(ExperimentVariantKind variant, int weight) =
+      _ExperimentAllocation;
 
   /// The variant arm this entry allocates traffic to.
-  final ExperimentVariantKind variant;
-
   /// The relative share of the bucket space this arm receives.
-  final int weight;
 }
 
 /// Typed enum of the known experiments exposed by the experiments feature.

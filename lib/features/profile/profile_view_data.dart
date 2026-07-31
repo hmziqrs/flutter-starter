@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-final class ProfileDraft {
+part 'profile_view_data.freezed.dart';
+
+@freezed
+class ProfileDraft with _$ProfileDraft {
   const ProfileDraft({
     required this.displayName,
     required this.username,
@@ -15,43 +17,20 @@ final class ProfileDraft {
       email = 'alex@example.com',
       bio = 'Building a thoughtful foundation for the next product.';
 
+  @override
   final String displayName;
+  @override
   final String username;
+  @override
   final String email;
+  @override
   final String bio;
-
-  ProfileDraft copyWith({
-    String? displayName,
-    String? username,
-    String? email,
-    String? bio,
-  }) {
-    return ProfileDraft(
-      displayName: displayName ?? this.displayName,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      bio: bio ?? this.bio,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is ProfileDraft &&
-            displayName == other.displayName &&
-            username == other.username &&
-            email == other.email &&
-            bio == other.bio;
-  }
-
-  @override
-  int get hashCode => Object.hash(displayName, username, email, bio);
 }
 
 enum ProfilePresentationPhase { idle, dirty, invalid, saving, saved, discardPrompt }
 
-@immutable
-final class ProfilePresentationState {
+@freezed
+class ProfilePresentationState with _$ProfilePresentationState {
   const ProfilePresentationState._({required this.phase, this.draft});
 
   const ProfilePresentationState.defaults({ProfileDraft? draft})
@@ -72,17 +51,10 @@ final class ProfilePresentationState {
   const ProfilePresentationState.discardPrompt({required ProfileDraft draft})
     : this._(phase: ProfilePresentationPhase.discardPrompt, draft: draft);
 
+  @override
   final ProfilePresentationPhase phase;
+  @override
   final ProfileDraft? draft;
 
   bool get isSaving => phase == ProfilePresentationPhase.saving;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is ProfilePresentationState && phase == other.phase && draft == other.draft;
-  }
-
-  @override
-  int get hashCode => Object.hash(phase, draft);
 }

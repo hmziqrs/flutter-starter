@@ -1,11 +1,13 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
+
+part 'force_update_state.freezed.dart';
 
 /// Immutable view data for the update-block UI (the hard-block page and the
 /// soft-deprecation dialog), built from an [UpdateRequirement] via
 /// [ForceUpdateState.from]. [storeUrl] is empty for `none` (never rendered).
-@immutable
-final class ForceUpdateState {
+@freezed
+class ForceUpdateState with _$ForceUpdateState {
   const ForceUpdateState({
     required this.latestVersion,
     required this.storeUrl,
@@ -41,19 +43,10 @@ final class ForceUpdateState {
     };
   }
 
+  @override
   final String latestVersion;
+  @override
   final String storeUrl;
+  @override
   final String? message;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is ForceUpdateState &&
-            latestVersion == other.latestVersion &&
-            storeUrl == other.storeUrl &&
-            message == other.message;
-  }
-
-  @override
-  int get hashCode => Object.hash(latestVersion, storeUrl, message);
 }

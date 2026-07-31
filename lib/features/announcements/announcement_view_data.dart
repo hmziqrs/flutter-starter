@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:forui/forui.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
+
+part 'announcement_view_data.freezed.dart';
 
 /// Severity of an in-app announcement. Drives the [FAlert] variant + icon via
 /// an exhaustive switch in `announcement_banner.dart`.
@@ -12,56 +14,38 @@ enum AnnouncementSeverity { info, success, warning, critical }
 /// object free of slang string keys while staying fully typed. The object
 /// itself is never persisted — only its [id] joins the dismissed set stored
 /// under `announcements.dismissedIds`.
-@immutable
-final class Announcement {
-  const Announcement({
-    required this.id,
-    required this.severity,
-    required this.title,
-    required this.message,
-    this.actionRoute,
-    this.dismissible = true,
-    this.activeFrom,
-    this.activeUntil,
-    this.minAppVersion,
-    this.maxAppVersion,
-  });
+@freezed
+abstract class Announcement with _$Announcement {
+  const factory Announcement({
+    required String id,
+    required AnnouncementSeverity severity,
+    required String Function(Translations translations) title,
+    required String Function(Translations translations) message,
+    String? actionRoute,
+    @Default(true) bool dismissible,
+    DateTime? activeFrom,
+    DateTime? activeUntil,
+    String? minAppVersion,
+    String? maxAppVersion,
+  }) = _Announcement;
+
+  const Announcement._();
 
   /// Stable identifier; joining the dismissed set hides this announcement.
-  final String id;
-
   /// Drives banner styling (FAlert variant + icon) via the exhaustive switch.
-  final AnnouncementSeverity severity;
-
   /// Localized title, resolved against the active [Translations].
-  final String Function(Translations translations) title;
-
   /// Localized body, resolved against the active [Translations].
-  final String Function(Translations translations) message;
-
   /// Optional existing named route navigated to via `context.goNamed` when
   /// the CTA is tapped. A plain string — features must not import route
   /// constants.
-  final String? actionRoute;
-
   /// Whether the dismiss control is offered. Critical broadcasts can pin
   /// themselves with `false` to force a read.
-  final bool dismissible;
-
   /// Inclusive lower bound of the active date window (`null` = unbounded past).
-  final DateTime? activeFrom;
-
   /// Inclusive upper bound of the active date window (`null` = unbounded future).
-  final DateTime? activeUntil;
-
   /// Minimum app version (inclusive) for this announcement to show. `null`
   /// means no lower bound.
-  final String? minAppVersion;
-
   /// Maximum app version (inclusive) for this announcement to show. `null`
   /// means no upper bound.
-  final String? maxAppVersion;
-
   /// Whether [now] falls inside the active date window.
   bool isWithinDateWindow(DateTime now) {
     final from = activeFrom;
@@ -97,37 +81,6 @@ final class Announcement {
     }
     return true;
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is Announcement &&
-            id == other.id &&
-            severity == other.severity &&
-            // Closures compare by identity; fixtures are canonical singletons.
-            identical(title, other.title) &&
-            identical(message, other.message) &&
-            actionRoute == other.actionRoute &&
-            dismissible == other.dismissible &&
-            activeFrom == other.activeFrom &&
-            activeUntil == other.activeUntil &&
-            minAppVersion == other.minAppVersion &&
-            maxAppVersion == other.maxAppVersion;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    severity,
-    title,
-    message,
-    actionRoute,
-    dismissible,
-    activeFrom,
-    activeUntil,
-    minAppVersion,
-    maxAppVersion,
-  );
 }
 
 /// Compares two dotted version strings (`"1.2.3"`) segment by segment.
@@ -178,57 +131,16 @@ enum AnnouncementsStatus { idle, dismissFailure }
 
 /// Immutable state published by the announcements controller. Holds the
 /// resolved [active] banner and the dismissed id set for observability.
-@immutable
-final class AnnouncementsState {
-  const AnnouncementsState({
-    required this.active,
-    required this.dismissedIds,
-    this.status = AnnouncementsStatus.idle,
-  });
+@freezed
+abstract class AnnouncementsState with _$AnnouncementsState {
+  const factory AnnouncementsState({
+    required Announcement? active,
+    required Set<String> dismissedIds,
+    @Default(AnnouncementsStatus.idle) AnnouncementsStatus status,
+  }) = _AnnouncementsState;
 
   /// The announcement the banner should render, or `null` when nothing is in
   /// window.
-  final Announcement? active;
-
   /// Dismissed announcement ids persisted under the `announcements.dismissedIds`
   /// settings key.
-  final Set<String> dismissedIds;
-
-  final AnnouncementsStatus status;
-
-  AnnouncementsState copyWith({
-    Announcement? active,
-    Set<String>? dismissedIds,
-    AnnouncementsStatus? status,
-  }) {
-    return AnnouncementsState(
-      active: active ?? this.active,
-      dismissedIds: dismissedIds ?? this.dismissedIds,
-      status: status ?? this.status,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AnnouncementsState &&
-            active == other.active &&
-            _setEquals(dismissedIds, other.dismissedIds) &&
-            status == other.status;
-  }
-
-  @override
-  int get hashCode => Object.hash(active, Object.hashAllUnordered(dismissedIds), status);
-}
-
-bool _setEquals<T>(Set<T> a, Set<T> b) {
-  if (a.length != b.length) {
-    return false;
-  }
-  for (final value in a) {
-    if (!b.contains(value)) {
-      return false;
-    }
-  }
-  return true;
 }

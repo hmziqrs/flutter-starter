@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/splash/app_startup_result.dart';
+
+part 'splash_view_data.freezed.dart';
 
 /// The presentation phases the splash surface renders.
 enum SplashPhase { loading, done, error }
@@ -7,8 +9,8 @@ enum SplashPhase { loading, done, error }
 /// Immutable, fixture-friendly view data for the splash surface. The
 /// production SplashPage derives it from the watched AppStartupResult future;
 /// the development gallery constructs it directly via [SplashFixtures].
-@immutable
-final class SplashViewData {
+@freezed
+class SplashViewData with _$SplashViewData {
   const SplashViewData({
     required this.phase,
     this.buildLabel,
@@ -29,26 +31,17 @@ final class SplashViewData {
     );
   }
 
+  @override
   final SplashPhase phase;
 
   /// Optional build label (e.g. `1.0.0+1`) shown on the `done` phase.
+  @override
   final String? buildLabel;
 
   /// Optional diagnostic id shown on the `error` phase, reused from
   /// `startupDiagnosticIdFor` so the error styling stays consistent.
+  @override
   final String? errorDiagnosticId;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is SplashViewData &&
-            phase == other.phase &&
-            buildLabel == other.buildLabel &&
-            errorDiagnosticId == other.errorDiagnosticId;
-  }
-
-  @override
-  int get hashCode => Object.hash(phase, buildLabel, errorDiagnosticId);
 }
 
 /// Deterministic, immutable gallery fixtures, one per [SplashPhase].

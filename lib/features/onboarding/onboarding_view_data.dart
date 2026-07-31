@@ -1,19 +1,18 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/i18n/translations.g.dart';
+
+part 'onboarding_view_data.freezed.dart';
 
 enum OnboardingVisual { foundation, adaptive, preferences }
 
-class OnboardingSlideViewData {
-  const OnboardingSlideViewData({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.visual,
-  });
-
-  final String id;
-  final String title;
-  final String body;
-  final OnboardingVisual visual;
+@freezed
+abstract class OnboardingSlideViewData with _$OnboardingSlideViewData {
+  const factory OnboardingSlideViewData({
+    required String id,
+    required String title,
+    required String body,
+    required OnboardingVisual visual,
+  }) = _OnboardingSlideViewData;
 }
 
 abstract final class OnboardingSlideIds {

@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'experiment_variant.freezed.dart';
 
 /// The finite set of variant kinds an `ExperimentKey` can allocate to. Backs
 /// the per-experiment allocation table and the wire decode in the
@@ -29,19 +31,44 @@ enum ExperimentVariantKind {
 /// switch on the [ExperimentVariant] subtypes instead.
 ///
 /// Each subtype has value equality over its [payload].
-sealed class ExperimentVariant {
-  const ExperimentVariant({this.payload = const <String, Object?>{}});
+@freezed
+sealed class ExperimentVariant with _$ExperimentVariant {
+  const factory ExperimentVariant.control({
+    @Default(<String, Object?>{}) Map<String, Object?> payload,
+  }) = ExperimentVariantControl;
+
+  const factory ExperimentVariant.treatmentA({
+    @Default(<String, Object?>{}) Map<String, Object?> payload,
+  }) = ExperimentVariantTreatmentA;
+
+  const factory ExperimentVariant.treatmentB({
+    @Default(<String, Object?>{}) Map<String, Object?> payload,
+  }) = ExperimentVariantTreatmentB;
+
+  const factory ExperimentVariant.treatmentC({
+    @Default(<String, Object?>{}) Map<String, Object?> payload,
+  }) = ExperimentVariantTreatmentC;
+
+  const ExperimentVariant._();
 
   /// Backend-supplied configuration for this variant. Empty for the
   /// deterministic local default; populated by the optional remote reader.
-  final Map<String, Object?> payload;
-
   /// The [ExperimentVariantKind] this subtype represents.
-  ExperimentVariantKind get kind;
+  ExperimentVariantKind get kind => switch (this) {
+    ExperimentVariantControl() => ExperimentVariantKind.control,
+    ExperimentVariantTreatmentA() => ExperimentVariantKind.treatmentA,
+    ExperimentVariantTreatmentB() => ExperimentVariantKind.treatmentB,
+    ExperimentVariantTreatmentC() => ExperimentVariantKind.treatmentC,
+  };
 
   /// Backend wire name (snake_case) used in the `experiments` slice and the
   /// diagnostics read-out.
-  String get wireName;
+  String get wireName => switch (this) {
+    ExperimentVariantControl() => 'control',
+    ExperimentVariantTreatmentA() => 'treatment_a',
+    ExperimentVariantTreatmentB() => 'treatment_b',
+    ExperimentVariantTreatmentC() => 'treatment_c',
+  };
 
   /// Returns the [ExperimentVariant] subtype for [kind], carrying [payload].
   static ExperimentVariant forKind(
@@ -68,93 +95,4 @@ sealed class ExperimentVariant {
       _ => null,
     };
   }
-}
-
-/// The control (hold-out) arm.
-@immutable
-final class ExperimentVariantControl extends ExperimentVariant {
-  const ExperimentVariantControl({super.payload});
-
-  @override
-  ExperimentVariantKind get kind => ExperimentVariantKind.control;
-
-  @override
-  String get wireName => 'control';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ExperimentVariantControl && _payloadEquals(payload, other.payload);
-
-  @override
-  int get hashCode => Object.hash(ExperimentVariantKind.control, payload);
-}
-
-/// The first treatment arm.
-@immutable
-final class ExperimentVariantTreatmentA extends ExperimentVariant {
-  const ExperimentVariantTreatmentA({super.payload});
-
-  @override
-  ExperimentVariantKind get kind => ExperimentVariantKind.treatmentA;
-
-  @override
-  String get wireName => 'treatment_a';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ExperimentVariantTreatmentA && _payloadEquals(payload, other.payload);
-
-  @override
-  int get hashCode => Object.hash(ExperimentVariantKind.treatmentA, payload);
-}
-
-/// The second treatment arm.
-@immutable
-final class ExperimentVariantTreatmentB extends ExperimentVariant {
-  const ExperimentVariantTreatmentB({super.payload});
-
-  @override
-  ExperimentVariantKind get kind => ExperimentVariantKind.treatmentB;
-
-  @override
-  String get wireName => 'treatment_b';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ExperimentVariantTreatmentB && _payloadEquals(payload, other.payload);
-
-  @override
-  int get hashCode => Object.hash(ExperimentVariantKind.treatmentB, payload);
-}
-
-/// The third treatment arm.
-@immutable
-final class ExperimentVariantTreatmentC extends ExperimentVariant {
-  const ExperimentVariantTreatmentC({super.payload});
-
-  @override
-  ExperimentVariantKind get kind => ExperimentVariantKind.treatmentC;
-
-  @override
-  String get wireName => 'treatment_c';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ExperimentVariantTreatmentC && _payloadEquals(payload, other.payload);
-
-  @override
-  int get hashCode => Object.hash(ExperimentVariantKind.treatmentC, payload);
-}
-
-/// Shared payload-map equality for the [ExperimentVariant] subtypes.
-bool _payloadEquals(Map<String, Object?> a, Map<String, Object?> b) {
-  if (a.length != b.length) return false;
-  for (final entry in a.entries) {
-    if (b[entry.key] != entry.value) return false;
-  }
-  return true;
 }

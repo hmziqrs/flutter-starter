@@ -1,3 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'feedback_presentation_state.freezed.dart';
+
 /// Status of the feedback sheet's lifecycle: `idle` is the rest state,
 /// `drafting` is composing, `validating` is the synchronous form pass,
 /// `submitting` is the transport round-trip, `success` is a confirmed
@@ -16,7 +20,8 @@ enum FeedbackPresentationStatus {
 /// status enum plus named constructors so the dev-gallery can pin
 /// `drafting` / `submitting` / `failed` deterministically. The sheet
 /// exhaustive-switches on [status].
-final class FeedbackPresentationState {
+@freezed
+class FeedbackPresentationState with _$FeedbackPresentationState {
   const FeedbackPresentationState({
     this.status = FeedbackPresentationStatus.idle,
   });
@@ -31,6 +36,7 @@ final class FeedbackPresentationState {
 
   const FeedbackPresentationState.failed() : status = FeedbackPresentationStatus.failed;
 
+  @override
   final FeedbackPresentationStatus status;
 
   /// `true` while validating / submitting; gates the submit button + fields.

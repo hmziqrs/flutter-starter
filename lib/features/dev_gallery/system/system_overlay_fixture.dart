@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+
+part 'system_overlay_fixture.freezed.dart';
 
 /// The deterministic ForUI overlay state rendered by the development gallery.
 enum SystemOverlayFixtureKind {
@@ -18,11 +21,10 @@ enum SystemOverlayFixtureKind {
 }
 
 /// Immutable input for a development-only overlay fixture.
-@immutable
-final class SystemOverlayFixtureState {
-  const SystemOverlayFixtureState({required this.kind});
-
-  final SystemOverlayFixtureKind kind;
+@freezed
+abstract class SystemOverlayFixtureState with _$SystemOverlayFixtureState {
+  const factory SystemOverlayFixtureState({required SystemOverlayFixtureKind kind}) =
+      _SystemOverlayFixtureState;
 }
 
 /// A development-only host for exercising real ForUI overlay controls.

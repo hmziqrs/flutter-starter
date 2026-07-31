@@ -1,49 +1,30 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'home_view_data.freezed.dart';
 
 enum HomeStatusKind { ready, adaptive, localized }
 
-@immutable
-final class HomeStatusViewData {
-  const HomeStatusViewData({required this.id, required this.kind});
-
-  final String id;
-  final HomeStatusKind kind;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is HomeStatusViewData && id == other.id && kind == other.kind;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, kind);
+@freezed
+abstract class HomeStatusViewData with _$HomeStatusViewData {
+  const factory HomeStatusViewData({required String id, required HomeStatusKind kind}) =
+      _HomeStatusViewData;
 }
 
-@immutable
-final class HomeActivityViewData {
-  const HomeActivityViewData({required this.id, required this.kind});
-
-  final String id;
-  final HomeStatusKind kind;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is HomeActivityViewData && id == other.id && kind == other.kind;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, kind);
+@freezed
+abstract class HomeActivityViewData with _$HomeActivityViewData {
+  const factory HomeActivityViewData({required String id, required HomeStatusKind kind}) =
+      _HomeActivityViewData;
 }
 
-@immutable
-final class HomeViewData {
-  HomeViewData({
-    required this.greetingName,
-    required Iterable<HomeStatusViewData> statuses,
-    required Iterable<HomeActivityViewData> recentActivity,
-  }) : statuses = List.unmodifiable(statuses),
-       recentActivity = List.unmodifiable(recentActivity);
+@freezed
+abstract class HomeViewData with _$HomeViewData {
+  const factory HomeViewData({
+    required String greetingName,
+    required List<HomeStatusViewData> statuses,
+    required List<HomeActivityViewData> recentActivity,
+  }) = _HomeViewData;
+
+  const HomeViewData._();
 
   factory HomeViewData.defaults({String greetingName = 'Alex'}) {
     return HomeViewData(
@@ -71,10 +52,6 @@ final class HomeViewData {
     HomeActivityViewData(id: 'foundation-ready', kind: HomeStatusKind.ready),
     HomeActivityViewData(id: 'adaptive-connected', kind: HomeStatusKind.adaptive),
   ];
-
-  final String greetingName;
-  final List<HomeStatusViewData> statuses;
-  final List<HomeActivityViewData> recentActivity;
 
   bool get hasRecentActivity => recentActivity.isNotEmpty;
 }

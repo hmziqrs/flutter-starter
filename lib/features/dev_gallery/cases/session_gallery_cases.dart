@@ -1,14 +1,20 @@
 import 'package:flutter/widgets.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/session/session_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
+part 'session_gallery_cases.freezed.dart';
+
 /// Preview state for the session gallery cases: logged out vs logged in.
-final class SessionGalleryState {
+@Freezed(copyWith: false)
+class SessionGalleryState with _$SessionGalleryState {
   const SessionGalleryState._(this.viewData, this.labelBuilder);
 
+  @override
   final SessionViewData viewData;
+  @override
   final String Function(Translations translations) labelBuilder;
 
   static final loggedOut = SessionGalleryState._(

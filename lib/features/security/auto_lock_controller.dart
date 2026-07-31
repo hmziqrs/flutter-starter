@@ -10,10 +10,12 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/security/passcode_controller.dart';
+
+part 'auto_lock_controller.freezed.dart';
 
 /// Why the session was re-locked.
 enum AutoLockReason { idleTimeout, backgroundReturn, manual }
@@ -21,14 +23,16 @@ enum AutoLockReason { idleTimeout, backgroundReturn, manual }
 /// Immutable snapshot of the session auto-lock state. [locked] is the signal
 /// the composition-root redirect consults to decide whether a protected
 /// destination must re-challenge.
-@immutable
-final class AutoLockState {
+@Freezed(copyWith: false)
+class AutoLockState with _$AutoLockState {
   const AutoLockState({required this.locked, this.lockedReason});
 
   /// Unlocked rest state.
   const AutoLockState.unlocked() : locked = false, lockedReason = null;
 
+  @override
   final bool locked;
+  @override
   final AutoLockReason? lockedReason;
 
   AutoLockState copyWith({bool? locked, AutoLockReason? lockedReason, bool clearReason = false}) {
@@ -37,15 +41,6 @@ final class AutoLockState {
       lockedReason: clearReason ? null : (lockedReason ?? this.lockedReason),
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AutoLockState && locked == other.locked && lockedReason == other.lockedReason;
-  }
-
-  @override
-  int get hashCode => Object.hash(locked, lockedReason);
 }
 
 /// Idle seconds before the session re-locks; 0 (default) disables idle
