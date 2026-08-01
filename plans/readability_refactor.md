@@ -12,6 +12,15 @@ Baseline at start: 1155 tests green. Final: **1161 green, 14/14 goldens unchange
 | `a55d51e` | 2 | Settings save failures now logged; duplicate `feedbackLoggerProvider` removed; 3 tests added for a path that had none |
 | `c0bf877` | 4a | `SettingsSection` moved to its own file — `route_guards.dart` no longer imports a 1200-line widget file for an enum |
 | `843ca8b` | 4b | Six preference tiles + toggle card + save-failure mixin moved to `widgets/` |
+| `cd141a6` | follow-up | `update_profile_page` uses the shared reveal helper; dead `RestorationMixin` removed from `reset_password_page` |
+
+**Correction to the audit's "cheapest real win".** The red-team audit reported that
+`update_profile_page` duplicates `shared/forms/form_validators.dart` via private
+`_required`/`_username`/`_bio`. Only the *reveal* was a genuine duplicate. There is no shared
+username or bio validator at all, and `_required` is **not** equivalent to `validateRequired`
+— the local one rejects whitespace-only input (`value.trim().isEmpty`), the shared one accepts
+it (`value.isEmpty`). Consolidating would loosen profile validation or tighten auth's. Left
+alone deliberately.
 
 **Dropped as planned:** Step 3 (auth submit mixin) and Step 5 (enum consolidation).
 
