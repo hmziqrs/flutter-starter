@@ -32,15 +32,10 @@ enum SettingsSection {
   final String parameter;
 
   static SettingsSection? tryParse(String? value) {
-    return switch (value) {
-      'appearance' => SettingsSection.appearance,
-      'language' => SettingsSection.language,
-      'accessibility' => SettingsSection.accessibility,
-      'account' => SettingsSection.account,
-      'subscription' => SettingsSection.subscription,
-      'privacy-about' => SettingsSection.privacyAbout,
-      _ => null,
-    };
+    for (final section in values) {
+      if (section.parameter == value) return section;
+    }
+    return null;
   }
 }
 
