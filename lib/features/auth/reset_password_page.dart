@@ -61,7 +61,7 @@ class _ResetPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with RestorationMixin {
+class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -75,12 +75,6 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ResetPasswordPresentationStatus.submitting;
-
-  @override
-  String get restorationId => 'reset-password-view';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {}
 
   @override
   void initState() {

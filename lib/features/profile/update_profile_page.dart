@@ -12,6 +12,7 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
@@ -345,24 +346,28 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     setState(() => _phase = ProfilePresentationPhase.saved);
   }
 
-  Future<void> _revealFirstInvalid(Set<FormFieldState<Object?>> invalidFields) async {
-    final orderedFields = [
-      (_displayNameFieldKey, _displayNameFocusNode),
-      (_usernameFieldKey, _usernameFocusNode),
-      (_bioFieldKey, _bioFocusNode),
-    ];
-    for (final (key, focusNode) in orderedFields) {
-      final state = key.currentState;
-      if (state != null && invalidFields.contains(state)) {
-        await Scrollable.ensureVisible(
-          state.context,
-          alignment: 0.2,
-          duration: const Duration(milliseconds: 1),
-        );
-        if (mounted) focusNode.requestFocus();
-        return;
-      }
-    }
+  Future<void> _revealFirstInvalid(Set<FormFieldState<Object?>> invalidFields) {
+    return revealFirstInvalid(
+      invalidFields,
+      orderedTargets: [
+        (
+          field: _displayNameFieldKey.currentState,
+          context: _displayNameFieldKey.currentContext,
+          focusNode: _displayNameFocusNode,
+        ),
+        (
+          field: _usernameFieldKey.currentState,
+          context: _usernameFieldKey.currentContext,
+          focusNode: _usernameFocusNode,
+        ),
+        (
+          field: _bioFieldKey.currentState,
+          context: _bioFieldKey.currentContext,
+          focusNode: _bioFocusNode,
+        ),
+      ],
+      isMounted: () => mounted,
+    );
   }
 
   Future<void> _showDiscardDialog() async {
