@@ -6,6 +6,7 @@ import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 part 'experiments_controller.freezed.dart';
 
@@ -43,6 +44,7 @@ final experimentsControllerProvider =
 
 final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapshot>> {
   ExperimentSource get _source => ref.read(experimentSourceProvider);
+  AppLogger get _logger => ref.read(appLoggerProvider);
 
   int _liveEpoch = 0;
 
@@ -87,8 +89,12 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
       if (current != next) {
         state = AsyncValue<ExperimentsSnapshot>.data(next);
       }
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'Experiment refresh failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

@@ -8,16 +8,15 @@ import 'package:starter/features/force_update/force_update_page.dart';
 import 'package:starter/features/force_update/force_update_state.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 List<RouteBase> buildForceUpdateRoutes() => [
   GoRoute(
     name: AppRoutes.forceUpdate,
     path: AppRoutes.forceUpdatePath,
     builder: (context, state) {
-      final requirement = ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).read(versionCheckProvider).value;
+      final container = ProviderScope.containerOf(context, listen: false);
+      final requirement = container.read(versionCheckProvider).value;
       final hard = requirement is UpdateRequirementHard
           ? requirement
           : const UpdateRequirementHard(
@@ -27,7 +26,9 @@ List<RouteBase> buildForceUpdateRoutes() => [
             );
       return ForceUpdatePage(
         state: ForceUpdateState.from(hard),
-        onUpdateNow: () => unawaited(launchStoreUrl(hard.storeUrl)),
+        onUpdateNow: () => unawaited(
+          launchStoreUrl(hard.storeUrl, logger: container.read(appLoggerProvider)),
+        ),
       );
     },
   ),

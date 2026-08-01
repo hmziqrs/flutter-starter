@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 final featureFlagsControllerProvider = NotifierProvider<FeatureFlagsController, FeatureFlags>(
   FeatureFlagsController.new,
@@ -11,6 +12,7 @@ final featureFlagsControllerProvider = NotifierProvider<FeatureFlagsController, 
 
 final class FeatureFlagsController extends Notifier<FeatureFlags> {
   FeatureFlagsSource get _source => ref.read(featureFlagsSourceProvider);
+  AppLogger get _logger => ref.read(appLoggerProvider);
 
   int _liveEpoch = 0;
 
@@ -44,8 +46,12 @@ final class FeatureFlagsController extends Notifier<FeatureFlags> {
       if (epochAtStart == _liveEpoch && state != flags) {
         state = flags;
       }
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'Feature flag refresh failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

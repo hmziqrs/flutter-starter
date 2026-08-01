@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 final class ConnectivityPlusService implements ConnectivityService {
-  ConnectivityPlusService({Connectivity? connectivity})
-    : _connectivity = connectivity ?? Connectivity() {
+  ConnectivityPlusService({Connectivity? connectivity, AppLogger? logger})
+    : _connectivity = connectivity ?? Connectivity(),
+      _logger = logger ?? AppLogger.bootstrap() {
     runZonedGuarded(_init, _degradeToOffline);
   }
 
@@ -14,15 +16,25 @@ final class ConnectivityPlusService implements ConnectivityService {
     unawaited(_seed());
     _changes = _connectivity.onConnectivityChanged.listen(
       _apply,
-      onError: (_) => _publish(ConnectivityState.offline),
+      onError: (Object error, StackTrace stackTrace) {
+        _logger.warning(
+          'connectivity.stream_error',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        _publish(ConnectivityState.offline);
+      },
     );
   }
 
-  void _degradeToOffline(Object _, StackTrace _) {
+  void _degradeToOffline(Object error, StackTrace stackTrace) {
+    _logger.warning('connectivity.zone_error', error: error, stackTrace: stackTrace);
     _publish(ConnectivityState.offline);
   }
 
   final Connectivity _connectivity;
+
+  final AppLogger _logger;
 
   ConnectivityState _current = ConnectivityState.online;
 
@@ -62,7 +74,8 @@ final class ConnectivityPlusService implements ConnectivityService {
     List<ConnectivityResult> results;
     try {
       results = await _connectivity.checkConnectivity();
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      _logger.warning('connectivity.seed_failed', error: error, stackTrace: stackTrace);
       _publish(ConnectivityState.offline);
       return;
     }

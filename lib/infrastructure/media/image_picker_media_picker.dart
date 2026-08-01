@@ -1,10 +1,15 @@
 import 'package:image_picker/image_picker.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
 
 class ImagePickerMediaPicker implements MediaPicker {
-  ImagePickerMediaPicker({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
+  ImagePickerMediaPicker({ImagePicker? picker, AppLogger? logger})
+    : _picker = picker ?? ImagePicker(),
+      _logger = logger ?? AppLogger.bootstrap();
 
   final ImagePicker _picker;
+
+  final AppLogger _logger;
 
   @override
   Future<PickedMedia?> pickImage({bool fromCamera = false}) async {
@@ -19,7 +24,13 @@ class ImagePickerMediaPicker implements MediaPicker {
         mimeType: result.mimeType ?? '',
         fromCamera: fromCamera,
       );
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'media.pick_image_failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'fromCamera': fromCamera},
+      );
       return null;
     }
   }

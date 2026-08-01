@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -29,8 +30,21 @@ final class AppLogger {
     _talker.info(_format(message, context));
   }
 
-  void warning(String message, {Map<String, Object?> context = const {}}) {
-    _talker.warning(_format(message, context));
+  void warning(
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+    Map<String, Object?> context = const {},
+  }) {
+    final errorText = error == null ? null : _redactor.redactText(error.toString());
+    final formatted = _format(
+      message,
+      <String, Object?>{
+        ...context,
+        'error': ?errorText,
+      },
+    );
+    _talker.warning(formatted, null, _verbose ? stackTrace : null);
   }
 
   void error(
@@ -59,3 +73,9 @@ final class AppLogger {
     return '$redactedMessage | ${_redactor.redactContext(context)}';
   }
 }
+
+/// Shared diagnostic logger for Riverpod consumers.
+///
+/// Overridden at the composition root with the application's real [AppLogger]
+/// when one is available; otherwise falls back to a non-verbose instance.
+final appLoggerProvider = Provider<AppLogger>((ref) => AppLogger.bootstrap());

@@ -7,6 +7,7 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/route_support.dart';
 import 'package:starter/features/settings/license_page.dart';
 import 'package:starter/features/settings/settings_page.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';

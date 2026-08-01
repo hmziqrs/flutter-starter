@@ -5,44 +5,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/features/feedback/feedback_sheet.dart';
-import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
-import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/widgets/analytics_opt_in_tile.dart';
+import 'package:starter/features/settings/widgets/auto_lock_delay_tile.dart';
+import 'package:starter/features/settings/widgets/biometric_unlock_tile.dart';
+import 'package:starter/features/settings/widgets/haptics_tile.dart';
+import 'package:starter/features/settings/widgets/lock_on_background_tile.dart';
+import 'package:starter/features/settings/widgets/passcode_tile.dart';
+import 'package:starter/features/settings/widgets/settings_save_failure.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
-
-enum SettingsSection {
-  appearance('appearance'),
-  language('language'),
-  accessibility('accessibility'),
-  account('account'),
-  subscription('subscription'),
-  privacyAbout('privacy-about');
-
-  const SettingsSection(this.parameter);
-
-  final String parameter;
-
-  static SettingsSection? tryParse(String? value) {
-    return switch (value) {
-      'appearance' => SettingsSection.appearance,
-      'language' => SettingsSection.language,
-      'accessibility' => SettingsSection.accessibility,
-      'account' => SettingsSection.account,
-      'subscription' => SettingsSection.subscription,
-      'privacy-about' => SettingsSection.privacyAbout,
-      _ => null,
-    };
-  }
-}
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({
@@ -594,11 +574,11 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                   },
                 ),
               ),
-              const _BiometricUnlockTile(),
-              _PasscodeTile(onOpenSetup: widget.onOpenPasscodeSetup),
-              const _LockOnBackgroundTile(),
-              const _AutoLockDelayTile(),
-              const _AnalyticsOptInTile(),
+              const BiometricUnlockTile(),
+              PasscodeTile(onOpenSetup: widget.onOpenPasscodeSetup),
+              const LockOnBackgroundTile(),
+              const AutoLockDelayTile(),
+              const AnalyticsOptInTile(),
               FTile(
                 key: const ValueKey('settings-open-terms'),
                 title: Text(translations.settings.terms),
@@ -631,257 +611,6 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   }
 }
 
-mixin _SaveFailureState<T extends StatefulWidget> on State<T> {
-  bool _saveFailed = false;
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) setState(() => _saveFailed = false);
-    } on Object {
-      if (mounted) setState(() => _saveFailed = true);
-    }
-  }
-}
-
-class _HapticsTile extends ConsumerStatefulWidget {
-  const _HapticsTile();
-
-  @override
-  ConsumerState<_HapticsTile> createState() => _HapticsTileState();
-}
-
-class _HapticsTileState extends ConsumerState<_HapticsTile> with _SaveFailureState {
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final enabled = ref.watch(settingsControllerProvider).hapticsEnabled;
-    final controller = ref.read(settingsControllerProvider.notifier);
-    return _ToggleCard(
-      keyName: 'haptics',
-      label: Text(translations.settings.haptics.title),
-      description: Text(translations.settings.haptics.enable),
-      value: enabled,
-      onChange: (value) => _run(() => controller.setHapticsEnabled(enabled: value)),
-      saveFailed: _saveFailed,
-    );
-  }
-}
-
-class _BiometricUnlockTile extends ConsumerStatefulWidget {
-  const _BiometricUnlockTile();
-
-  @override
-  ConsumerState<_BiometricUnlockTile> createState() => _BiometricUnlockTileState();
-}
-
-class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> with _SaveFailureState {
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final enabled = ref.watch(settingsControllerProvider).biometricUnlockEnabled;
-    final controller = ref.read(settingsControllerProvider.notifier);
-    final availability = ref.watch(biometricAvailabilityProvider);
-    final canCheck = availability.maybeWhen(
-      data: (report) => report.canCheck,
-      orElse: () => false,
-    );
-    return _ToggleCard(
-      keyName: 'biometric',
-      label: Text(translations.settings.enableBiometric),
-      value: enabled,
-      onChange: (value) {
-        if (value && !canCheck) return;
-        unawaited(_run(() => controller.setBiometricUnlockEnabled(enabled: value)));
-      },
-      saveFailed: _saveFailed,
-    );
-  }
-}
-
-class _PasscodeTile extends ConsumerStatefulWidget {
-  const _PasscodeTile({required this.onOpenSetup});
-
-  final VoidCallback onOpenSetup;
-
-  @override
-  ConsumerState<_PasscodeTile> createState() => _PasscodeTileState();
-}
-
-class _PasscodeTileState extends ConsumerState<_PasscodeTile> with _SaveFailureState {
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final enabled = ref.watch(settingsControllerProvider).passcodeEnabled;
-    final controller = ref.read(settingsControllerProvider.notifier);
-    return _ToggleCard(
-      keyName: 'passcode',
-      label: Text(translations.settings.passcode),
-      value: enabled,
-      onChange: (value) async {
-        if (value) {
-          await _run(() => controller.setPasscodeEnabled(enabled: true));
-          if (context.mounted) widget.onOpenSetup();
-        } else {
-          await _run(() async {
-            await ref.read(passcodeControllerProvider.notifier).disable();
-            await controller.setPasscodeEnabled(enabled: false);
-          });
-        }
-      },
-      saveFailed: _saveFailed,
-    );
-  }
-}
-
-class _LockOnBackgroundTile extends ConsumerStatefulWidget {
-  const _LockOnBackgroundTile();
-
-  @override
-  ConsumerState<_LockOnBackgroundTile> createState() => _LockOnBackgroundTileState();
-}
-
-class _LockOnBackgroundTileState extends ConsumerState<_LockOnBackgroundTile>
-    with _SaveFailureState {
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final state = ref.watch(settingsControllerProvider);
-    final controller = ref.read(settingsControllerProvider.notifier);
-    return _ToggleCard(
-      keyName: 'lock-on-background',
-      label: Text(translations.settings.lockOnBackground),
-      value: state.lockOnBackground,
-      onChange: (value) {
-        if (!state.passcodeEnabled) return;
-        unawaited(_run(() => controller.setLockOnBackground(enabled: value)));
-      },
-      saveFailed: _saveFailed,
-    );
-  }
-}
-
-class _AutoLockDelayTile extends ConsumerStatefulWidget {
-  const _AutoLockDelayTile();
-
-  @override
-  ConsumerState<_AutoLockDelayTile> createState() => _AutoLockDelayTileState();
-}
-
-class _AutoLockDelayTileState extends ConsumerState<_AutoLockDelayTile> with _SaveFailureState {
-  static const _options = <int>[0, 30, 60, 300];
-
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final state = ref.watch(settingsControllerProvider);
-    final controller = ref.read(settingsControllerProvider.notifier);
-    return _ToggleCard(
-      keyName: 'auto-lock-delay',
-      label: Text(translations.settings.autoLockDelay),
-      status: _labelFor(translations, state.autoLockDelaySeconds),
-      value: state.autoLockDelaySeconds > 0,
-      onChange: (_) {
-        if (!state.passcodeEnabled) return;
-        final currentIndex = _options.indexOf(state.autoLockDelaySeconds);
-        final nextIndex = (currentIndex + 1) % _options.length;
-        unawaited(_run(() => controller.setAutoLockDelaySeconds(_options[nextIndex])));
-      },
-      saveFailed: _saveFailed,
-    );
-  }
-
-  String _labelFor(Translations translations, int seconds) {
-    if (seconds <= 0) return translations.settings.analytics.statusOff;
-    if (seconds < 60) return '${seconds}s';
-    final minutes = seconds ~/ 60;
-    return '${minutes}m';
-  }
-}
-
-class _AnalyticsOptInTile extends ConsumerStatefulWidget {
-  const _AnalyticsOptInTile();
-
-  @override
-  ConsumerState<_AnalyticsOptInTile> createState() => _AnalyticsOptInTileState();
-}
-
-class _AnalyticsOptInTileState extends ConsumerState<_AnalyticsOptInTile> with _SaveFailureState {
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    final optedIn = ref.watch(analyticsOptInControllerProvider);
-    final controller = ref.read(analyticsOptInControllerProvider.notifier);
-    return _ToggleCard(
-      keyName: 'analytics',
-      label: Text(translations.settings.analytics.optInTitle),
-      description: Text(translations.settings.analytics.optInBody),
-      status: optedIn
-          ? translations.settings.analytics.statusOn
-          : translations.settings.analytics.statusOff,
-      value: optedIn,
-      onChange: (value) => _run(() => controller.setOptIn(value: value)),
-      saveFailed: _saveFailed,
-    );
-  }
-}
-
-class _ToggleCard extends StatelessWidget {
-  const _ToggleCard({
-    required this.keyName,
-    required this.label,
-    required this.value,
-    required this.onChange,
-    required this.saveFailed,
-    this.description,
-    this.status,
-  });
-
-  final String keyName;
-  final Widget label;
-  final Widget? description;
-  final String? status;
-  final bool value;
-  final ValueChanged<bool> onChange;
-  final bool saveFailed;
-
-  @override
-  Widget build(BuildContext context) {
-    final translations = context.t;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FSwitch(
-              key: ValueKey('settings-toggle-$keyName'),
-              value: value,
-              label: label,
-              description: description,
-              onChange: onChange,
-            ),
-            if (status case final status?) ...[
-              const SizedBox(height: AppSpacing.md),
-              Text(status, style: context.theme.typography.body.sm),
-            ],
-            if (saveFailed) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                translations.common.notConnected,
-                key: const ValueKey('settings-toggle-save-error'),
-                style: context.theme.typography.body.sm.copyWith(
-                  color: context.theme.colors.error,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _DirectionalChevron extends StatelessWidget {
   const _DirectionalChevron();
 
@@ -903,7 +632,7 @@ class _AppearanceSettingsContent extends ConsumerStatefulWidget {
 }
 
 class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsContent>
-    with _SaveFailureState {
+    with SettingsSaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -926,7 +655,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
                     key: ValueKey('theme-${mode.name}'),
                     variant: settings.themeMode == mode ? .primary : .outline,
                     mainAxisSize: .min,
-                    onPress: () => _run(() => controller.setThemeMode(mode)),
+                    onPress: () => runSave(() => controller.setThemeMode(mode)),
                     child: Text(_themeModeLabel(translations, mode)),
                   ),
               ],
@@ -944,7 +673,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
                     key: ValueKey('accent-${accent.name}'),
                     variant: settings.accent == accent ? .primary : .outline,
                     mainAxisSize: .min,
-                    onPress: () => _run(() => controller.setAccent(accent)),
+                    onPress: () => runSave(() => controller.setAccent(accent)),
                     child: Text(_accentLabel(translations, accent)),
                   ),
               ],
@@ -966,7 +695,9 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
                         SettingsState.fontScaleStep /
                         (SettingsState.maximumFontScale - SettingsState.minimumFontScale),
                     onChange: (value) {
-                      unawaited(_run(() => controller.setFontScale(_sliderToFontScale(value.max))));
+                      unawaited(
+                        runSave(() => controller.setFontScale(_sliderToFontScale(value.max))),
+                      );
                     },
                   ),
                   semanticValueFormatterCallback: (value) {
@@ -985,8 +716,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             child: const _AppearanceMotionPreview(),
           ),
           const SizedBox(height: AppSpacing.lg),
-          const _HapticsTile(),
-          if (_saveFailed) ...[
+          const HapticsTile(),
+          if (saveFailed) ...[
             const SizedBox(height: AppSpacing.md),
             Text(
               translations.common.notConnected,
@@ -1010,7 +741,7 @@ class _LanguageSettingsContent extends ConsumerStatefulWidget {
 }
 
 class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsContent>
-    with _SaveFailureState {
+    with SettingsSaveFailureState {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -1032,9 +763,9 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
               key: ValueKey(key),
               selected: settings.localeOverride == locale,
               label: label,
-              onPress: () => _run(() => controller.setLocale(locale)),
+              onPress: () => runSave(() => controller.setLocale(locale)),
             ),
-          if (_saveFailed)
+          if (saveFailed)
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Text(

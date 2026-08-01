@@ -1,9 +1,12 @@
 import 'package:cross_file/cross_file.dart';
 import 'package:share_plus/share_plus.dart' as sp;
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/sharing/share_service.dart';
 
 class SharePlusShareService implements ShareService {
-  const SharePlusShareService();
+  SharePlusShareService({AppLogger? logger}) : _logger = logger ?? AppLogger.bootstrap();
+
+  final AppLogger _logger;
 
   @override
   Future<ShareResult> shareText(String text) async {
@@ -13,7 +16,8 @@ class SharePlusShareService implements ShareService {
     try {
       final result = await sp.SharePlus.instance.share(sp.ShareParams(text: text));
       return _mapStatus(result.status);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      _logger.warning('share.text_failed', error: error, stackTrace: stackTrace);
       return ShareResult.unavailable;
     }
   }
@@ -26,7 +30,8 @@ class SharePlusShareService implements ShareService {
     try {
       final result = await sp.SharePlus.instance.share(sp.ShareParams(files: files));
       return _mapStatus(result.status);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      _logger.warning('share.files_failed', error: error, stackTrace: stackTrace);
       return ShareResult.unavailable;
     }
   }

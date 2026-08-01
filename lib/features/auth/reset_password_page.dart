@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/features/auth/auth_form_support.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/reset_password_form_value.dart';
 import 'package:starter/features/auth/reset_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
+import 'package:starter/shared/forms/form_validators.dart';
+import 'package:starter/shared/forms/password_field_toggle.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -59,7 +61,7 @@ class _ResetPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with RestorationMixin {
+class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -73,12 +75,6 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
   bool get _submitting =>
       _callbackSubmitting ||
       widget.presentation.status == ResetPasswordPresentationStatus.submitting;
-
-  @override
-  String get restorationId => 'reset-password-view';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {}
 
   @override
   void initState() {
@@ -183,14 +179,14 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
                   enabled: !_submitting,
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-                  validator: (value) => validateAuthPassword(
+                  validator: (value) => validatePassword(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.resetPassword.newPassword,
                     ),
                     weakMessage: translations.validation.passwordWeak,
                   ),
-                  suffixBuilder: buildAuthPasswordToggle(
+                  suffixBuilder: buildPasswordToggle(
                     key: const ValueKey('auth-reset-password-new-toggle'),
                   ),
                   onEditingComplete: () {
@@ -226,7 +222,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
                       ? translations.validation.passwordMismatch
                       : null,
                   validator: (value) {
-                    final requiredError = validateAuthRequired(
+                    final requiredError = validateRequired(
                       value,
                       translations.validation.required(
                         field: translations.auth.common.confirmPassword,
@@ -238,7 +234,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
                     }
                     return null;
                   },
-                  suffixBuilder: buildAuthPasswordToggle(
+                  suffixBuilder: buildPasswordToggle(
                     key: const ValueKey('auth-reset-password-confirm-toggle'),
                   ),
                   onSubmit: (_) {
@@ -323,7 +319,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> with Res
     if (form == null) return;
     final invalidFields = form.validateGranularly();
     if (invalidFields.isNotEmpty) {
-      await revealFirstAuthInvalid(
+      await revealFirstInvalid(
         invalidFields,
         orderedTargets: [
           (

@@ -3,6 +3,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/shared/async/run_guarded.dart';
+
+// Params back private fields with distinct public names, so initializing-formals
+// don't apply.
+// ignore_for_file: prefer_initializing_formals
 
 const String lastRouteKey = 'nav.last_route';
 
@@ -41,11 +47,13 @@ String? pathForLastRouteName(String? name) {
 }
 
 final class LastRouteObserver extends NavigatorObserver {
-  // Public `store` param backs a private field, so initializing-formals don't apply.
-  // ignore: prefer_initializing_formals
-  LastRouteObserver({required SettingsStore store}) : _store = store;
+  LastRouteObserver({required SettingsStore store, AppLogger? logger})
+    : _store = store,
+      _logger = logger ?? AppLogger.bootstrap();
 
   final SettingsStore _store;
+
+  final AppLogger _logger;
 
   String? _lastWritten;
 
@@ -74,6 +82,12 @@ final class LastRouteObserver extends NavigatorObserver {
       return;
     }
     _lastWritten = path;
-    unawaited(_store.writeString(lastRouteKey, path).catchError((Object _, StackTrace _) {}));
+    unawaited(
+      runGuarded(
+        () => _store.writeString(lastRouteKey, path),
+        logger: _logger,
+        label: 'last_route.persist',
+      ),
+    );
   }
 }

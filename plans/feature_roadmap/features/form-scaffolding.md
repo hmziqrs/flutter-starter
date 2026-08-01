@@ -6,14 +6,14 @@
 
 Generalize the validators, password-toggle, and first-invalid-field-reveal already duplicated
 across five auth pages into `lib/shared/forms/`, plus a `FormScaffold` widget — so future forms
-(billing, settings-entry, feedback) don't re-implement validation. The seed already exists in
-[`auth_form_support.dart`](../../lib/features/auth/auth_form_support.dart); this is an
-extraction, not new behavior.
+(billing, settings-entry, feedback) don't re-implement validation. The seed was
+`lib/features/auth/auth_form_support.dart`, now extracted and deleted; this is an extraction,
+not new behavior.
 
 ## Contract
 
-- **Ports / value objects:** No port — backend-free. The existing `AuthInvalidFieldTarget`
-  record moves verbatim and is renamed `InvalidFieldTarget`; validators keep their
+- **Ports / value objects:** No port — backend-free. The former `AuthInvalidFieldTarget`
+  record moved verbatim and is renamed `InvalidFieldTarget`; validators keep their
   `(value, messages)` signatures. No codegen — presentation_state stays handwritten Riverpod.
 - **Providers:** none — pure helpers + a widget. State stays in each feature's
   `*_presentation_state`.
@@ -26,10 +26,8 @@ extraction, not new behavior.
   - add `lib/shared/forms/password_field_toggle.dart` — `buildPasswordToggle`
   - add `lib/shared/widgets/forms/form_scaffold.dart` — `FScaffold` + `FButton` submit +
     `FCard` grouping
-  - edit [`lib/features/auth/auth_form_support.dart`](../../lib/features/auth/auth_form_support.dart)
-    — becomes an aliasing facade (typedef + top-level aliases such as
-    `final validateAuthRequired = validateRequired;`) so the five existing Auth-prefixed
-    call sites resolve unchanged
+  - delete `lib/features/auth/auth_form_support.dart` — the transitional aliasing facade; the
+    five auth pages import `lib/shared/forms/` directly
   - add `test/shared/forms/form_validators_test.dart` + `test/shared/forms/form_field_reveal_test.dart`
 - **Dependencies:** none (Flutter SDK + ForUI `FTextField` / `FButton` / `FScaffold`)
 
@@ -76,11 +74,10 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
 
 ## Risks / notes
 
-- **Keep the facade.** Leave `auth_form_support.dart` as an aliasing facade (typedef + top-level
-  aliases such as `final validateAuthRequired = validateRequired;`,
-  `final validateAuthEmail = validateEmail;`, etc.) so the five existing Auth-prefixed call
-  sites resolve unchanged — do not rewrite every auth page in this change. The extraction is
-  rename-only; a pure Dart `export` cannot rename, so any behavior change is a separate PR.
+- **The facade is retired.** `auth_form_support.dart` served its purpose as a rename-only
+  aliasing shim during the extraction and has since been deleted; the five auth pages now import
+  `lib/shared/forms/` directly. Do not reintroduce it — a new alias layer over `shared/forms/`
+  would be pure indirection.
 - **Pair the submit with busy-indicators.** `FormScaffold` mounts the indicator from
   [busy-indicators.md](busy-indicators.md) so submit affordance is consistent — sequence after
   or alongside it.

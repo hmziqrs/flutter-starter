@@ -3,9 +3,13 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:starter/infrastructure/firebase/performance_supported.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 final class FirebasePerformanceDioInterceptor extends Interceptor {
-  FirebasePerformanceDioInterceptor();
+  FirebasePerformanceDioInterceptor({AppLogger? logger})
+    : _logger = logger ?? AppLogger.bootstrap();
+
+  final AppLogger _logger;
 
   final Expando<HttpMetric> _metrics = Expando<HttpMetric>();
 
@@ -19,8 +23,12 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
         );
         unawaited(metric.start());
         _metrics[options] = metric;
-      } on Object {
-        // ignored
+      } on Object catch (error, stackTrace) {
+        _logger.warning(
+          'firebase_perf.http_metric.start',
+          error: error,
+          stackTrace: stackTrace,
+        );
       }
     }
     handler.next(options);
@@ -69,8 +77,12 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
         }
       }
       unawaited(metric.stop());
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'firebase_perf.http_metric.stop',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

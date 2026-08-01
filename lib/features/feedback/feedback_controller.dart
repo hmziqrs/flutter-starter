@@ -33,8 +33,6 @@ final feedbackAppMetadataProvider = Provider<FeedbackAppMetadata>(
   ),
 );
 
-final feedbackLoggerProvider = Provider<AppLogger>((ref) => AppLogger.bootstrap());
-
 @freezed
 abstract class FeedbackControllerState with _$FeedbackControllerState {
   const factory FeedbackControllerState({
@@ -52,7 +50,7 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
 
   FeedbackTransport get _transport => ref.read(feedbackTransportProvider);
   SettingsStore get _store => ref.read(settingsStoreProvider);
-  AppLogger get _logger => ref.read(feedbackLoggerProvider);
+  AppLogger get _logger => ref.read(appLoggerProvider);
 
   @override
   FeedbackControllerState build() {

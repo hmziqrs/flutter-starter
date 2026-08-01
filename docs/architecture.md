@@ -239,7 +239,7 @@ Files:
 - `lib/features/auth/login_page.dart` — canonical page+form_value+presentation_state trio (replicated per routed screen below)
 - `lib/features/auth/{register,forgot_password,reset_password,otp}_page.dart` — sibling routed auth screens, each with its own `*_form_value` + `*_presentation_state` trio
 - `lib/features/auth/auth_page_scaffold.dart` — adaptive auth shell (compact/medium/expanded layout only)
-- `lib/features/auth/auth_form_support.dart` — shared email/password validators, password-toggle, first-invalid-field reveal (used by all auth pages)
+- `lib/shared/forms/{form_validators,password_field_toggle,form_field_reveal}.dart` — shared email/password validators, password-toggle, first-invalid-field reveal (imported directly by all auth pages)
 - `lib/features/home/home_page.dart` — dashboard + fixtures
 - `lib/features/onboarding/onboarding_page.dart` — slide PageView to paywall
 - `lib/features/pricing/pricing_page.dart` / `paywall_page.dart` — plan grid + paywall

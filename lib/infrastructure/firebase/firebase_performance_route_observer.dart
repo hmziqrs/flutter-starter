@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starter/infrastructure/firebase/performance_supported.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 class FirebasePerformanceRouteObserver extends NavigatorObserver {
-  FirebasePerformanceRouteObserver();
+  FirebasePerformanceRouteObserver({AppLogger? logger}) : _logger = logger ?? AppLogger.bootstrap();
+
+  final AppLogger _logger;
 
   final Map<String, Trace> _traces = <String, Trace>{};
 
@@ -39,8 +42,8 @@ class FirebasePerformanceRouteObserver extends NavigatorObserver {
       final trace = FirebasePerformance.instance.newTrace('route:$name');
       unawaited(trace.start());
       _traces[name] = trace;
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning('firebase_perf.route_trace.start', error: error, stackTrace: stackTrace);
     }
   }
 
@@ -58,8 +61,8 @@ class FirebasePerformanceRouteObserver extends NavigatorObserver {
     }
     try {
       unawaited(trace.stop());
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning('firebase_perf.route_trace.stop', error: error, stackTrace: stackTrace);
     }
   }
 
