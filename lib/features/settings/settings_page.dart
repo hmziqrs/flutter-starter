@@ -12,6 +12,7 @@ import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -626,14 +627,24 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   }
 }
 
-mixin _SaveFailureState<T extends StatefulWidget> on State<T> {
+mixin _SaveFailureState<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   bool _saveFailed = false;
 
+  /// Runs a settings write, surfacing failure as [_saveFailed] for the tile to
+  /// render. The failure is also logged: the controller rethrows, so this catch
+  /// is where the signal would otherwise be lost entirely.
   Future<void> _run(Future<void> Function() operation) async {
+    final logger = ref.read(appLoggerProvider);
     try {
       await operation();
       if (mounted) setState(() => _saveFailed = false);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'settings.save_failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'tile': '$T'},
+      );
       if (mounted) setState(() => _saveFailed = true);
     }
   }
