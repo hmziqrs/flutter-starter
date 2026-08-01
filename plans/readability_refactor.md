@@ -1,5 +1,36 @@
 # Readability & Architecture Refactor Plan
 
+## Outcome (executed on `refactor/readability-cleanup`)
+
+Baseline at start: 1155 tests green. Final: **1161 green, 14/14 goldens unchanged,
+`gen-check` clean.** `settings_page.dart` went 1247 → 978 lines.
+
+| Commit | Step | Result |
+|---|---|---|
+| `44746be` | 1 | Deleted `auth_form_support.dart` (42 lines, 6 pass-through symbols) + the 2 docs that told the next agent to keep it |
+| `49320fd` | 6 | `SettingsSection.tryParse` derived from `values`; added round-trip coverage for all 6 sections |
+| `a55d51e` | 2 | Settings save failures now logged; duplicate `feedbackLoggerProvider` removed; 3 tests added for a path that had none |
+| `c0bf877` | 4a | `SettingsSection` moved to its own file — `route_guards.dart` no longer imports a 1200-line widget file for an enum |
+| `843ca8b` | 4b | Six preference tiles + toggle card + save-failure mixin moved to `widgets/` |
+
+**Dropped as planned:** Step 3 (auth submit mixin) and Step 5 (enum consolidation).
+
+**Found during execution, not in any audit:** making the tiles public triggers
+`use_key_in_widget_constructors`, so each needs `super.key`. Minor, but it means "make it
+public" is never free in this repo.
+
+**Investigated, deliberately not changed:** `login_page.dart:314-317` keeps a non-null
+no-op `onPress` while submitting on *every* platform, whereas `register`, `forgot_password`,
+and `reset_password` only do so on ten-foot (`retainBusySubmitFocus` /
+`isTenFoot`) and otherwise pass `null`. Login never computes ten-foot in `build` at all.
+**No functional bug** — `_submit()` guards with `if (_submitting) return`, so duplicate
+submits are suppressed either way. The difference is affordance only: login's submit button
+does not render its disabled state while in flight. `login_page_test.dart:106` pins the
+current behavior with `isNotNull`, so aligning it is a product decision plus a test change,
+not a refactor.
+
+---
+
 Status: **audited and revised.** Four independent audits (fact-check, conventions,
 test-safety, red-team) ran against the draft. Two of the draft's six steps are dropped,
 one is trimmed, and three of its factual claims were refuted. Open questions A1–A9 are
