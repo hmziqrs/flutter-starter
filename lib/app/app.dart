@@ -50,6 +50,7 @@ import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/firebase/firebase_performance_route_observer.dart';
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
@@ -79,6 +80,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       overrides: [
+        appLoggerProvider.overrideWithValue(dependencies.logger),
         settingsRepositoryProvider.overrideWithValue(dependencies.settings.settingsRepository),
         initialSettingsProvider.overrideWithValue(dependencies.settings.initialSettings),
         settingsStoreProvider.overrideWithValue(dependencies.settings.settingsStore),
@@ -187,7 +189,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     observers: [
       AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
       LastRouteObserver(store: ref.read(settingsStoreProvider)),
-      FirebasePerformanceRouteObserver(),
+      FirebasePerformanceRouteObserver(logger: ref.read(appLoggerProvider)),
       ...widget.inspectorHost.navigatorObservers,
     ],
   );

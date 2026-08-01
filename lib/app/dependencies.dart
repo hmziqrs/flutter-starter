@@ -72,6 +72,7 @@ import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 
 final class AppDependencies {
   const AppDependencies({
+    required this.logger,
     required this.settings,
     required this.storage,
     required this.auth,
@@ -97,6 +98,7 @@ final class AppDependencies {
     final versionGateStore = InMemoryVersionGateStore();
     final effectiveSecureStore = secureStore ?? InMemorySecureStore();
     return AppDependencies(
+      logger: AppLogger.bootstrap(),
       settings: SettingsDependencies(
         settingsRepository: SettingsRepository(effectiveSettingsStore),
         settingsStore: effectiveSettingsStore,
@@ -166,6 +168,8 @@ final class AppDependencies {
     );
   }
 
+  final AppLogger logger;
+
   final SettingsDependencies settings;
   final StorageDependencies storage;
   final AuthDependencies auth;
@@ -183,6 +187,7 @@ final class AppDependencies {
 
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
     return AppDependencies(
+      logger: logger,
       settings: settings,
       storage: storage,
       auth: auth,
@@ -247,7 +252,12 @@ final class AppDependencies {
     var initialAnalyticsOptIn = false;
     try {
       initialAnalyticsOptIn = await effectiveSecureStore.read(analyticsOptInKey) == 'true';
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'Unable to read analytics opt-in; defaulting to off',
+        error: error,
+        stackTrace: stackTrace,
+      );
       initialAnalyticsOptIn = false;
     }
     final biometricAuthenticator = capabilities.isWeb
@@ -264,13 +274,23 @@ final class AppDependencies {
         email: email == null || email.isEmpty ? null : email,
         includeScreenshot: includeScreenshot == 'true',
       );
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'Unable to read persisted feedback draft; using empty seed',
+        error: error,
+        stackTrace: stackTrace,
+      );
       initialFeedbackDraft = const FeedbackDraft.empty();
     }
     try {
       initialFeedbackShakeEnabled =
           await settingsStore.readString(feedbackShakeEnabledKey) == 'true';
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'Unable to read shake-feedback flag; defaulting to off',
+        error: error,
+        stackTrace: stackTrace,
+      );
       initialFeedbackShakeEnabled = false;
     }
     CacheStore cacheStore;
@@ -280,7 +300,12 @@ final class AppDependencies {
       try {
         final cacheDir = await FileCacheStore.resolveApplicationSupportDirectory();
         cacheStore = FileCacheStore(cacheDir);
-      } on Object {
+      } on Object catch (error, stackTrace) {
+        logger.warning(
+          'Unable to resolve cache directory; falling back to in-memory cache',
+          error: error,
+          stackTrace: stackTrace,
+        );
         cacheStore = InMemoryCacheStore();
       }
     }
@@ -294,7 +319,7 @@ final class AppDependencies {
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
     if (backendBaseUrl != null) {
-      final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost);
+      final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost, logger: logger);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
       profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl, dio: dio);
@@ -304,6 +329,7 @@ final class AppDependencies {
       profileRepository = const NoopProfileRepository();
     }
     return AppDependencies(
+      logger: logger,
       settings: SettingsDependencies(
         settingsRepository: repository,
         settingsStore: settingsStore,
@@ -315,7 +341,7 @@ final class AppDependencies {
       ),
       auth: AuthDependencies(
         authRepository: authRepository,
-        sessionRepository: SessionRepository(effectiveSecureStore),
+        sessionRepository: SessionRepository(effectiveSecureStore, logger: logger),
         initialSession: const AuthAnonymous(),
         otpRepository: otpRepository,
         attemptTracker: InMemoryAttemptTracker(),
@@ -356,12 +382,16 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: capabilities,
         buildInfo: buildInfo,
-        connectivityService: ConnectivityPlusService(),
+        connectivityService: ConnectivityPlusService(logger: logger),
         hapticService: const DeviceHapticService(),
-        permissionService: _selectPermissionService(capabilities),
-        mediaPicker: _selectMediaPicker(capabilities),
-        shareService: _selectShareService(capabilities),
-        appUpdateService: _selectAppUpdateService(capabilities, iosAppleId: iosAppleId),
+        permissionService: _selectPermissionService(capabilities, logger: logger),
+        mediaPicker: _selectMediaPicker(capabilities, logger: logger),
+        shareService: _selectShareService(capabilities, logger: logger),
+        appUpdateService: _selectAppUpdateService(
+          capabilities,
+          iosAppleId: iosAppleId,
+          logger: logger,
+        ),
         appLinkHandler: AppLinksDeepLinkService(
           handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
         ),
@@ -376,35 +406,47 @@ final class AppDependencies {
     );
   }
 
-  static PermissionService _selectPermissionService(PlatformCapabilities caps) {
+  static PermissionService _selectPermissionService(
+    PlatformCapabilities caps, {
+    required AppLogger logger,
+  }) {
     if (caps.isWeb) return const NoopPermissionService();
     return switch (caps.platform) {
-      'ios' || 'android' => DevicePermissionService(),
+      'ios' || 'android' => DevicePermissionService(logger: logger),
       _ => const NoopPermissionService(),
     };
   }
 
-  static MediaPicker _selectMediaPicker(PlatformCapabilities caps) {
+  static MediaPicker _selectMediaPicker(
+    PlatformCapabilities caps, {
+    required AppLogger logger,
+  }) {
     if (caps.isWeb) return const NoopMediaPicker();
     return switch (caps.platform) {
-      'ios' || 'android' => ImagePickerMediaPicker(),
+      'ios' || 'android' => ImagePickerMediaPicker(logger: logger),
       _ => const NoopMediaPicker(),
     };
   }
 
-  static ShareService _selectShareService(PlatformCapabilities caps) {
+  static ShareService _selectShareService(
+    PlatformCapabilities caps, {
+    required AppLogger logger,
+  }) {
     if (caps.isWeb) return const NoopShareService();
-    return shareTargetAvailable(caps) ? const SharePlusShareService() : const NoopShareService();
+    return shareTargetAvailable(caps)
+        ? SharePlusShareService(logger: logger)
+        : const NoopShareService();
   }
 
   static AppUpdateService _selectAppUpdateService(
     PlatformCapabilities caps, {
     required String iosAppleId,
+    required AppLogger logger,
   }) {
     if (caps.isWeb) return const NoopAppUpdateService();
     return switch (caps.platform) {
-      'android' => const AndroidAppUpdateService(),
-      'ios' => IosAppUpdateService(appleId: iosAppleId),
+      'android' => AndroidAppUpdateService(logger: logger),
+      'ios' => IosAppUpdateService(appleId: iosAppleId, logger: logger),
       _ => const NoopAppUpdateService(),
     };
   }

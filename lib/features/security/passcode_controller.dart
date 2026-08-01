@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/security/passcode_hasher.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 
@@ -97,6 +98,7 @@ class PasscodeController extends Notifier<PasscodeState> {
 
   SecureStore get _store => ref.read(secureStoreProvider);
   PasscodeHasher get _hasher => ref.read(passcodeHasherProvider);
+  AppLogger get _logger => ref.read(appLoggerProvider);
 
   @override
   PasscodeState build() {
@@ -128,8 +130,8 @@ class PasscodeController extends Notifier<PasscodeState> {
         lockedUntil: lockedUntil,
         totalFailures: totalFailures,
       );
-    } on SecureStoreException {
-      // ignored
+    } on SecureStoreException catch (error, stackTrace) {
+      _logger.warning('passcode.hydrate_failed', error: error, stackTrace: stackTrace);
     }
   }
 
@@ -218,15 +220,20 @@ class PasscodeController extends Notifier<PasscodeState> {
       await _store.write(attemptsKey, freeAttemptsBeforeLockout.toString());
       await _store.delete(lockedUntilKey);
       await _store.delete(totalFailuresKey);
-    } on SecureStoreException {
-      // ignored
+    } on SecureStoreException catch (error, stackTrace) {
+      _logger.warning(
+        'passcode.reset_attempts_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   Future<String?> _readHash() async {
     try {
       return await _store.read(hashKey);
-    } on SecureStoreException {
+    } on SecureStoreException catch (error, stackTrace) {
+      _logger.warning('passcode.read_hash_failed', error: error, stackTrace: stackTrace);
       return null;
     }
   }
@@ -263,8 +270,12 @@ class PasscodeController extends Notifier<PasscodeState> {
           null => _store.delete(lockedUntilKey),
         },
       ]);
-    } on SecureStoreException {
-      // ignored
+    } on SecureStoreException catch (error, stackTrace) {
+      _logger.warning(
+        'passcode.write_attempts_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -277,8 +288,8 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.delete(lockedUntilKey),
         _store.delete(totalFailuresKey),
       ]);
-    } on SecureStoreException {
-      // ignored
+    } on SecureStoreException catch (error, stackTrace) {
+      _logger.warning('passcode.delete_all_failed', error: error, stackTrace: stackTrace);
     }
   }
 

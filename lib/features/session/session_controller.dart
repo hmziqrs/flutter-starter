@@ -5,6 +5,7 @@ import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_repository.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => throw StateError('AuthRepository must be overridden at the composition root.'),
@@ -23,6 +24,7 @@ final sessionControllerProvider = NotifierProvider<SessionController, AuthSessio
 final class SessionController extends Notifier<AuthSession> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
   SessionRepository get _sessionRepository => ref.read(sessionRepositoryProvider);
+  AppLogger get _logger => ref.read(appLoggerProvider);
 
   @override
   AuthSession build() {
@@ -88,13 +90,21 @@ final class SessionController extends Notifier<AuthSession> {
     state = const AuthAnonymous();
     try {
       await _repository.logout(previous);
-    } on AuthException {
-      // ignored
+    } on AuthException catch (error, stackTrace) {
+      _logger.warning(
+        'Remote logout failed; completing local logout',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
     try {
       await _sessionRepository.deleteRefreshToken();
-    } on Object {
-      // ignored
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'Failed to delete refresh token during logout',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -111,11 +121,20 @@ final class SessionController extends Notifier<AuthSession> {
     );
     try {
       await _refresh(stub);
-    } on AuthException {
+    } on AuthException catch (error, stackTrace) {
+      _logger.warning(
+        'Stored refresh token rejected during hydration; clearing',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         await _sessionRepository.deleteRefreshToken();
-      } on Object {
-        // ignored
+      } on Object catch (error, stackTrace) {
+        _logger.warning(
+          'Failed to delete rejected refresh token',
+          error: error,
+          stackTrace: stackTrace,
+        );
       }
     }
   }
@@ -123,8 +142,12 @@ final class SessionController extends Notifier<AuthSession> {
   Future<void> _safeRefreshIfExpired() async {
     try {
       await refreshIfExpired();
-    } on AuthException {
-      // ignored
+    } on AuthException catch (error, stackTrace) {
+      _logger.warning(
+        'Background session refresh failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

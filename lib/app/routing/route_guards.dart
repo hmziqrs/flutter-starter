@@ -16,6 +16,8 @@ import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/shared/async/run_guarded.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 String? appRedirect(
@@ -153,7 +155,9 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
           showSoftUpdateDialog(
             context,
             state: ForceUpdateState.from(requirement),
-            onUpdate: () => unawaited(launchStoreUrl(requirement.storeUrl)),
+            onUpdate: () => unawaited(
+              launchStoreUrl(requirement.storeUrl, logger: container.read(appLoggerProvider)),
+            ),
             onLater: () => store.writeString(SoftUpdateSnooze.key, SoftUpdateSnooze.encode()),
           ),
         );
@@ -162,16 +166,16 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
   });
 }
 
-Future<void> launchStoreUrl(String storeUrl) async {
+Future<void> launchStoreUrl(String storeUrl, {AppLogger? logger}) async {
   final uri = Uri.tryParse(storeUrl);
   if (uri == null) {
     return;
   }
-  try {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } on Object {
-    // ignored
-  }
+  await runGuarded(
+    () => launchUrl(uri, mode: LaunchMode.externalApplication),
+    logger: logger ?? AppLogger.bootstrap(),
+    label: 'force_update.launch_store',
+  );
 }
 
 bool _readLivePasscodeRequiresChallenge(BuildContext context) {

@@ -4,6 +4,7 @@ import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 final class CacheUnavailable implements Exception {
   const CacheUnavailable({this.key});
@@ -61,12 +62,19 @@ final class CachedFutureSpec<T> {
 FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> spec) {
   return FutureProvider<CachedValue<T>>((ref) async {
     final store = ref.watch(cacheStoreProvider);
+    final logger = ref.read(appLoggerProvider);
     final now = clock.now();
 
     CacheEntry<T>? cached;
     try {
       cached = await store.read<T>(spec.key, codec: spec.codec);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'cache.read_failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'key': spec.key},
+      );
       cached = null;
     }
 
@@ -93,11 +101,22 @@ FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> 
       );
       try {
         await store.write<T>(spec.key, entry, codec: spec.codec);
-      } on Object {
-        // ignored
+      } on Object catch (error, stackTrace) {
+        logger.warning(
+          'cache.write_failed',
+          error: error,
+          stackTrace: stackTrace,
+          context: {'key': spec.key},
+        );
       }
       return CachedValue<T>.fresh(entry);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      logger.warning(
+        'cache.fetch_failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'key': spec.key},
+      );
       if (cached != null) {
         return CachedValue<T>.stale(cached);
       }
