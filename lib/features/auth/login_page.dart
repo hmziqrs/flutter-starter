@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/features/auth/auth_form_support.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/login_form_value.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
+import 'package:starter/shared/forms/form_validators.dart';
+import 'package:starter/shared/forms/password_field_toggle.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -231,7 +233,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
                   forceErrorText: invalidFixture || fieldFailureFixture
                       ? translations.validation.email
                       : null,
-                  validator: (value) => validateAuthEmail(
+                  validator: (value) => validateEmail(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.common.email,
@@ -267,14 +269,14 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
                   enabled: !(_submitting || _locked),
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-                  validator: (value) => validateAuthPassword(
+                  validator: (value) => validatePassword(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.common.password,
                     ),
                     weakMessage: translations.validation.passwordWeak,
                   ),
-                  suffixBuilder: buildAuthPasswordToggle(
+                  suffixBuilder: buildPasswordToggle(
                     key: const ValueKey('auth-login-password-toggle'),
                   ),
                   onSubmit: (_) {
@@ -445,7 +447,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   }
 
   Future<void> _revealFirstInvalid(Set<FormFieldState<Object?>> invalidFields) async {
-    await revealFirstAuthInvalid(
+    await revealFirstInvalid(
       invalidFields,
       orderedTargets: [
         (

@@ -5,13 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
-import 'package:starter/features/auth/auth_form_support.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/otp_form_value.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -432,7 +432,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     if (form == null) return;
     final invalidFields = form.validateGranularly();
     if (invalidFields.isNotEmpty) {
-      await revealFirstAuthInvalid(
+      await revealFirstInvalid(
         invalidFields,
         orderedTargets: [
           (

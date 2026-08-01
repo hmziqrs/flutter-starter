@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/features/auth/auth_form_support.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/forgot_password_form_value.dart';
 import 'package:starter/features/auth/forgot_password_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
+import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -194,7 +195,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
                   enabled: !_submitting,
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: forceEmailError ? translations.validation.email : null,
-                  validator: (value) => validateAuthEmail(
+                  validator: (value) => validateEmail(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.common.email,
@@ -283,7 +284,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
     if (form == null) return;
     final invalidFields = form.validateGranularly();
     if (invalidFields.isNotEmpty) {
-      await revealFirstAuthInvalid(
+      await revealFirstInvalid(
         invalidFields,
         orderedTargets: [
           (

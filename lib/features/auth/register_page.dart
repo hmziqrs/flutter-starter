@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/features/auth/auth_form_support.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/register_form_value.dart';
 import 'package:starter/features/auth/register_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/forms/form_field_reveal.dart';
+import 'package:starter/shared/forms/form_validators.dart';
+import 'package:starter/shared/forms/password_field_toggle.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -255,7 +257,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                           field: translations.auth.common.displayName,
                         )
                       : null,
-                  validator: (value) => validateAuthRequired(
+                  validator: (value) => validateRequired(
                     value,
                     translations.validation.required(
                       field: translations.auth.common.displayName,
@@ -291,7 +293,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                   forceErrorText: invalidFixture || fieldFailureFixture
                       ? translations.validation.email
                       : null,
-                  validator: (value) => validateAuthEmail(
+                  validator: (value) => validateEmail(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.common.email,
@@ -330,14 +332,14 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                   enabled: !_submitting,
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-                  validator: (value) => validateAuthPassword(
+                  validator: (value) => validatePassword(
                     value,
                     requiredMessage: translations.validation.required(
                       field: translations.auth.common.password,
                     ),
                     weakMessage: translations.validation.passwordWeak,
                   ),
-                  suffixBuilder: buildAuthPasswordToggle(
+                  suffixBuilder: buildPasswordToggle(
                     key: const ValueKey('auth-register-password-toggle'),
                   ),
                   onEditingComplete: () {
@@ -371,7 +373,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                   autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                   forceErrorText: invalidFixture ? translations.validation.passwordMismatch : null,
                   validator: (value) {
-                    final requiredError = validateAuthRequired(
+                    final requiredError = validateRequired(
                       value,
                       translations.validation.required(
                         field: translations.auth.common.confirmPassword,
@@ -383,7 +385,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
                     }
                     return null;
                   },
-                  suffixBuilder: buildAuthPasswordToggle(
+                  suffixBuilder: buildPasswordToggle(
                     key: const ValueKey('auth-register-confirm-password-toggle'),
                   ),
                   onSubmit: (_) {
@@ -529,7 +531,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView> with RestorationMi
   }
 
   Future<void> _revealFirstInvalid(Set<FormFieldState<Object?>> invalidFields) async {
-    await revealFirstAuthInvalid(
+    await revealFirstInvalid(
       invalidFields,
       orderedTargets: [
         (
