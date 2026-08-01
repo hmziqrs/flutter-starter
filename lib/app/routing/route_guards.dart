@@ -13,7 +13,7 @@ import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
-import 'package:starter/features/settings/settings_page.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';

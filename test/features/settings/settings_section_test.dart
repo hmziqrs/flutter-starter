@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:starter/features/settings/settings_page.dart';
+import 'package:starter/features/settings/settings_section.dart';
 
 void main() {
   group('SettingsSection', () {

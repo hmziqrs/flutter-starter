@@ -9,6 +9,7 @@ import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
@@ -19,26 +20,6 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
-
-enum SettingsSection {
-  appearance('appearance'),
-  language('language'),
-  accessibility('accessibility'),
-  account('account'),
-  subscription('subscription'),
-  privacyAbout('privacy-about');
-
-  const SettingsSection(this.parameter);
-
-  final String parameter;
-
-  static SettingsSection? tryParse(String? value) {
-    for (final section in values) {
-      if (section.parameter == value) return section;
-    }
-    return null;
-  }
-}
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({

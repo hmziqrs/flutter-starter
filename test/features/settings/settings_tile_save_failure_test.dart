@@ -6,6 +6,7 @@ import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_repository.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';

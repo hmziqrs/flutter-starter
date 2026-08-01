@@ -24,6 +24,7 @@ import 'package:starter/features/pricing/pricing_page.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_page.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
