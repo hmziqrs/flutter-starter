@@ -1,6 +1,6 @@
 import 'dart:async';
 
-// Initializing formals would expose private field names, so parameters stay explicit.
+// fields are private
 // ignore_for_file: prefer_initializing_formals
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -116,7 +116,6 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
 
   @override
   Stream<NotificationTap> get onNotificationTap {
-    // onMessageOpenedApp misses cold-start taps, so getInitialMessage is merged in.
     final controller = StreamController<NotificationTap>.broadcast();
     unawaited(_wireInitialMessage(controller));
     FirebaseMessaging.onMessageOpenedApp

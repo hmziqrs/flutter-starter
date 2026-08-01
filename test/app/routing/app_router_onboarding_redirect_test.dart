@@ -205,7 +205,6 @@ Future<void> _pumpApp(
   await _pumpAppFrames(tester);
 }
 
-/// Avoid pumpAndSettle: focused editables/animations schedule frames indefinitely.
 Future<void> _pumpAppFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));

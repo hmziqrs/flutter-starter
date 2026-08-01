@@ -397,7 +397,6 @@ class _PasscodeDots extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Force LTR so an Arabic locale does not mirror the digit order.
         Directionality(
           textDirection: TextDirection.ltr,
           child: Row(

@@ -221,7 +221,6 @@ bool fswitchValue(FSwitch widget) {
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {
-  // Bounded pumps: pumpAndSettle hangs on a focused editable while ForUI timers resolve.
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }

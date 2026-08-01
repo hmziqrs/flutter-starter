@@ -17,7 +17,6 @@ class _AboutLicensePageState extends State<AboutLicensePage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    // LicensePage renders its own Scaffold + AppBar; must not be re-wrapped.
     return FutureBuilder<AppBuildInfo>(
       future: _buildInfo,
       builder: (context, snapshot) {

@@ -44,7 +44,6 @@ ProviderScope _scope({required Widget child}) {
 }
 
 Future<void> _settle(WidgetTester tester) async {
-  // pumpAndSettle never settles motion-guarded pages (repeating timers), so pump bounded frames.
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }

@@ -329,7 +329,7 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
             if (!mounted) return;
           }
         }
-        // `mounted` above already guards this post-await context use.
+        // Intentional navigate after the awaited establish() + mounted check.
         // ignore: use_build_context_synchronously
         context.goNamed(AppRoutes.home);
       },

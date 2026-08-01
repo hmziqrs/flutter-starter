@@ -7,7 +7,6 @@ import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/cache_store_exception.dart';
 
-/// Keys are base64url-encoded so raw `/` or `..` segments can't traverse paths.
 final class FileCacheStore implements CacheStore {
   FileCacheStore(this._directory);
 

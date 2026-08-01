@@ -1,6 +1,3 @@
-/// Deep-link host allowlist ([AllowedDeepLinkHosts]) is the security boundary: non-allowlisted hosts resolve to null (phishing rejection).
-library;
-
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
@@ -97,7 +94,7 @@ bool _setEquals(Set<String> a, Set<String> b) {
   return a.containsAll(b);
 }
 
-// Single-method seam so deep-link resolvers stay mockable in tests.
+// single-member seam
 // ignore: one_member_abstracts
 abstract interface class AppLinkHandler {
   ResolvedLink? resolve(Uri uri);
@@ -180,7 +177,6 @@ abstract interface class DeepLinkService {
   void dispose();
 }
 
-/// Test seam: concrete `AppLinks` is a `PlatformInterface`, not an implementable interface.
 abstract interface class AppLinkInbox {
   Future<Uri?> getInitialLink();
 
@@ -234,7 +230,6 @@ final class AppLinksDeepLinkService implements DeepLinkService {
 
   @override
   void dispose() {
-    // AppLinks has no public dispose across versions; release our handle so the platform instance can be GC'd.
     _inbox = null;
   }
 }

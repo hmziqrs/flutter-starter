@@ -8,7 +8,6 @@ sealed class AuthSession with _$AuthSession {
 
   const factory AuthSession.anonymous() = AuthAnonymous;
 
-  /// Access token stays in-memory only; the refresh token persists via SessionRepository.
   const factory AuthSession.authenticated({
     required String accessToken,
     required String refreshToken,

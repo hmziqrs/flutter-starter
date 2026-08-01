@@ -57,7 +57,6 @@ void configureTvTestView(
   });
 }
 
-/// TV focus highlights and platform animations never quiesce; never pumpAndSettle here.
 Future<void> pumpTvFrames(
   WidgetTester tester, {
   int frames = 8,
@@ -139,7 +138,6 @@ Future<void> pumpTvPresentationHarness(
   await pumpTvFrames(tester);
 }
 
-/// Avoids WidgetsApp so directional keys reach the host unconsumed.
 Future<void> pumpTvKeyboardHarness(
   WidgetTester tester, {
   required AppInteractionPolicy interactionPolicy,

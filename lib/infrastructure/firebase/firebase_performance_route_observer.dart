@@ -40,7 +40,7 @@ class FirebasePerformanceRouteObserver extends NavigatorObserver {
       unawaited(trace.start());
       _traces[name] = trace;
     } on Object {
-      // Best-effort: never block navigation on performance monitoring.
+      // ignored
     }
   }
 
@@ -59,7 +59,7 @@ class FirebasePerformanceRouteObserver extends NavigatorObserver {
     try {
       unawaited(trace.stop());
     } on Object {
-      // Best-effort: never propagate a monitoring failure into navigation.
+      // ignored
     }
   }
 

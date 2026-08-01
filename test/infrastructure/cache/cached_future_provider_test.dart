@@ -43,7 +43,6 @@ ProviderContainer _container({
   required InMemoryCacheStore store,
   required FakeConnectivityService connectivity,
 }) {
-  // Forcing a listen delivers the connectivity seed before the cached provider builds.
   return ProviderContainer(
     overrides: [
       cacheStoreProvider.overrideWithValue(store),
@@ -154,7 +153,6 @@ void main() {
       connectivity: FakeConnectivityService(initial: ConnectivityState.offline),
     );
     addTearDown(container.dispose);
-    // Keep a subscription so the error transition survives; reading `.future` would race teardown.
     container.read(counterProvider);
     await settle();
 

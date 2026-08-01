@@ -56,7 +56,6 @@ Future<App> createApplication(
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Android 15 enforces edge-to-edge; apply before the first frame to avoid a system-bar flash.
   await SystemUiController.applyEdgeToEdge(capabilities: PlatformCapabilities.current());
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);

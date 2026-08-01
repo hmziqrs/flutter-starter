@@ -1,4 +1,3 @@
-/// Pass order matters (patterns overlap); card runs are Luhn-gated so non-card digit IDs survive.
 final class LogRedactor {
   const LogRedactor();
 

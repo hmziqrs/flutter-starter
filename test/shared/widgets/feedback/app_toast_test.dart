@@ -121,7 +121,6 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.byKey(_triggerKey));
-      // dismiss() needs the enter animation settled; ForUI's status-listener breaks if interrupted.
       await _pumpFrames(tester);
 
       expect(entry, isNotNull);

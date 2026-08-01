@@ -11,7 +11,6 @@ final biometricUnlockControllerProvider =
 class BiometricUnlockController extends Notifier<BiometricLockState> {
   @override
   BiometricLockState build() {
-    // inactive/hidden are overlay states, not real backgrounding.
     ref.listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
       final wasResumed = previous?.isResumed ?? false;
       if (wasResumed && next.kind == AppLifecycleKind.paused) {
@@ -22,7 +21,6 @@ class BiometricUnlockController extends Notifier<BiometricLockState> {
     return availability.when(
       data: (report) =>
           report.canCheck ? const BiometricLockLocked() : const BiometricLockUnavailable(),
-      // Hold the lock while availability is pending so cold start never flashes the protected shell.
       loading: () => const BiometricLockLocked(),
       error: (_, _) => const BiometricLockUnavailable(),
     );

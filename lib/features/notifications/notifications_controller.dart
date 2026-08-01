@@ -135,16 +135,14 @@ final class NotificationsController extends Notifier<NotificationsState> {
       final repository = ref.read(notificationsRepositoryProvider);
       await repository.unregisterToken(previousToken);
     } on NotificationsException {
-      // Best-effort: local state already cleared.
+      // ignored
     }
   }
 }
 
-/// The token is a delivery address, not a credential, so plaintext is appropriate.
 const String persistedPermissionKey = 'notifications.permission';
 const String persistedTokenKey = 'notifications.token';
 
-/// The cold-start tap must be captured before `_AppViewState` mounts its drain listener.
 final notificationTapQueueProvider = NotifierProvider<NotificationTapQueue, List<NotificationTap>>(
   NotificationTapQueue.new,
 );

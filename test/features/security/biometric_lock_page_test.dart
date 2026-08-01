@@ -81,7 +81,6 @@ void main() {
     expect(find.text(translations.lockTitle), findsOneWidget);
     expect(find.text(translations.lockBody), findsOneWidget);
     expect(find.text(translations.unlock), findsOneWidget);
-    // A ghost fallback in this locked+available case caused a /lock -> /home -> /lock loop.
     expect(find.text(translations.useFallback), findsNothing);
   });
 

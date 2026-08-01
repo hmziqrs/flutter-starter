@@ -68,7 +68,7 @@ void _useBiometricFallback(BuildContext context) {
       return;
     }
   } on Object {
-    // No-scope test harness — fall through to the legacy disable path.
+    // ignored
   }
   _disableBiometricAndGoHome(context);
 }

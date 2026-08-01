@@ -218,7 +218,6 @@ abstract final class ForuiThemeFactory {
     required double sizeScalar,
     String? fontFamily,
   }) {
-    // Dyslexia family is Latin-only; keep scriptFontFamilies as fallback so non-Latin glyphs render.
     final resolvedFontFamily = fontFamily ?? typeface.fontFamily;
     TextStyle token(TextStyle style, int index) {
       final token = tokens[index];

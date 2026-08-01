@@ -14,7 +14,6 @@ final class ProfileException implements Exception {
 
   final ProfileFailureKind kind;
 
-  /// Never a raw access token; redacted before construction.
   final Object? cause;
 
   @override

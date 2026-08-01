@@ -1,7 +1,6 @@
 import 'package:starter/infrastructure/updates/app_update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// iOS forbids in-app update checks; App Store policy only allows nudging to the store.
 class IosAppUpdateService implements AppUpdateService {
   const IosAppUpdateService({required this.appleId});
 
@@ -9,7 +8,6 @@ class IosAppUpdateService implements AppUpdateService {
 
   @override
   Future<UpdateAvailability> checkForUpdate() async {
-    // Newer-build nudges route through `VersionGateStore`.
     return UpdateAvailability.noUpdate;
   }
 
@@ -26,7 +24,7 @@ class IosAppUpdateService implements AppUpdateService {
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } on Object {
-      // Store deep-link is best-effort; the soft nudge stays dismissible.
+      // ignored
     }
   }
 }

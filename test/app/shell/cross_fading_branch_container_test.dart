@@ -262,7 +262,6 @@ void _go(WidgetTester tester, String location) {
   GoRouter.of(ctx).go(location);
 }
 
-/// Two-step pump: transient ticker callbacks fire before the build registering the AnimatedOpacity ticker.
 Future<void> _advance(WidgetTester tester, Duration duration) async {
   await tester.pump();
   await tester.pump(duration);
@@ -288,7 +287,6 @@ AnimatedOpacity _animatedOpacity(WidgetTester tester, int branchIndex) {
       .elementAt(branchIndex);
 }
 
-/// Scope to our AnimatedOpacity: the branch Navigator also emits IgnorePointer/gate widgets deeper down.
 Element _branchWrapper(WidgetTester tester, int branchIndex) {
   return tester.elementList(_scoped(find.byType(AnimatedOpacity))).elementAt(branchIndex);
 }
@@ -317,7 +315,6 @@ ExcludeSemantics _excludeSemantics(WidgetTester tester, int branchIndex) =>
 TickerMode _tickerMode(WidgetTester tester, int branchIndex) =>
     _branchWrapperDescendant<TickerMode>(tester, branchIndex);
 
-/// Reads the render object's live value: mid-flight widget.opacity is the destination, not the current value.
 List<double> _currentOpacities(WidgetTester tester) {
   return tester
       .renderObjectList<RenderAnimatedOpacity>(

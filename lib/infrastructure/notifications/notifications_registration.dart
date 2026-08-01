@@ -1,5 +1,4 @@
 abstract interface class NotificationsRegistration {
-  /// Idempotent: the server stores each `(deviceId, token)` once.
   Future<void> registerToken({
     required String token,
     required String platform,

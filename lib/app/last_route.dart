@@ -6,7 +6,6 @@ import 'package:starter/features/settings/settings_store.dart';
 
 const String lastRouteKey = 'nav.last_route';
 
-/// Returns null for routes that must never persist: splash (relaunch loop), gates, and dynamic OTP.
 String? pathForLastRouteName(String? name) {
   if (name == null) {
     return null;
@@ -42,7 +41,7 @@ String? pathForLastRouteName(String? name) {
 }
 
 final class LastRouteObserver extends NavigatorObserver {
-  // Backing field is private by convention, so the initializing-formal lint does not apply.
+  // Public `store` param backs a private field, so initializing-formals don't apply.
   // ignore: prefer_initializing_formals
   LastRouteObserver({required SettingsStore store}) : _store = store;
 
@@ -75,7 +74,6 @@ final class LastRouteObserver extends NavigatorObserver {
       return;
     }
     _lastWritten = path;
-    // catchError keeps a write failure out of the zone's uncaught-error handler.
     unawaited(_store.writeString(lastRouteKey, path).catchError((Object _, StackTrace _) {}));
   }
 }

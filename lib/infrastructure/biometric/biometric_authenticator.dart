@@ -83,7 +83,6 @@ final class BiometricAvailability {
   }
 }
 
-/// [authenticate] never throws on plugin failure and never fabricates success.
 abstract interface class BiometricAuthenticator {
   Future<BiometricAvailability> checkAvailability();
 

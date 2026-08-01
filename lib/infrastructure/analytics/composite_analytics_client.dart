@@ -22,7 +22,7 @@ final class CompositeAnalyticsClient implements AnalyticsClient {
       try {
         await call(client);
       } on Object {
-        // A single backend failure must never block the remaining backends.
+        // ignored
       }
     }
   }

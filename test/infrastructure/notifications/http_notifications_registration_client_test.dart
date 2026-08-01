@@ -6,7 +6,6 @@ import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/notifications/http_notifications_registration_client.dart';
 
-/// Backend push contract (C9).
 Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})> _bootServer({
   int statusCode = 204,
 }) async {
@@ -21,7 +20,7 @@ Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})
       try {
         await request.drain<void>();
       } on Object {
-        // Ignore drain failures.
+        // ignored
       }
       request.response.statusCode = statusCode;
       await request.response.close();

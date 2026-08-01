@@ -3,7 +3,6 @@ import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
 import 'package:starter/infrastructure/firebase/reporting_supported.dart';
 
-/// Skips `analyticsOptInKey`; GA4 collection is toggled via the Firebase console.
 final class FirebaseAnalyticsClient implements AnalyticsClient {
   FirebaseAnalyticsClient();
 
@@ -50,7 +49,7 @@ final class FirebaseAnalyticsClient implements AnalyticsClient {
           );
       }
     } on Object {
-      // Swallow: analytics must never break the UX it measures.
+      // ignored
     }
   }
 
@@ -66,7 +65,7 @@ final class FirebaseAnalyticsClient implements AnalyticsClient {
     try {
       await analytics.setUserProperty(name: property.key, value: property.value);
     } on Object {
-      // Swallow; see [track].
+      // ignored
     }
   }
 
@@ -82,7 +81,7 @@ final class FirebaseAnalyticsClient implements AnalyticsClient {
     try {
       await analytics.setUserId(id: userId);
     } on Object {
-      // Swallow; see [track].
+      // ignored
     }
   }
 }

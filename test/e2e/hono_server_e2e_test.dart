@@ -115,7 +115,6 @@ void main() {
       },
     );
 
-    // Auth mutates shared live-server state (C9); unique emails prevent cross-test interference.
     var authEmailSeq = 0;
     String authEmail() => 'hono-e2e-${authEmailSeq++}@example.com';
 

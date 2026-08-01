@@ -23,11 +23,9 @@ import 'integration_test_support.dart';
 final _clock = Stopwatch()..start();
 
 void _log(Object? message) {
-  // debugPrint only: the test binding rebinds stdout, so dart:io writes throw.
   debugPrint('   │ smoke · ${_clock.elapsed.toString().split('.').first.padLeft(8)} · $message');
 }
 
-/// Watch mode keeps native window size: `physicalSize` blanks the desktop window (flutter#149209).
 const _watchMode = bool.fromEnvironment('SMOKE_WATCH');
 
 const _watchDilationString = String.fromEnvironment('SMOKE_DILATION', defaultValue: '2.0');
@@ -81,7 +79,6 @@ void main() {
     _log(
       'building app graph + root widget (first run also compiles the macOS runner; this is the slow part)',
     );
-    // The headless Linux runner has no secret-service daemon (libsecret).
     await tester.pumpWidget(
       await createApplication(config, secureStore: InMemorySecureStore()),
     );
@@ -273,10 +270,8 @@ void main() {
     final restoredState = _settingsState(tester);
     expect(restoredState, liveState);
     _log('settings restored after restart');
-    // Post-restart UI re-check omitted: the rebooted MaterialApp flakes on persisted theme/locale.
     _log('SMOKE FLOW COMPLETE — all assertions passed');
     if (_watchMode) {
-      // Reset synchronously: the binding's debugAssertNoTimeDilation runs before addTearDown.
       timeDilation = 1.0;
     }
   });

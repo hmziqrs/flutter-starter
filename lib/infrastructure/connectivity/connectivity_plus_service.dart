@@ -7,8 +7,6 @@ import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 final class ConnectivityPlusService implements ConnectivityService {
   ConnectivityPlusService({Connectivity? connectivity})
     : _connectivity = connectivity ?? Connectivity() {
-    // connectivity_plus -> nm -> D-Bus can fail in an internal unawaited
-    // connect() the stream's onError can't capture (headless Linux).
     runZonedGuarded(_init, _degradeToOffline);
   }
 
@@ -30,7 +28,7 @@ final class ConnectivityPlusService implements ConnectivityService {
 
   final StreamController<ConnectivityState> _controller =
       StreamController<ConnectivityState>.broadcast();
-  // App-lifetime singleton; the lint can't trace the cross-method cancel.
+  // app-lifetime singleton
   // ignore: cancel_subscriptions
   StreamSubscription<List<ConnectivityResult>>? _changes;
   bool _disposed = false;
@@ -40,7 +38,6 @@ final class ConnectivityPlusService implements ConnectivityService {
 
   @override
   Stream<ConnectivityState> get states {
-    // Sync controller (not async*) so no event is lost between seed and subscribe.
     final outgoing = StreamController<ConnectivityState>();
     void forward(ConnectivityState state) {
       if (!outgoing.isClosed) {

@@ -1,6 +1,3 @@
-/// The SecureStore hash is the security boundary; the lockout is UX-only and user-wipeable.
-library;
-
 import 'dart:async';
 import 'dart:math';
 
@@ -23,7 +20,6 @@ enum PasscodeVerifyResult {
   notConfigured,
 }
 
-/// [enabled] is the armed flag (not SettingsState.passcodeEnabled).
 @Freezed(copyWith: false)
 class PasscodeState with _$PasscodeState {
   const PasscodeState({
@@ -133,7 +129,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         totalFailures: totalFailures,
       );
     } on SecureStoreException {
-      // Keychain read failure degrades to absent (no gate) rather than trapping the user out.
+      // ignored
     }
   }
 
@@ -223,7 +219,7 @@ class PasscodeController extends Notifier<PasscodeState> {
       await _store.delete(lockedUntilKey);
       await _store.delete(totalFailuresKey);
     } on SecureStoreException {
-      // Best-effort: the in-memory unlock already happened; a stale counter clears on next verify.
+      // ignored
     }
   }
 
@@ -268,7 +264,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         },
       ]);
     } on SecureStoreException {
-      // Best-effort: in-memory state is the source of truth for this session.
+      // ignored
     }
   }
 
@@ -282,7 +278,7 @@ class PasscodeController extends Notifier<PasscodeState> {
         _store.delete(totalFailuresKey),
       ]);
     } on SecureStoreException {
-      // Best-effort: in-memory disarm still happens; a stale hash is harmless without the gate.
+      // ignored
     }
   }
 
@@ -294,7 +290,6 @@ class PasscodeController extends Notifier<PasscodeState> {
     return parsed;
   }
 
-  /// Reconciles pre-totalFailures legacy data from [attemptsRemaining] for mid-lockout cold starts.
   static int _parseTotalFailures(
     String? saved, {
     required int attemptsRemaining,

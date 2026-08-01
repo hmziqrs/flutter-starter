@@ -153,7 +153,7 @@ final class HttpOtpClient implements OtpRepository {
         return decoded;
       }
     } on FormatException {
-      // Fall through to empty; caller classifies by status.
+      // ignored
     }
     return const <String, Object?>{};
   }

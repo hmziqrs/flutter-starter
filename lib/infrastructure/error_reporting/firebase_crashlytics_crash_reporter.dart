@@ -4,7 +4,6 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/firebase/reporting_supported.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-/// Avoids FirebaseCrashlytics.recordFlutterError, which double-presents and skips redaction.
 final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
   FirebaseCrashlyticsCrashReporter({
     required this.verbose,
@@ -61,7 +60,7 @@ final class FirebaseCrashlyticsCrashReporter implements CrashReporter {
         information: report.context.entries.map((e) => '${e.key}=${e.value}'),
       );
     } on Object {
-      // Never rethrow: must not break the error path it is observing.
+      // ignored
     }
   }
 

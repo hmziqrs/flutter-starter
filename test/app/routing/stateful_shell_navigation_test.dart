@@ -460,7 +460,6 @@ void main() {
         matching: find.byIcon(icon),
       );
 
-      // warnIfMissed:false: taps land on ForUI's footer gesture handler, not the icon.
       await tester.tap(
         compactNavIcon(FLucideIcons.badgeDollarSign),
         warnIfMissed: false,

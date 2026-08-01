@@ -7,7 +7,6 @@ enum AppLifecycleKind { detached, resumed, inactive, hidden, paused }
 final class AppLifecyclePhase {
   const AppLifecyclePhase({required this.kind, required this.transitionedAt});
 
-  /// Defaults to resumed: desktop/web never fire an [AppLifecycleState] transition.
   factory AppLifecyclePhase.initial() {
     return AppLifecyclePhase(
       kind: AppLifecycleKind.resumed,
@@ -19,7 +18,6 @@ final class AppLifecyclePhase {
 
   final DateTime transitionedAt;
 
-  /// `inactive`/`hidden` are noisy (overlays, sheets, notifications) and must not refresh.
   bool get isResumed => kind == AppLifecycleKind.resumed;
 
   @override

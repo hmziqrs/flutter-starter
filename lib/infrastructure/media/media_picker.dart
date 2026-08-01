@@ -31,7 +31,7 @@ final class PickedMedia {
   String toString() => 'PickedMedia(path: $path, mimeType: $mimeType, fromCamera: $fromCamera)';
 }
 
-// One-member abstract lint is a false positive for a multi-implementation port.
+// multi-implementation port
 // ignore: one_member_abstracts
 abstract interface class MediaPicker {
   Future<PickedMedia?> pickImage({bool fromCamera = false});

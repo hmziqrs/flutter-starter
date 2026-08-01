@@ -17,7 +17,6 @@ enum OtpFailureKind {
   unknown,
 }
 
-/// [cause] never carries a raw code or attempt token (mirrors `AuthException`).
 final class OtpRepositoryException implements Exception {
   const OtpRepositoryException.notConnected() : kind = OtpFailureKind.notConnected, cause = null;
 
@@ -33,7 +32,6 @@ final class OtpRepositoryException implements Exception {
   String toString() => 'OtpRepositoryException(${kind.name})';
 }
 
-/// [attemptToken] is the opaque verify handle — never reaches a widget or log.
 @immutable
 final class OtpIssueResult {
   const OtpIssueResult({

@@ -23,7 +23,7 @@ final class CompositeCrashReporter implements CrashReporter {
       try {
         await call(reporter);
       } on Object {
-        // Never blocks remaining backends, never breaks the error path.
+        // ignored
       }
     }
   }

@@ -1,7 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
-/// macOS reads silently return `null` without the Keychain Sharing entitlement; Android defaults require `minSdkVersion >= 23`.
 final class FlutterSecureStorageStore implements SecureStore {
   FlutterSecureStorageStore()
     : _storage = const FlutterSecureStorage(

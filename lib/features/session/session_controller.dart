@@ -89,12 +89,12 @@ final class SessionController extends Notifier<AuthSession> {
     try {
       await _repository.logout(previous);
     } on AuthException {
-      // Local state is already anonymous, the correct end state.
+      // ignored
     }
     try {
       await _sessionRepository.deleteRefreshToken();
     } on Object {
-      // Non-fatal: worst case is a no-op hydrate on the next cold start.
+      // ignored
     }
   }
 
@@ -115,7 +115,7 @@ final class SessionController extends Notifier<AuthSession> {
       try {
         await _sessionRepository.deleteRefreshToken();
       } on Object {
-        // Best-effort cleanup; non-fatal.
+        // ignored
       }
     }
   }
@@ -124,7 +124,7 @@ final class SessionController extends Notifier<AuthSession> {
     try {
       await refreshIfExpired();
     } on AuthException {
-      // Swallowed: foreground refresh is best-effort; prior state retained.
+      // ignored
     }
   }
 }

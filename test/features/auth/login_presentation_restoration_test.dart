@@ -6,7 +6,6 @@ import 'package:starter/features/auth/login_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// The password is intentionally NOT restored: secrets never participate in restoration.
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
 

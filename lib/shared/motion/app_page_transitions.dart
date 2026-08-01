@@ -65,7 +65,6 @@ const nativePageTransitionsTheme = PageTransitionsTheme(
   },
 );
 
-/// tvOS reports as iOS to defaultTargetPlatform; override keeps TV off Cupertino swipe transitions.
 const televisionPageTransitionsTheme = PageTransitionsTheme(
   builders: <TargetPlatform, PageTransitionsBuilder>{
     TargetPlatform.iOS: OpaquePageTransitionsBuilder(

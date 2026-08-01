@@ -89,7 +89,7 @@ void main() {
       expect(shakes, 1);
 
       detector.reset();
-      // Reset must be a distinct, observable step before the post-reset feed, not a cascade.
+      // reset and post-reset feed stay separate steps
       // ignore: cascade_invocations
       detector.handle(_event(20, 0, 0));
       expect(shakes, 2);

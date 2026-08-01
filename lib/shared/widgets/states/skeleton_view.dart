@@ -62,7 +62,6 @@ class _SkeletonShimmerScope extends InheritedWidget {
       context.dependOnInheritedWidgetOfExactType<_SkeletonShimmerScope>();
 }
 
-/// Tests must use bounded pumps, never `pumpAndSettle` — the repeating shimmer hangs the harness.
 class SkeletonView extends StatefulWidget {
   const SkeletonView({
     required this.child,

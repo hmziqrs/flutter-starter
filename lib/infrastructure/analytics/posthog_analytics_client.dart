@@ -29,7 +29,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
           );
       }
     } on Object {
-      // Swallow: analytics must never break the UX it measures.
+      // ignored
     }
   }
 
@@ -43,7 +43,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
         userPropertiesToSet: <String, Object>{property.key: property.value},
       );
     } on Object {
-      // Swallow; see [track].
+      // ignored
     }
   }
 
@@ -59,7 +59,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
         await Posthog().reset();
       }
     } on Object {
-      // Swallow; see [track].
+      // ignored
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 
-/// Implementations must degrade to `none` on failure — never fabricate a block.
 abstract interface class VersionGateStore {
   Future<UpdateRequirement> check(AppBuildInfo buildInfo);
 

@@ -6,7 +6,6 @@ import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 abstract final class SystemUiController {
   static const Set<String> _desktopPlatforms = {'macOS', 'linux', 'windows'};
 
-  /// Android 15 (API 35) enforces edge-to-edge for modern `targetSdk`.
   static Future<void> applyEdgeToEdge({
     required PlatformCapabilities capabilities,
   }) async {
@@ -16,7 +15,6 @@ abstract final class SystemUiController {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  // Call before the first frame on mobile, or the layout breaks.
   static void applyOverlayStyle({
     required Brightness brightness,
     required AppAccent accent,
@@ -30,7 +28,6 @@ abstract final class SystemUiController {
     );
   }
 
-  /// Contrast-enforced flags stay off so a transparent nav bar doesn't pick up an auto-scrim on Android 29+.
   static SystemUiOverlayStyle overlayStyleFor({
     required Brightness brightness,
     required AppAccent accent,

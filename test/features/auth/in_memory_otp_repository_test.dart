@@ -67,7 +67,7 @@ void main() {
           await repository.verify(identifier: 'a@b.c', code: '000000');
           fail('verify returned without throwing — the no-backend guard broke.');
         } on OtpRepositoryException {
-          // expected: the only honest outcome with no backend.
+          // ignored
         }
       });
 
@@ -76,7 +76,7 @@ void main() {
           await repository.issue(purpose: OtpPurpose.registration, identifier: 'a@b.c');
           fail('issue returned without throwing — the no-backend guard broke.');
         } on OtpRepositoryException {
-          // expected.
+          // ignored
         }
       });
     });

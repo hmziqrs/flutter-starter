@@ -100,7 +100,6 @@ final class AppDependencies {
       settings: SettingsDependencies(
         settingsRepository: SettingsRepository(effectiveSettingsStore),
         settingsStore: effectiveSettingsStore,
-        // Onboarding-complete so suites boot to home; fresh-install redirect covered by app_router_onboarding_redirect_test.dart.
         initialSettings:
             initialSettings ??
             const SettingsState.defaults().copyWith(hasCompletedOnboarding: true),
@@ -180,7 +179,6 @@ final class AppDependencies {
 
   final Set<String> initialDismissedAnnouncementIds;
 
-  /// Production uses [StubInspectorHost]: `dio_request_inspector` trips the flutter/flutter#188060 AOT snapshotter crash.
   final InspectorHost inspectorHost;
 
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
@@ -205,7 +203,6 @@ final class AppDependencies {
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
     AppBuildInfo? buildInfo,
-    // A headless test (no secret-service daemon) injects an in-memory store to avoid libsecret.
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
@@ -276,7 +273,6 @@ final class AppDependencies {
     } on Object {
       initialFeedbackShakeEnabled = false;
     }
-    // path_provider is unsupported on web.
     CacheStore cacheStore;
     if (capabilities.isWeb) {
       cacheStore = InMemoryCacheStore();
@@ -327,7 +323,6 @@ final class AppDependencies {
         profileRepository: profileRepository,
       ),
       telemetry: TelemetryDependencies(
-        // Firebase adapters self-disable on unsupported targets, so both composites stay safe with Noop arms.
         crashReporter: CompositeCrashReporter(<CrashReporter>[
           const NoopCrashReporter(),
           FirebaseCrashlyticsCrashReporter(verbose: false),
@@ -371,7 +366,6 @@ final class AppDependencies {
           handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
         ),
       ),
-      // `localeApplied` is optimistic; `createApplication` finalizes via copyWith if the locale apply fails.
       appStartupResult: AppStartupResult(
         buildInfo: buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: settingsLoaded,

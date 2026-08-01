@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:starter/infrastructure/firebase/performance_supported.dart';
 
-/// Keyed via [Expando]: the request `extra` map may be serialized by the dev inspector.
 final class FirebasePerformanceDioInterceptor extends Interceptor {
   FirebasePerformanceDioInterceptor();
 
@@ -21,7 +20,7 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
         unawaited(metric.start());
         _metrics[options] = metric;
       } on Object {
-        // Best-effort: never block the request on performance monitoring.
+        // ignored
       }
     }
     handler.next(options);
@@ -71,7 +70,7 @@ final class FirebasePerformanceDioInterceptor extends Interceptor {
       }
       unawaited(metric.stop());
     } on Object {
-      // Best-effort: never propagate a monitoring failure into Dio's flow.
+      // ignored
     }
   }
 

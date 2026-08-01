@@ -45,7 +45,6 @@ typedef ShakeStreamFactory =
 
 typedef ShakeCallback = void Function({required double magnitude});
 
-/// m/s²; gravity reads ~9.8, so going lower risks gravity-fires.
 const double _shakeMagnitudeThreshold = 18;
 
 const Duration _shakeDebounce = Duration(milliseconds: 900);

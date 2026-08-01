@@ -97,7 +97,7 @@ final class HonoServerHandle {
     try {
       process.kill();
     } on Object {
-      // Already gone — nothing to signal.
+      // ignored
     }
     await exitOrKill(process);
   }
@@ -148,7 +148,7 @@ Future<int> exitOrKill(Process process) async {
     try {
       process.kill(ProcessSignal.sigkill);
     } on Object {
-      // Already gone.
+      // ignored
     }
     return process.exitCode;
   }

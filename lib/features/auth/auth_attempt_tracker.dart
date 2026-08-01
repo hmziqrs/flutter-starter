@@ -1,6 +1,3 @@
-/// Lockout schedule for failed sign-in — UX only, not a security boundary; the server 429 is authoritative.
-library;
-
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

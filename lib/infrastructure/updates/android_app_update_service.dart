@@ -1,7 +1,6 @@
 import 'package:in_app_update/in_app_update.dart' as iau;
 import 'package:starter/infrastructure/updates/app_update_service.dart';
 
-/// The plugin needs a physical device with Play Services + a Play listing.
 class AndroidAppUpdateService implements AppUpdateService {
   const AndroidAppUpdateService();
 
@@ -25,7 +24,7 @@ class AndroidAppUpdateService implements AppUpdateService {
       await iau.InAppUpdate.startFlexibleUpdate();
       await iau.InAppUpdate.completeFlexibleUpdate();
     } on Object {
-      // Store-flow failure is best-effort; the soft nudge stays dismissible.
+      // ignored
     }
   }
 

@@ -90,7 +90,6 @@ void main() {
   });
 }
 
-/// Bounded pump; pumpAndSettle never settles these motion-driven tile transitions.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));

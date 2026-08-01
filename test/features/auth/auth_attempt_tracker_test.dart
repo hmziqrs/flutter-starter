@@ -258,7 +258,6 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      // Riverpod wraps the throw in a ProviderException; assert on error.toString() so the message surfaces.
       expect(
         () => container.read(attemptTrackerProvider),
         throwsA(

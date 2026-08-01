@@ -88,14 +88,14 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
         state = AsyncValue<ExperimentsSnapshot>.data(next);
       }
     } on Object {
-      // Degrade: keep the current state (loading or the last known snapshot).
+      // ignored
     }
   }
 
   ExperimentVariant? variantFor(ExperimentKey key) => state.value?.variantFor(key);
 }
 
-// Family builder returns a private Riverpod family type; the top-level type is inferred.
+// inferred Riverpod family type
 // ignore: specify_nonobvious_property_types
 final experimentsProvider = Provider.family<AsyncValue<ExperimentVariant>, ExperimentKey>((
   ref,

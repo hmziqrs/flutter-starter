@@ -213,7 +213,6 @@ void main() {
     });
 
     tearDown(() {
-      // close()'s future never completes without a listener these tests never attach; unawaited avoids a hang.
       unawaited(controller.close());
     });
 

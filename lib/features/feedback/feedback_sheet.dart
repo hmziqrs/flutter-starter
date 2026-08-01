@@ -17,7 +17,6 @@ Future<bool> showFeedbackSheet({required BuildContext context}) async {
     side: FLayout.btt,
     useSafeArea: true,
     builder: (sheetContext) => ColoredBox(
-      // FSheet paints no surface of its own.
       color: sheetContext.theme.colors.background,
       child: EscapeDismissibleOverlay(
         child: FeedbackSheetBody(

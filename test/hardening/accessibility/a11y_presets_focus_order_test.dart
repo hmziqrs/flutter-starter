@@ -89,7 +89,6 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
-/// The focus node lives inside FTile's own subtree, so probe a descendant Text, not FTile.
 String? _focusedPresetKey(WidgetTester tester) {
   for (final preset in AppTextPreset.values) {
     final node = Focus.of(

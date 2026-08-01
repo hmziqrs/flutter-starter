@@ -58,7 +58,6 @@ final class CachedFutureSpec<T> {
   final int ttlSeconds;
 }
 
-/// A factory, not a `.family`: handwritten Riverpod families can't express a generic element type.
 FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> spec) {
   return FutureProvider<CachedValue<T>>((ref) async {
     final store = ref.watch(cacheStoreProvider);
@@ -95,7 +94,7 @@ FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> 
       try {
         await store.write<T>(spec.key, entry, codec: spec.codec);
       } on Object {
-        // Write failure must not prevent serving the freshly fetched value.
+        // ignored
       }
       return CachedValue<T>.fresh(entry);
     } on Object {

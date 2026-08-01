@@ -32,7 +32,7 @@ class DevicePermissionService implements PermissionService {
     try {
       await AppSettings.openAppSettings();
     } on Object {
-      // Best-effort: a failure to launch settings never gates a user action.
+      // ignored
     }
   }
 

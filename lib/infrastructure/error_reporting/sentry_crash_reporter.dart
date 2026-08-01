@@ -28,7 +28,7 @@ final class SentryCrashReporter implements CrashReporter {
     try {
       await _capture(report);
     } on Object {
-      // Never rethrow: must not break the error path it is observing.
+      // ignored
     }
   }
 
@@ -42,7 +42,6 @@ final class SentryCrashReporter implements CrashReporter {
   }
 
   Future<void> _capture(CrashReport report) async {
-    // captureException (not captureMessage) so Sentry applies crash-stream grouping.
     await Sentry.captureException(
       Exception(report.message),
       stackTrace: report.stack != null ? StackTrace.fromString(report.stack!) : null,

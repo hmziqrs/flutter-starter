@@ -47,7 +47,6 @@ final class AutoLockController extends Notifier<AutoLockState> {
     _resetIdleTimer(delaySeconds: delaySeconds);
     ref.onDispose(() => _idleTimer?.cancel());
 
-    // inactive/hidden are overlay states, not real backgrounding.
     final lockOnBackground = ref.watch(lockOnBackgroundProvider);
     ref.listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
       if (!lockOnBackground) return;

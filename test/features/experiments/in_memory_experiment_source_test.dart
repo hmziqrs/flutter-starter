@@ -66,7 +66,6 @@ void main() {
       var events = 0;
       final subscription = source.changes().listen((_) => events++);
       addTearDown(subscription.cancel);
-      // `.isEmpty` hangs on an open broadcast stream; assert no event in a timed window.
       await Future<void>.delayed(const Duration(milliseconds: 10));
       expect(events, 0);
     });

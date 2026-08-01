@@ -95,7 +95,6 @@ bool? _readLiveHasCompletedOnboarding(BuildContext context) {
     final container = ProviderScope.containerOf(context, listen: false);
     return container.read(settingsControllerProvider).hasCompletedOnboarding;
   } on Object {
-    // Test-harness fallback: production always nests the router under a ProviderScope.
     return null;
   }
 }
@@ -146,7 +145,6 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
         if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
           return;
         }
-        // go_router can re-evaluate this redirect twice in one frame; this re-check stops the dialog stacking.
         if (container.read(softUpdatePromptShownProvider)) {
           return;
         }
@@ -172,7 +170,7 @@ Future<void> launchStoreUrl(String storeUrl) async {
   try {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   } on Object {
-    // Store deep-link is best-effort; never break the hard-block UI on failure.
+    // ignored
   }
 }
 

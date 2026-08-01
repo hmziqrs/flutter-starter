@@ -2,7 +2,6 @@ import 'package:starter/features/notifications/notification_permission_status.da
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
 
-/// Production default; selected for desktop/web because `firebase_messaging` has no support there.
 final class NoopNotificationsRepository implements NotificationsRepository {
   const NoopNotificationsRepository();
 

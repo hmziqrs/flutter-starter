@@ -28,7 +28,6 @@ void main() {
       await tester.pumpWidget(_harness());
       await tester.pump(const Duration(milliseconds: 10));
 
-      // findsWidgets: Material's LicensePage also renders this title in its header.
       expect(find.text('Licenses'), findsWidgets);
       expect(find.text('1.2.3+42'), findsOneWidget);
     });

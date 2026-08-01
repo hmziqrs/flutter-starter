@@ -88,7 +88,6 @@ class App extends StatelessWidget {
           dependencies.telemetry.crashReporterBackend,
         ),
         versionGateStoreProvider.overrideWithValue(dependencies.remoteConfig.versionGateStore),
-        // Precomputed so the version-check redirect reads a ready AsyncData and never re-fires.
         versionCheckProvider.overrideWith((ref) async => dependencies.remoteConfig.versionCheck),
         connectivityServiceProvider.overrideWithValue(
           dependencies.platform.connectivityService,
@@ -201,7 +200,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
       _drainNotificationTapQueue();
       _listenAppLinkStream();
-      // Refresh on version-check resolve: the cold-start redirect can run before it resolves.
       ref.listenManual(
         versionCheckProvider,
         (_, _) => _router.refresh(),
@@ -236,7 +234,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   }
 
   void _listenAppLinkStream() {
-    // Foreground links only; the cold-start initial link is threaded as initialLocation in createApplication.
     ref.listenManual<AsyncValue<ResolvedLink>>(
       appLinkStreamProvider,
       (previous, next) {
@@ -265,7 +262,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     ref.read(appLifecyclePhaseProvider.notifier).transitionTo(state);
-    // Refresh on resume so the redirect re-sends the user to /lock after a pause-relock.
     if (state == AppLifecycleState.resumed) {
       _router.refresh();
     }
@@ -300,7 +296,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.t.app.name,
-      // Must stay constant across releases: changing it invalidates every user's restorable state.
       restorationScopeId: 'app',
       routerConfig: _router,
       locale: localeData.flutterLocale,
@@ -381,7 +376,6 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                                 Positioned.fill(
                                   child: Builder(
                                     builder: (sheetContext) => ShakeFeedbackTrigger(
-                                      // Off on web/desktop: no accelerometer, so the sensors_plus factory throws.
                                       enabled:
                                           ref.watch(feedbackShakeEnabledControllerProvider) &&
                                           !PlatformCapabilities.current().isWeb,

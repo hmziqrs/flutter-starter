@@ -132,7 +132,6 @@ void main() {
       );
     }
 
-    // Bounded pumps, not pumpAndSettle: the lockout Timer.periodic (1s) would keep pumpAndSettle alive.
     final submit = find.byKey(const ValueKey('auth-login-submit'));
     await tester.ensureVisible(submit);
     await tester.pump();
@@ -147,7 +146,6 @@ void main() {
       reason: 'submit is disabled while the lockout countdown is active',
     );
 
-    // Expire the lockout so the Timer.periodic self-cancels (no pending timers at teardown).
     await tester.pump(const Duration(seconds: 31));
   });
 

@@ -35,7 +35,7 @@ abstract class OtpControllerState with _$OtpControllerState {
       presentation.status == OtpPresentationStatus.resending;
 }
 
-// Family builder returns a private Riverpod family type; the top-level type is inferred.
+// inferred Riverpod family type
 // ignore: specify_nonobvious_property_types
 final otpControllerProvider =
     NotifierProvider.family<OtpController, OtpControllerState, OtpControllerKey>(

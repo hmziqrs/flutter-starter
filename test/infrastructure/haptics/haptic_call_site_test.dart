@@ -51,7 +51,6 @@ Widget _hapticApp({
 
 const ValueKey<String> _selectionKey = ValueKey('haptics-trigger-selection');
 
-/// forui entrance animations keep scheduling frames, so pumpAndSettle would hang.
 Future<void> _settleFrames(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 50));

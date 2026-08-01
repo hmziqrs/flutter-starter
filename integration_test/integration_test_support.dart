@@ -23,7 +23,6 @@ Future<void> tapVisible(WidgetTester tester, Key key) async {
   await pumpAppFrames(tester);
 }
 
-/// Avoids [WidgetTester.pumpAndSettle]: a focused editable or animation schedules frames forever.
 Future<void> pumpAppFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));

@@ -15,7 +15,6 @@ import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 export 'package:starter/i18n/translations.g.dart' show AppLocale;
 
-/// Reviewed render instant; one timestamp also completes focus and font/layout stabilization.
 const canonicalGoldenSettleTime = Duration(milliseconds: 500);
 
 const ValueKey<String> canonicalGoldenBoundaryKey = ValueKey(
@@ -95,7 +94,6 @@ Future<void> expectCanonicalGolden(
     await LocaleSettings.setLocale(previousLocale);
   });
 
-  // Park the mouse outside the viewport so no desktop control accidentally captures hover.
   TestPointer? pointer;
   if (fixture.interactionPolicy == AppInteractionPolicy.precisionPointer) {
     pointer = TestPointer(1, PointerDeviceKind.mouse);

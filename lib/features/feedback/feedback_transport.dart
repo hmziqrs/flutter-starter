@@ -22,7 +22,6 @@ final class FeedbackResult {
 
   final String? id;
 
-  /// Already redacted; never a raw email or message body.
   final Object? cause;
 
   bool get isAccepted => outcome == FeedbackOutcome.accepted;

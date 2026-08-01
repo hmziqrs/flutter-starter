@@ -45,7 +45,7 @@ final class FeatureFlagsController extends Notifier<FeatureFlags> {
         state = flags;
       }
     } on Object {
-      // Degrade: keep the current state (baseline or last known value).
+      // ignored
     }
   }
 

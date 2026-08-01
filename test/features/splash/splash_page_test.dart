@@ -12,7 +12,6 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
-/// Bounded pump; the indeterminate spinner never settles, so never pumpAndSettle.
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));

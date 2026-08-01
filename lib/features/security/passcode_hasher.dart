@@ -4,14 +4,12 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Deterministic for (pin, salt); never emits cleartext; [generateSalt] must be unique per call.
 abstract interface class PasscodeHasher {
   String generateSalt();
 
   String saltAndHash(String pin, String salt);
 }
 
-/// The dot delimiter in `salt.pin` prevents length-extension ambiguity.
 final class CryptoPasscodeHasher implements PasscodeHasher {
   const CryptoPasscodeHasher({Random Function()? secureRandomFactory})
     : _secureRandomFactory = secureRandomFactory ?? _defaultSecureRandom;

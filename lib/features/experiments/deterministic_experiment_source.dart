@@ -7,7 +7,6 @@ import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 import 'package:starter/features/settings/settings_store.dart';
 
-/// FNV-1a, not `String.hashCode` (unstable on web/isolates).
 final class DeterministicExperimentSource implements ExperimentSource {
   DeterministicExperimentSource({
     required this.store,
@@ -63,7 +62,7 @@ final class DeterministicExperimentSource implements ExperimentSource {
     try {
       await store.writeString(stableIdKey, generated);
     } on Object {
-      // Persist failed; the in-memory id is used for this session only.
+      // ignored
     }
     _cachedStableId = generated;
     return generated;
@@ -80,7 +79,6 @@ final class DeterministicExperimentSource implements ExperimentSource {
   @visibleForTesting
   ExperimentVariant bucket(ExperimentKey key, String stableId) => _bucket(key, stableId);
 
-  // Changing the hash or salt re-buckets every user — bump deliberately.
   ExperimentVariant _bucket(ExperimentKey key, String stableId) {
     final total = key.totalWeight;
     if (total <= 0) {

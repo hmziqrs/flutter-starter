@@ -11,7 +11,6 @@ import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
-/// Bounded pumps: the offline banner pulses forever, so `pumpAndSettle` hangs.
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));

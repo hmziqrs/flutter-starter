@@ -6,7 +6,6 @@ import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/devtools/real_inspector_host.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
-/// Separated from lib/main.dart to exclude dio_request_inspector from release AOT (flutter/flutter#188060).
 Future<void> main() async {
   final fallbackLogger = AppLogger.bootstrap();
   final guardedMain = runZonedGuarded<Future<void>>(

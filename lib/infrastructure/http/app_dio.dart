@@ -6,7 +6,7 @@ Dio buildAppDio(Uri baseUrl, {InspectorHost? inspectorHost}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl.toString(),
-      // Explicit for documentation despite matching the Dio default.
+      // Dio default; retained for clarity.
       // ignore: avoid_redundant_argument_values
       responseType: ResponseType.json,
       validateStatus: (_) => true,

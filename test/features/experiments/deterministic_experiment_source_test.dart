@@ -39,7 +39,6 @@ void main() {
       expect(a1, a2);
       final paywall = source.bucket(ExperimentKey.paywallLayout, id);
       final onboarding = source.bucket(ExperimentKey.onboardingCta, id);
-      // Arms may coincidentally match; assert each resolves independently, not that they differ.
       expect(paywall, isA<ExperimentVariant>());
       expect(onboarding, isA<ExperimentVariant>());
     });
