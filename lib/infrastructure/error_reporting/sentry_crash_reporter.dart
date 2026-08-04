@@ -27,9 +27,7 @@ final class SentryCrashReporter with FlutterErrorForwarder implements CrashRepor
     );
     try {
       await _capture(report);
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   Future<void> _capture(CrashReport report) async {

@@ -42,9 +42,7 @@ Map<String, Object?> decodeJsonMapOrEmpty(Response<dynamic> response) {
     if (decoded is Map<String, Object?>) {
       return decoded;
     }
-  } on FormatException {
-    // ignored
-  }
+  } on FormatException {}
   return const <String, Object?>{};
 }
 

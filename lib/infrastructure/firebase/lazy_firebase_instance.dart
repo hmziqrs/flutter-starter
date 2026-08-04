@@ -34,8 +34,6 @@ class LazyFirebaseInstance<T> {
     }
     try {
       await action(instance);
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 }

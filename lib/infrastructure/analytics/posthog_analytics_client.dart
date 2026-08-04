@@ -29,9 +29,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
             properties: <String, Object>{'name': name, 'step': step},
           );
       }
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   @override
@@ -43,9 +41,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
       await Posthog().setPersonProperties(
         userPropertiesToSet: <String, Object>{property.key: property.value},
       );
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   @override
@@ -59,9 +55,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
       } else {
         await Posthog().reset();
       }
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   Future<bool> _optedIn() async {
