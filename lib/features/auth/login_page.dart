@@ -78,7 +78,6 @@ class _LoginViewState extends ConsumerState<_LoginView>
   final _emailFocus = FocusNode(debugLabel: 'login.email');
   final _passwordFocus = FocusNode(debugLabel: 'login.password');
   final RestorableString _emailDraft = RestorableString('');
-  // Created in initState; stored so dispose can remove the listener.
   late final VoidCallback _syncEmailDraft;
   final _submitFocus = FocusNode(debugLabel: 'login.submit');
   final LockoutCountdownController _lockoutCountdown = LockoutCountdownController();
@@ -90,10 +89,6 @@ class _LoginViewState extends ConsumerState<_LoginView>
   @override
   void initState() {
     super.initState();
-    // Assign the controller before reading it inside the syncer closure — a
-    // cascade (`..addListener(textDraftSyncer(.., _emailController))`) would
-    // evaluate the argument before the assignment lands, throwing
-    // LateInitializationError. Mirror register_page's stored-closure pattern.
     _emailController = TextEditingController();
     _syncEmailDraft = textDraftSyncer(_emailDraft, _emailController);
     _emailController.addListener(_syncEmailDraft);
@@ -294,11 +289,6 @@ class _LoginViewState extends ConsumerState<_LoginView>
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            // Kept inline (not FormSubmitButton): login's submit absorbs presses
-            // on every surface while busy (`onPress` stays `() {}` even on
-            // near-field), whereas FormSubmitButton only absorbs on ten-foot and
-            // disables (null) on near-field while busy. That press-absorber
-            // divergence is the sole reason this button stays inline.
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
@@ -364,9 +354,6 @@ class _LoginViewState extends ConsumerState<_LoginView>
       password: _passwordController.text,
       rememberMe: _rememberMe,
     ),
-    // LoginSubmitCallback returns FutureOr<void>; the shared submit flow
-    // expects Future<void>. The async wrapper normalizes the sync branch to a
-    // completed future without changing the await semantics.
     onSubmit: (value) async => widget.onSubmit(value),
     tenFootFocusNode: _submitFocus,
   );

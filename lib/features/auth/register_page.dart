@@ -100,7 +100,6 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
 
   final RestorableString _displayNameDraft = RestorableString('');
   final RestorableString _emailDraft = RestorableString('');
-  // Created in initState; stored so dispose can remove the listener.
   late final VoidCallback _syncDisplayNameDraft;
   late final VoidCallback _syncEmailDraft;
 

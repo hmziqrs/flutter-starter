@@ -11,7 +11,6 @@ abstract final class AppSpacing {
   static const xl2 = 32.0;
   static const xl3 = 48.0;
 
-  /// Outer page-content padding applied around full-screen page bodies.
   static const EdgeInsets screenPadding = EdgeInsets.all(xl);
 
   static AppSpacingValues of(BuildContext context) {
@@ -46,6 +45,5 @@ final class AppSpacingValues {
 extension AppSpacingBuildContext on BuildContext {
   AppSpacingValues get spacing => AppSpacing.of(this);
 
-  /// Presentation-scaled equivalent of [AppSpacing.screenPadding].
   EdgeInsets get screenPadding => EdgeInsets.all(spacing.xl);
 }

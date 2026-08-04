@@ -5,19 +5,6 @@ import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/forms/password_field_toggle.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 
-/// A shared password field for auth forms (login or "new password" inputs).
-///
-/// Wraps [AppTvEditableField] (secure) around an [FTextFormField.password] with:
-///   * the show / hide toggle from [buildPasswordToggle],
-///   * [AutovalidateMode.onUserInteractionIfError],
-///   * a clear-and-unfocus reset,
-///   * the centralized [validatePassword] validator (messages sourced from
-///     translations, using [label] as the field name).
-///
-/// Pass [autofillHints] to select e.g. [AutofillHints.newPassword] (it defaults
-/// to [AutofillHints.password], matching the underlying [FTextFormField.password]
-/// constructor). Pass [nextFocusNode] to wire editing-complete to the next field,
-/// and/or [onSubmit] to submit on the field's enter action.
 AppTvEditableField passwordFormField({
   required Key activationKey,
   required Key fieldKey,
@@ -81,13 +68,6 @@ AppTvEditableField passwordFormField({
   );
 }
 
-/// A shared confirm-password field for auth forms.
-///
-/// Like [passwordFormField] but the validator additionally requires the entered
-/// value to match [matchTarget]'s current text, reporting the mismatch message
-/// from translations. Confirm is the last field, so it exposes [onSubmit] only
-/// (no next-focus wiring). [autofillHints] defaults to [AutofillHints.newPassword]
-/// and [textInputAction] defaults to [TextInputAction.done].
 AppTvEditableField confirmPasswordFormField({
   required Key activationKey,
   required Key fieldKey,

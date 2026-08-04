@@ -35,9 +35,6 @@ class AppConfirmationDialog {
     final resolvedDialogKey = dialogKey ?? const ValueKey('app-confirmation-dialog');
     final resolvedCancelKey = cancelKey ?? const ValueKey('app-confirmation-cancel');
     final resolvedActionKey = actionKey ?? const ValueKey('app-confirmation-action');
-    // When [flexibleActions] is set, wrap the button content in [Flexible] to
-    // match the discard dialogs that size their labels inside a Row. Otherwise
-    // reuse the forui default so existing call sites render identically.
     final contentBuilder = flexibleActions ? _flexibleButtonContent : FButton.defaultContentBuilder;
 
     return showFDialog<bool>(
@@ -105,8 +102,6 @@ class AppConfirmationDialog {
   }
 }
 
-// Wraps the button label in [Flexible] so it can shrink within the button's
-// internal Row, mirroring the discard dialogs that opt into flexible content.
 Widget _flexibleButtonContent(
   BuildContext _,
   FButtonStyle _,

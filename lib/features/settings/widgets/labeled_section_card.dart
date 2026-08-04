@@ -3,10 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 
-/// A section card with a `body.lg` heading above its [child].
-///
-/// Absorbs the historical settings `_SettingsCard` shape:
-/// `AppCard > Column(title + SizedBox.lg + child)`.
 class LabeledSectionCard extends StatelessWidget {
   const LabeledSectionCard({
     required this.title,

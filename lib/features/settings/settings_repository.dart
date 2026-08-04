@@ -57,9 +57,6 @@ final class SettingsRepository {
         fontScale: _parseFontScale(values[2]),
         textPreset: textPreset,
         localeOverride: _parseLocale(values[4]),
-        // Decoded inline because the values are read concurrently via
-        // Future.wait above; BoolCodecSettingsStore.readBool performs its own
-        // read and cannot join this batch. haptics is INVERTED (!= 'false').
         hasCompletedOnboarding: values[5] == 'true',
         biometricUnlockEnabled: values[6] == 'true',
         hapticsEnabled: values[7] != 'false',
@@ -85,8 +82,6 @@ final class SettingsRepository {
         },
         _store.writeBool(onboardingKey, value: state.hasCompletedOnboarding),
         _store.writeBool(biometricUnlockKey, value: state.biometricUnlockEnabled),
-        // haptics is INVERTED: disabled is persisted as 'false', enabled removes
-        // the key so the default-on value is restored.
         _store.writeBool(hapticsEnabledKey, value: state.hapticsEnabled, invert: true),
         _store.writeBool(passcodeEnabledKey, value: state.passcodeEnabled),
         switch (state.autoLockDelaySeconds) {

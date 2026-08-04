@@ -91,9 +91,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
 
   final RestorableString _codeDraft = RestorableString('');
 
-  // Owns the per-second lockout countdown (the resend cooldown is a separate,
-  // declarative concern driven by `presentation.resendSeconds` and is not
-  // merged here).
   late final LockoutCountdownController _lockout = LockoutCountdownController();
   late final VoidCallback _syncCodeDraft;
 
@@ -113,10 +110,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    // Register + sync are delegated to RestorableTextControllerBinding; the
-    // OTP field needs a selection-aware write-back (collapsed caret at the
-    // tail of the restored text), which the helper intentionally leaves to
-    // the caller.
     registerTextDraft(_codeDraft, 'code_draft');
     if (_codeDraft.value.isNotEmpty) {
       _otpController.value = TextEditingValue(
@@ -138,8 +131,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
   }
 
   void _onLockoutChanged() {
-    // Reproduces the prior per-tick setState that re-rendered the locked
-    // alert's live seconds subtitle.
     if (mounted) setState(() {});
   }
 
@@ -410,10 +401,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
   }
 
   Future<void> _submit() async {
-    // Keep the composite guard (local submit OR presentation-driven submit) so
-    // a host-driven `submitting` status still short-circuits before the shared
-    // flow; the mixin's own guard only covers local re-entrancy. The mixin's
-    // reveal step replaces this page's previously inlined revealFirstInvalid.
     if (_submitting) return;
     await submit<OtpFormValue>(
       formKey: _formKey,

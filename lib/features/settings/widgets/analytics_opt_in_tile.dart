@@ -10,9 +10,6 @@ class AnalyticsOptInTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final translations = context.t;
-    // The value-derived status text needs the current opt-in state, so the
-    // provider is watched here for the status while SettingsToggleTile watches
-    // it again for the switch value. The redundant subscription is harmless.
     final optedIn = ref.watch(analyticsOptInControllerProvider);
     final controller = ref.read(analyticsOptInControllerProvider.notifier);
     return SettingsToggleTile<bool>(
