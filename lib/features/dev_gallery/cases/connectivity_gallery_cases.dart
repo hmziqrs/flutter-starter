@@ -15,17 +15,15 @@ String _caseLabel(Translations t, ConnectivityState state) => switch (state) {
 };
 
 List<GalleryCase> buildConnectivityGalleryCases() {
-  return [
-    for (final state in ConnectivityState.values)
-      TypedGalleryCase<ConnectivityState>(
-        id: 'connectivity.${state.name}',
-        screenId: 'connectivity',
-        screenLabelBuilder: (translations) => translations.devGallery.screenConnectivity,
-        caseLabelBuilder: (translations) => _caseLabel(translations, state),
-        stateFactory: (_) => state,
-        pageFactory: (context, state) => _ConnectivityPreview(state: state),
-      ),
-  ];
+  return buildEnumGalleryCases<ConnectivityState>(
+    values: ConnectivityState.values,
+    idPrefix: 'connectivity',
+    screenId: 'connectivity',
+    screenLabelBuilder: (translations) => translations.devGallery.screenConnectivity,
+    caseLabelBuilder: (state) =>
+        (translations) => _caseLabel(translations, state),
+    pageFactory: (context, state) => _ConnectivityPreview(state: state),
+  );
 }
 
 class _ConnectivityPreview extends StatelessWidget {

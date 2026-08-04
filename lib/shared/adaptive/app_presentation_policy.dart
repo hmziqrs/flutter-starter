@@ -63,3 +63,10 @@ class AppPresentationScope extends InheritedWidget {
     return policy != oldWidget.policy;
   }
 }
+
+/// Context conveniences for [AppPresentationPolicy].
+extension AppPresentationPolicyBuildContext on BuildContext {
+  /// Whether the nearest [AppPresentationScope] describes a ten-foot viewing
+  /// environment. Defaults to `false` when no scope is present (near-field).
+  bool get isTenFoot => AppPresentationPolicy.maybeOf(this)?.isTenFoot ?? false;
+}

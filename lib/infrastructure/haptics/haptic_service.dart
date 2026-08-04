@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 enum HapticKind {
   selection,
@@ -15,10 +16,9 @@ abstract interface class HapticService {
   Future<void> trigger(HapticKind kind);
 }
 
-final class HapticServiceException implements Exception {
-  const HapticServiceException({required this.operation, required this.kind});
+final class HapticServiceException extends OperationException {
+  const HapticServiceException({required super.operation, required this.kind});
 
-  final String operation;
   final HapticKind kind;
 
   @override

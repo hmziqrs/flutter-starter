@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/flutter_error_forwarder.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-final class SentryCrashReporter implements CrashReporter {
+final class SentryCrashReporter with FlutterErrorForwarder implements CrashReporter {
   SentryCrashReporter({
     required this.verbose,
     this.redactor = const LogRedactor(),
@@ -30,15 +30,6 @@ final class SentryCrashReporter implements CrashReporter {
     } on Object {
       // ignored
     }
-  }
-
-  @override
-  Future<void> recordFlutterError(FlutterErrorDetails details) {
-    return recordError(
-      details.exception,
-      details.stack,
-      context: <String, Object?>{'source': 'flutter_framework'},
-    );
   }
 
   Future<void> _capture(CrashReport report) async {

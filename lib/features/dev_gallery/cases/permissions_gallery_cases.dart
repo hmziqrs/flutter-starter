@@ -5,6 +5,7 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/profile/widgets/permission_rationale_sheet.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
+import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 part 'permissions_gallery_cases.freezed.dart';
@@ -64,10 +65,10 @@ class _PermissionPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: AppSpacing.screenPadding,
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+          constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
           child: FCard(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.sm),

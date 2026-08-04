@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
+import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
 class FormScaffold extends StatelessWidget {
   const FormScaffold({
@@ -46,7 +47,6 @@ class FormScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = isValid && !isSubmitting;
     return BusyOverlay(
       isBusy: isSubmitting,
       label: busyLabel,
@@ -59,7 +59,7 @@ class FormScaffold extends StatelessWidget {
                 constraints: const BoxConstraints(
                   maxWidth: AppSizes.formContentMaxWidth,
                 ),
-                child: _body(enabled),
+                child: _body(),
               ),
             ),
           ),
@@ -68,7 +68,7 @@ class FormScaffold extends StatelessWidget {
     );
   }
 
-  Widget _body(bool enabled) {
+  Widget _body() {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -82,16 +82,12 @@ class FormScaffold extends StatelessWidget {
         ],
         Form(key: formKey, child: fields),
         const SizedBox(height: AppSpacing.xl),
-        FButton(
-          key: submitKey,
-          onPress: enabled ? onSubmit : null,
-          builder: (_, _, _, _, _, child) => Flexible(child: child!),
-          child: Text(
-            submitLabel,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
+        FormSubmitButton(
+          buttonKey: submitKey,
+          label: submitLabel,
+          onPress: onSubmit,
+          busy: isSubmitting,
+          locked: !isValid,
         ),
       ],
     );

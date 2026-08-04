@@ -51,14 +51,14 @@ class _SkeletonPreview extends StatelessWidget {
 
     if (!forceStatic) {
       return Center(
-        child: Padding(padding: const EdgeInsets.all(AppSpacing.xl), child: content),
+        child: Padding(padding: AppSpacing.screenPadding, child: content),
       );
     }
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(disableAnimations: true),
       child: Center(
-        child: Padding(padding: const EdgeInsets.all(AppSpacing.xl), child: content),
+        child: Padding(padding: AppSpacing.screenPadding, child: content),
       ),
     );
   }

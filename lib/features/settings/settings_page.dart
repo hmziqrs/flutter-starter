@@ -13,6 +13,8 @@ import 'package:starter/features/settings/widgets/analytics_opt_in_tile.dart';
 import 'package:starter/features/settings/widgets/auto_lock_delay_tile.dart';
 import 'package:starter/features/settings/widgets/biometric_unlock_tile.dart';
 import 'package:starter/features/settings/widgets/haptics_tile.dart';
+import 'package:starter/features/settings/widgets/inline_save_error_text.dart';
+import 'package:starter/features/settings/widgets/labeled_section_card.dart';
 import 'package:starter/features/settings/widgets/lock_on_background_tile.dart';
 import 'package:starter/features/settings/widgets/passcode_tile.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
@@ -23,6 +25,8 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
+import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
+import 'package:starter/shared/widgets/spaced_column.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({
@@ -135,9 +139,9 @@ class _SettingsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.title,
-      child: _SpacedSettingsTiles(
+      child: SpacedColumn(
         children: [
           FTile(
             key: const ValueKey('settings-open-appearance'),
@@ -233,7 +237,7 @@ class _SettingsWideLayout extends StatelessWidget {
           child: SizedBox(
             width: context.presentationTokens.navigationWidth,
             child: Padding(
-              padding: EdgeInsets.all(context.spacing.xl),
+              padding: context.screenPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -466,14 +470,14 @@ class _AccountSettingsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.account,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(translations.settings.accountBody),
           const SizedBox(height: AppSpacing.lg),
-          _SpacedSettingsTiles(
+          SpacedColumn(
             children: [
               FTile(
                 key: const ValueKey('settings-open-profile'),
@@ -505,9 +509,9 @@ class _SubscriptionSettingsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.subscription,
-      child: _SettingsCard(
+      child: LabeledSectionCard(
         title: translations.settings.openPricing,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -551,14 +555,14 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.privacyAbout,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(translations.settings.privacyBody),
           const SizedBox(height: AppSpacing.lg),
-          _SpacedSettingsTiles(
+          SpacedColumn(
             children: [
               FTile(
                 title: Text(translations.settings.aboutBuild),
@@ -639,12 +643,12 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
 
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.appearance,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SettingsCard(
+          LabeledSectionCard(
             title: translations.settings.themeMode,
             child: Wrap(
               spacing: AppSpacing.sm,
@@ -662,7 +666,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _SettingsCard(
+          LabeledSectionCard(
             title: translations.settings.accent,
             child: Wrap(
               spacing: AppSpacing.sm,
@@ -680,7 +684,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _SettingsCard(
+          LabeledSectionCard(
             title: translations.settings.fontScale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -711,7 +715,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _SettingsCard(
+          LabeledSectionCard(
             title: translations.settings.motionPreview,
             child: const _AppearanceMotionPreview(),
           ),
@@ -719,12 +723,9 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
           const HapticsTile(),
           if (saveFailed) ...[
             const SizedBox(height: AppSpacing.md),
-            Text(
-              translations.common.notConnected,
-              key: const ValueKey('settings-save-error'),
-              style: context.theme.typography.body.sm.copyWith(
-                color: context.theme.colors.error,
-              ),
+            InlineSaveErrorText(
+              message: translations.common.notConnected,
+              valueKey: 'settings-save-error',
             ),
           ],
         ],
@@ -754,9 +755,9 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
       ('locale-zh-Hans', AppLocale.zhHans, translations.settings.languageChinese),
     ];
 
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: translations.settings.language,
-      child: _SpacedSettingsTiles(
+      child: SpacedColumn(
         children: [
           for (final (key, locale, label) in options)
             _LocaleTile(
@@ -768,12 +769,9 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
           if (saveFailed)
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Text(
-                translations.common.notConnected,
-                key: const ValueKey('locale-save-error'),
-                style: context.theme.typography.body.sm.copyWith(
-                  color: context.theme.colors.error,
-                ),
+              child: InlineSaveErrorText(
+                message: translations.common.notConnected,
+                valueKey: 'locale-save-error',
               ),
             ),
         ],
@@ -810,87 +808,9 @@ class _AccessibilitySettingsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SettingsScrollFrame(
+    return ReadingContentScrollFrame(
       title: context.t.settings.accessibility.title,
       child: const AccessibilityPresetSelector(),
-    );
-  }
-}
-
-class _SettingsScrollFrame extends StatelessWidget {
-  const _SettingsScrollFrame({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl2,
-      ),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: context.presentationTokens.readingContentMaxWidth,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: context.theme.typography.display.xl2),
-                SizedBox(height: context.spacing.xl),
-                child,
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SpacedSettingsTiles extends StatelessWidget {
-  const _SpacedSettingsTiles({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var index = 0; index < children.length; index++) ...[
-          if (index > 0) const SizedBox(height: AppSpacing.sm),
-          children[index],
-        ],
-      ],
-    );
-  }
-}
-
-class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: context.theme.typography.body.lg),
-            const SizedBox(height: AppSpacing.lg),
-            child,
-          ],
-        ),
-      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:starter/features/auth/verification_lockout_policy.dart';
 
 part 'auth_attempt_tracker.freezed.dart';
 
@@ -12,7 +13,7 @@ const int freeAttemptsBeforeLockout = 2;
 int get _maxCooldownSeconds => attemptCooldownSeconds.last;
 
 @Freezed(copyWith: false)
-class AttemptState with _$AttemptState {
+class AttemptState with _$AttemptState, VerificationLockoutPolicy {
   const AttemptState({
     required this.attempts,
     required this.lockedUntil,
@@ -39,19 +40,6 @@ class AttemptState with _$AttemptState {
 
   @override
   final int nextCooldownSeconds;
-
-  bool isLockedAt(DateTime now) {
-    final until = lockedUntil;
-    return until != null && until.isAfter(now);
-  }
-
-  int lockedSecondsAt(DateTime now) {
-    final until = lockedUntil;
-    if (until == null) {
-      return 0;
-    }
-    return max(0, until.difference(now).inSeconds);
-  }
 
   AttemptState copyWith({
     int? attempts,
@@ -90,8 +78,9 @@ final class InMemoryAttemptTracker implements AttemptTracker {
     final key = hashIdentifier(identifier);
     final previous = _states[key];
     final attempts = (previous?.attempts ?? 0) + 1;
-    final cooldown = cooldownSecondsFor(attempts);
-    final lockedUntil = cooldown == 0 ? null : _now().add(Duration(seconds: cooldown));
+    final now = _now();
+    final cooldown = computeLockout(attempts, now);
+    final lockedUntil = cooldown == 0 ? null : now.add(Duration(seconds: cooldown));
     final state = AttemptState(
       attempts: attempts,
       lockedUntil: lockedUntil,

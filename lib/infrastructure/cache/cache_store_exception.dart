@@ -1,7 +1,7 @@
-final class CacheStoreException implements Exception {
-  const CacheStoreException({required this.operation, required this.key});
+import 'package:starter/shared/state/operation_exception.dart';
 
-  final String operation;
+final class CacheStoreException extends OperationException {
+  const CacheStoreException({required super.operation, required this.key});
 
   final String key;
 

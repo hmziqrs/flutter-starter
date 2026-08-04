@@ -1,21 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/auth/auth_form_submit_mixin.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
+import 'package:starter/features/auth/lockout_countdown_controller.dart';
 import 'package:starter/features/auth/login_form_value.dart';
 import 'package:starter/features/auth/login_presentation_state.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
+import 'package:starter/features/auth/widgets/auth_form_header.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/adaptive/app_presentation_policy.dart';
-import 'package:starter/shared/forms/form_field_reveal.dart';
-import 'package:starter/shared/forms/form_validators.dart';
-import 'package:starter/shared/forms/password_field_toggle.dart';
+import 'package:starter/shared/forms/email_form_field.dart';
+import 'package:starter/shared/forms/password_form_field.dart';
+import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
+import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
 typedef LoginSubmitCallback = FutureOr<void> Function(LoginFormValue value);
 
@@ -63,7 +65,11 @@ class _LoginView extends ConsumerStatefulWidget {
   ConsumerState<_LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
+class _LoginViewState extends ConsumerState<_LoginView>
+    with
+        RestorationMixin<_LoginView>,
+        RestorableTextControllerBinding<_LoginView>,
+        AuthFormSubmitMixin<_LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -72,32 +78,27 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   final _emailFocus = FocusNode(debugLabel: 'login.email');
   final _passwordFocus = FocusNode(debugLabel: 'login.password');
   final RestorableString _emailDraft = RestorableString('');
+  // Created in initState; stored so dispose can remove the listener.
+  late final VoidCallback _syncEmailDraft;
   final _submitFocus = FocusNode(debugLabel: 'login.submit');
-  bool _callbackSubmitting = false;
+  final LockoutCountdownController _lockoutCountdown = LockoutCountdownController();
   bool _rememberMe = false;
 
-  Timer? _countdownTimer;
-  int _liveLockedSeconds = 0;
-
   bool get _submitting =>
-      _callbackSubmitting || widget.presentation.status == LoginPresentationStatus.submitting;
-
-  bool get _locked =>
-      widget.presentation.status == LoginPresentationStatus.locked && _liveLockedSeconds > 0;
+      callbackSubmitting || widget.presentation.status == LoginPresentationStatus.submitting;
 
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController()..addListener(_syncEmailDraft);
-    _liveLockedSeconds = widget.presentation.lockedSeconds;
+    // Assign the controller before reading it inside the syncer closure — a
+    // cascade (`..addListener(textDraftSyncer(.., _emailController))`) would
+    // evaluate the argument before the assignment lands, throwing
+    // LateInitializationError. Mirror register_page's stored-closure pattern.
+    _emailController = TextEditingController();
+    _syncEmailDraft = textDraftSyncer(_emailDraft, _emailController);
+    _emailController.addListener(_syncEmailDraft);
+    _lockoutCountdown.syncFrom(widget.presentation.lockedSeconds);
     _requestFixtureFocus();
-    _startLockoutCountdownIfNeeded();
-  }
-
-  void _syncEmailDraft() {
-    if (_emailController.text != _emailDraft.value) {
-      _emailDraft.value = _emailController.text;
-    }
   }
 
   @override
@@ -105,7 +106,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_emailDraft, 'email_draft');
+    registerTextDraft(_emailDraft, 'email_draft');
     if (_emailController.text != _emailDraft.value) {
       _emailController.text = _emailDraft.value;
     }
@@ -118,8 +119,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
       _requestFixtureFocus();
     }
     if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
-      _liveLockedSeconds = widget.presentation.lockedSeconds;
-      _startLockoutCountdownIfNeeded();
+      _lockoutCountdown.syncFrom(widget.presentation.lockedSeconds);
     }
   }
 
@@ -131,27 +131,12 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
     }
   }
 
-  void _startLockoutCountdownIfNeeded() {
-    _countdownTimer?.cancel();
-    if (_liveLockedSeconds <= 0) {
-      return;
-    }
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
-        if (_liveLockedSeconds <= 0) timer.cancel();
-      });
-    });
-  }
-
   @override
   void dispose() {
-    _countdownTimer?.cancel();
-    _emailController.dispose();
+    _lockoutCountdown.dispose();
+    _emailController
+      ..removeListener(_syncEmailDraft)
+      ..dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
@@ -163,7 +148,6 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
   @override
   Widget build(BuildContext context) {
     final layoutClass = ref.watch(appLayoutClassProvider);
-    final form = _buildForm(context);
     final translations = context.t.auth.login;
 
     return BusyOverlay(
@@ -175,16 +159,79 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
         icon: FLucideIcons.shieldCheck,
         title: translations.title,
         body: translations.body,
-        form: form,
+        form: ValueListenableBuilder<int>(
+          valueListenable: _lockoutCountdown,
+          builder: (context, liveLockedSeconds, _) => _buildForm(context, liveLockedSeconds),
+        ),
       ),
     );
   }
 
-  Widget _buildForm(BuildContext context) {
+  Widget _buildForm(BuildContext context, int liveLockedSeconds) {
     final translations = context.t;
     final status = widget.presentation.status;
+    final submitting = _submitting;
+    final locked = status == LoginPresentationStatus.locked && liveLockedSeconds > 0;
     final invalidFixture = status == LoginPresentationStatus.invalid;
     final fieldFailureFixture = status == LoginPresentationStatus.fieldFailure;
+    final enabled = !(submitting || locked);
+
+    final attemptsAlert = AuthAttemptsRemainingAlert.maybe(
+      remaining: widget.presentation.attemptsRemaining,
+      locked: status == LoginPresentationStatus.locked,
+      titleFor: (remaining) => Text(
+        translations.auth.login.attemptsRemaining(n: remaining, count: remaining),
+      ),
+      alertKey: const ValueKey('auth-login-attempts-remaining'),
+    );
+    final feedbackAlert = AuthFeedbackAlert.forStatus<LoginPresentationStatus>(
+      status: status,
+      specFor: (status) => switch (status) {
+        LoginPresentationStatus.idle ||
+        LoginPresentationStatus.focused ||
+        LoginPresentationStatus.submitting => null,
+        LoginPresentationStatus.invalid => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-login-invalid'),
+          variant: .destructive,
+          title: Text(
+            translations.validation.required(field: translations.auth.common.email),
+          ),
+        ),
+        LoginPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-login-field-failure'),
+          variant: .destructive,
+          title: Text(translations.validation.email),
+        ),
+        LoginPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-login-global-failure'),
+          variant: .destructive,
+          title: Text(translations.auth.login.globalError),
+        ),
+        LoginPresentationStatus.success => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-login-success'),
+          title: Text(
+            widget.presentation.successMessage ?? translations.auth.login.success,
+          ),
+          icon: const Icon(FLucideIcons.circleCheck),
+        ),
+        LoginPresentationStatus.locked => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-login-locked'),
+          variant: .destructive,
+          title: Text(translations.auth.login.lockedTitle),
+          subtitle: Text(
+            translations.auth.login.lockedBody(
+              n: liveLockedSeconds,
+              seconds: liveLockedSeconds,
+            ),
+          ),
+        ),
+      },
+    );
+
+    final alerts = <Widget>[
+      ?attemptsAlert,
+      ?feedbackAlert,
+    ];
 
     return AutofillGroup(
       onDisposeAction: AutofillContextAction.cancel,
@@ -194,101 +241,38 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
           key: const ValueKey('auth-login-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              translations.auth.login.title,
-              style: context.theme.typography.display.xl2,
+            AuthFormHeader(
+              title: translations.auth.login.title,
+              body: translations.auth.login.body,
+              alerts: alerts,
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              translations.auth.login.body,
-              style: context.theme.typography.body.md,
-            ),
-            if (_attemptsRemainingAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            if (_feedbackAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            const SizedBox(height: AppSpacing.xl),
-            AppTvEditableField(
+            emailFormField(
               activationKey: const ValueKey('auth-login-email-activation'),
+              fieldKey: const ValueKey('auth-login-email'),
               label: translations.auth.common.email,
               controller: _emailController,
               focusNode: _emailFocus,
-              enabled: !(_submitting || _locked),
+              formFieldKey: _emailFieldKey,
+              nextFocusNode: _passwordFocus,
+              enabled: enabled,
               autofocus: true,
-              builder: (context, editorFocusNode, completeEditing) {
-                return FTextFormField.email(
-                  key: const ValueKey('auth-login-email'),
-                  formFieldKey: _emailFieldKey,
-                  control: .managed(controller: _emailController),
-                  focusNode: editorFocusNode,
-                  label: Text(translations.auth.common.email),
-                  textDirection: TextDirection.ltr,
-                  autofillHints: const [AutofillHints.username, AutofillHints.email],
-                  enabled: !(_submitting || _locked),
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: invalidFixture || fieldFailureFixture
-                      ? translations.validation.email
-                      : null,
-                  validator: (value) => validateEmail(
-                    value,
-                    requiredMessage: translations.validation.required(
-                      field: translations.auth.common.email,
-                    ),
-                    invalidMessage: translations.validation.email,
-                  ),
-                  onEditingComplete: () {
-                    completeEditing(nextFocusNode: _passwordFocus);
-                  },
-                  onReset: () {
-                    _emailController.clear();
-                    _emailFocus.unfocus();
-                  },
-                );
-              },
+              forceErrorText: invalidFixture || fieldFailureFixture
+                  ? translations.validation.email
+                  : null,
             ),
             const SizedBox(height: AppSpacing.lg),
-            AppTvEditableField(
+            passwordFormField(
               activationKey: const ValueKey('auth-login-password-activation'),
+              fieldKey: const ValueKey('auth-login-password'),
+              toggleKey: const ValueKey('auth-login-password-toggle'),
               label: translations.auth.common.password,
               controller: _passwordController,
               focusNode: _passwordFocus,
-              enabled: !(_submitting || _locked),
-              secure: true,
-              builder: (context, editorFocusNode, completeEditing) {
-                return FTextFormField.password(
-                  key: const ValueKey('auth-login-password'),
-                  formFieldKey: _passwordFieldKey,
-                  control: .managed(controller: _passwordController),
-                  focusNode: editorFocusNode,
-                  label: Text(translations.auth.common.password),
-                  textInputAction: TextInputAction.done,
-                  enabled: !(_submitting || _locked),
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-                  validator: (value) => validatePassword(
-                    value,
-                    requiredMessage: translations.validation.required(
-                      field: translations.auth.common.password,
-                    ),
-                    weakMessage: translations.validation.passwordWeak,
-                  ),
-                  suffixBuilder: buildPasswordToggle(
-                    key: const ValueKey('auth-login-password-toggle'),
-                  ),
-                  onSubmit: (_) {
-                    completeEditing();
-                    unawaited(_submit());
-                  },
-                  onReset: () {
-                    _passwordController.clear();
-                    _passwordFocus.unfocus();
-                  },
-                );
-              },
+              formFieldKey: _passwordFieldKey,
+              enabled: enabled,
+              forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
+              textInputAction: TextInputAction.done,
+              onSubmit: () => unawaited(_submit()),
             ),
             const SizedBox(height: AppSpacing.lg),
             FormField<bool>(
@@ -301,7 +285,7 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
                   child: FCheckbox(
                     key: const ValueKey('auth-login-remember'),
                     value: field.value ?? false,
-                    enabled: !(_submitting || _locked),
+                    enabled: enabled,
                     label: Text(translations.auth.login.rememberMe),
                     error: field.errorText == null ? null : Text(field.errorText!),
                     onChange: field.didChange,
@@ -310,12 +294,17 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
+            // Kept inline (not FormSubmitButton): login's submit absorbs presses
+            // on every surface while busy (`onPress` stays `() {}` even on
+            // near-field), whereas FormSubmitButton only absorbs on ten-foot and
+            // disables (null) on near-field while busy. That press-absorber
+            // divergence is the sole reason this button stays inline.
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
-              onPress: _locked
+              onPress: locked
                   ? null
-                  : _submitting
+                  : submitting
                   ? () {}
                   : () => unawaited(_submit()),
               builder: (_, _, _, _, _, child) => Flexible(child: child!),
@@ -332,31 +321,21 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                FButton(
-                  key: const ValueKey('auth-login-forgot-password'),
-                  variant: .ghost,
-                  mainAxisSize: .min,
-                  builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                  onPress: _submitting ? null : widget.onForgotPassword,
-                  child: Text(
-                    translations.auth.login.forgotPassword,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
+                FormSubmitButton(
+                  buttonKey: const ValueKey('auth-login-forgot-password'),
+                  variant: FButtonVariant.ghost,
+                  mainAxisSize: MainAxisSize.min,
+                  busy: submitting,
+                  onPress: widget.onForgotPassword,
+                  label: translations.auth.login.forgotPassword,
                 ),
-                FButton(
-                  key: const ValueKey('auth-login-register'),
-                  variant: .ghost,
-                  mainAxisSize: .min,
-                  builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                  onPress: _submitting ? null : widget.onRegister,
-                  child: Text(
-                    translations.auth.login.register,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
+                FormSubmitButton(
+                  buttonKey: const ValueKey('auth-login-register'),
+                  variant: FButtonVariant.ghost,
+                  mainAxisSize: MainAxisSize.min,
+                  busy: submitting,
+                  onPress: widget.onRegister,
+                  label: translations.auth.login.register,
                 ),
               ],
             ),
@@ -366,102 +345,29 @@ class _LoginViewState extends ConsumerState<_LoginView> with RestorationMixin {
     );
   }
 
-  Widget? _feedbackAlert(BuildContext context) {
-    final translations = context.t;
-    return switch (widget.presentation.status) {
-      LoginPresentationStatus.idle ||
-      LoginPresentationStatus.focused ||
-      LoginPresentationStatus.submitting => null,
-      LoginPresentationStatus.invalid => FAlert(
-        key: const ValueKey('auth-login-invalid'),
-        variant: .destructive,
-        title: Text(
-          translations.validation.required(field: translations.auth.common.email),
-        ),
+  Future<void> _submit() => submit(
+    formKey: _formKey,
+    orderedTargets: [
+      (
+        field: _emailFieldKey.currentState,
+        context: _emailFieldKey.currentContext,
+        focusNode: _emailFocus,
       ),
-      LoginPresentationStatus.fieldFailure => FAlert(
-        key: const ValueKey('auth-login-field-failure'),
-        variant: .destructive,
-        title: Text(translations.validation.email),
+      (
+        field: _passwordFieldKey.currentState,
+        context: _passwordFieldKey.currentContext,
+        focusNode: _passwordFocus,
       ),
-      LoginPresentationStatus.globalFailure => FAlert(
-        key: const ValueKey('auth-login-global-failure'),
-        variant: .destructive,
-        title: Text(translations.auth.login.globalError),
-      ),
-      LoginPresentationStatus.success => FAlert(
-        key: const ValueKey('auth-login-success'),
-        title: Text(widget.presentation.successMessage ?? translations.auth.login.success),
-        icon: const Icon(FLucideIcons.circleCheck),
-      ),
-      LoginPresentationStatus.locked => FAlert(
-        key: const ValueKey('auth-login-locked'),
-        variant: .destructive,
-        title: Text(translations.auth.login.lockedTitle),
-        subtitle: Text(
-          translations.auth.login.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
-        ),
-      ),
-    };
-  }
-
-  Widget? _attemptsRemainingAlert(BuildContext context) {
-    final remaining = widget.presentation.attemptsRemaining;
-    if (remaining <= 0 || widget.presentation.status == LoginPresentationStatus.locked) {
-      return null;
-    }
-    return FAlert(
-      key: const ValueKey('auth-login-attempts-remaining'),
-      title: Text(context.t.auth.login.attemptsRemaining(n: remaining, count: remaining)),
-    );
-  }
-
-  Future<void> _submit() async {
-    if (_submitting) return;
-    final form = _formKey.currentState;
-    if (form == null) return;
-
-    final invalidFields = form.validateGranularly();
-    if (invalidFields.isNotEmpty) {
-      await _revealFirstInvalid(invalidFields);
-      return;
-    }
-
-    form.save();
-    final value = LoginFormValue(
+    ],
+    buildValue: () => LoginFormValue(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       rememberMe: _rememberMe,
-    );
-
-    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
-      _submitFocus.requestFocus();
-    }
-    setState(() => _callbackSubmitting = true);
-    TextInput.finishAutofillContext(shouldSave: false);
-    try {
-      await widget.onSubmit(value);
-    } finally {
-      if (mounted) setState(() => _callbackSubmitting = false);
-    }
-  }
-
-  Future<void> _revealFirstInvalid(Set<FormFieldState<Object?>> invalidFields) async {
-    await revealFirstInvalid(
-      invalidFields,
-      orderedTargets: [
-        (
-          field: _emailFieldKey.currentState,
-          context: _emailFieldKey.currentContext,
-          focusNode: _emailFocus,
-        ),
-        (
-          field: _passwordFieldKey.currentState,
-          context: _passwordFieldKey.currentContext,
-          focusNode: _passwordFocus,
-        ),
-      ],
-      isMounted: () => mounted,
-    );
-  }
+    ),
+    // LoginSubmitCallback returns FutureOr<void>; the shared submit flow
+    // expects Future<void>. The async wrapper normalizes the sync branch to a
+    // completed future without changing the await semantics.
+    onSubmit: (value) async => widget.onSubmit(value),
+    tenFootFocusNode: _submitFocus,
+  );
 }

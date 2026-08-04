@@ -1,10 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/features/dev_gallery/widgets/gallery_preview_body.dart';
 import 'package:starter/features/force_update/force_update_page.dart';
 import 'package:starter/features/force_update/force_update_state.dart';
 import 'package:starter/features/force_update/soft_update_dialog.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
-import 'package:starter/shared/theme/app_spacing.dart';
 
 List<GalleryCase> buildForceUpdateGalleryCases() {
   return [
@@ -43,14 +42,8 @@ class _SoftUpdateCardPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: SoftUpdateCard(state: state, onUpdate: () {}, onLater: () {}),
-        ),
-      ),
+    return GalleryPreviewBody(
+      child: SoftUpdateCard(state: state, onUpdate: () {}, onLater: () {}),
     );
   }
 }

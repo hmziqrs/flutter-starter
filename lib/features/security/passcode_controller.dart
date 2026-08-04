@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
+import 'package:starter/features/auth/verification_lockout_policy.dart';
 import 'package:starter/features/security/passcode_hasher.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
@@ -22,7 +23,7 @@ enum PasscodeVerifyResult {
 }
 
 @Freezed(copyWith: false)
-class PasscodeState with _$PasscodeState {
+class PasscodeState with _$PasscodeState, VerificationLockoutPolicy {
   const PasscodeState({
     required this.enabled,
     required this.isSet,
@@ -51,17 +52,6 @@ class PasscodeState with _$PasscodeState {
   final int totalFailures;
 
   bool get requiresChallenge => isSet && enabled && lockedUntil == null;
-
-  bool isLockedAt(DateTime now) {
-    final until = lockedUntil;
-    return until != null && until.isAfter(now);
-  }
-
-  int lockedSecondsAt(DateTime now) {
-    final until = lockedUntil;
-    if (until == null) return 0;
-    return max(0, until.difference(now).inSeconds);
-  }
 
   PasscodeState copyWith({
     bool? enabled,
@@ -199,8 +189,8 @@ class PasscodeController extends Notifier<PasscodeState> {
 
   Future<void> _recordFailure() async {
     final attempts = state.totalFailures + 1;
-    final cooldown = cooldownSecondsFor(attempts);
     final now = DateTime.now();
+    final cooldown = computeLockout(attempts, now);
     final lockedUntil = cooldown == 0 ? null : now.add(Duration(seconds: cooldown));
     final attemptsRemaining = max(0, freeAttemptsBeforeLockout - attempts);
     state = state.copyWith(

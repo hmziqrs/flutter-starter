@@ -66,7 +66,7 @@ class _StateViewsPreview extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: AppSpacing.screenPadding,
         child: content,
       ),
     );

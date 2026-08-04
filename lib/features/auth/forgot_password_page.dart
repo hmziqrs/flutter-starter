@@ -1,20 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/auth/auth_form_submit_mixin.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/forgot_password_form_value.dart';
 import 'package:starter/features/auth/forgot_password_presentation_state.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
+import 'package:starter/features/auth/widgets/auth_form_header.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/adaptive/app_presentation_policy.dart';
-import 'package:starter/shared/forms/form_field_reveal.dart';
-import 'package:starter/shared/forms/form_validators.dart';
+import 'package:starter/shared/forms/email_form_field.dart';
+import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
+import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
 typedef ForgotPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -60,18 +61,22 @@ class _ForgotPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with RestorationMixin {
+class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
+    with
+        RestorationMixin,
+        RestorableTextControllerBinding<_ForgotPasswordView>,
+        AuthFormSubmitMixin<_ForgotPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailController = TextEditingController();
   final _emailFocus = FocusNode(debugLabel: 'forgotPassword.email');
   final _submitFocus = FocusNode(debugLabel: 'forgotPassword.submit');
-  bool _callbackSubmitting = false;
 
   final RestorableString _emailDraft = RestorableString('');
+  late final VoidCallback _syncEmailDraft;
 
   bool get _submitting =>
-      _callbackSubmitting ||
+      callbackSubmitting ||
       widget.presentation.status == ForgotPasswordPresentationStatus.submitting;
 
   @override
@@ -79,21 +84,16 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_emailDraft, 'email_draft');
+    registerTextDraft(_emailDraft, 'email_draft');
     if (_emailController.text != _emailDraft.value) {
       _emailController.text = _emailDraft.value;
-    }
-  }
-
-  void _syncEmailDraft() {
-    if (_emailController.text != _emailDraft.value) {
-      _emailDraft.value = _emailController.text;
     }
   }
 
   @override
   void initState() {
     super.initState();
+    _syncEmailDraft = textDraftSyncer(_emailDraft, _emailController);
     _emailController.addListener(_syncEmailDraft);
     _requestFixtureFocus();
   }
@@ -147,11 +147,13 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
     final status = widget.presentation.status;
-    final retainBusySubmitFocus =
-        _submitting && (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false);
     final forceEmailError =
         status == ForgotPasswordPresentationStatus.invalid ||
         status == ForgotPasswordPresentationStatus.fieldFailure;
+    final feedbackAlert = AuthFeedbackAlert.forStatus(
+      status: status,
+      specFor: (status) => _feedbackSpec(context, status),
+    );
 
     return AutofillGroup(
       onDisposeAction: AutofillContextAction.cancel,
@@ -161,87 +163,40 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
           key: const ValueKey('auth-forgot-password-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              translations.auth.forgotPassword.title,
-              style: context.theme.typography.display.xl2,
+            AuthFormHeader(
+              title: translations.auth.forgotPassword.title,
+              body: translations.auth.forgotPassword.body,
+              alerts: feedbackAlert == null ? const [] : [feedbackAlert],
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              translations.auth.forgotPassword.body,
-              style: context.theme.typography.body.md,
-            ),
-            if (_feedbackAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            const SizedBox(height: AppSpacing.xl),
-            AppTvEditableField(
+            emailFormField(
               activationKey: const ValueKey('auth-forgot-password-email-activation'),
+              fieldKey: const ValueKey('auth-forgot-password-email'),
               label: translations.auth.common.email,
               controller: _emailController,
               focusNode: _emailFocus,
+              formFieldKey: _emailFieldKey,
               enabled: !_submitting,
               autofocus: true,
-              builder: (context, editorFocusNode, completeEditing) {
-                return FTextFormField.email(
-                  key: const ValueKey('auth-forgot-password-email'),
-                  formFieldKey: _emailFieldKey,
-                  control: .managed(controller: _emailController),
-                  focusNode: editorFocusNode,
-                  label: Text(translations.auth.common.email),
-                  textDirection: TextDirection.ltr,
-                  autofillHints: const [AutofillHints.username, AutofillHints.email],
-                  textInputAction: TextInputAction.done,
-                  enabled: !_submitting,
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: forceEmailError ? translations.validation.email : null,
-                  validator: (value) => validateEmail(
-                    value,
-                    requiredMessage: translations.validation.required(
-                      field: translations.auth.common.email,
-                    ),
-                    invalidMessage: translations.validation.email,
-                  ),
-                  onSubmit: (_) {
-                    completeEditing();
-                    unawaited(_submit());
-                  },
-                  onReset: () {
-                    _emailController.clear();
-                    _emailFocus.unfocus();
-                  },
-                );
-              },
+              forceErrorText: forceEmailError ? translations.validation.email : null,
+              textInputAction: TextInputAction.done,
+              onSubmit: () => unawaited(_submit()),
             ),
             const SizedBox(height: AppSpacing.xl),
-            FButton(
-              key: const ValueKey('auth-forgot-password-submit'),
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-forgot-password-submit'),
               focusNode: _submitFocus,
-              onPress: _submitting
-                  ? retainBusySubmitFocus
-                        ? () {}
-                        : null
-                  : () => unawaited(_submit()),
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                translations.auth.forgotPassword.submit,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+              busy: _submitting,
+              retainFocusOnBusy: true,
+              onPress: () => unawaited(_submit()),
+              label: translations.auth.forgotPassword.submit,
             ),
             const SizedBox(height: AppSpacing.md),
-            FButton(
-              key: const ValueKey('auth-forgot-password-login'),
-              variant: .ghost,
-              onPress: _submitting ? null : widget.onLogin,
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                translations.auth.common.returnToLogin,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-forgot-password-login'),
+              variant: FButtonVariant.ghost,
+              busy: _submitting,
+              onPress: widget.onLogin,
+              label: translations.auth.common.returnToLogin,
             ),
           ],
         ),
@@ -249,28 +204,31 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
     );
   }
 
-  Widget? _feedbackAlert(BuildContext context) {
+  AuthFeedbackAlertSpec? _feedbackSpec(
+    BuildContext context,
+    ForgotPasswordPresentationStatus status,
+  ) {
     final translations = context.t;
-    return switch (widget.presentation.status) {
+    return switch (status) {
       ForgotPasswordPresentationStatus.idle ||
       ForgotPasswordPresentationStatus.focused ||
       ForgotPasswordPresentationStatus.submitting => null,
-      ForgotPasswordPresentationStatus.invalid => FAlert(
+      ForgotPasswordPresentationStatus.invalid => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-invalid'),
-        variant: .destructive,
+        variant: FAlertVariant.destructive,
         title: Text(translations.validation.email),
       ),
-      ForgotPasswordPresentationStatus.fieldFailure => FAlert(
+      ForgotPasswordPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-field-failure'),
-        variant: .destructive,
+        variant: FAlertVariant.destructive,
         title: Text(translations.validation.email),
       ),
-      ForgotPasswordPresentationStatus.globalFailure => FAlert(
+      ForgotPasswordPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-global-failure'),
-        variant: .destructive,
+        variant: FAlertVariant.destructive,
         title: Text(translations.common.notConnected),
       ),
-      ForgotPasswordPresentationStatus.success => FAlert(
+      ForgotPasswordPresentationStatus.success => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-success'),
         title: Text(translations.auth.forgotPassword.success),
         icon: const Icon(FLucideIcons.circleCheck),
@@ -278,37 +236,19 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView> with R
     };
   }
 
-  Future<void> _submit() async {
-    if (_submitting) return;
-    final form = _formKey.currentState;
-    if (form == null) return;
-    final invalidFields = form.validateGranularly();
-    if (invalidFields.isNotEmpty) {
-      await revealFirstInvalid(
-        invalidFields,
-        orderedTargets: [
-          (
-            field: _emailFieldKey.currentState,
-            context: _emailFieldKey.currentContext,
-            focusNode: _emailFocus,
-          ),
-        ],
-        isMounted: () => mounted,
-      );
-      return;
-    }
-
-    form.save();
-    final value = ForgotPasswordFormValue(email: _emailController.text.trim());
-    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
-      _submitFocus.requestFocus();
-    }
-    setState(() => _callbackSubmitting = true);
-    TextInput.finishAutofillContext(shouldSave: false);
-    try {
+  Future<void> _submit() => submit(
+    formKey: _formKey,
+    orderedTargets: [
+      (
+        field: _emailFieldKey.currentState,
+        context: _emailFieldKey.currentContext,
+        focusNode: _emailFocus,
+      ),
+    ],
+    buildValue: () => ForgotPasswordFormValue(email: _emailController.text.trim()),
+    onSubmit: (value) async {
       await widget.onSubmit(value);
-    } finally {
-      if (mounted) setState(() => _callbackSubmitting = false);
-    }
-  }
+    },
+    tenFootFocusNode: _submitFocus,
+  );
 }

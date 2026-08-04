@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_repository.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/shared/state/app_lifecycle_listener.dart';
+import 'package:starter/shared/state/optimistic_notifier.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => throw StateError('AuthRepository must be overridden at the composition root.'),
@@ -21,33 +20,27 @@ final sessionControllerProvider = NotifierProvider<SessionController, AuthSessio
   SessionController.new,
 );
 
-final class SessionController extends Notifier<AuthSession> {
+final class SessionController extends Notifier<AuthSession> with OptimisticNotifier<AuthSession> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
   SessionRepository get _sessionRepository => ref.read(sessionRepositoryProvider);
   AppLogger get _logger => ref.read(appLoggerProvider);
 
   @override
   AuthSession build() {
-    ref.listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
-      final wasResumed = previous?.isResumed ?? false;
-      if (next.isResumed && !wasResumed) {
-        unawaited(_safeRefreshIfExpired());
-      }
-    });
+    listenOnResume(ref, _safeRefreshIfExpired);
     return ref.watch(initialSessionProvider);
   }
 
   Future<void> login(AuthCredentials credentials) async {
-    final previous = state;
     final session = await _repository.login(credentials);
     if (session is! AuthAuthenticated) {
       return;
     }
-    await _apply(session, previous: previous);
+    await _apply(session);
   }
 
   Future<void> establish(AuthAuthenticated session) async {
-    await _apply(session, previous: state);
+    await _apply(session);
   }
 
   Future<void> refreshIfExpired() async {
@@ -67,22 +60,15 @@ final class SessionController extends Notifier<AuthSession> {
   }
 
   Future<void> _refresh(AuthAuthenticated current) async {
-    final previous = state;
     final session = await _repository.refresh(current);
     if (session is! AuthAuthenticated) {
       return;
     }
-    await _apply(session, previous: previous);
+    await _apply(session);
   }
 
-  Future<void> _apply(AuthAuthenticated next, {required AuthSession previous}) async {
-    state = next;
-    try {
-      await _sessionRepository.writeRefreshToken(next.refreshToken);
-    } on Object {
-      state = previous;
-      rethrow;
-    }
+  Future<void> _apply(AuthAuthenticated next) async {
+    await guardRollback(next, () => _sessionRepository.writeRefreshToken(next.refreshToken));
   }
 
   Future<void> logout() async {

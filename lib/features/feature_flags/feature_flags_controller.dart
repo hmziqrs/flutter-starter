@@ -1,58 +1,50 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/shared/state/app_lifecycle_listener.dart';
+import 'package:starter/shared/state/guarded_refresh_notifier.dart';
 
 final featureFlagsControllerProvider = NotifierProvider<FeatureFlagsController, FeatureFlags>(
   FeatureFlagsController.new,
 );
 
-final class FeatureFlagsController extends Notifier<FeatureFlags> {
+final class FeatureFlagsController extends Notifier<FeatureFlags>
+    with GuardedRefreshNotifier<FeatureFlags> {
   FeatureFlagsSource get _source => ref.read(featureFlagsSourceProvider);
-  AppLogger get _logger => ref.read(appLoggerProvider);
 
-  int _liveEpoch = 0;
+  @override
+  AppLogger get logger => ref.read(appLoggerProvider);
 
   @override
   FeatureFlags build() {
     unawaited(_refresh());
 
     final subscription = _source.changes().listen((flags) {
-      _liveEpoch++;
+      bumpLiveEpoch();
       if (state != flags) {
         state = flags;
       }
     });
 
-    ref
-      ..onDispose(subscription.cancel)
-      ..listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
-        final wasResumed = previous?.isResumed ?? false;
-        if (next.isResumed && !wasResumed) {
-          unawaited(_refresh());
-        }
-      });
+    ref.onDispose(subscription.cancel);
+    listenOnResume(ref, _refresh);
 
     return const FeatureFlags.defaults();
   }
 
   Future<void> _refresh() async {
-    final epochAtStart = _liveEpoch;
-    try {
-      final flags = await _source.load();
-      if (epochAtStart == _liveEpoch && state != flags) {
-        state = flags;
-      }
-    } on Object catch (error, stackTrace) {
-      _logger.warning(
-        'Feature flag refresh failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+    await guardedRefresh(
+      load: _source.load,
+      apply: (flags) {
+        if (state != flags) {
+          state = flags;
+        }
+      },
+      errorMessage: 'Feature flag refresh failed',
+    );
   }
 
   bool isEnabled(FeatureFlag flag) => state.isEnabled(flag);

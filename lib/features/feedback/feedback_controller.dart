@@ -7,6 +7,8 @@ import 'package:starter/features/feedback/feedback_presentation_state.dart';
 import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/preferences/bool_codec.dart';
+import 'package:starter/shared/state/optimistic_notifier.dart';
 
 part 'feedback_controller.freezed.dart';
 
@@ -180,10 +182,7 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
           final email? => _store.writeString(feedbackDraftEmailKey, email),
           null => _store.remove(feedbackDraftEmailKey),
         },
-        switch (draft.includeScreenshot) {
-          true => _store.writeString(feedbackDraftIncludeScreenshotKey, 'true'),
-          false => _store.remove(feedbackDraftIncludeScreenshotKey),
-        },
+        _store.writeBool(feedbackDraftIncludeScreenshotKey, value: draft.includeScreenshot),
       ]);
     } on SettingsStoreException catch (error, stackTrace) {
       _logger.error(
@@ -214,25 +213,14 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
 final feedbackShakeEnabledControllerProvider =
     NotifierProvider<FeedbackShakeEnabledController, bool>(FeedbackShakeEnabledController.new);
 
-final class FeedbackShakeEnabledController extends Notifier<bool> {
+final class FeedbackShakeEnabledController extends Notifier<bool> with OptimisticNotifier<bool> {
   SettingsStore get _store => ref.read(settingsStoreProvider);
 
   @override
   bool build() => ref.watch(initialFeedbackShakeEnabledProvider);
 
   Future<void> setEnabled({required bool value}) async {
-    final previous = state;
-    state = value;
-    try {
-      if (value) {
-        await _store.writeString(feedbackShakeEnabledKey, 'true');
-      } else {
-        await _store.remove(feedbackShakeEnabledKey);
-      }
-    } on Object {
-      state = previous;
-      rethrow;
-    }
+    await guardRollback(value, () => _store.writeBool(feedbackShakeEnabledKey, value: value));
   }
 
   Future<void> toggle() => setEnabled(value: !state);

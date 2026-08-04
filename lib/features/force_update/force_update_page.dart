@@ -29,7 +29,7 @@ class ForceUpdatePage extends StatelessWidget {
                 maxWidth: AppSizes.formContentMaxWidth,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,

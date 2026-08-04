@@ -42,7 +42,7 @@ class _ToastDialogPreview extends StatelessWidget {
     final translations = context.t;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: AppSpacing.screenPadding,
         child: FButton(
           key: ValueKey<String>('toast-dialog-trigger-${kind.name}'),
           onPress: () => _activate(context),

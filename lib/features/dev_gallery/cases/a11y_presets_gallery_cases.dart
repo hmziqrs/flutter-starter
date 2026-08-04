@@ -10,17 +10,15 @@ import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 List<GalleryCase> buildA11yPresetsGalleryCases() {
-  return [
-    for (final preset in AppTextPreset.values)
-      TypedGalleryCase<AppTextPreset>(
-        id: 'accessibility.${preset.name}',
-        screenId: 'accessibility',
-        screenLabelBuilder: (translations) => translations.devGallery.screenAccessibility,
-        caseLabelBuilder: (translations) => _caseLabel(translations, preset),
-        stateFactory: (_) => preset,
-        pageFactory: (context, state) => _AccessibilityPresetPreview(preset: state),
-      ),
-  ];
+  return buildEnumGalleryCases<AppTextPreset>(
+    values: AppTextPreset.values,
+    idPrefix: 'accessibility',
+    screenId: 'accessibility',
+    screenLabelBuilder: (translations) => translations.devGallery.screenAccessibility,
+    caseLabelBuilder: (preset) =>
+        (translations) => _caseLabel(translations, preset),
+    pageFactory: (context, state) => _AccessibilityPresetPreview(preset: state),
+  );
 }
 
 String _caseLabel(Translations t, AppTextPreset preset) => switch (preset) {

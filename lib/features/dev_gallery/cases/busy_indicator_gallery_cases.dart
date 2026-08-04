@@ -45,7 +45,7 @@ class _BusyIndicatorPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: AppSpacing.screenPadding,
         child: BusyIndicator(value: value),
       ),
     );

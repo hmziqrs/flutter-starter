@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/features/dev_gallery/widgets/gallery_preview_body.dart';
 import 'package:starter/features/settings/license_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/sharing/share_service.dart';
 import 'package:starter/infrastructure/updates/app_update_service.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 
 List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
-  return [
+  return <GalleryCase>[
     TypedGalleryCase<void>(
       id: 'license.about',
       screenId: 'license',
@@ -18,33 +19,33 @@ List<GalleryCase> buildLicenseShareUpdateGalleryCases() {
       stateFactory: (_) {},
       pageFactory: (context, state) => const AboutLicensePage(),
     ),
-    for (final result in ShareResult.values)
-      TypedGalleryCase<ShareResult>(
-        id: 'share.${result.name}',
-        screenId: 'share',
-        screenLabelBuilder: (translations) => translations.devGallery.screenShare,
-        caseLabelBuilder: (translations) => _shareResultLabel(translations, result),
-        stateFactory: (_) => result,
-        pageFactory: (context, state) => _IconLabelCard(
-          screenLabel: (t) => t.devGallery.screenShare,
-          caseLabel: (t) => _shareResultLabel(t, state),
-          icon: _shareIcon(state),
-        ),
+    ...buildEnumGalleryCases<ShareResult>(
+      values: ShareResult.values,
+      idPrefix: 'share',
+      screenId: 'share',
+      screenLabelBuilder: (translations) => translations.devGallery.screenShare,
+      caseLabelBuilder: (result) =>
+          (translations) => _shareResultLabel(translations, result),
+      pageFactory: (context, state) => _IconLabelCard(
+        screenLabel: (t) => t.devGallery.screenShare,
+        caseLabel: (t) => _shareResultLabel(t, state),
+        icon: _shareIcon(state),
       ),
-    for (final availability in UpdateAvailability.values)
-      TypedGalleryCase<UpdateAvailability>(
-        id: 'appUpdate.${availability.name}',
-        screenId: 'appUpdate',
-        screenLabelBuilder: (translations) => translations.devGallery.screenAppUpdate,
-        caseLabelBuilder: (translations) => _updateAvailabilityLabel(translations, availability),
-        stateFactory: (_) => availability,
-        pageFactory: (context, state) => _IconLabelCard(
-          screenLabel: (t) => t.devGallery.screenAppUpdate,
-          caseLabel: (t) => _updateAvailabilityLabel(t, availability),
-          icon: _updateIcon(availability),
-          iconColorError: availability == UpdateAvailability.required,
-        ),
+    ),
+    ...buildEnumGalleryCases<UpdateAvailability>(
+      values: UpdateAvailability.values,
+      idPrefix: 'appUpdate',
+      screenId: 'appUpdate',
+      screenLabelBuilder: (translations) => translations.devGallery.screenAppUpdate,
+      caseLabelBuilder: (availability) =>
+          (translations) => _updateAvailabilityLabel(translations, availability),
+      pageFactory: (context, state) => _IconLabelCard(
+        screenLabel: (t) => t.devGallery.screenAppUpdate,
+        caseLabel: (t) => _updateAvailabilityLabel(t, state),
+        icon: _updateIcon(state),
+        iconColorError: state == UpdateAvailability.required,
       ),
+    ),
   ];
 }
 
@@ -99,36 +100,25 @@ class _IconLabelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: FCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
+    return GalleryPreviewBody(
+      child: AppCard(
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: iconColorError ? context.theme.colors.error : context.theme.colors.primary,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    icon,
-                    color: iconColorError
-                        ? context.theme.colors.error
-                        : context.theme.colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(screenLabel(translations), style: context.theme.typography.body.lg),
-                        Text(caseLabel(translations)),
-                      ],
-                    ),
-                  ),
+                  Text(screenLabel(translations), style: context.theme.typography.body.lg),
+                  Text(caseLabel(translations)),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

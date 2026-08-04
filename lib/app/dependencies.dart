@@ -58,6 +58,7 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities_resolver.dart';
+import 'package:starter/infrastructure/preferences/bool_codec.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
 import 'package:starter/infrastructure/profile/http_profile_repository.dart';
 import 'package:starter/infrastructure/secure_storage/flutter_secure_storage_store.dart';
@@ -251,7 +252,7 @@ final class AppDependencies {
     final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
     var initialAnalyticsOptIn = false;
     try {
-      initialAnalyticsOptIn = await effectiveSecureStore.read(analyticsOptInKey) == 'true';
+      initialAnalyticsOptIn = await effectiveSecureStore.readBool(analyticsOptInKey);
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read analytics opt-in; defaulting to off',
@@ -268,11 +269,11 @@ final class AppDependencies {
     try {
       final message = await settingsStore.readString(feedbackDraftMessageKey);
       final email = await settingsStore.readString(feedbackDraftEmailKey);
-      final includeScreenshot = await settingsStore.readString(feedbackDraftIncludeScreenshotKey);
+      final includeScreenshot = await settingsStore.readBool(feedbackDraftIncludeScreenshotKey);
       initialFeedbackDraft = FeedbackDraft(
         message: message ?? '',
         email: email == null || email.isEmpty ? null : email,
-        includeScreenshot: includeScreenshot == 'true',
+        includeScreenshot: includeScreenshot,
       );
     } on Object catch (error, stackTrace) {
       logger.warning(
@@ -283,8 +284,7 @@ final class AppDependencies {
       initialFeedbackDraft = const FeedbackDraft.empty();
     }
     try {
-      initialFeedbackShakeEnabled =
-          await settingsStore.readString(feedbackShakeEnabledKey) == 'true';
+      initialFeedbackShakeEnabled = await settingsStore.readBool(feedbackShakeEnabledKey);
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read shake-feedback flag; defaulting to off',

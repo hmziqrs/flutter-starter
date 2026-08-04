@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_bottom_sheet.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 part 'system_overlay_fixture.freezed.dart';
@@ -103,37 +104,34 @@ class SystemOverlayFixturePage extends StatelessWidget {
   void _showSheet(BuildContext context) {
     final translations = context.t;
     unawaited(
-      showFSheet<void>(
+      showAppBottomSheet<void>(
         context: context,
-        side: FLayout.btt,
         barrierDismissible: false,
         draggable: false,
-        useSafeArea: true,
-        builder: (context) => EscapeDismissibleOverlay(
-          child: Semantics(
-            label: translations.devGallery.caseSheet,
-            container: true,
-            child: Padding(
-              key: const ValueKey('overlay-sheet-content'),
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    translations.devGallery.caseSheet,
-                    style: context.theme.typography.display.lg,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(translations.common.notConnected),
-                  const SizedBox(height: AppSpacing.xl),
-                  FButton(
-                    key: const ValueKey('overlay-sheet-close'),
-                    onPress: () => Navigator.of(context).pop(),
-                    child: Text(translations.common.close),
-                  ),
-                ],
-              ),
+        colored: false,
+        builder: (context) => Semantics(
+          label: translations.devGallery.caseSheet,
+          container: true,
+          child: Padding(
+            key: const ValueKey('overlay-sheet-content'),
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  translations.devGallery.caseSheet,
+                  style: context.theme.typography.display.lg,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(translations.common.notConnected),
+                const SizedBox(height: AppSpacing.xl),
+                FButton(
+                  key: const ValueKey('overlay-sheet-close'),
+                  onPress: () => Navigator.of(context).pop(),
+                  child: Text(translations.common.close),
+                ),
+              ],
             ),
           ),
         ),
@@ -175,7 +173,7 @@ class _OverlayTrigger extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: AppSpacing.screenPadding,
           child: FButton(
             key: triggerKey,
             onPress: onPress,

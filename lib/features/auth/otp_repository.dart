@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/shared/errors/repository_exception.dart';
 
 enum OtpDeliveryChannel {
   sms,
@@ -17,19 +18,17 @@ enum OtpFailureKind {
   unknown,
 }
 
-final class OtpRepositoryException implements Exception {
-  const OtpRepositoryException.notConnected() : kind = OtpFailureKind.notConnected, cause = null;
+final class OtpRepositoryException extends RepositoryException<OtpFailureKind> {
+  const OtpRepositoryException.notConnected() : super(kind: OtpFailureKind.notConnected);
 
-  const OtpRepositoryException.invalid([this.cause]) : kind = OtpFailureKind.invalid;
+  const OtpRepositoryException.invalid([Object? cause])
+    : super(kind: OtpFailureKind.invalid, cause: cause);
 
-  const OtpRepositoryException.unknown([this.cause]) : kind = OtpFailureKind.unknown;
-
-  final OtpFailureKind kind;
-
-  final Object? cause;
+  const OtpRepositoryException.unknown([Object? cause])
+    : super(kind: OtpFailureKind.unknown, cause: cause);
 
   @override
-  String toString() => 'OtpRepositoryException(${kind.name})';
+  String toString() => describe('OtpRepositoryException');
 }
 
 @immutable

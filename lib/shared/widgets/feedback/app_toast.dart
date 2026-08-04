@@ -22,6 +22,9 @@ class AppToast {
     String? title,
     Duration? duration = const Duration(seconds: 5),
     VoidCallback? onDismiss,
+    IconData? icon,
+    Color? iconColor,
+    String? iconSemanticLabel,
   }) {
     final translations = context.t;
     final resolvedTitle = _resolveTitle(severity, title, message, translations);
@@ -32,10 +35,10 @@ class AppToast {
       context: context,
       variant: presentation.variant,
       icon: Icon(
-        presentation.icon,
+        icon ?? presentation.icon,
         size: 18,
-        color: presentation.iconColor,
-        semanticLabel: presentation.semanticLabel,
+        color: iconColor ?? presentation.iconColor,
+        semanticLabel: iconSemanticLabel ?? presentation.semanticLabel,
       ),
       title: Text(resolvedTitle),
       description: showDescription ? Text(message) : null,

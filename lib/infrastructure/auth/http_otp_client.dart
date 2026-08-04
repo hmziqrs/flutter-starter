@@ -4,12 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
-import 'package:starter/infrastructure/http/app_dio.dart';
+import 'package:starter/infrastructure/http/app_http_repository.dart';
+import 'package:starter/infrastructure/http/json_body.dart';
 
-final class HttpOtpClient implements OtpRepository {
-  HttpOtpClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
-
-  final Dio _dio;
+final class HttpOtpClient extends AppHttpRepository implements OtpRepository {
+  HttpOtpClient({required super.baseUrl, super.dio});
 
   final Map<String, String> _attemptTokens = <String, String>{};
 
@@ -45,10 +44,10 @@ final class HttpOtpClient implements OtpRepository {
       if (valid is! bool || !valid) {
         return const OtpVerifyResult.invalid();
       }
-      final accessToken = _asString(body['access_token']);
-      final refreshToken = _asString(body['refresh_token']);
-      final expiresAt = _parseDate(body['expires_at']);
-      final userId = _asString(body['user_id']);
+      final accessToken = asString(body['access_token']);
+      final refreshToken = asString(body['refresh_token']);
+      final expiresAt = parseDate(body['expires_at']);
+      final userId = asString(body['user_id']);
       _attemptTokens.remove(identifier);
       if (accessToken == null || refreshToken == null || expiresAt == null || userId == null) {
         return const OtpVerifyResult.valid();
@@ -62,7 +61,7 @@ final class HttpOtpClient implements OtpRepository {
         ),
       );
     }
-    _classifyStatus(status);
+    classify(status);
   }
 
   @override
@@ -70,6 +69,20 @@ final class HttpOtpClient implements OtpRepository {
     final purpose = _purposes[identifier] ?? OtpPurpose.registration;
     return _issue(path: '/v1/otp/resend', purpose: purpose, identifier: identifier);
   }
+
+  @override
+  Never classify(int status) {
+    if (status >= 500) {
+      throw const OtpRepositoryException.notConnected();
+    }
+    if (status >= 400 && status < 500) {
+      throw const OtpRepositoryException.invalid();
+    }
+    throw const OtpRepositoryException.notConnected();
+  }
+
+  @override
+  Never throwNotConnected() => throw const OtpRepositoryException.notConnected();
 
   Future<OtpIssueResult> _issue({
     required String path,
@@ -81,7 +94,7 @@ final class HttpOtpClient implements OtpRepository {
       body: <String, Object>{'purpose': purpose.pathSegment, 'identifier': identifier},
     );
     if (result.status != 200) {
-      _classifyStatus(result.status);
+      classify(result.status);
     }
     final envelope = _parseIssueEnvelope(result.body);
     _attemptTokens[identifier] = envelope.attemptToken;
@@ -93,9 +106,8 @@ final class HttpOtpClient implements OtpRepository {
     required String path,
     required Map<String, Object> body,
   }) async {
-    final Response<String> response;
-    try {
-      response = await _dio.post<String>(
+    final response = await roundTripRaw(
+      () => dio.post<String>(
         path,
         data: jsonEncode(body),
         options: Options(
@@ -103,30 +115,14 @@ final class HttpOtpClient implements OtpRepository {
           contentType: Headers.jsonContentType,
           headers: <String, String>{'X-Api-Key': 'dev'},
         ),
-      );
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status != null) {
-        _classifyStatus(status);
-      }
-      throw const OtpRepositoryException.notConnected();
-    }
-    return (status: response.statusCode!, body: _decodeBody(response.data ?? ''));
-  }
-
-  Never _classifyStatus(int status) {
-    if (status >= 500) {
-      throw const OtpRepositoryException.notConnected();
-    }
-    if (status >= 400 && status < 500) {
-      throw const OtpRepositoryException.invalid();
-    }
-    throw const OtpRepositoryException.notConnected();
+      ),
+    );
+    return (status: response.statusCode!, body: decodeJsonMapOrEmpty(response));
   }
 
   OtpIssueResult _parseIssueEnvelope(Map<String, Object?> body) {
-    final attemptToken = _asString(body['attempt_token']);
-    final expiresAt = _parseDate(body['expires_at']);
+    final attemptToken = asString(body['attempt_token']);
+    final expiresAt = parseDate(body['expires_at']);
     if (attemptToken == null || expiresAt == null) {
       throw const OtpRepositoryException.unknown();
     }
@@ -143,29 +139,5 @@ final class HttpOtpClient implements OtpRepository {
       'email' => OtpDeliveryChannel.email,
       _ => OtpDeliveryChannel.authenticator,
     };
-  }
-
-  static Map<String, Object?> _decodeBody(String body) {
-    if (body.isEmpty) return const <String, Object?>{};
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, Object?>) {
-        return decoded;
-      }
-    } on FormatException {
-      // ignored
-    }
-    return const <String, Object?>{};
-  }
-
-  static String? _asString(Object? raw) => raw is String && raw.isNotEmpty ? raw : null;
-
-  static DateTime? _parseDate(Object? raw) {
-    if (raw is! String || raw.isEmpty) return null;
-    try {
-      return DateTime.parse(raw);
-    } on FormatException {
-      return null;
-    }
   }
 }

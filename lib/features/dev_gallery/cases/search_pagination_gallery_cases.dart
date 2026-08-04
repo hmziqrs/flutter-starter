@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/features/dev_gallery/widgets/gallery_preview_body.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/state/paged_state.dart';
 import 'package:starter/shared/state/paged_state_notifier.dart';
@@ -121,28 +122,22 @@ class _GallerySearchFieldPreviewState extends State<_GallerySearchFieldPreview> 
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                context.t.search.title,
-                style: context.theme.typography.display.lg,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              SearchField(
-                controller: _controller,
-                hintText: context.t.search.placeholder,
-                onChanged: (_) {},
-              ),
-            ],
+    return GalleryPreviewBody(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            context.t.search.title,
+            style: context.theme.typography.display.lg,
           ),
-        ),
+          const SizedBox(height: AppSpacing.md),
+          SearchField(
+            controller: _controller,
+            hintText: context.t.search.placeholder,
+            onChanged: (_) {},
+          ),
+        ],
       ),
     );
   }

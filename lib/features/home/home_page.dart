@@ -11,6 +11,7 @@ import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
+import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
 import 'package:starter/shared/widgets/states/empty_state_view.dart';
 
 class HomePage extends ConsumerWidget {
@@ -40,41 +41,27 @@ class HomePage extends ConsumerWidget {
 
     return SafeArea(
       bottom: false,
-      child: ListView(
+      child: ReadingContentScrollFrame(
         key: ValueKey('home-layout-${layoutClass.name}'),
-        padding: EdgeInsetsDirectional.fromSTEB(
-          context.spacing.xl,
-          context.spacing.xl,
-          context.spacing.xl,
-          context.spacing.xl2,
-        ),
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: context.presentationTokens.wideContentMaxWidth,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HomeHeader(viewData: viewData),
-                  SizedBox(height: context.spacing.xl),
-                  _QuickActions(
-                    columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
-                    onOpenProfile: onOpenProfile,
-                    onOpenPricing: onOpenPricing,
-                    onOpenSettings: onOpenSettings,
-                    onOpenLogin: onOpenLogin,
-                  ),
-                  SizedBox(height: context.spacing.xl),
-                  _StatusSection(viewData: viewData, columns: columns),
-                  SizedBox(height: context.spacing.xl),
-                  _RecentActivity(viewData: viewData),
-                ],
-              ),
+        maxWidth: context.presentationTokens.wideContentMaxWidth,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _HomeHeader(viewData: viewData),
+            SizedBox(height: context.spacing.xl),
+            _QuickActions(
+              columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
+              onOpenProfile: onOpenProfile,
+              onOpenPricing: onOpenPricing,
+              onOpenSettings: onOpenSettings,
+              onOpenLogin: onOpenLogin,
             ),
-          ),
-        ],
+            SizedBox(height: context.spacing.xl),
+            _StatusSection(viewData: viewData, columns: columns),
+            SizedBox(height: context.spacing.xl),
+            _RecentActivity(viewData: viewData),
+          ],
+        ),
       ),
     );
   }

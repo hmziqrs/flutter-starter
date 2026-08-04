@@ -7,17 +7,15 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 List<GalleryCase> buildAnnouncementsGalleryCases() {
-  return [
-    for (final severity in AnnouncementSeverity.values)
-      TypedGalleryCase<AnnouncementSeverity>(
-        id: 'announcements.${severity.name}',
-        screenId: 'announcements',
-        screenLabelBuilder: (translations) => translations.devGallery.screenAnnouncements,
-        caseLabelBuilder: (translations) => _caseLabel(translations, severity),
-        stateFactory: (_) => severity,
-        pageFactory: (context, state) => _AnnouncementsPreview(severity: state),
-      ),
-  ];
+  return buildEnumGalleryCases<AnnouncementSeverity>(
+    values: AnnouncementSeverity.values,
+    idPrefix: 'announcements',
+    screenId: 'announcements',
+    screenLabelBuilder: (translations) => translations.devGallery.screenAnnouncements,
+    caseLabelBuilder: (severity) =>
+        (translations) => _caseLabel(translations, severity),
+    pageFactory: (context, state) => _AnnouncementsPreview(severity: state),
+  );
 }
 
 String _caseLabel(Translations t, AnnouncementSeverity severity) => switch (severity) {

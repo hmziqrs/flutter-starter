@@ -17,21 +17,21 @@ enum FormScaffoldGalleryState {
 }
 
 List<GalleryCase> buildFormScaffoldingGalleryCases() {
-  return [
-    for (final state in FormScaffoldGalleryState.values)
-      TypedGalleryCase<FormScaffoldGalleryState>(
-        id: 'formScaffold.${state.name}',
-        screenId: 'form-scaffold',
-        screenLabelBuilder: (translations) => translations.devGallery.screenFormScaffolding,
-        caseLabelBuilder: (translations) => switch (state) {
-          FormScaffoldGalleryState.disabled => translations.devGallery.caseFormScaffoldDisabled,
-          FormScaffoldGalleryState.enabled => translations.devGallery.caseFormScaffoldEnabled,
-          FormScaffoldGalleryState.submitting => translations.devGallery.caseFormScaffoldSubmitting,
-        },
-        stateFactory: (_) => state,
-        pageFactory: (context, state) => _FormScaffoldPreview(state: state),
-      ),
-  ];
+  return buildEnumGalleryCases<FormScaffoldGalleryState>(
+    values: FormScaffoldGalleryState.values,
+    idPrefix: 'formScaffold',
+    screenId: 'form-scaffold',
+    screenLabelBuilder: (translations) => translations.devGallery.screenFormScaffolding,
+    caseLabelBuilder: (state) => switch (state) {
+      FormScaffoldGalleryState.disabled =>
+        (translations) => translations.devGallery.caseFormScaffoldDisabled,
+      FormScaffoldGalleryState.enabled =>
+        (translations) => translations.devGallery.caseFormScaffoldEnabled,
+      FormScaffoldGalleryState.submitting =>
+        (translations) => translations.devGallery.caseFormScaffoldSubmitting,
+    },
+    pageFactory: (context, state) => _FormScaffoldPreview(state: state),
+  );
 }
 
 class _FormScaffoldPreview extends StatefulWidget {

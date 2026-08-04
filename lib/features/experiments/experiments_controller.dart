@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/shared/state/app_lifecycle_listener.dart';
+import 'package:starter/shared/state/guarded_refresh_notifier.dart';
 
 part 'experiments_controller.freezed.dart';
 
@@ -42,18 +43,19 @@ final experimentsControllerProvider =
       ExperimentsController.new,
     );
 
-final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapshot>> {
+final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapshot>>
+    with GuardedRefreshNotifier<AsyncValue<ExperimentsSnapshot>> {
   ExperimentSource get _source => ref.read(experimentSourceProvider);
-  AppLogger get _logger => ref.read(appLoggerProvider);
 
-  int _liveEpoch = 0;
+  @override
+  AppLogger get logger => ref.read(appLoggerProvider);
 
   @override
   AsyncValue<ExperimentsSnapshot> build() {
     unawaited(_refresh());
 
     final subscription = _source.changes().listen((assignments) {
-      _liveEpoch++;
+      bumpLiveEpoch();
       final next = ExperimentsSnapshot(assignments: assignments);
       final current = state.value;
       if (current != next) {
@@ -61,41 +63,28 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
       }
     });
 
-    ref
-      ..onDispose(subscription.cancel)
-      ..listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
-        final wasResumed = previous?.isResumed ?? false;
-        if (next.isResumed && !wasResumed) {
-          unawaited(_refresh());
-        }
-      });
+    ref.onDispose(subscription.cancel);
+    listenOnResume(ref, _refresh);
 
     return const AsyncValue<ExperimentsSnapshot>.loading();
   }
 
   Future<void> _refresh() async {
-    final epochAtStart = _liveEpoch;
-    try {
-      final assignments = await Future.wait(
+    await guardedRefresh(
+      load: () => Future.wait(
         <Future<ExperimentAssignment>>[
           for (final key in ExperimentKey.values) _source.assignmentFor(key),
         ],
-      );
-      if (epochAtStart != _liveEpoch) {
-        return;
-      }
-      final next = ExperimentsSnapshot(assignments: assignments);
-      final current = state.value;
-      if (current != next) {
-        state = AsyncValue<ExperimentsSnapshot>.data(next);
-      }
-    } on Object catch (error, stackTrace) {
-      _logger.warning(
-        'Experiment refresh failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+      ),
+      apply: (assignments) {
+        final next = ExperimentsSnapshot(assignments: assignments);
+        final current = state.value;
+        if (current != next) {
+          state = AsyncValue<ExperimentsSnapshot>.data(next);
+        }
+      },
+      errorMessage: 'Experiment refresh failed',
+    );
   }
 
   ExperimentVariant? variantFor(ExperimentKey key) => state.value?.variantFor(key);

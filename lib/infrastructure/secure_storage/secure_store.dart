@@ -1,3 +1,5 @@
+import 'package:starter/shared/state/operation_exception.dart';
+
 abstract interface class SecureStore {
   Future<String?> read(String key);
 
@@ -6,10 +8,9 @@ abstract interface class SecureStore {
   Future<void> delete(String key);
 }
 
-final class SecureStoreException implements Exception {
-  const SecureStoreException({required this.operation, required this.key});
+final class SecureStoreException extends OperationException {
+  const SecureStoreException({required super.operation, required this.key});
 
-  final String operation;
   final String key;
 
   @override

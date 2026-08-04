@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 
 class SettingsToggleCard extends StatelessWidget {
   const SettingsToggleCard({
@@ -26,35 +27,32 @@ class SettingsToggleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FSwitch(
-              key: ValueKey('settings-toggle-$keyName'),
-              value: value,
-              label: label,
-              description: description,
-              onChange: onChange,
-            ),
-            if (status case final status?) ...[
-              const SizedBox(height: AppSpacing.md),
-              Text(status, style: context.theme.typography.body.sm),
-            ],
-            if (saveFailed) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                translations.common.notConnected,
-                key: const ValueKey('settings-toggle-save-error'),
-                style: context.theme.typography.body.sm.copyWith(
-                  color: context.theme.colors.error,
-                ),
-              ),
-            ],
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FSwitch(
+            key: ValueKey('settings-toggle-$keyName'),
+            value: value,
+            label: label,
+            description: description,
+            onChange: onChange,
+          ),
+          if (status case final status?) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(status, style: context.theme.typography.body.sm),
           ],
-        ),
+          if (saveFailed) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              translations.common.notConnected,
+              key: const ValueKey('settings-toggle-save-error'),
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.error,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

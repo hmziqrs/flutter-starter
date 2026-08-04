@@ -4,7 +4,7 @@ import 'package:starter/features/profile/widgets/permission_rationale_assets.dar
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+import 'package:starter/shared/widgets/app_bottom_sheet.dart';
 
 enum PermissionRationaleResult { continueRequest, openSettings, dismiss }
 
@@ -13,24 +13,15 @@ Future<PermissionRationaleResult> showPermissionRationaleSheet({
   required AppPermission permission,
   bool permanentlyDenied = false,
 }) async {
-  final result = await showFSheet<PermissionRationaleResult>(
+  final result = await showAppBottomSheet<PermissionRationaleResult>(
     context: context,
-    side: FLayout.btt,
     draggable: false,
-    useSafeArea: true,
-    builder: (sheetContext) => ColoredBox(
-      color: sheetContext.theme.colors.background,
-      child: EscapeDismissibleOverlay(
-        child: PermissionRationaleBody(
-          permission: permission,
-          permanentlyDenied: permanentlyDenied,
-          onContinue: () =>
-              Navigator.of(sheetContext).pop(PermissionRationaleResult.continueRequest),
-          onOpenSettings: () =>
-              Navigator.of(sheetContext).pop(PermissionRationaleResult.openSettings),
-          onDismiss: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.dismiss),
-        ),
-      ),
+    builder: (sheetContext) => PermissionRationaleBody(
+      permission: permission,
+      permanentlyDenied: permanentlyDenied,
+      onContinue: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.continueRequest),
+      onOpenSettings: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.openSettings),
+      onDismiss: () => Navigator.of(sheetContext).pop(PermissionRationaleResult.dismiss),
     ),
   );
   return result ?? PermissionRationaleResult.dismiss;

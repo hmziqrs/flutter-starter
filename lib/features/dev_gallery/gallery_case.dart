@@ -77,3 +77,33 @@ List<GalleryCase> buildTypedGalleryCases<TState>({
       ),
   ];
 }
+
+/// Builds one [TypedGalleryCase] per entry in [values].
+///
+/// Each case is assembled from the value's `name` (suffixed onto
+/// [idPrefix]), the shared [screenLabelBuilder], the per-value
+/// [caseLabelBuilder], and the shared [pageFactory]. This absorbs the
+/// `for (final value in E.values)` + `TypedGalleryCase` boilerplate that
+/// otherwise repeats across enum-driven gallery case files. Callers pass the
+/// concrete enum's `values` list because Dart cannot reach it through the
+/// generic type parameter.
+List<GalleryCase> buildEnumGalleryCases<T extends Enum>({
+  required Iterable<T> values,
+  required String idPrefix,
+  required String screenId,
+  required GalleryLabelBuilder screenLabelBuilder,
+  required GalleryLabelBuilder Function(T value) caseLabelBuilder,
+  required ProductionPageFactory<T> pageFactory,
+}) {
+  return [
+    for (final value in values)
+      TypedGalleryCase<T>(
+        id: '$idPrefix.${value.name}',
+        screenId: screenId,
+        screenLabelBuilder: screenLabelBuilder,
+        caseLabelBuilder: caseLabelBuilder(value),
+        stateFactory: (_) => value,
+        pageFactory: pageFactory,
+      ),
+  ];
+}

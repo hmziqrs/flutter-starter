@@ -1,56 +1,35 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/route_error_page.dart';
-import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+
+// Re-exported so existing route modules that import this helper (e.g. the
+// profile routes) keep compiling after the dialog moved to shared/feedback.
+export 'package:starter/shared/widgets/feedback/app_information_dialog.dart';
 
 void goAppTab(BuildContext context, int index) {
   final shell = StatefulNavigationShell.of(context);
   shell.goBranch(index, initialLocation: index == shell.currentIndex);
 }
 
-void showAppInformationDialog(
-  BuildContext context, {
-  required String title,
-  String? body,
+/// Pops the current route when there is somewhere to return to, otherwise falls
+/// back to a [GoRouter.goNamed] navigation.
+///
+/// Pass [result] to deliver a value to the previous route's `push`/`pushNamed`
+/// caller when popping. [queryParameters] only apply to the fallback navigation
+/// and are ignored on the pop path, mirroring the manual pattern this unifies.
+void popOrGoNamed(
+  BuildContext context,
+  String name, {
+  Object? result,
+  Map<String, String> queryParameters = const <String, String>{},
 }) {
-  unawaited(
-    showFDialog<void>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      builder: (context, style, animation) => EscapeDismissibleOverlay(
-        child: FDialog(
-          key: const ValueKey('information-dialog'),
-          animation: animation,
-          builder: (context, style) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: context.theme.typography.display.xl),
-                const SizedBox(height: AppSpacing.md),
-                Text(body ?? context.t.common.legalPlaceholderBody),
-                const SizedBox(height: AppSpacing.xl),
-                FButton(
-                  key: const ValueKey('information-dialog-close'),
-                  autofocus: true,
-                  onPress: () => Navigator.of(context).pop(),
-                  child: Text(context.t.common.close),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    router.pop(result);
+    return;
+  }
+  context.goNamed(name, queryParameters: queryParameters);
 }
 
 RouteErrorPage buildRouteErrorPage(

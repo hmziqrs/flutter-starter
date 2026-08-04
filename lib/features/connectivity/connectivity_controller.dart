@@ -1,9 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/shared/state/app_lifecycle_listener.dart';
 
 final connectivityServiceProvider = Provider<ConnectivityService>(
   (ref) => throw StateError(
@@ -13,11 +11,6 @@ final connectivityServiceProvider = Provider<ConnectivityService>(
 
 final connectivityStatusProvider = StreamProvider<ConnectivityState>((ref) {
   final service = ref.watch(connectivityServiceProvider);
-  ref.listen<AppLifecyclePhase>(appLifecyclePhaseProvider, (previous, next) {
-    final wasResumed = previous?.isResumed ?? false;
-    if (next.isResumed && !wasResumed) {
-      unawaited(service.refresh());
-    }
-  });
+  listenOnResume(ref, service.refresh);
   return service.states;
 });

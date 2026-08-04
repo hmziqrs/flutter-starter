@@ -9,6 +9,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 
 class PaywallPage extends StatefulWidget {
   PaywallPage({
@@ -267,24 +268,21 @@ class _BenefitList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            for (final benefit in benefits)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Row(
-                  children: [
-                    const Icon(FLucideIcons.circleCheck, size: 20),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(child: Text(benefit)),
-                  ],
-                ),
+    return AppCard(
+      child: Column(
+        children: [
+          for (final benefit in benefits)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Row(
+                children: [
+                  const Icon(FLucideIcons.circleCheck, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(benefit)),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

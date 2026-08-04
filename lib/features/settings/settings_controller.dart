@@ -3,6 +3,7 @@ import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/state/optimistic_notifier.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
   (ref) => throw StateError('SettingsRepository must be overridden at the composition root.'),
@@ -16,7 +17,8 @@ final settingsControllerProvider = NotifierProvider<SettingsController, Settings
   SettingsController.new,
 );
 
-final class SettingsController extends Notifier<SettingsState> {
+final class SettingsController extends Notifier<SettingsState>
+    with OptimisticNotifier<SettingsState> {
   SettingsRepository get _repository => ref.read(settingsRepositoryProvider);
 
   @override
@@ -93,13 +95,6 @@ final class SettingsController extends Notifier<SettingsState> {
   }
 
   Future<void> _replace(SettingsState next) async {
-    final previous = state;
-    state = next;
-    try {
-      await _repository.save(next);
-    } on Object {
-      state = previous;
-      rethrow;
-    }
+    await guardRollback(next, () => _repository.save(next));
   }
 }

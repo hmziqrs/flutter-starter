@@ -45,7 +45,7 @@ class DiagnosticsPage extends ConsumerWidget {
     return FScaffold(
       child: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: AppSpacing.screenPadding,
           children: [
             Center(
               child: ConstrainedBox(
