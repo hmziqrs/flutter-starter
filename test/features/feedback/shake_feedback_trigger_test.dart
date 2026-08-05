@@ -89,8 +89,7 @@ void main() {
       expect(shakes, 1);
 
       detector.reset();
-      // reset and post-reset feed stay separate steps
-      // ignore: cascade_invocations
+      // ignore: cascade_invocations, reset and post-reset feed stay separate steps
       detector.handle(_event(20, 0, 0));
       expect(shakes, 2);
     });

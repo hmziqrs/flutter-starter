@@ -1,7 +1,6 @@
 import 'dart:async';
 
-// fields are private
-// ignore_for_file: prefer_initializing_formals
+// ignore_for_file: prefer_initializing_formals, private backing fields
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';

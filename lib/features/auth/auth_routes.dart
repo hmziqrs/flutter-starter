@@ -329,8 +329,7 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
             if (!mounted) return;
           }
         }
-        // Intentional navigate after the awaited establish() + mounted check.
-        // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously, after awaited establish() + mounted check
         context.goNamed(AppRoutes.home);
       },
       onResend: controller.resend,

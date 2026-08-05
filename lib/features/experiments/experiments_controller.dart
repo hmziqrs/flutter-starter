@@ -101,8 +101,7 @@ final class ExperimentsController extends Notifier<AsyncValue<ExperimentsSnapsho
   ExperimentVariant? variantFor(ExperimentKey key) => state.value?.variantFor(key);
 }
 
-// inferred Riverpod family type
-// ignore: specify_nonobvious_property_types
+// ignore: specify_nonobvious_property_types, inferred Riverpod family type
 final experimentsProvider = Provider.family<AsyncValue<ExperimentVariant>, ExperimentKey>((
   ref,
   key,

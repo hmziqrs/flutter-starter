@@ -1,7 +1,6 @@
 import 'dart:async';
 
-// Params assign to fields via an initializer list (not initializing-formals).
-// ignore_for_file: prefer_initializing_formals
+// ignore_for_file: prefer_initializing_formals, initializer list assigns to public fields
 
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notification_tap.dart';

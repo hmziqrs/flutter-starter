@@ -74,8 +74,4 @@ final class AppLogger {
   }
 }
 
-/// Shared diagnostic logger for Riverpod consumers.
-///
-/// Overridden at the composition root with the application's real [AppLogger]
-/// when one is available; otherwise falls back to a non-verbose instance.
 final appLoggerProvider = Provider<AppLogger>((ref) => AppLogger.bootstrap());

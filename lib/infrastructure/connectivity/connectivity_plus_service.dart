@@ -40,8 +40,7 @@ final class ConnectivityPlusService implements ConnectivityService {
 
   final StreamController<ConnectivityState> _controller =
       StreamController<ConnectivityState>.broadcast();
-  // app-lifetime singleton
-  // ignore: cancel_subscriptions
+  // ignore: cancel_subscriptions, app-lifetime singleton
   StreamSubscription<List<ConnectivityResult>>? _changes;
   bool _disposed = false;
 

@@ -94,8 +94,7 @@ bool _setEquals(Set<String> a, Set<String> b) {
   return a.containsAll(b);
 }
 
-// single-member seam
-// ignore: one_member_abstracts
+// ignore: one_member_abstracts, multi-implementation port
 abstract interface class AppLinkHandler {
   ResolvedLink? resolve(Uri uri);
 }

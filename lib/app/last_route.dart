@@ -6,9 +6,7 @@ import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/shared/async/run_guarded.dart';
 
-// Params back private fields with distinct public names, so initializing-formals
-// don't apply.
-// ignore_for_file: prefer_initializing_formals
+// ignore_for_file: prefer_initializing_formals, private fields with a default fallback
 
 const String lastRouteKey = 'nav.last_route';
 

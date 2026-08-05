@@ -31,8 +31,7 @@ final class PickedMedia {
   String toString() => 'PickedMedia(path: $path, mimeType: $mimeType, fromCamera: $fromCamera)';
 }
 
-// multi-implementation port
-// ignore: one_member_abstracts
+// ignore: one_member_abstracts, multi-implementation port
 abstract interface class MediaPicker {
   Future<PickedMedia?> pickImage({bool fromCamera = false});
 }

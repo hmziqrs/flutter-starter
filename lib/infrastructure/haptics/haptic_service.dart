@@ -10,8 +10,7 @@ enum HapticKind {
   notificationError,
 }
 
-// One-member abstract lint is a false positive for a multi-implementation port.
-// ignore: one_member_abstracts
+// ignore: one_member_abstracts, multi-implementation port
 abstract interface class HapticService {
   Future<void> trigger(HapticKind kind);
 }

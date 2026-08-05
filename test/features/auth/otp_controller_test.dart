@@ -377,14 +377,12 @@ void main() {
       FakeAsync().run((async) {
         final repo = _FakeOtpRepository();
         final container = _container(repository: repo);
-        // Record type annotation is required for the family key to resolve.
-        // ignore: omit_local_variable_types
+        // ignore: omit_local_variable_types, record annotation required for family key resolution
         const ({OtpPurpose purpose, String identifier}) a = (
           purpose: OtpPurpose.registration,
           identifier: 'a@b.c',
         );
-        // Same load-bearing record annotation as `a` above.
-        // ignore: omit_local_variable_types
+        // ignore: omit_local_variable_types, same load-bearing record annotation
         const ({OtpPurpose purpose, String identifier}) b = (
           purpose: OtpPurpose.passwordReset,
           identifier: 'x@y.z',

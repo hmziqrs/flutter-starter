@@ -112,8 +112,7 @@ class OtpPresentationState with _$OtpPresentationState {
   @override
   final int remainingSeconds;
 
-  // public API reads top-down
-  // ignore: sort_constructors_first
+  // ignore: sort_constructors_first, public API reads top-down
   const OtpPresentationState._({
     required this.status,
     this.resendSeconds = 0,
