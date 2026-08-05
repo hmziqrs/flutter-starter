@@ -88,6 +88,16 @@ void main() {
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     _log('home rendered');
 
+    for (var i = 0; i < 8; i += 1) {
+      final announcementDismiss = find.byKey(const ValueKey('announcement-dismiss'));
+      if (announcementDismiss.evaluate().isEmpty) {
+        break;
+      }
+      _log('dismissing a dev announcement so it clears top-right chrome');
+      await tester.tap(announcementDismiss.hitTestable());
+      await pumpAppFrames(tester);
+    }
+
     _log('navigating: home -> pricing (compact bottom-nav tap)');
     await tester.tap(
       find.descendant(

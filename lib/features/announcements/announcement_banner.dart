@@ -132,49 +132,57 @@ class AnnouncementBannerView extends StatelessWidget {
             ),
             child: SizedBox(
               width: double.infinity,
-              child: FAlert(
-                variant: presentation.variant,
-                icon: Icon(
-                  presentation.icon,
-                  size: 18,
-                  semanticLabel: presentation.severityLabel,
-                ),
-                title: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
+              child: Stack(
+                children: [
+                  IgnorePointer(
+                    child: FAlert(
+                      variant: presentation.variant,
+                      icon: Icon(
+                        presentation.icon,
+                        size: 18,
+                        semanticLabel: presentation.severityLabel,
+                      ),
+                      title: Text(
                         announcement.title(translations),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      subtitle: Text(
+                        announcement.message(translations),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    if (actionRoute != null) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      FButton(
-                        variant: .outline,
-                        size: .sm,
-                        onPress: onAction,
-                        child: Text(translations.announcements.actionLearnMore),
-                      ),
-                    ],
-                    if (announcement.dismissible) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      FButton.icon(
-                        variant: .ghost,
-                        size: .sm,
-                        semanticsLabel: translations.announcements.dismiss,
-                        onPress: onDismiss,
-                        child: const Icon(FLucideIcons.x, size: 16),
-                      ),
-                    ],
-                  ],
-                ),
-                subtitle: Text(
-                  announcement.message(translations),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (actionRoute != null) ...[
+                          FButton(
+                            key: const ValueKey('announcement-action'),
+                            variant: .outline,
+                            size: .sm,
+                            onPress: onAction,
+                            child: Text(translations.announcements.actionLearnMore),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                        if (announcement.dismissible)
+                          FButton.icon(
+                            key: const ValueKey('announcement-dismiss'),
+                            variant: .ghost,
+                            size: .sm,
+                            semanticsLabel: translations.announcements.dismiss,
+                            onPress: onDismiss,
+                            child: const Icon(FLucideIcons.x, size: 16),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

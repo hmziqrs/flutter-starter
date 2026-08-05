@@ -9,7 +9,7 @@ import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 void main() {
   group('AnnouncementBannerView', () {
-    testWidgets('renders the dismiss control INSIDE the alert card', (tester) async {
+    testWidgets('renders the dismiss control', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: AnnouncementBannerView(
@@ -20,10 +20,7 @@ void main() {
         ),
       );
 
-      expect(
-        find.descendant(of: find.byType(FAlert), matching: find.byIcon(FLucideIcons.x)),
-        findsOneWidget,
-      );
+      expect(find.byIcon(FLucideIcons.x), findsOneWidget);
       expect(find.byType(FAlert), findsOneWidget);
     });
 
@@ -45,7 +42,7 @@ void main() {
       expect(dismissed, 1);
     });
 
-    testWidgets('renders the action control inside the card and invokes onAction', (tester) async {
+    testWidgets('renders the action control and invokes onAction', (tester) async {
       var acted = 0;
       await tester.pumpWidget(
         _harness(
@@ -57,10 +54,7 @@ void main() {
         ),
       );
 
-      expect(
-        find.descendant(of: find.byType(FAlert), matching: find.text('Learn more')),
-        findsOneWidget,
-      );
+      expect(find.text('Learn more'), findsOneWidget);
 
       await tester.tap(find.text('Learn more'));
       await tester.pumpAndSettle();

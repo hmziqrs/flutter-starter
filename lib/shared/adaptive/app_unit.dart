@@ -54,11 +54,11 @@ final class AppUnit {
   }
 
   static const referenceWidth = 390.0;
-  static const minimumWidth = 320.0;
+  static const minimumWidth = 360.0;
   static const maximumWidth = 1200.0;
-  static const minimumSpacingScale = 0.9;
+  static const minimumSpacingScale = 0.8;
   static const maximumSpacingScale = 1.2;
-  static const minimumTypographyScale = 0.9;
+  static const minimumTypographyScale = 0.8;
   static const maximumTypographyScale = 1.15;
   static const baseSpace = 4.0;
 

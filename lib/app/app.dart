@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
 import 'package:starter/app/config/app_config.dart';
+import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/interaction_policy_controller.dart';
 import 'package:starter/app/keyboard/app_keyboard_host.dart';
@@ -18,6 +19,8 @@ import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/announcements/announcement_banner.dart';
+import 'package:starter/features/announcements/announcement_fixtures.dart';
+import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/otp_repository.dart';
@@ -97,6 +100,11 @@ class App extends StatelessWidget {
         appStartupResultProvider.overrideWith((ref) => dependencies.appStartupResult),
         initialDismissedAnnouncementIdsProvider.overrideWithValue(
           dependencies.initialDismissedAnnouncementIds,
+        ),
+        announcementsFixturesProvider.overrideWithValue(
+          config.environment == AppEnvironment.development
+              ? AnnouncementFixtures.standard
+              : const <Announcement>[],
         ),
         appBuildInfoProvider.overrideWithValue(dependencies.platform.buildInfo),
         authRepositoryProvider.overrideWithValue(dependencies.auth.authRepository),
