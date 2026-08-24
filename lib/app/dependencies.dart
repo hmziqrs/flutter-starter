@@ -39,6 +39,8 @@ import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/file_cache_store.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
+import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
@@ -94,6 +96,7 @@ final class AppDependencies {
     AuthSession? initialSession,
     PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
     Set<String> dismissedAnnouncementIds = const <String>{},
+    ConnectivityService connectivityService = const StaticConnectivityService(),
   }) {
     final effectiveSettingsStore = settingsStore ?? InMemorySettingsStore();
     final versionGateStore = InMemoryVersionGateStore();
@@ -152,7 +155,7 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: platformCapabilities,
         buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-        connectivityService: ConnectivityPlusService(),
+        connectivityService: connectivityService,
         hapticService: NoopHapticService(),
         permissionService: const NoopPermissionService(),
         mediaPicker: const NoopMediaPicker(),
@@ -212,6 +215,7 @@ final class AppDependencies {
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
+    ConnectivityService? connectivityService,
   }) async {
     PlatformCapabilities capabilities;
     try {
@@ -382,7 +386,7 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: capabilities,
         buildInfo: buildInfo,
-        connectivityService: ConnectivityPlusService(logger: logger),
+        connectivityService: connectivityService ?? ConnectivityPlusService(logger: logger),
         hapticService: const DeviceHapticService(),
         permissionService: _selectPermissionService(capabilities, logger: logger),
         mediaPicker: _selectMediaPicker(capabilities, logger: logger),
