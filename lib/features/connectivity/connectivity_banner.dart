@@ -53,7 +53,7 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(connectivityStatusProvider).value;
-    final showBanner = state != null && state.isDegraded;
+    final showBanner = ref.watch(connectivityBannerVisibleProvider);
     return _BannerSlot(state: showBanner ? state : null);
   }
 }

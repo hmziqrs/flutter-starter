@@ -99,3 +99,11 @@ final class AnnouncementsController extends Notifier<AnnouncementsState> {
     }
   }
 }
+
+/// Whether the announcement banner currently occupies space in the shell.
+///
+/// Shared by the AnnouncementBanner widget and the shell's banner host so both agree on
+/// a single visibility rule.
+final announcementBannerVisibleProvider = Provider<bool>((ref) {
+  return ref.watch(announcementsControllerProvider).active != null;
+});

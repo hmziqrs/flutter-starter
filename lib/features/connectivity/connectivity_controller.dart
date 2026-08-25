@@ -14,3 +14,12 @@ final connectivityStatusProvider = StreamProvider<ConnectivityState>((ref) {
   listenOnResume(ref, service.refresh);
   return service.states;
 });
+
+/// Whether the connectivity banner currently occupies space in the shell.
+///
+/// Shared by the ConnectivityBanner widget and the shell's banner host so both agree on
+/// a single visibility rule.
+final connectivityBannerVisibleProvider = Provider<bool>((ref) {
+  final state = ref.watch(connectivityStatusProvider).value;
+  return state != null && state.isDegraded;
+});
