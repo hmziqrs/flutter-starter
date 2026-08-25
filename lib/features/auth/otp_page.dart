@@ -5,16 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/auth/auth_form_submit_mixin.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
+import 'package:starter/features/auth/lockout_countdown_controller.dart';
 import 'package:starter/features/auth/otp_form_value.dart';
 import 'package:starter/features/auth/otp_presentation_state.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
+import 'package:starter/features/auth/widgets/auth_form_header.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
-import 'package:starter/shared/forms/form_field_reveal.dart';
+import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
+import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
 typedef OtpSubmitCallback = FutureOr<void> Function(OtpFormValue value);
 typedef OtpResendCallback = FutureOr<void> Function();
@@ -63,7 +68,11 @@ class _OtpView extends ConsumerStatefulWidget {
   ConsumerState<_OtpView> createState() => _OtpViewState();
 }
 
-class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
+class _OtpViewState extends ConsumerState<_OtpView>
+    with
+        RestorationMixin,
+        AuthFormSubmitMixin<_OtpView>,
+        RestorableTextControllerBinding<_OtpView> {
   final _formKey = GlobalKey<FormState>();
   final _otpFieldKey = GlobalKey<FormFieldState<String>>();
   final _otpFocus = FocusNode(debugLabel: 'otp.code');
@@ -78,22 +87,21 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     ),
   );
   bool _callbackResending = false;
-  bool _callbackSubmitting = false;
   String _savedCode = '';
 
   final RestorableString _codeDraft = RestorableString('');
 
-  Timer? _countdownTimer;
-  int _liveLockedSeconds = 0;
+  late final LockoutCountdownController _lockout = LockoutCountdownController();
+  late final VoidCallback _syncCodeDraft;
 
   bool get _submitting =>
-      _callbackSubmitting || widget.presentation.status == OtpPresentationStatus.submitting;
+      callbackSubmitting || widget.presentation.status == OtpPresentationStatus.submitting;
 
   bool get _resending =>
       _callbackResending || widget.presentation.status == OtpPresentationStatus.resending;
 
   bool get _locked =>
-      widget.presentation.status == OtpPresentationStatus.locked && _liveLockedSeconds > 0;
+      widget.presentation.status == OtpPresentationStatus.locked && _lockout.remainingSeconds > 0;
 
   bool get _resendBlocked => _resending || widget.presentation.resendSeconds > 0 || _locked;
 
@@ -102,7 +110,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_codeDraft, 'code_draft');
+    registerTextDraft(_codeDraft, 'code_draft');
     if (_codeDraft.value.isNotEmpty) {
       _otpController.value = TextEditingValue(
         text: _codeDraft.value,
@@ -112,51 +120,35 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     }
   }
 
-  void _syncCodeDraft() {
-    if (_otpController.text != _codeDraft.value) {
-      _codeDraft.value = _otpController.text;
-    }
-  }
-
   @override
   void initState() {
     super.initState();
+    _syncCodeDraft = textDraftSyncer(_codeDraft, _otpController);
     _otpController.addListener(_syncCodeDraft);
-    _liveLockedSeconds = widget.presentation.lockedSeconds;
-    _startLockoutCountdownIfNeeded();
+    _lockout
+      ..addListener(_onLockoutChanged)
+      ..syncFrom(widget.presentation.lockedSeconds);
+  }
+
+  void _onLockoutChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void didUpdateWidget(covariant _OtpView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.presentation.lockedSeconds != widget.presentation.lockedSeconds) {
-      _liveLockedSeconds = widget.presentation.lockedSeconds;
-      _startLockoutCountdownIfNeeded();
+      _lockout.syncFrom(widget.presentation.lockedSeconds);
     }
-  }
-
-  void _startLockoutCountdownIfNeeded() {
-    _countdownTimer?.cancel();
-    if (_liveLockedSeconds <= 0) {
-      return;
-    }
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        if (_liveLockedSeconds > 0) _liveLockedSeconds -= 1;
-        if (_liveLockedSeconds <= 0) timer.cancel();
-      });
-    });
   }
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
     _otpController
       ..removeListener(_syncCodeDraft)
+      ..dispose();
+    _lockout
+      ..removeListener(_onLockoutChanged)
       ..dispose();
     _codeDraft.dispose();
     _otpFocus.dispose();
@@ -188,12 +180,17 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
     final translations = context.t;
     final (title, body) = _copy(context);
     final screenDirection = Directionality.of(context);
-    final isTenFoot = AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false;
     final forcedError = switch (widget.presentation.status) {
       OtpPresentationStatus.invalid => translations.auth.otp.invalid,
       OtpPresentationStatus.expired => translations.auth.otp.expired,
       _ => null,
     };
+
+    final alerts = <Widget>[
+      ?_countdownAlert(context),
+      ?_attemptsRemainingAlert(context),
+      ?_feedbackAlert(context),
+    ];
 
     return AutofillGroup(
       onDisposeAction: AutofillContextAction.cancel,
@@ -203,22 +200,7 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
           key: const ValueKey('auth-otp-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: context.theme.typography.display.xl2),
-            const SizedBox(height: AppSpacing.md),
-            Text(body, style: context.theme.typography.body.md),
-            if (_countdownAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            if (_attemptsRemainingAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            if (_feedbackAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            const SizedBox(height: AppSpacing.xl),
+            AuthFormHeader(title: title, body: body, alerts: alerts),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: Directionality(
@@ -284,39 +266,25 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            FButton(
-              key: const ValueKey('auth-otp-submit'),
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-otp-submit'),
               focusNode: _submitFocus,
-              onPress: _locked
-                  ? null
-                  : _submitting
-                  ? (isTenFoot ? () {} : null)
-                  : () => unawaited(_submit()),
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                translations.auth.otp.submit,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+              onPress: () => unawaited(_submit()),
+              label: translations.auth.otp.submit,
+              busy: _submitting,
+              locked: _locked,
+              retainFocusOnBusy: true,
             ),
             const SizedBox(height: AppSpacing.md),
-            FButton(
-              key: const ValueKey('auth-otp-resend'),
-              variant: .ghost,
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-otp-resend'),
               focusNode: _resendFocus,
-              onPress: _resendBlocked
-                  ? _resending && isTenFoot
-                        ? () {}
-                        : null
-                  : () => unawaited(_resend()),
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                _resendLabel(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+              onPress: () => unawaited(_resend()),
+              label: _resendLabel(context),
+              busy: _resending,
+              locked: _locked || widget.presentation.resendSeconds > 0,
+              retainFocusOnBusy: true,
+              variant: FButtonVariant.ghost,
             ),
           ],
         ),
@@ -351,57 +319,63 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
 
   Widget? _feedbackAlert(BuildContext context) {
     final translations = context.t;
-    return switch (widget.presentation.status) {
-      OtpPresentationStatus.empty ||
-      OtpPresentationStatus.partial ||
-      OtpPresentationStatus.pastedComplete ||
-      OtpPresentationStatus.resending ||
-      OtpPresentationStatus.submitting => null,
-      OtpPresentationStatus.invalid => FAlert(
-        key: const ValueKey('auth-otp-invalid'),
-        variant: .destructive,
-        title: Text(translations.auth.otp.invalid),
-      ),
-      OtpPresentationStatus.expired => FAlert(
-        key: const ValueKey('auth-otp-expired'),
-        variant: .destructive,
-        title: Text(translations.auth.otp.expired),
-      ),
-      OtpPresentationStatus.globalFailure => FAlert(
-        key: const ValueKey('auth-otp-global-failure'),
-        variant: .destructive,
-        title: Text(translations.common.notConnected),
-      ),
-      OtpPresentationStatus.success => FAlert(
-        key: const ValueKey('auth-otp-success'),
-        title: Text(
-          switch (widget.purpose) {
-            OtpPurpose.registration => translations.auth.otp.registrationSuccess,
-            OtpPurpose.passwordReset => translations.auth.otp.passwordResetSuccess,
-            OtpPurpose.mfa => translations.auth.otp.mfaSuccess,
-          },
+    return AuthFeedbackAlert.forStatus<OtpPresentationStatus>(
+      status: widget.presentation.status,
+      specFor: (status) => switch (status) {
+        OtpPresentationStatus.empty ||
+        OtpPresentationStatus.partial ||
+        OtpPresentationStatus.pastedComplete ||
+        OtpPresentationStatus.resending ||
+        OtpPresentationStatus.submitting => null,
+        OtpPresentationStatus.invalid => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-otp-invalid'),
+          variant: .destructive,
+          title: Text(translations.auth.otp.invalid),
         ),
-        icon: const Icon(FLucideIcons.circleCheck),
-      ),
-      OtpPresentationStatus.locked => FAlert(
-        key: const ValueKey('auth-otp-locked'),
-        variant: .destructive,
-        title: Text(translations.auth.otp.lockedTitle),
-        subtitle: Text(
-          translations.auth.otp.lockedBody(n: _liveLockedSeconds, seconds: _liveLockedSeconds),
+        OtpPresentationStatus.expired => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-otp-expired'),
+          variant: .destructive,
+          title: Text(translations.auth.otp.expired),
         ),
-      ),
-    };
+        OtpPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-otp-global-failure'),
+          variant: .destructive,
+          title: Text(translations.common.notConnected),
+        ),
+        OtpPresentationStatus.success => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-otp-success'),
+          title: Text(
+            switch (widget.purpose) {
+              OtpPurpose.registration => translations.auth.otp.registrationSuccess,
+              OtpPurpose.passwordReset => translations.auth.otp.passwordResetSuccess,
+              OtpPurpose.mfa => translations.auth.otp.mfaSuccess,
+            },
+          ),
+          icon: const Icon(FLucideIcons.circleCheck),
+        ),
+        OtpPresentationStatus.locked => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-otp-locked'),
+          variant: .destructive,
+          title: Text(translations.auth.otp.lockedTitle),
+          subtitle: Text(
+            translations.auth.otp.lockedBody(
+              n: _lockout.remainingSeconds,
+              seconds: _lockout.remainingSeconds,
+            ),
+          ),
+        ),
+      },
+    );
   }
 
   Widget? _attemptsRemainingAlert(BuildContext context) {
-    final remaining = widget.presentation.attemptsRemaining;
-    if (remaining <= 0 || widget.presentation.status == OtpPresentationStatus.locked) {
-      return null;
-    }
-    return FAlert(
-      key: const ValueKey('auth-otp-attempts-remaining'),
-      title: Text(context.t.auth.otp.attemptsRemaining(n: remaining, count: remaining)),
+    return AuthAttemptsRemainingAlert.maybe(
+      remaining: widget.presentation.attemptsRemaining,
+      locked: widget.presentation.status == OtpPresentationStatus.locked,
+      titleFor: (remaining) => Text(
+        context.t.auth.otp.attemptsRemaining(n: remaining, count: remaining),
+      ),
+      alertKey: const ValueKey('auth-otp-attempts-remaining'),
     );
   }
 
@@ -428,41 +402,26 @@ class _OtpViewState extends ConsumerState<_OtpView> with RestorationMixin {
 
   Future<void> _submit() async {
     if (_submitting) return;
-    final form = _formKey.currentState;
-    if (form == null) return;
-    final invalidFields = form.validateGranularly();
-    if (invalidFields.isNotEmpty) {
-      await revealFirstInvalid(
-        invalidFields,
-        orderedTargets: [
-          (
-            field: _otpFieldKey.currentState,
-            context: _otpFieldKey.currentContext,
-            focusNode: _otpFocus,
-          ),
-        ],
-        isMounted: () => mounted,
-      );
-      return;
-    }
-
-    form.save();
-    final value = OtpFormValue(code: _savedCode);
-    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
-      _submitFocus.requestFocus();
-    }
-    setState(() => _callbackSubmitting = true);
-    TextInput.finishAutofillContext(shouldSave: false);
-    try {
-      await widget.onSubmit(value);
-    } finally {
-      if (mounted) setState(() => _callbackSubmitting = false);
-    }
+    await submit<OtpFormValue>(
+      formKey: _formKey,
+      orderedTargets: [
+        (
+          field: _otpFieldKey.currentState,
+          context: _otpFieldKey.currentContext,
+          focusNode: _otpFocus,
+        ),
+      ],
+      buildValue: () => OtpFormValue(code: _savedCode),
+      onSubmit: (value) async {
+        await widget.onSubmit(value);
+      },
+      tenFootFocusNode: _submitFocus,
+    );
   }
 
   Future<void> _resend() async {
     if (_resendBlocked) return;
-    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
+    if (context.isTenFoot) {
       _resendFocus.requestFocus();
     }
     setState(() => _callbackResending = true);

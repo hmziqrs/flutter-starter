@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/feedback/feedback_form_value.dart';
+import 'package:starter/shared/errors/repository_exception.dart';
 
 enum FeedbackOutcome {
   accepted,
@@ -30,20 +31,18 @@ final class FeedbackResult {
   String toString() => 'FeedbackResult(${outcome.name})';
 }
 
-final class FeedbackTransportException implements Exception {
-  const FeedbackTransportException.notConnected([this.cause])
-    : kind = FeedbackFailureKind.notConnected;
+final class FeedbackTransportException extends RepositoryException<FeedbackFailureKind> {
+  const FeedbackTransportException.notConnected([Object? cause])
+    : super(kind: FeedbackFailureKind.notConnected, cause: cause);
 
-  const FeedbackTransportException.invalid([this.cause]) : kind = FeedbackFailureKind.invalid;
+  const FeedbackTransportException.invalid([Object? cause])
+    : super(kind: FeedbackFailureKind.invalid, cause: cause);
 
-  const FeedbackTransportException.unknown([this.cause]) : kind = FeedbackFailureKind.unknown;
-
-  final FeedbackFailureKind kind;
-
-  final Object? cause;
+  const FeedbackTransportException.unknown([Object? cause])
+    : super(kind: FeedbackFailureKind.unknown, cause: cause);
 
   @override
-  String toString() => 'FeedbackTransportException(${kind.name})';
+  String toString() => describe('FeedbackTransportException');
 }
 
 enum FeedbackFailureKind {

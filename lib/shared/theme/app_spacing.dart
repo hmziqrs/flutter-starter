@@ -11,6 +11,8 @@ abstract final class AppSpacing {
   static const xl2 = 32.0;
   static const xl3 = 48.0;
 
+  static const EdgeInsets screenPadding = EdgeInsets.all(xl);
+
   static AppSpacingValues of(BuildContext context) {
     return AppSpacingValues(
       context.appUnit,
@@ -42,4 +44,6 @@ final class AppSpacingValues {
 
 extension AppSpacingBuildContext on BuildContext {
   AppSpacingValues get spacing => AppSpacing.of(this);
+
+  EdgeInsets get screenPadding => EdgeInsets.all(spacing.xl);
 }

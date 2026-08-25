@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 abstract interface class PasscodeHasher {
   String generateSalt();
@@ -35,10 +36,8 @@ final class CryptoPasscodeHasher implements PasscodeHasher {
   static String _toHex(int byte) => byte.toRadixString(16).padLeft(2, '0');
 }
 
-final class PasscodeHasherException implements Exception {
-  const PasscodeHasherException({required this.operation});
-
-  final String operation;
+final class PasscodeHasherException extends OperationException {
+  const PasscodeHasherException({required super.operation});
 
   @override
   String toString() => 'PasscodeHasherException: $operation failed';

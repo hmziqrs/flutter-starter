@@ -4,12 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:starter/features/auth/otp_repository.dart';
 import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
-import 'package:starter/infrastructure/http/app_dio.dart';
+import 'package:starter/infrastructure/http/app_http_repository.dart';
+import 'package:starter/infrastructure/http/json_body.dart';
 
-final class HttpAuthClient implements AuthRepository {
-  HttpAuthClient({required Uri baseUrl, Dio? dio}) : _dio = dio ?? buildAppDio(baseUrl);
-
-  final Dio _dio;
+final class HttpAuthClient extends AppHttpRepository implements AuthRepository {
+  HttpAuthClient({required super.baseUrl, super.dio});
 
   @override
   Future<AuthSession> login(AuthCredentials credentials) async {
@@ -52,9 +51,9 @@ final class HttpAuthClient implements AuthRepository {
       path: '/v1/auth/refresh',
       body: <String, Object>{'refreshToken': session.refreshToken},
     );
-    final accessToken = _asString(body['accessToken']);
-    final refreshToken = _asString(body['refreshToken']);
-    final expiresAt = _parseDate(body['expiresAt']);
+    final accessToken = asString(body['accessToken']);
+    final refreshToken = asString(body['refreshToken']);
+    final expiresAt = parseDate(body['expiresAt']);
     if (accessToken == null || refreshToken == null || expiresAt == null) {
       throw const AuthException.unknown();
     }
@@ -77,41 +76,8 @@ final class HttpAuthClient implements AuthRepository {
     return const AuthAnonymous();
   }
 
-  Future<Map<String, Object?>> _request({
-    required String method,
-    required String path,
-    required Map<String, Object> body,
-    Map<String, String> extraHeaders = const <String, String>{},
-  }) async {
-    final Response<String> response;
-    try {
-      response = await _dio.request<String>(
-        path,
-        data: jsonEncode(body),
-        options: Options(
-          method: method,
-          responseType: ResponseType.plain,
-          contentType: Headers.jsonContentType,
-          headers: extraHeaders,
-        ),
-      );
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status != null) {
-        _classifyStatus(status);
-      }
-      throw const AuthException.notConnected();
-    }
-    final status = response.statusCode!;
-    if (status >= 200 && status < 300) {
-      final responseBody = response.data ?? '';
-      if (responseBody.isEmpty) return const <String, Object?>{};
-      return _decodeJson(responseBody);
-    }
-    _classifyStatus(status);
-  }
-
-  Never _classifyStatus(int status) {
+  @override
+  Never classify(int status) {
     if (status == 401 || status == 409) {
       throw const AuthException.unauthorized();
     }
@@ -121,11 +87,39 @@ final class HttpAuthClient implements AuthRepository {
     throw const AuthException.notConnected();
   }
 
+  @override
+  Never throwNotConnected() => throw const AuthException.notConnected();
+
+  Future<Map<String, Object?>> _request({
+    required String method,
+    required String path,
+    required Map<String, Object> body,
+    Map<String, String> extraHeaders = const <String, String>{},
+  }) async {
+    final response = await roundTripRaw(
+      () => dio.request<String>(
+        path,
+        data: jsonEncode(body),
+        options: Options(
+          method: method,
+          responseType: ResponseType.plain,
+          contentType: Headers.jsonContentType,
+          headers: extraHeaders,
+        ),
+      ),
+    );
+    final status = response.statusCode!;
+    if (status >= 200 && status < 300) {
+      return decodeJsonMap(response, errorFactory: (_) => throw const AuthException.unknown());
+    }
+    classify(status);
+  }
+
   AuthAuthenticated _parseAuthenticated(Map<String, Object?> body) {
-    final accessToken = _asString(body['accessToken']);
-    final refreshToken = _asString(body['refreshToken']);
-    final expiresAt = _parseDate(body['expiresAt']);
-    final userId = _asString(body['userId']);
+    final accessToken = asString(body['accessToken']);
+    final refreshToken = asString(body['refreshToken']);
+    final expiresAt = parseDate(body['expiresAt']);
+    final userId = asString(body['userId']);
     if (accessToken == null || refreshToken == null || expiresAt == null || userId == null) {
       throw const AuthException.unknown();
     }
@@ -138,8 +132,8 @@ final class HttpAuthClient implements AuthRepository {
   }
 
   OtpIssueResult _parseIssueEnvelope(Map<String, Object?> body) {
-    final attemptToken = _asString(body['attempt_token']);
-    final expiresAt = _parseDate(body['expires_at']);
+    final attemptToken = asString(body['attempt_token']);
+    final expiresAt = parseDate(body['expires_at']);
     if (attemptToken == null || expiresAt == null) {
       throw const AuthException.unknown();
     }
@@ -156,28 +150,5 @@ final class HttpAuthClient implements AuthRepository {
       'email' => OtpDeliveryChannel.email,
       _ => OtpDeliveryChannel.authenticator,
     };
-  }
-
-  static Map<String, Object?> _decodeJson(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, Object?>) {
-        return decoded;
-      }
-    } on FormatException {
-      throw const AuthException.unknown();
-    }
-    throw const AuthException.unknown();
-  }
-
-  static String? _asString(Object? raw) => raw is String && raw.isNotEmpty ? raw : null;
-
-  static DateTime? _parseDate(Object? raw) {
-    if (raw is! String || raw.isEmpty) return null;
-    try {
-      return DateTime.parse(raw);
-    } on FormatException {
-      return null;
-    }
   }
 }

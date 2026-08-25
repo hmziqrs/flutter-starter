@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/experiments/experiment_key.dart';
 import 'package:starter/features/experiments/experiment_variant.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 part 'experiment_source.freezed.dart';
 
@@ -39,10 +40,8 @@ abstract interface class ExperimentSource {
   Stream<List<ExperimentAssignment>> changes();
 }
 
-final class ExperimentSourceException implements Exception {
-  const ExperimentSourceException({required this.operation});
-
-  final String operation;
+final class ExperimentSourceException extends OperationException {
+  const ExperimentSourceException({required super.operation});
 
   @override
   String toString() => 'ExperimentSourceException: $operation failed';

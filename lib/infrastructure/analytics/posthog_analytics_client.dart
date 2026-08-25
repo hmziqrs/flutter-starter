@@ -1,6 +1,7 @@
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
+import 'package:starter/infrastructure/preferences/bool_codec.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
 final class PosthogAnalyticsClient implements AnalyticsClient {
@@ -28,9 +29,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
             properties: <String, Object>{'name': name, 'step': step},
           );
       }
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   @override
@@ -42,9 +41,7 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
       await Posthog().setPersonProperties(
         userPropertiesToSet: <String, Object>{property.key: property.value},
       );
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   @override
@@ -58,14 +55,12 @@ final class PosthogAnalyticsClient implements AnalyticsClient {
       } else {
         await Posthog().reset();
       }
-    } on Object {
-      // ignored
-    }
+    } on Object {}
   }
 
   Future<bool> _optedIn() async {
     try {
-      return await secureStore.read(analyticsOptInKey) == 'true';
+      return await secureStore.readBool(analyticsOptInKey);
     } on Object {
       return false;
     }

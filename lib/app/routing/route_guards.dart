@@ -38,21 +38,9 @@ String? appRedirect(
     _maybeShowSoftUpdateDialog(context, requirement);
   }
 
-  if (path == AppRoutes.appearanceSettingsPath) {
-    return state.uri
-        .replace(
-          path: AppRoutes.settingsPath,
-          queryParameters: {'section': SettingsSection.appearance.parameter},
-        )
-        .toString();
-  }
-  if (path == AppRoutes.languageSettingsPath) {
-    return state.uri
-        .replace(
-          path: AppRoutes.settingsPath,
-          queryParameters: {'section': SettingsSection.language.parameter},
-        )
-        .toString();
+  final legacySection = _legacySettingsRedirects[path];
+  if (legacySection != null) {
+    return _redirectLegacySettings(state, legacySection);
   }
 
   if (_isOnboardingOrAuthRoute(path)) {
@@ -80,6 +68,20 @@ String? appRedirect(
     return AppRoutes.passcodeEntryPath;
   }
   return null;
+}
+
+const Map<String, SettingsSection> _legacySettingsRedirects = {
+  AppRoutes.appearanceSettingsPath: SettingsSection.appearance,
+  AppRoutes.languageSettingsPath: SettingsSection.language,
+};
+
+String _redirectLegacySettings(GoRouterState state, SettingsSection section) {
+  return state.uri
+      .replace(
+        path: AppRoutes.settingsPath,
+        queryParameters: {'section': section.parameter},
+      )
+      .toString();
 }
 
 bool _isShellTabDestination(String path) =>

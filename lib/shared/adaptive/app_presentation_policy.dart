@@ -63,3 +63,7 @@ class AppPresentationScope extends InheritedWidget {
     return policy != oldWidget.policy;
   }
 }
+
+extension AppPresentationPolicyBuildContext on BuildContext {
+  bool get isTenFoot => AppPresentationPolicy.maybeOf(this)?.isTenFoot ?? false;
+}

@@ -1,21 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/auth/auth_form_submit_mixin.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/features/auth/reset_password_form_value.dart';
 import 'package:starter/features/auth/reset_password_presentation_state.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
+import 'package:starter/features/auth/widgets/auth_form_header.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/adaptive/app_presentation_policy.dart';
-import 'package:starter/shared/forms/form_field_reveal.dart';
-import 'package:starter/shared/forms/form_validators.dart';
-import 'package:starter/shared/forms/password_field_toggle.dart';
+import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
+import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
 typedef ResetPasswordSubmitCallback =
     FutureOr<void> Function(
@@ -61,7 +60,8 @@ class _ResetPasswordView extends ConsumerStatefulWidget {
   ConsumerState<_ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
+class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
+    with AuthFormSubmitMixin<_ResetPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
@@ -70,10 +70,9 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   final _passwordFocus = FocusNode(debugLabel: 'resetPassword.newPassword');
   final _confirmPasswordFocus = FocusNode(debugLabel: 'resetPassword.confirmPassword');
   final _submitFocus = FocusNode(debugLabel: 'resetPassword.submit');
-  bool _callbackSubmitting = false;
 
   bool get _submitting =>
-      _callbackSubmitting ||
+      callbackSubmitting ||
       widget.presentation.status == ResetPasswordPresentationStatus.submitting;
 
   @override
@@ -130,7 +129,6 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
     final status = widget.presentation.status;
-    final isTenFoot = AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false;
     final invalidFixture = status == ResetPasswordPresentationStatus.invalid;
     final fieldFailureFixture = status == ResetPasswordPresentationStatus.fieldFailure;
 
@@ -142,141 +140,63 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
           key: const ValueKey('auth-reset-password-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              translations.auth.resetPassword.title,
-              style: context.theme.typography.display.xl2,
+            AuthFormHeader(
+              title: translations.auth.resetPassword.title,
+              body: translations.auth.resetPassword.body,
+              alerts: [
+                ?_feedbackAlert(context),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              translations.auth.resetPassword.body,
-              style: context.theme.typography.body.md,
-            ),
-            if (_feedbackAlert(context) case final alert?) ...[
-              const SizedBox(height: AppSpacing.xl),
-              alert,
-            ],
-            const SizedBox(height: AppSpacing.xl),
-            AppTvEditableField(
+            passwordFormField(
               activationKey: const ValueKey('auth-reset-password-new-activation'),
+              fieldKey: const ValueKey('auth-reset-password-new'),
+              toggleKey: const ValueKey('auth-reset-password-new-toggle'),
               label: translations.auth.resetPassword.newPassword,
               controller: _passwordController,
               focusNode: _passwordFocus,
+              formFieldKey: _passwordFieldKey,
               enabled: !_submitting,
-              secure: true,
               autofocus: true,
-              builder: (context, editorFocusNode, completeEditing) {
-                return FTextFormField.password(
-                  key: const ValueKey('auth-reset-password-new'),
-                  formFieldKey: _passwordFieldKey,
-                  control: .managed(controller: _passwordController),
-                  focusNode: editorFocusNode,
-                  label: Text(translations.auth.resetPassword.newPassword),
-                  description: Text(
-                    translations.auth.common.passwordRequirements,
-                    key: const ValueKey('auth-reset-password-requirements'),
-                  ),
-                  autofillHints: const [AutofillHints.newPassword],
-                  enabled: !_submitting,
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
-                  validator: (value) => validatePassword(
-                    value,
-                    requiredMessage: translations.validation.required(
-                      field: translations.auth.resetPassword.newPassword,
-                    ),
-                    weakMessage: translations.validation.passwordWeak,
-                  ),
-                  suffixBuilder: buildPasswordToggle(
-                    key: const ValueKey('auth-reset-password-new-toggle'),
-                  ),
-                  onEditingComplete: () {
-                    completeEditing(nextFocusNode: _confirmPasswordFocus);
-                  },
-                  onReset: () {
-                    _passwordController.clear();
-                    _passwordFocus.unfocus();
-                  },
-                );
-              },
+              forceErrorText: invalidFixture ? translations.validation.passwordWeak : null,
+              description: Text(
+                translations.auth.common.passwordRequirements,
+                key: const ValueKey('auth-reset-password-requirements'),
+              ),
+              autofillHints: const [AutofillHints.newPassword],
+              nextFocusNode: _confirmPasswordFocus,
             ),
             const SizedBox(height: AppSpacing.lg),
-            AppTvEditableField(
+            confirmPasswordFormField(
               activationKey: const ValueKey('auth-reset-password-confirm-activation'),
+              fieldKey: const ValueKey('auth-reset-password-confirm'),
+              toggleKey: const ValueKey('auth-reset-password-confirm-toggle'),
               label: translations.auth.common.confirmPassword,
               controller: _confirmPasswordController,
               focusNode: _confirmPasswordFocus,
+              formFieldKey: _confirmPasswordFieldKey,
+              matchTarget: _passwordController,
               enabled: !_submitting,
-              secure: true,
-              builder: (context, editorFocusNode, completeEditing) {
-                return FTextFormField.password(
-                  key: const ValueKey('auth-reset-password-confirm'),
-                  formFieldKey: _confirmPasswordFieldKey,
-                  control: .managed(controller: _confirmPasswordController),
-                  focusNode: editorFocusNode,
-                  label: Text(translations.auth.common.confirmPassword),
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.newPassword],
-                  enabled: !_submitting,
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  forceErrorText: invalidFixture || fieldFailureFixture
-                      ? translations.validation.passwordMismatch
-                      : null,
-                  validator: (value) {
-                    final requiredError = validateRequired(
-                      value,
-                      translations.validation.required(
-                        field: translations.auth.common.confirmPassword,
-                      ),
-                    );
-                    if (requiredError != null) return requiredError;
-                    if (value != _passwordController.text) {
-                      return translations.validation.passwordMismatch;
-                    }
-                    return null;
-                  },
-                  suffixBuilder: buildPasswordToggle(
-                    key: const ValueKey('auth-reset-password-confirm-toggle'),
-                  ),
-                  onSubmit: (_) {
-                    completeEditing();
-                    unawaited(_submit());
-                  },
-                  onReset: () {
-                    _confirmPasswordController.clear();
-                    _confirmPasswordFocus.unfocus();
-                  },
-                );
-              },
+              forceErrorText: invalidFixture || fieldFailureFixture
+                  ? translations.validation.passwordMismatch
+                  : null,
+              onSubmit: () => unawaited(_submit()),
             ),
             const SizedBox(height: AppSpacing.xl),
-            FButton(
-              key: const ValueKey('auth-reset-password-submit'),
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-reset-password-submit'),
               focusNode: _submitFocus,
-              onPress: _submitting
-                  ? isTenFoot
-                        ? () {}
-                        : null
-                  : () => unawaited(_submit()),
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                translations.auth.resetPassword.submit,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+              onPress: () => unawaited(_submit()),
+              label: translations.auth.resetPassword.submit,
+              busy: _submitting,
+              retainFocusOnBusy: true,
             ),
             const SizedBox(height: AppSpacing.md),
-            FButton(
-              key: const ValueKey('auth-reset-password-login'),
-              variant: .ghost,
-              onPress: _submitting ? null : widget.onLogin,
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              child: Text(
-                translations.auth.common.returnToLogin,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+            FormSubmitButton(
+              buttonKey: const ValueKey('auth-reset-password-login'),
+              variant: FButtonVariant.ghost,
+              onPress: widget.onLogin,
+              label: translations.auth.common.returnToLogin,
+              busy: _submitting,
             ),
           ],
         ),
@@ -286,72 +206,57 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView> {
 
   Widget? _feedbackAlert(BuildContext context) {
     final translations = context.t;
-    return switch (widget.presentation.status) {
-      ResetPasswordPresentationStatus.idle ||
-      ResetPasswordPresentationStatus.focused ||
-      ResetPasswordPresentationStatus.submitting => null,
-      ResetPasswordPresentationStatus.invalid => FAlert(
-        key: const ValueKey('auth-reset-password-invalid'),
-        variant: .destructive,
-        title: Text(translations.validation.passwordWeak),
-      ),
-      ResetPasswordPresentationStatus.fieldFailure => FAlert(
-        key: const ValueKey('auth-reset-password-field-failure'),
-        variant: .destructive,
-        title: Text(translations.validation.passwordMismatch),
-      ),
-      ResetPasswordPresentationStatus.globalFailure => FAlert(
-        key: const ValueKey('auth-reset-password-global-failure'),
-        variant: .destructive,
-        title: Text(translations.auth.resetPassword.globalError),
-      ),
-      ResetPasswordPresentationStatus.success => FAlert(
-        key: const ValueKey('auth-reset-password-success'),
-        title: Text(translations.auth.resetPassword.success),
-        icon: const Icon(FLucideIcons.circleCheck),
-      ),
-    };
+    return AuthFeedbackAlert.forStatus(
+      status: widget.presentation.status,
+      specFor: (status) => switch (status) {
+        ResetPasswordPresentationStatus.idle ||
+        ResetPasswordPresentationStatus.focused ||
+        ResetPasswordPresentationStatus.submitting => null,
+        ResetPasswordPresentationStatus.invalid => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-reset-password-invalid'),
+          variant: .destructive,
+          title: Text(translations.validation.passwordWeak),
+        ),
+        ResetPasswordPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-reset-password-field-failure'),
+          variant: .destructive,
+          title: Text(translations.validation.passwordMismatch),
+        ),
+        ResetPasswordPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-reset-password-global-failure'),
+          variant: .destructive,
+          title: Text(translations.auth.resetPassword.globalError),
+        ),
+        ResetPasswordPresentationStatus.success => AuthFeedbackAlertSpec(
+          key: const ValueKey('auth-reset-password-success'),
+          title: Text(translations.auth.resetPassword.success),
+          icon: const Icon(FLucideIcons.circleCheck),
+        ),
+      },
+    );
   }
 
-  Future<void> _submit() async {
-    if (_submitting) return;
-    final form = _formKey.currentState;
-    if (form == null) return;
-    final invalidFields = form.validateGranularly();
-    if (invalidFields.isNotEmpty) {
-      await revealFirstInvalid(
-        invalidFields,
-        orderedTargets: [
-          (
-            field: _passwordFieldKey.currentState,
-            context: _passwordFieldKey.currentContext,
-            focusNode: _passwordFocus,
-          ),
-          (
-            field: _confirmPasswordFieldKey.currentState,
-            context: _confirmPasswordFieldKey.currentContext,
-            focusNode: _confirmPasswordFocus,
-          ),
-        ],
-        isMounted: () => mounted,
-      );
-      return;
-    }
-
-    form.save();
-    final value = ResetPasswordFormValue(
-      newPassword: _passwordController.text,
-      confirmPassword: _confirmPasswordController.text,
+  Future<void> _submit() {
+    return submit(
+      formKey: _formKey,
+      orderedTargets: [
+        (
+          field: _passwordFieldKey.currentState,
+          context: _passwordFieldKey.currentContext,
+          focusNode: _passwordFocus,
+        ),
+        (
+          field: _confirmPasswordFieldKey.currentState,
+          context: _confirmPasswordFieldKey.currentContext,
+          focusNode: _confirmPasswordFocus,
+        ),
+      ],
+      buildValue: () => ResetPasswordFormValue(
+        newPassword: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      ),
+      onSubmit: (value) async => widget.onSubmit(value),
+      tenFootFocusNode: _submitFocus,
     );
-    if (AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false) {
-      _submitFocus.requestFocus();
-    }
-    setState(() => _callbackSubmitting = true);
-    TextInput.finishAutofillContext(shouldSave: false);
-    try {
-      await widget.onSubmit(value);
-    } finally {
-      if (mounted) setState(() => _callbackSubmitting = false);
-    }
   }
 }

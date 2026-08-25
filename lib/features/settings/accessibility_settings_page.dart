@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/text_preset.dart';
+import 'package:starter/features/settings/widgets/labeled_section_card.dart';
+import 'package:starter/features/settings/widgets/settings_save_failure.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
+import 'package:starter/shared/widgets/spaced_column.dart';
 
 class AccessibilitySettingsPage extends StatelessWidget {
   const AccessibilitySettingsPage({super.key});
@@ -14,7 +17,7 @@ class AccessibilitySettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
-      child: _AccessibilityScrollFrame(
+      child: ReadingContentScrollFrame(
         title: context.t.settings.accessibility.title,
         child: const AccessibilityPresetSelector(),
       ),
@@ -29,9 +32,8 @@ class AccessibilityPresetSelector extends ConsumerStatefulWidget {
   ConsumerState<AccessibilityPresetSelector> createState() => _AccessibilityPresetSelectorState();
 }
 
-class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPresetSelector> {
-  bool _saveFailed = false;
-
+class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPresetSelector>
+    with SettingsSaveFailureState<AccessibilityPresetSelector> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
@@ -42,20 +44,21 @@ class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPrese
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _AccessibilityCard(
+        LabeledSectionCard(
           title: translations.settings.accessibility.title,
-          child: _SpacedTiles(
+          child: SpacedColumn(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final preset in AppTextPreset.values)
                 _PresetTile(
                   preset: preset,
                   selected: preset == selected,
-                  onPress: () => _run(() => controller.setTextPreset(preset)),
+                  onPress: () => runSave(() => controller.setTextPreset(preset)),
                 ),
             ],
           ),
         ),
-        if (_saveFailed) ...[
+        if (saveFailed) ...[
           const SizedBox(height: AppSpacing.md),
           Text(
             translations.common.notConnected,
@@ -67,19 +70,6 @@ class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPrese
         ],
       ],
     );
-  }
-
-  Future<void> _run(Future<void> Function() operation) async {
-    try {
-      await operation();
-      if (mounted) {
-        setState(() => _saveFailed = false);
-      }
-    } on Object {
-      if (mounted) {
-        setState(() => _saveFailed = true);
-      }
-    }
   }
 }
 
@@ -129,83 +119,5 @@ final class _PresetLabels {
       AppTextPreset.large => translations.settings.accessibility.preset.largeDescription,
       AppTextPreset.dyslexia => translations.settings.accessibility.preset.dyslexiaDescription,
     };
-  }
-}
-
-class _AccessibilityScrollFrame extends StatelessWidget {
-  const _AccessibilityScrollFrame({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl2,
-      ),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.readingContentMaxWidth,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: context.theme.typography.display.xl2),
-                SizedBox(height: context.spacing.xl),
-                child,
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AccessibilityCard extends StatelessWidget {
-  const _AccessibilityCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: context.theme.typography.body.lg),
-            const SizedBox(height: AppSpacing.lg),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SpacedTiles extends StatelessWidget {
-  const _SpacedTiles({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var index = 0; index < children.length; index++) ...[
-          if (index > 0) const SizedBox(height: AppSpacing.sm),
-          children[index],
-        ],
-      ],
-    );
   }
 }

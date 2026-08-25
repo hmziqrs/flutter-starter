@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 enum AppPermission {
   camera,
@@ -45,10 +46,9 @@ abstract interface class PermissionService {
   Future<void> openSystemSettings();
 }
 
-final class PermissionServiceException implements Exception {
-  const PermissionServiceException({required this.operation, required this.permission});
+final class PermissionServiceException extends OperationException {
+  const PermissionServiceException({required super.operation, required this.permission});
 
-  final String operation;
   final AppPermission permission;
 
   @override

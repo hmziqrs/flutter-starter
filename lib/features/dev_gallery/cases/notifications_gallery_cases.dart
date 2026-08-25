@@ -2,9 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/features/dev_gallery/widgets/gallery_preview_body.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 
 part 'notifications_gallery_cases.freezed.dart';
 
@@ -63,47 +65,38 @@ class _NotificationsRationalePreview extends StatelessWidget {
     final notifications = translations.notifications;
     final permission = state.permission;
     final isBlocked = permission.showsOpenSettings;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: FCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isBlocked ? notifications.enableBlockedTitle : notifications.enableTitle,
-                    style: context.theme.typography.display.lg,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    isBlocked ? notifications.enableBlockedBody : notifications.enableBody,
-                    style: context.theme.typography.body.sm,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _StatusChip(label: notifications.deny),
-                      _StatusChip(label: notifications.allow),
-                    ],
-                  ),
-                  if (permission == NotificationPermissionStatus.notRequested) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      notifications.disabled,
-                      style: context.theme.typography.body.xs,
-                    ),
-                  ],
-                ],
-              ),
+    return GalleryPreviewBody(
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isBlocked ? notifications.enableBlockedTitle : notifications.enableTitle,
+              style: context.theme.typography.display.lg,
             ),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              isBlocked ? notifications.enableBlockedBody : notifications.enableBody,
+              style: context.theme.typography.body.sm,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _StatusChip(label: notifications.deny),
+                _StatusChip(label: notifications.allow),
+              ],
+            ),
+            if (permission == NotificationPermissionStatus.notRequested) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                notifications.disabled,
+                style: context.theme.typography.body.xs,
+              ),
+            ],
+          ],
         ),
       ),
     );

@@ -77,3 +77,24 @@ List<GalleryCase> buildTypedGalleryCases<TState>({
       ),
   ];
 }
+
+List<GalleryCase> buildEnumGalleryCases<T extends Enum>({
+  required Iterable<T> values,
+  required String idPrefix,
+  required String screenId,
+  required GalleryLabelBuilder screenLabelBuilder,
+  required GalleryLabelBuilder Function(T value) caseLabelBuilder,
+  required ProductionPageFactory<T> pageFactory,
+}) {
+  return [
+    for (final value in values)
+      TypedGalleryCase<T>(
+        id: '$idPrefix.${value.name}',
+        screenId: screenId,
+        screenLabelBuilder: screenLabelBuilder,
+        caseLabelBuilder: caseLabelBuilder(value),
+        stateFactory: (_) => value,
+        pageFactory: pageFactory,
+      ),
+  ];
+}

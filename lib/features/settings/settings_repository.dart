@@ -2,6 +2,7 @@ import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/preferences/bool_codec.dart';
 
 final class SettingsRepository {
   const SettingsRepository(this._store);
@@ -79,30 +80,15 @@ final class SettingsRepository {
           final locale? => _store.writeString(localeKey, locale.languageTag),
           null => _store.remove(localeKey),
         },
-        switch (state.hasCompletedOnboarding) {
-          true => _store.writeString(onboardingKey, 'true'),
-          false => _store.remove(onboardingKey),
-        },
-        switch (state.biometricUnlockEnabled) {
-          true => _store.writeString(biometricUnlockKey, 'true'),
-          false => _store.remove(biometricUnlockKey),
-        },
-        switch (state.hapticsEnabled) {
-          false => _store.writeString(hapticsEnabledKey, 'false'),
-          true => _store.remove(hapticsEnabledKey),
-        },
-        switch (state.passcodeEnabled) {
-          true => _store.writeString(passcodeEnabledKey, 'true'),
-          false => _store.remove(passcodeEnabledKey),
-        },
+        _store.writeBool(onboardingKey, value: state.hasCompletedOnboarding),
+        _store.writeBool(biometricUnlockKey, value: state.biometricUnlockEnabled),
+        _store.writeBool(hapticsEnabledKey, value: state.hapticsEnabled, invert: true),
+        _store.writeBool(passcodeEnabledKey, value: state.passcodeEnabled),
         switch (state.autoLockDelaySeconds) {
           0 => _store.remove(autoLockDelayKey),
           final seconds => _store.writeString(autoLockDelayKey, seconds.toString()),
         },
-        switch (state.lockOnBackground) {
-          true => _store.writeString(lockOnBackgroundKey, 'true'),
-          false => _store.remove(lockOnBackgroundKey),
-        },
+        _store.writeBool(lockOnBackgroundKey, value: state.lockOnBackground),
       ]);
     } on SettingsStoreException catch (error) {
       throw SettingsFailure.write(error.operation);

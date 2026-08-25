@@ -20,6 +20,7 @@ import 'package:starter/features/session/auth_repository.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/widgets/feedback/legal_dialog_callbacks.dart';
 
 List<RouteBase> buildAuthRoutes() => [
   GoRoute(
@@ -32,43 +33,44 @@ List<RouteBase> buildAuthRoutes() => [
   GoRoute(
     name: AppRoutes.register,
     path: AppRoutes.registerPath,
-    builder: (context, state) => RegisterPage(
-      onSubmit: (value) async {
-        final container = ProviderScope.containerOf(context, listen: false);
-        try {
-          await container
-              .read(authRepositoryProvider)
-              .register(
-                credentials: AuthCredentials(email: value.email, password: value.password),
-                displayName: value.displayName,
-              );
-          if (!context.mounted) return;
-          GoRouter.of(context).goNamed(
-            AppRoutes.otp,
-            pathParameters: <String, String>{
-              'purpose': OtpPurpose.registration.pathSegment,
-            },
-            queryParameters: <String, String>{'identifier': value.email},
-          );
-        } on AuthException {
-          if (!context.mounted) return;
-          showAppInformationDialog(
-            context,
-            title: context.t.common.legalPlaceholderTitle,
-            body: context.t.common.notConnected,
-          );
-        }
-      },
-      onLogin: () => _returnToLogin(context),
-      onOpenTerms: () => showAppInformationDialog(
+    builder: (context, state) {
+      final legal = legalDialogCallbacks(
         context,
-        title: context.t.auth.register.terms,
-      ),
-      onOpenPrivacy: () => showAppInformationDialog(
-        context,
-        title: context.t.auth.register.privacy,
-      ),
-    ),
+        termsTitle: context.t.auth.register.terms,
+        privacyTitle: context.t.auth.register.privacy,
+      );
+      return RegisterPage(
+        onSubmit: (value) async {
+          final container = ProviderScope.containerOf(context, listen: false);
+          try {
+            await container
+                .read(authRepositoryProvider)
+                .register(
+                  credentials: AuthCredentials(email: value.email, password: value.password),
+                  displayName: value.displayName,
+                );
+            if (!context.mounted) return;
+            GoRouter.of(context).goNamed(
+              AppRoutes.otp,
+              pathParameters: <String, String>{
+                'purpose': OtpPurpose.registration.pathSegment,
+              },
+              queryParameters: <String, String>{'identifier': value.email},
+            );
+          } on AuthException {
+            if (!context.mounted) return;
+            showAppInformationDialog(
+              context,
+              title: context.t.common.legalPlaceholderTitle,
+              body: context.t.common.notConnected,
+            );
+          }
+        },
+        onLogin: () => _returnToLogin(context),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+      );
+    },
   ),
   GoRoute(
     name: AppRoutes.forgotPassword,
@@ -264,27 +266,18 @@ void _finishPasswordResetFlow(
   BuildContext context,
   _PasswordResetFlowResult result,
 ) {
-  final router = GoRouter.of(context);
-  if (router.canPop()) {
-    router.pop(result);
-    return;
-  }
-
-  context.goNamed(
+  popOrGoNamed(
+    context,
     AppRoutes.login,
+    result: result,
     queryParameters: result == _PasswordResetFlowResult.completed
-        ? {'status': _passwordResetComplete}
+        ? const {'status': _passwordResetComplete}
         : const {},
   );
 }
 
 void _returnToLogin(BuildContext context) {
-  final router = GoRouter.of(context);
-  if (router.canPop()) {
-    router.pop();
-    return;
-  }
-  context.goNamed(AppRoutes.login);
+  popOrGoNamed(context, AppRoutes.login);
 }
 
 class OtpRoutePage extends ConsumerStatefulWidget {

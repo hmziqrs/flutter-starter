@@ -17,7 +17,8 @@ import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
-import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
+import 'package:starter/shared/widgets/feedback/app_confirmation_dialog.dart';
 
 typedef ProfileSaveCallback = FutureOr<void> Function(ProfileDraft draft);
 typedef AvatarPickedCallback = void Function(PickedMedia? media);
@@ -377,56 +378,19 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
       setState(() => _phase = ProfilePresentationPhase.discardPrompt);
     }
 
-    final shouldDiscard = await showFDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext, style, animation) {
-        final translations = dialogContext.t.profile.update;
-        return EscapeDismissibleOverlay(
-          child: FDialog(
-            key: const ValueKey('profile-discard-dialog'),
-            animation: animation,
-            semanticsLabel: translations.discardTitle,
-            builder: (_, _) => Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(translations.discardTitle, style: style.titleTextStyle),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(translations.discardBody, style: style.bodyTextStyle),
-                  const SizedBox(height: AppSpacing.xl),
-                  Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      FButton(
-                        key: const ValueKey('profile-keep-editing'),
-                        variant: .outline,
-                        autofocus: true,
-                        mainAxisSize: .min,
-                        builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                        onPress: () => Navigator.of(dialogContext).pop(false),
-                        child: Text(translations.stay),
-                      ),
-                      FButton(
-                        key: const ValueKey('profile-discard-changes'),
-                        variant: .destructive,
-                        mainAxisSize: .min,
-                        builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                        onPress: () => Navigator.of(dialogContext).pop(true),
-                        child: Text(translations.discard),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    final translations = context.t.profile.update;
+    final shouldDiscard = await AppConfirmationDialog.show(
+      context,
+      intent: ConfirmationIntent.destroy,
+      title: translations.discardTitle,
+      body: translations.discardBody,
+      cancelLabel: translations.stay,
+      confirmLabel: translations.discard,
+      dialogKey: const ValueKey('profile-discard-dialog'),
+      cancelKey: const ValueKey('profile-keep-editing'),
+      actionKey: const ValueKey('profile-discard-changes'),
+      autofocusCancel: true,
+      flexibleActions: true,
     );
     _dialogVisible = false;
     if (!mounted) return;
@@ -684,25 +648,22 @@ class _AvatarEditorState extends State<_AvatarEditor> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.profile.update;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: AppSpacing.lg,
-          runSpacing: AppSpacing.lg,
-          children: [
-            _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
-            FButton(
-              key: const ValueKey('profile-avatar-feedback'),
-              variant: .outline,
-              mainAxisSize: .min,
-              builder: (_, _, _, _, _, child) => Flexible(child: child!),
-              onPress: widget.enabled && !_avatarFlowInProgress ? _runAvatarFlow : null,
-              child: Text(translations.changeAvatar),
-            ),
-          ],
-        ),
+    return AppCard(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppSpacing.lg,
+        runSpacing: AppSpacing.lg,
+        children: [
+          _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
+          FButton(
+            key: const ValueKey('profile-avatar-feedback'),
+            variant: .outline,
+            mainAxisSize: .min,
+            builder: (_, _, _, _, _, child) => Flexible(child: child!),
+            onPress: widget.enabled && !_avatarFlowInProgress ? _runAvatarFlow : null,
+            child: Text(translations.changeAvatar),
+          ),
+        ],
       ),
     );
   }
@@ -716,28 +677,26 @@ class _ProfilePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.profile.update;
-    return FCard(
+    return AppCard(
       key: const ValueKey('profile-preview'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            draft.displayName,
+            key: const ValueKey('profile-preview-name'),
+            style: context.theme.typography.display.lg,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('@${draft.username}', style: context.theme.typography.body.sm),
+          if (draft.bio.trim().isNotEmpty) ...[
             const SizedBox(height: AppSpacing.lg),
-            Text(
-              draft.displayName,
-              key: const ValueKey('profile-preview-name'),
-              style: context.theme.typography.display.lg,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text('@${draft.username}', style: context.theme.typography.body.sm),
-            if (draft.bio.trim().isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Text(draft.bio, style: context.theme.typography.body.sm),
-            ],
+            Text(draft.bio, style: context.theme.typography.body.sm),
           ],
-        ),
+        ],
       ),
     );
   }

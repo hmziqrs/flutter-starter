@@ -12,6 +12,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/widgets/feedback/legal_dialog_callbacks.dart';
 
 List<RouteBase> buildSettingsRoutes() => [
   GoRoute(
@@ -45,6 +46,11 @@ List<RouteBase> buildSettingsRoutes() => [
 ];
 
 SettingsPage buildSettingsPage(BuildContext context, SettingsSection? section) {
+  final legal = legalDialogCallbacks(
+    context,
+    termsTitle: context.t.settings.terms,
+    privacyTitle: context.t.settings.privacy,
+  );
   return SettingsPage(
     section: section,
     onOpenAppearance: () => _openSettingsSection(context, SettingsSection.appearance),
@@ -57,14 +63,8 @@ SettingsPage buildSettingsPage(BuildContext context, SettingsSection? section) {
     onOpenLogin: () => context.pushNamed(AppRoutes.login),
     onOpenPricing: () => goAppTab(context, 1),
     onOpenPasscodeSetup: () => unawaited(context.pushNamed<void>(AppRoutes.passcodeSetup)),
-    onOpenTerms: () => showAppInformationDialog(
-      context,
-      title: context.t.settings.terms,
-    ),
-    onOpenPrivacy: () => showAppInformationDialog(
-      context,
-      title: context.t.settings.privacy,
-    ),
+    onOpenTerms: legal.onOpenTerms,
+    onOpenPrivacy: legal.onOpenPrivacy,
     onOpenLicense: () => context.pushNamed(AppRoutes.aboutLicense),
     loadBuildLabel: () async => (await AppBuildInfo.load()).displayValue,
   );

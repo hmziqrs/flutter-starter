@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/auth/forgot_password_page.dart';
@@ -26,8 +23,8 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
+import 'package:starter/shared/widgets/feedback/app_information_dialog.dart';
+import 'package:starter/shared/widgets/feedback/legal_dialog_callbacks.dart';
 
 part 'production_gallery_cases.freezed.dart';
 
@@ -116,25 +113,32 @@ List<GalleryCase> _buildPaywallCases() {
     screenId: 'paywall',
     screenLabelBuilder: (translations) => translations.devGallery.screenPaywall,
     definitions: _pricingDefinitions(),
-    pageFactory: (context, state) => PaywallPage(
-      plans: state.plans,
-      initialBillingPeriod: state.billingPeriod,
-      initialPlanId: state.initialPlanId,
-      availability: state.availability,
-      onSkip: () => _showUnavailableFeedback(context),
-      onContinue: (plan, _) => _showInformationDialog(
+    pageFactory: (context, state) {
+      final legal = legalDialogCallbacks(
         context,
-        title: context.t.pricing.choosePlan(plan: plan.name),
-        body: context.t.pricing.staticSuccess,
-      ),
-      onRestore: () => _showInformationDialog(
-        context,
-        title: context.t.pricing.restore,
-        body: context.t.common.notConnected,
-      ),
-      onOpenTerms: () => _showLegalDialog(context, context.t.pricing.terms),
-      onOpenPrivacy: () => _showLegalDialog(context, context.t.pricing.privacy),
-    ),
+        termsTitle: context.t.pricing.terms,
+        privacyTitle: context.t.pricing.privacy,
+      );
+      return PaywallPage(
+        plans: state.plans,
+        initialBillingPeriod: state.billingPeriod,
+        initialPlanId: state.initialPlanId,
+        availability: state.availability,
+        onSkip: () => _showUnavailableFeedback(context),
+        onContinue: (plan, _) => showAppInformationDialog(
+          context,
+          title: context.t.pricing.choosePlan(plan: plan.name),
+          body: context.t.pricing.staticSuccess,
+        ),
+        onRestore: () => showAppInformationDialog(
+          context,
+          title: context.t.pricing.restore,
+          body: context.t.common.notConnected,
+        ),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+      );
+    },
   );
 }
 
@@ -144,19 +148,26 @@ List<GalleryCase> _buildPricingCases() {
     screenId: 'pricing',
     screenLabelBuilder: (translations) => translations.devGallery.screenPricing,
     definitions: _pricingDefinitions(),
-    pageFactory: (context, state) => PricingPage(
-      plans: state.plans,
-      initialBillingPeriod: state.billingPeriod,
-      initialPlanId: state.initialPlanId,
-      availability: state.availability,
-      onSelectPlan: (plan, _) => _showInformationDialog(
+    pageFactory: (context, state) {
+      final legal = legalDialogCallbacks(
         context,
-        title: context.t.pricing.choosePlan(plan: plan.name),
-        body: context.t.pricing.staticPurchaseNotice,
-      ),
-      onOpenTerms: () => _showLegalDialog(context, context.t.pricing.terms),
-      onOpenPrivacy: () => _showLegalDialog(context, context.t.pricing.privacy),
-    ),
+        termsTitle: context.t.pricing.terms,
+        privacyTitle: context.t.pricing.privacy,
+      );
+      return PricingPage(
+        plans: state.plans,
+        initialBillingPeriod: state.billingPeriod,
+        initialPlanId: state.initialPlanId,
+        availability: state.availability,
+        onSelectPlan: (plan, _) => showAppInformationDialog(
+          context,
+          title: context.t.pricing.choosePlan(plan: plan.name),
+          body: context.t.pricing.staticPurchaseNotice,
+        ),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+      );
+    },
   );
 }
 
@@ -278,13 +289,20 @@ List<GalleryCase> _buildRegisterCases() {
       ),
       galleryCaseOf('success', _caseSuccess, const RegisterPresentationState.success()),
     ],
-    pageFactory: (context, state) => RegisterPage(
-      presentation: state,
-      onSubmit: (_) => _showUnavailableFeedback(context),
-      onLogin: () => _showUnavailableFeedback(context),
-      onOpenTerms: () => _showLegalDialog(context, context.t.auth.register.terms),
-      onOpenPrivacy: () => _showLegalDialog(context, context.t.auth.register.privacy),
-    ),
+    pageFactory: (context, state) {
+      final legal = legalDialogCallbacks(
+        context,
+        termsTitle: context.t.auth.register.terms,
+        privacyTitle: context.t.auth.register.privacy,
+      );
+      return RegisterPage(
+        presentation: state,
+        onSubmit: (_) => _showUnavailableFeedback(context),
+        onLogin: () => _showUnavailableFeedback(context),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+      );
+    },
   );
 }
 
@@ -441,7 +459,7 @@ List<GalleryCase> _buildProfileCases() {
       initialDraft: const ProfileDraft.defaults(),
       presentationState: state,
       onSave: (_) => _showUnavailableFeedback(context),
-      onAvatarPicked: (_) => _showInformationDialog(
+      onAvatarPicked: (_) => showAppInformationDialog(
         context,
         title: context.t.profile.update.changeAvatar,
         body: context.t.profile.update.avatarUnavailable,
@@ -487,23 +505,33 @@ List<GalleryCase> _buildSettingsCases() {
         stateFactory: (_) => SettingsSection.privacyAbout,
       ),
     ],
-    pageFactory: (context, state) => SettingsPage(
-      section: state,
-      onOpenAppearance: () => _showUnavailableFeedback(context),
-      onOpenLanguage: () => _showUnavailableFeedback(context),
-      onOpenAccessibility: () => _showUnavailableFeedback(context),
-      onOpenAccount: () => _showUnavailableFeedback(context),
-      onOpenSubscription: () => _showUnavailableFeedback(context),
-      onOpenPrivacyAbout: () => _showUnavailableFeedback(context),
-      onOpenProfile: () => _showUnavailableFeedback(context),
-      onOpenLogin: () => _showUnavailableFeedback(context),
-      onOpenPricing: () => _showUnavailableFeedback(context),
-      onOpenPasscodeSetup: () => _showUnavailableFeedback(context),
-      onOpenTerms: () => _showLegalDialog(context, context.t.settings.terms),
-      onOpenPrivacy: () => _showLegalDialog(context, context.t.settings.privacy),
-      onOpenLicense: () => _showLegalDialog(context, context.t.settings.about.license),
-      loadBuildLabel: () => Future.value(context.t.common.notConnected),
-    ),
+    pageFactory: (context, state) {
+      final legal = legalDialogCallbacks(
+        context,
+        termsTitle: context.t.settings.terms,
+        privacyTitle: context.t.settings.privacy,
+      );
+      return SettingsPage(
+        section: state,
+        onOpenAppearance: () => _showUnavailableFeedback(context),
+        onOpenLanguage: () => _showUnavailableFeedback(context),
+        onOpenAccessibility: () => _showUnavailableFeedback(context),
+        onOpenAccount: () => _showUnavailableFeedback(context),
+        onOpenSubscription: () => _showUnavailableFeedback(context),
+        onOpenPrivacyAbout: () => _showUnavailableFeedback(context),
+        onOpenProfile: () => _showUnavailableFeedback(context),
+        onOpenLogin: () => _showUnavailableFeedback(context),
+        onOpenPricing: () => _showUnavailableFeedback(context),
+        onOpenPasscodeSetup: () => _showUnavailableFeedback(context),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+        onOpenLicense: () => showAppInformationDialog(
+          context,
+          title: context.t.settings.about.license,
+        ),
+        loadBuildLabel: () => Future.value(context.t.common.notConnected),
+      );
+    },
   );
 }
 
@@ -515,55 +543,11 @@ ProfileDraft _invalidProfileDraft() {
   return const ProfileDraft.defaults().copyWith(username: '');
 }
 
-void _showLegalDialog(BuildContext context, String title) {
-  _showInformationDialog(
-    context,
-    title: title,
-    body: context.t.common.legalPlaceholderBody,
-  );
-}
-
 void _showUnavailableFeedback(BuildContext context) {
-  _showInformationDialog(
+  showAppInformationDialog(
     context,
     title: context.t.common.legalPlaceholderTitle,
     body: context.t.common.notConnected,
-  );
-}
-
-void _showInformationDialog(
-  BuildContext context, {
-  required String title,
-  required String body,
-}) {
-  unawaited(
-    showFDialog<void>(
-      context: context,
-      useSafeArea: true,
-      builder: (context, style, animation) => EscapeDismissibleOverlay(
-        child: FDialog(
-          animation: animation,
-          semanticsLabel: title,
-          builder: (context, style) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: style.titleTextStyle),
-                const SizedBox(height: AppSpacing.md),
-                Text(body, style: style.bodyTextStyle),
-                const SizedBox(height: AppSpacing.xl),
-                FButton(
-                  onPress: () => Navigator.of(context).pop(),
-                  child: Text(context.t.common.close),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
   );
 }
 

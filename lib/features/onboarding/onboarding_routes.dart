@@ -10,6 +10,7 @@ import 'package:starter/features/pricing/paywall_page.dart';
 import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/widgets/feedback/legal_dialog_callbacks.dart';
 
 List<RouteBase> buildOnboardingRoutes() => [
   GoRoute(
@@ -23,24 +24,25 @@ List<RouteBase> buildOnboardingRoutes() => [
   GoRoute(
     name: AppRoutes.onboardingPaywall,
     path: AppRoutes.onboardingPaywallPath,
-    builder: (context, state) => PaywallPage(
-      plans: PricingFixtures.standard(context.t),
-      onSkip: () => _completeOnboardingAndGoHome(context),
-      onContinue: (_, _) => _completeOnboardingAndGoHome(context),
-      onRestore: () => showAppInformationDialog(
+    builder: (context, state) {
+      final legal = legalDialogCallbacks(
         context,
-        title: context.t.pricing.restore,
-        body: context.t.pricing.restoreUnavailable,
-      ),
-      onOpenTerms: () => showAppInformationDialog(
-        context,
-        title: context.t.pricing.terms,
-      ),
-      onOpenPrivacy: () => showAppInformationDialog(
-        context,
-        title: context.t.pricing.privacy,
-      ),
-    ),
+        termsTitle: context.t.pricing.terms,
+        privacyTitle: context.t.pricing.privacy,
+      );
+      return PaywallPage(
+        plans: PricingFixtures.standard(context.t),
+        onSkip: () => _completeOnboardingAndGoHome(context),
+        onContinue: (_, _) => _completeOnboardingAndGoHome(context),
+        onRestore: () => showAppInformationDialog(
+          context,
+          title: context.t.pricing.restore,
+          body: context.t.pricing.restoreUnavailable,
+        ),
+        onOpenTerms: legal.onOpenTerms,
+        onOpenPrivacy: legal.onOpenPrivacy,
+      );
+    },
   ),
 ];
 

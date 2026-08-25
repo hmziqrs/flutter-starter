@@ -7,6 +7,7 @@ import 'package:starter/app/diagnostics/diagnostics_page.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/bootstrap.dart';
 import 'package:starter/features/dev_gallery/screen_gallery_page.dart';
+import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 
 import 'integration_test_support.dart';
 
@@ -26,7 +27,11 @@ void main() {
       AppRoutes.diagnosticsPath,
     ]) {
       await tester.pumpWidget(
-        await createApplication(config, initialLocation: location),
+        await createApplication(
+          config,
+          initialLocation: location,
+          connectivityService: const StaticConnectivityService(),
+        ),
       );
       await pumpAppFrames(tester);
 

@@ -8,6 +8,8 @@ import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/banners/collapsing_banner_slot.dart';
+import 'package:starter/shared/widgets/feedback/app_toast.dart';
 
 class ConnectivityBanner extends ConsumerStatefulWidget {
   const ConnectivityBanner({super.key});
@@ -39,15 +41,12 @@ class _ConnectivityBannerState extends ConsumerState<ConnectivityBanner> {
 
   void _showBackOnlineToast(BuildContext context) {
     final translations = context.t;
-    showFToast(
-      context: context,
-      icon: Icon(
-        FLucideIcons.wifi,
-        size: 18,
-        color: context.theme.colors.primary,
-        semanticLabel: translations.connectivity.online,
-      ),
-      title: Text(translations.connectivity.backOnline),
+    AppToast.show(
+      context,
+      severity: ToastSeverity.info,
+      message: translations.connectivity.backOnline,
+      icon: FLucideIcons.wifi,
+      iconSemanticLabel: translations.connectivity.online,
     );
   }
 
@@ -66,18 +65,8 @@ class _BannerSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = state == null
-        ? const SizedBox(width: double.infinity, height: 0)
-        : _ConnectivityBannerContent(state: state!);
-
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return content;
-    }
-    return AnimatedSize(
-      duration: AppMotion.standard,
-      curve: AppMotion.standardCurve,
-      alignment: Alignment.topCenter,
-      child: content,
+    return CollapsingBannerSlot(
+      child: state == null ? null : _ConnectivityBannerContent(state: state!),
     );
   }
 }

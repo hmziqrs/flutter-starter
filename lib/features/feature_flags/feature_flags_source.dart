@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/feature_flags/feature_flags.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 abstract interface class FeatureFlagsSource {
   Future<FeatureFlags> load();
@@ -7,10 +8,8 @@ abstract interface class FeatureFlagsSource {
   Stream<FeatureFlags> changes();
 }
 
-final class FeatureFlagsException implements Exception {
-  const FeatureFlagsException({required this.operation});
-
-  final String operation;
+final class FeatureFlagsException extends OperationException {
+  const FeatureFlagsException({required super.operation});
 
   @override
   String toString() => 'FeatureFlagsException: $operation failed';

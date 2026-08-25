@@ -5,7 +5,7 @@ import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 String _caseLabel(Translations t, ConnectivityState state) => switch (state) {
@@ -15,17 +15,15 @@ String _caseLabel(Translations t, ConnectivityState state) => switch (state) {
 };
 
 List<GalleryCase> buildConnectivityGalleryCases() {
-  return [
-    for (final state in ConnectivityState.values)
-      TypedGalleryCase<ConnectivityState>(
-        id: 'connectivity.${state.name}',
-        screenId: 'connectivity',
-        screenLabelBuilder: (translations) => translations.devGallery.screenConnectivity,
-        caseLabelBuilder: (translations) => _caseLabel(translations, state),
-        stateFactory: (_) => state,
-        pageFactory: (context, state) => _ConnectivityPreview(state: state),
-      ),
-  ];
+  return buildEnumGalleryCases<ConnectivityState>(
+    values: ConnectivityState.values,
+    idPrefix: 'connectivity',
+    screenId: 'connectivity',
+    screenLabelBuilder: (translations) => translations.devGallery.screenConnectivity,
+    caseLabelBuilder: (state) =>
+        (translations) => _caseLabel(translations, state),
+    pageFactory: (context, state) => _ConnectivityPreview(state: state),
+  );
 }
 
 class _ConnectivityPreview extends StatelessWidget {
@@ -37,7 +35,7 @@ class _ConnectivityPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       overrides: [
-        connectivityServiceProvider.overrideWithValue(_FixedConnectivityService(state)),
+        connectivityServiceProvider.overrideWithValue(StaticConnectivityService(state: state)),
       ],
       child: Stack(
         children: [
@@ -58,22 +56,4 @@ class _ConnectivityPreview extends StatelessWidget {
       ),
     );
   }
-}
-
-final class _FixedConnectivityService implements ConnectivityService {
-  const _FixedConnectivityService(this.state);
-
-  final ConnectivityState state;
-
-  @override
-  ConnectivityState get current => state;
-
-  @override
-  Stream<ConnectivityState> get states => Stream.value(state);
-
-  @override
-  Future<void> refresh() async {}
-
-  @override
-  void dispose() {}
 }

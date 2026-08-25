@@ -21,18 +21,28 @@ class AppConfirmationDialog {
     String? confirmLabel,
     String? cancelLabel,
     String? semanticsLabel,
+    Key? dialogKey,
+    Key? cancelKey,
+    Key? actionKey,
+    bool autofocusCancel = false,
+    bool flexibleActions = false,
+    double titleBodySpacing = AppSpacing.sm,
   }) {
     final translations = context.t;
     final action = confirmLabel ?? _defaultActionLabel(intent, translations);
     final cancel = cancelLabel ?? translations.common.cancel;
     final semantic = semanticsLabel ?? title;
+    final resolvedDialogKey = dialogKey ?? const ValueKey('app-confirmation-dialog');
+    final resolvedCancelKey = cancelKey ?? const ValueKey('app-confirmation-cancel');
+    final resolvedActionKey = actionKey ?? const ValueKey('app-confirmation-action');
+    final contentBuilder = flexibleActions ? _flexibleButtonContent : FButton.defaultContentBuilder;
 
     return showFDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext, style, animation) => EscapeDismissibleOverlay(
         child: FDialog(
-          key: const ValueKey('app-confirmation-dialog'),
+          key: resolvedDialogKey,
           animation: animation,
           semanticsLabel: semantic,
           builder: (_, _) => Padding(
@@ -42,7 +52,7 @@ class AppConfirmationDialog {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(title, style: style.titleTextStyle),
-                const SizedBox(height: AppSpacing.sm),
+                SizedBox(height: titleBodySpacing),
                 Text(body, style: style.bodyTextStyle),
                 const SizedBox(height: AppSpacing.xl),
                 Wrap(
@@ -51,16 +61,19 @@ class AppConfirmationDialog {
                   runSpacing: AppSpacing.sm,
                   children: [
                     FButton(
-                      key: const ValueKey('app-confirmation-cancel'),
+                      key: resolvedCancelKey,
                       variant: FButtonVariant.outline,
                       mainAxisSize: MainAxisSize.min,
+                      autofocus: autofocusCancel,
+                      builder: contentBuilder,
                       onPress: () => Navigator.of(dialogContext).pop(false),
                       child: Text(cancel),
                     ),
                     FButton(
-                      key: const ValueKey('app-confirmation-action'),
+                      key: resolvedActionKey,
                       variant: _actionVariant(intent),
                       mainAxisSize: MainAxisSize.min,
+                      builder: contentBuilder,
                       onPress: () => Navigator.of(dialogContext).pop(true),
                       child: Text(action),
                     ),
@@ -88,3 +101,12 @@ class AppConfirmationDialog {
     };
   }
 }
+
+Widget _flexibleButtonContent(
+  BuildContext _,
+  FButtonStyle _,
+  TextStyle _,
+  IconThemeData _,
+  FCircularProgressStyle _,
+  Widget? child,
+) => Flexible(child: child!);

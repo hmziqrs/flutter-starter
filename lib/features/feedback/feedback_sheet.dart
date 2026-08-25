@@ -8,22 +8,15 @@ import 'package:starter/features/feedback/feedback_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/app_bottom_sheet.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
-import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 Future<bool> showFeedbackSheet({required BuildContext context}) async {
-  final accepted = await showFSheet<bool>(
+  final accepted = await showAppBottomSheet<bool>(
     context: context,
-    side: FLayout.btt,
-    useSafeArea: true,
-    builder: (sheetContext) => ColoredBox(
-      color: sheetContext.theme.colors.background,
-      child: EscapeDismissibleOverlay(
-        child: FeedbackSheetBody(
-          onDismiss: () => Navigator.of(sheetContext).maybePop(false),
-          onAccepted: () => Navigator.of(sheetContext).maybePop(true),
-        ),
-      ),
+    builder: (sheetContext) => FeedbackSheetBody(
+      onDismiss: () => Navigator.of(sheetContext).maybePop(false),
+      onAccepted: () => Navigator.of(sheetContext).maybePop(true),
     ),
   );
   return accepted ?? false;

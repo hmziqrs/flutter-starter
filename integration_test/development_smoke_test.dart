@@ -17,6 +17,7 @@ import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 
 import 'integration_test_support.dart';
 
@@ -80,7 +81,11 @@ void main() {
       'building app graph + root widget (first run also compiles the macOS runner; this is the slow part)',
     );
     await tester.pumpWidget(
-      await createApplication(config, secureStore: InMemorySecureStore()),
+      await createApplication(
+        config,
+        secureStore: InMemorySecureStore(),
+        connectivityService: const StaticConnectivityService(),
+      ),
     );
     await pumpAppFrames(tester);
     await _watchPause(tester);
@@ -273,7 +278,11 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await pumpAppFrames(tester);
     await tester.pumpWidget(
-      await createApplication(config, secureStore: InMemorySecureStore()),
+      await createApplication(
+        config,
+        secureStore: InMemorySecureStore(),
+        connectivityService: const StaticConnectivityService(),
+      ),
     );
     await pumpAppFrames(tester);
 

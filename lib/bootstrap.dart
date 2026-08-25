@@ -10,6 +10,7 @@ import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
@@ -53,6 +54,7 @@ Future<App> createApplication(
   String? initialLocation,
   SecureStore? secureStore,
   InspectorHost inspectorHost = const StubInspectorHost(),
+  ConnectivityService? connectivityService,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -68,6 +70,7 @@ Future<App> createApplication(
     backendBaseUrl: config.backendBaseUrl,
     secureStore: secureStore,
     inspectorHost: inspectorHost,
+    connectivityService: connectivityService,
   );
   var localeApplied = true;
   if (dependencies.settings.initialSettings.localeOverride case final locale?) {

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
+import 'package:starter/shared/errors/repository_exception.dart';
 
 enum ProfileFailureKind {
   notConnected,
@@ -7,17 +8,14 @@ enum ProfileFailureKind {
   unknown,
 }
 
-final class ProfileException implements Exception {
-  const ProfileException.notConnected() : kind = ProfileFailureKind.notConnected, cause = null;
+final class ProfileException extends RepositoryException<ProfileFailureKind> {
+  const ProfileException.notConnected() : super(kind: ProfileFailureKind.notConnected);
 
-  const ProfileException.unknown([this.cause]) : kind = ProfileFailureKind.unknown;
-
-  final ProfileFailureKind kind;
-
-  final Object? cause;
+  const ProfileException.unknown([Object? cause])
+    : super(kind: ProfileFailureKind.unknown, cause: cause);
 
   @override
-  String toString() => 'ProfileException(${kind.name})';
+  String toString() => describe('ProfileException');
 }
 
 abstract interface class ProfileRepository {

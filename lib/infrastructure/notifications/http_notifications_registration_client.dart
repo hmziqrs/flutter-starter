@@ -2,14 +2,12 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
-import 'package:starter/infrastructure/http/app_dio.dart';
+import 'package:starter/infrastructure/http/app_http_repository.dart';
 import 'package:starter/infrastructure/notifications/notifications_registration.dart';
 
-final class HttpNotificationsRegistrationClient implements NotificationsRegistration {
-  HttpNotificationsRegistrationClient({required Uri baseUrl, Dio? dio})
-    : _dio = dio ?? buildAppDio(baseUrl);
-
-  final Dio _dio;
+final class HttpNotificationsRegistrationClient extends AppHttpRepository
+    implements NotificationsRegistration {
+  HttpNotificationsRegistrationClient({required super.baseUrl, super.dio});
 
   @override
   Future<void> registerToken({
@@ -40,9 +38,20 @@ final class HttpNotificationsRegistrationClient implements NotificationsRegistra
     );
   }
 
+  @override
+  Never classify(int status) {
+    if (status >= 400 && status < 500) {
+      throw const NotificationsException.unknown();
+    }
+    throw const NotificationsException.notConnected();
+  }
+
+  @override
+  Never throwNotConnected() => throw const NotificationsException.notConnected();
+
   Future<void> _post({required String path, required Map<String, Object> body}) async {
     await _roundTrip(
-      () => _dio.post<String>(
+      () => dio.post<String>(
         path,
         data: jsonEncode(body),
         options: Options(responseType: ResponseType.plain, contentType: Headers.jsonContentType),
@@ -52,29 +61,14 @@ final class HttpNotificationsRegistrationClient implements NotificationsRegistra
 
   Future<void> _delete(String path) async {
     await _roundTrip(
-      () => _dio.delete<String>(path, options: Options(responseType: ResponseType.plain)),
+      () => dio.delete<String>(path, options: Options(responseType: ResponseType.plain)),
     );
   }
 
   Future<void> _roundTrip(Future<Response<String>> Function() send) async {
-    final Response<String> response;
-    try {
-      response = await send();
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status != null) {
-        _ensureSuccess(status);
-      }
-      throw const NotificationsException.notConnected();
-    }
-    _ensureSuccess(response.statusCode!);
-  }
-
-  void _ensureSuccess(int status) {
+    final response = await roundTripRaw(send);
+    final status = response.statusCode!;
     if (status >= 200 && status < 300) return;
-    if (status >= 400 && status < 500) {
-      throw const NotificationsException.unknown();
-    }
-    throw const NotificationsException.notConnected();
+    classify(status);
   }
 }

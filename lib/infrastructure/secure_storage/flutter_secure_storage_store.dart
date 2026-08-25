@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store.dart';
+import 'package:starter/shared/async/storage_guard.dart';
 
 final class FlutterSecureStorageStore implements SecureStore {
   FlutterSecureStorageStore()
@@ -9,30 +10,36 @@ final class FlutterSecureStorageStore implements SecureStore {
 
   final FlutterSecureStorage _storage;
 
+  static Never _fail(Object error, String operation, String key) =>
+      throw SecureStoreException(operation: operation, key: key);
+
   @override
-  Future<String?> read(String key) async {
-    try {
-      return await _storage.read(key: key);
-    } on Object {
-      throw SecureStoreException(operation: 'read', key: key);
-    }
+  Future<String?> read(String key) {
+    return guardStorageOpAsync(
+      operation: 'read',
+      key: key,
+      action: () => _storage.read(key: key),
+      failure: _fail,
+    );
   }
 
   @override
-  Future<void> write(String key, String value) async {
-    try {
-      await _storage.write(key: key, value: value);
-    } on Object {
-      throw SecureStoreException(operation: 'write', key: key);
-    }
+  Future<void> write(String key, String value) {
+    return guardStorageOpAsync(
+      operation: 'write',
+      key: key,
+      action: () => _storage.write(key: key, value: value),
+      failure: _fail,
+    );
   }
 
   @override
-  Future<void> delete(String key) async {
-    try {
-      await _storage.delete(key: key);
-    } on Object {
-      throw SecureStoreException(operation: 'delete', key: key);
-    }
+  Future<void> delete(String key) {
+    return guardStorageOpAsync(
+      operation: 'delete',
+      key: key,
+      action: () => _storage.delete(key: key),
+      failure: _fail,
+    );
   }
 }

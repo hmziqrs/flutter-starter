@@ -39,6 +39,8 @@ import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/file_cache_store.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
+import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
+import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 import 'package:starter/infrastructure/devtools/inspector_host.dart';
 import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
@@ -58,6 +60,7 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities_resolver.dart';
+import 'package:starter/infrastructure/preferences/bool_codec.dart';
 import 'package:starter/infrastructure/preferences/shared_preferences_settings_store.dart';
 import 'package:starter/infrastructure/profile/http_profile_repository.dart';
 import 'package:starter/infrastructure/secure_storage/flutter_secure_storage_store.dart';
@@ -93,6 +96,7 @@ final class AppDependencies {
     AuthSession? initialSession,
     PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
     Set<String> dismissedAnnouncementIds = const <String>{},
+    ConnectivityService connectivityService = const StaticConnectivityService(),
   }) {
     final effectiveSettingsStore = settingsStore ?? InMemorySettingsStore();
     final versionGateStore = InMemoryVersionGateStore();
@@ -151,7 +155,7 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: platformCapabilities,
         buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
-        connectivityService: ConnectivityPlusService(),
+        connectivityService: connectivityService,
         hapticService: NoopHapticService(),
         permissionService: const NoopPermissionService(),
         mediaPicker: const NoopMediaPicker(),
@@ -211,6 +215,7 @@ final class AppDependencies {
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
+    ConnectivityService? connectivityService,
   }) async {
     PlatformCapabilities capabilities;
     try {
@@ -251,7 +256,7 @@ final class AppDependencies {
     final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
     var initialAnalyticsOptIn = false;
     try {
-      initialAnalyticsOptIn = await effectiveSecureStore.read(analyticsOptInKey) == 'true';
+      initialAnalyticsOptIn = await effectiveSecureStore.readBool(analyticsOptInKey);
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read analytics opt-in; defaulting to off',
@@ -268,11 +273,11 @@ final class AppDependencies {
     try {
       final message = await settingsStore.readString(feedbackDraftMessageKey);
       final email = await settingsStore.readString(feedbackDraftEmailKey);
-      final includeScreenshot = await settingsStore.readString(feedbackDraftIncludeScreenshotKey);
+      final includeScreenshot = await settingsStore.readBool(feedbackDraftIncludeScreenshotKey);
       initialFeedbackDraft = FeedbackDraft(
         message: message ?? '',
         email: email == null || email.isEmpty ? null : email,
-        includeScreenshot: includeScreenshot == 'true',
+        includeScreenshot: includeScreenshot,
       );
     } on Object catch (error, stackTrace) {
       logger.warning(
@@ -283,8 +288,7 @@ final class AppDependencies {
       initialFeedbackDraft = const FeedbackDraft.empty();
     }
     try {
-      initialFeedbackShakeEnabled =
-          await settingsStore.readString(feedbackShakeEnabledKey) == 'true';
+      initialFeedbackShakeEnabled = await settingsStore.readBool(feedbackShakeEnabledKey);
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read shake-feedback flag; defaulting to off',
@@ -382,7 +386,7 @@ final class AppDependencies {
       platform: PlatformDependencies(
         platformCapabilities: capabilities,
         buildInfo: buildInfo,
-        connectivityService: ConnectivityPlusService(logger: logger),
+        connectivityService: connectivityService ?? ConnectivityPlusService(logger: logger),
         hapticService: const DeviceHapticService(),
         permissionService: _selectPermissionService(capabilities, logger: logger),
         mediaPicker: _selectMediaPicker(capabilities, logger: logger),

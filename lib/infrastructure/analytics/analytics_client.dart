@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/infrastructure/analytics/analytics_event.dart';
+import 'package:starter/shared/state/operation_exception.dart';
 
 const String analyticsOptInKey = 'analytics.opt_in';
 
@@ -11,10 +12,8 @@ abstract interface class AnalyticsClient {
   Future<void> setUserId(String? userId);
 }
 
-final class AnalyticsException implements Exception {
-  const AnalyticsException({required this.operation});
-
-  final String operation;
+final class AnalyticsException extends OperationException {
+  const AnalyticsException({required super.operation});
 
   @override
   String toString() => 'AnalyticsException: $operation failed';

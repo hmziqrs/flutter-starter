@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/banners/collapsing_banner_slot.dart';
+import 'package:starter/shared/widgets/feedback/app_toast.dart';
 
 class AnnouncementBanner extends ConsumerStatefulWidget {
   const AnnouncementBanner({super.key});
@@ -38,15 +39,11 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
 
   void _showDismissFailureToast(BuildContext context) {
     final translations = context.t;
-    showFToast(
-      context: context,
-      icon: Icon(
-        FLucideIcons.triangleAlert,
-        size: 18,
-        color: context.theme.colors.primary,
-        semanticLabel: translations.announcements.dismissFailed,
-      ),
-      title: Text(translations.announcements.dismissFailed),
+    AppToast.show(
+      context,
+      severity: ToastSeverity.info,
+      message: translations.announcements.dismissFailed,
+      icon: FLucideIcons.triangleAlert,
     );
   }
 
@@ -79,22 +76,14 @@ class _AnnouncementBannerSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final announcement = active;
-    final content = announcement == null
-        ? const SizedBox(width: double.infinity, height: 0)
-        : AnnouncementBannerView(
-            announcement: announcement,
-            onDismiss: onDismiss ?? () {},
-            onAction: onAction ?? () {},
-          );
-
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return content;
-    }
-    return AnimatedSize(
-      duration: AppMotion.standard,
-      curve: AppMotion.standardCurve,
-      alignment: Alignment.topCenter,
-      child: content,
+    return CollapsingBannerSlot(
+      child: announcement == null
+          ? null
+          : AnnouncementBannerView(
+              announcement: announcement,
+              onDismiss: onDismiss ?? () {},
+              onAction: onAction ?? () {},
+            ),
     );
   }
 }

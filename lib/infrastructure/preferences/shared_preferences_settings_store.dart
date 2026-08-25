@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/shared/async/storage_guard.dart';
 
 final class SharedPreferencesSettingsStore implements SettingsStore {
   SharedPreferencesSettingsStore({SharedPreferencesAsync? preferences})
@@ -7,30 +8,36 @@ final class SharedPreferencesSettingsStore implements SettingsStore {
 
   final SharedPreferencesAsync _preferences;
 
+  static Never _fail(Object error, String operation, String key) =>
+      throw SettingsStoreException(operation: operation, key: key);
+
   @override
-  Future<String?> readString(String key) async {
-    try {
-      return await _preferences.getString(key);
-    } on Object {
-      throw SettingsStoreException(operation: 'read', key: key);
-    }
+  Future<String?> readString(String key) {
+    return guardStorageOpAsync(
+      operation: 'read',
+      key: key,
+      action: () => _preferences.getString(key),
+      failure: _fail,
+    );
   }
 
   @override
-  Future<void> remove(String key) async {
-    try {
-      await _preferences.remove(key);
-    } on Object {
-      throw SettingsStoreException(operation: 'remove', key: key);
-    }
+  Future<void> remove(String key) {
+    return guardStorageOpAsync(
+      operation: 'remove',
+      key: key,
+      action: () => _preferences.remove(key),
+      failure: _fail,
+    );
   }
 
   @override
-  Future<void> writeString(String key, String value) async {
-    try {
-      await _preferences.setString(key, value);
-    } on Object {
-      throw SettingsStoreException(operation: 'write', key: key);
-    }
+  Future<void> writeString(String key, String value) {
+    return guardStorageOpAsync(
+      operation: 'write',
+      key: key,
+      action: () => _preferences.setString(key, value),
+      failure: _fail,
+    );
   }
 }

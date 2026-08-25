@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
+import 'package:starter/shared/errors/repository_exception.dart';
 
 enum NotificationsFailureKind {
   notConnected,
@@ -10,21 +11,17 @@ enum NotificationsFailureKind {
   unknown,
 }
 
-final class NotificationsException implements Exception {
-  const NotificationsException.notConnected()
-    : kind = NotificationsFailureKind.notConnected,
-      cause = null;
+final class NotificationsException extends RepositoryException<NotificationsFailureKind> {
+  const NotificationsException.notConnected() : super(kind: NotificationsFailureKind.notConnected);
 
-  const NotificationsException.denied([this.cause]) : kind = NotificationsFailureKind.denied;
+  const NotificationsException.denied([Object? cause])
+    : super(kind: NotificationsFailureKind.denied, cause: cause);
 
-  const NotificationsException.unknown([this.cause]) : kind = NotificationsFailureKind.unknown;
-
-  final NotificationsFailureKind kind;
-
-  final Object? cause;
+  const NotificationsException.unknown([Object? cause])
+    : super(kind: NotificationsFailureKind.unknown, cause: cause);
 
   @override
-  String toString() => 'NotificationsException(${kind.name})';
+  String toString() => describe('NotificationsException');
 }
 
 sealed class NotificationsBackend {

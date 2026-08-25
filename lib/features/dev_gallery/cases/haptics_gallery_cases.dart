@@ -29,7 +29,7 @@ class _HapticsPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final translations = context.t;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: AppSpacing.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/flutter_error_forwarder.dart';
 import 'package:starter/infrastructure/logging/log_redactor.dart';
 
-final class RecordingCrashReporter implements CrashReporter {
+final class RecordingCrashReporter with FlutterErrorForwarder implements CrashReporter {
   RecordingCrashReporter({
     required this.verbose,
     this.redactor = const LogRedactor(),
@@ -28,15 +28,6 @@ final class RecordingCrashReporter implements CrashReporter {
         verbose: verbose,
         redactor: redactor,
       ),
-    );
-  }
-
-  @override
-  Future<void> recordFlutterError(FlutterErrorDetails details) {
-    return recordError(
-      details.exception,
-      details.stack,
-      context: <String, Object?>{'source': 'flutter_framework'},
     );
   }
 }

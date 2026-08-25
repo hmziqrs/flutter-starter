@@ -56,7 +56,7 @@ class _SessionPreview extends StatelessWidget {
         : context.t.session.signedOut;
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: AppSpacing.screenPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

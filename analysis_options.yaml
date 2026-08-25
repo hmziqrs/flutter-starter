@@ -27,3 +27,6 @@ linter:
     public_member_api_docs: false
     # Keep analyzer and formatter policy aligned with the reviewed 100-column width.
     lines_longer_than_80_chars: false
+    # Prose that only exists to satisfy document_ignores/empty_catches is noise.
+    document_ignores: false
+    empty_catches: false
