@@ -294,11 +294,11 @@ Notes:
 
 #### testing-analysis-ci
 
-**very_good_analysis-linted suite with macOS-only canonical goldens, integration smoke/route tests, and a 5-job CI gate.**
+**very_good_analysis-linted suite with macOS-only canonical goldens and integration smoke/route tests, all run locally; GitHub Actions builds release artifacts only.**
 
 Files:
 - `justfile` — test, test-goldens, smoke, watch, analyze, gen recipes
-- `.github/workflows/ci.yml` — 5 jobs: ubuntu-quality, linux-integration, ubuntu/macos/windows release builds, macOS goldens
+- `.github/workflows/release.yml` — release artifacts for macOS/iOS/Windows/Linux/Android on pushes to `master`
 - `analysis_options.yaml` — very_good_analysis + strict-casts/inference/raw-types + riverpod_lint
 - `integration_test/development_smoke_test.dart` — full-flow smoke across layouts
 - `integration_test/production_routes_test.dart` — dev routes absent in prod

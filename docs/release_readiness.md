@@ -11,7 +11,9 @@ that CI cannot prove.
 - [ ] Version/build number: `____________________`
 - [ ] Reviewer(s): `____________________`
 - [ ] Review date: `____________________`
-- [ ] All required jobs in `.github/workflows/ci.yml` passed from this commit.
+- [ ] The local quality gates (`just format-check`, `just analyze`, `just test`,
+      `just test-goldens`, and the integration flows) passed from this commit.
+- [ ] `.github/workflows/release.yml` produced artifacts for this commit.
 - [ ] The candidate was rebuilt with an explicit production configuration and
       no uncommitted/generated drift.
 - [ ] Production diagnostics contain no secrets, credentials, personal data,

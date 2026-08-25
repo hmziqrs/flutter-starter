@@ -17,13 +17,15 @@ composition stay under `lib/app/routing/`. Immutable model codegen uses committe
 
 ## Build, Test, and Development Commands
 
-Use Flutter 3.44.7 (Dart 3.12.x) and keep `pubspec.lock` committed.
+Use Flutter 3.44.7 (Dart 3.12.x) and keep `pubspec.lock` committed. GitHub
+Actions builds release artifacts only, so run the quality gates locally before
+pushing.
 
 - `just deps`: resolve locked dependencies.
 - `just run macos`: launch with `config/development.json`; replace `macos` with
   another device target.
 - `just gen`: regenerate Slang and other builder output.
-- `just format-check && just analyze`: run the CI formatting and lint gates.
+- `just format-check && just analyze`: run the formatting and lint gates.
 - `just test`: run all non-golden unit and widget tests.
 - `just test-goldens`: compare canonical goldens on the pinned macOS environment.
 - `just smoke macos`: run the development integration flow.

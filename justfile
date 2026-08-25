@@ -1,7 +1,7 @@
 # Flutter starter — common dev tasks. Run `just` (no args) to list recipes.
 #
 # Integration tests have two modes:
-#   just smoke   → headless "coverage" mode (CI behavior: pins phone/tablet/desktop
+#   just smoke   → headless "coverage" mode (pins phone/tablet/desktop
 #                  sizes; the macOS window shows "Test starting...", which is expected)
 #   just watch   → visible mode: real window, slowed animations, step pauses
 
@@ -29,7 +29,7 @@ clean:
     {{flutter}} clean
 
 # --- quality ------------------------------------------------------------------
-# Static analysis (CI uses --fatal-infos).
+# Static analysis (--fatal-infos: infos fail the gate).
 analyze:
     {{flutter}} analyze --fatal-infos
 
@@ -37,11 +37,11 @@ analyze:
 format:
     dart format lib test integration_test
 
-# Fail if anything is unformatted (CI gate).
+# Fail if anything is unformatted (pre-commit gate).
 format-check:
     dart format --output=none --set-exit-if-changed lib test integration_test
 
-# Verify generated code is committed and in sync (CI gate).
+# Verify generated code is committed and in sync (pre-commit gate).
 gen-check:
     dart run build_runner clean
     rm -f lib/i18n/translations.g.dart lib/i18n/translations_en.g.dart lib/i18n/translations_ar.g.dart lib/i18n/translations_zh_Hans.g.dart
@@ -98,7 +98,7 @@ run dev='macos':
 
 # Run the app wired to the in-repo dummy backend (start it first with
 # `just backend`). BACKEND_BASE_URL is injected via --dart-define over the
-# zero-backend development.json (the same merge CI's smoke flow uses), so no
+# zero-backend development.json (the same merge the smoke flow uses), so no
 # separate config file is needed. host defaults to loopback; pass 10.0.2.2 for
 # the Android emulator (its alias for host loopback).
 run-backend dev='macos' host='127.0.0.1':
@@ -107,15 +107,15 @@ run-backend dev='macos' host='127.0.0.1':
         --dart-define=BACKEND_BASE_URL=http://{{host}}:8080
 
 # --- tests --------------------------------------------------------------------
-# All non-golden unit + widget tests (the CI quality job).
+# All non-golden unit + widget tests (the main quality gate).
 test:
     {{flutter}} test $(find test -type f -name '*_test.dart' ! -path 'test/goldens/*')
 
-# Canonical golden baseline (run on macOS, as in CI).
+# Canonical golden baseline (run on macOS; see test/goldens/README.md).
 test-goldens:
     {{flutter}} test test/goldens/canonical_matrix_golden_test.dart
 
-# Dev smoke integration test — HEADLESS coverage mode (CI behavior).
+# Dev smoke integration test — HEADLESS coverage mode.
 # Asserts the full flow + persistence across compact/medium/expanded layouts.
 smoke dev='macos':
     {{flutter}} test integration_test/development_smoke_test.dart -d {{dev}} --dart-define-from-file={{dev_config}}
@@ -190,7 +190,7 @@ android-tv-build:
 build target:
     {{flutter}} build {{target}} --release --dart-define-from-file={{prod_config}}
 
-# iOS release without code signing (matches CI).
+# iOS release without code signing (matches the release workflow).
 build-ios:
     {{flutter}} build ios --release --no-codesign --dart-define-from-file={{prod_config}}
 

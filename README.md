@@ -31,11 +31,15 @@ Current project deployment floors and validation targets are:
 | Windows | Windows 10/11 | `windows-2022` x64, Visual Studio 2022 with Desktop development with C++ |
 | Linux | GTK 3 runtime | `ubuntu-24.04` x64 with Clang, CMake, Ninja, pkg-config, GTK 3 headers, and libstdc++ 12 headers |
 
-Web remains optional and is not part of the release matrix. The CI labels are
-specific supported GitHub-hosted runner families rather than floating
+Web remains optional and is not part of the release matrix. The runner labels
+are specific supported GitHub-hosted runner families rather than floating
 `*-latest` aliases. Review runner image changes, Xcode/Visual Studio changes,
-and the action major versions in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+and the action major versions in [`.github/workflows/release.yml`](.github/workflows/release.yml)
 as maintenance changes.
+
+GitHub Actions builds release artifacts only; quality gates (`just format-check`,
+`just analyze`, `just test`, `just test-goldens`, and the integration flows) run
+locally.
 
 ## Set up and run
 

@@ -5,11 +5,11 @@ These baselines implement the intentional 13-case pairwise matrix in
 
 The reviewed baseline environment is:
 
-- the GitHub Actions `macos-26` runner image (macOS 26.x arm64). Pixel-exact
-  comparison is sensitive to the macOS minor version, so the CI runner is the
-  authoritative baseline environment; regenerate via the "Regenerate goldens"
-  workflow (`.github/workflows/regen-goldens.yml`) after any image bump, then
-  review the changed baselines before committing.
+- macOS 26.x arm64, matching the GitHub Actions `macos-26` runner image.
+  Pixel-exact comparison is sensitive to the macOS minor version, so regenerate
+  on that macOS version with
+  `flutter test test/goldens/canonical_matrix_golden_test.dart --update-goldens`,
+  then review the changed baselines before committing.
 - Flutter 3.44.7 stable, framework `84fc5cbb22`;
 - engine `7076f47b1d1a3a0edfd8837b17dc15be6abab661`;
 - the `flutter test` Skia renderer and sRGB output;
