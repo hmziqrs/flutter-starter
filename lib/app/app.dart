@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,13 +17,12 @@ import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
-import 'package:starter/features/announcements/announcement_banner.dart';
+import 'package:starter/app/shell/app_banner_host.dart';
 import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/features/auth/auth_attempt_tracker.dart';
 import 'package:starter/features/auth/otp_repository.dart';
-import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/experiments/experiment_source.dart';
 import 'package:starter/features/feature_flags/feature_flags_source.dart';
@@ -380,40 +378,23 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                         },
                         child: FToaster(
                           child: FTooltipGroup(
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Positioned.fill(
-                                  child: Builder(
-                                    builder: (sheetContext) => ShakeFeedbackTrigger(
-                                      enabled:
-                                          ref.watch(feedbackShakeEnabledControllerProvider) &&
-                                          !PlatformCapabilities.current().isWeb,
-                                      onShake: ({required magnitude}) =>
-                                          unawaited(showFeedbackSheet(context: sheetContext)),
-                                      child: Listener(
-                                        behavior: HitTestBehavior.translucent,
-                                        onPointerDown: (_) => _maybeExtendAutoLock(),
-                                        onPointerMove: (_) => _maybeExtendAutoLock(),
-                                        onPointerSignal: (_) => _maybeExtendAutoLock(),
-                                        child: child ?? const SizedBox.shrink(),
-                                      ),
-                                    ),
+                            child: AppBannerHost(
+                              child: Builder(
+                                builder: (sheetContext) => ShakeFeedbackTrigger(
+                                  enabled:
+                                      ref.watch(feedbackShakeEnabledControllerProvider) &&
+                                      !PlatformCapabilities.current().isWeb,
+                                  onShake: ({required magnitude}) =>
+                                      unawaited(showFeedbackSheet(context: sheetContext)),
+                                  child: Listener(
+                                    behavior: HitTestBehavior.translucent,
+                                    onPointerDown: (_) => _maybeExtendAutoLock(),
+                                    onPointerMove: (_) => _maybeExtendAutoLock(),
+                                    onPointerSignal: (_) => _maybeExtendAutoLock(),
+                                    child: child ?? const SizedBox.shrink(),
                                   ),
                                 ),
-                                const Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      ConnectivityBanner(),
-                                      AnnouncementBanner(),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
