@@ -41,6 +41,7 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
     debugLabel: 'television.content.region',
   );
   late final ReadingOrderTraversalPolicy _contentTraversalPolicy = ReadingOrderTraversalPolicy();
+  late final ReadingOrderTraversalPolicy _shellTraversalPolicy = ReadingOrderTraversalPolicy();
   late final Map<Type, Action<Intent>> _directionalActions = {
     DirectionalFocusIntent: CallbackAction<DirectionalFocusIntent>(
       onInvoke: _handleDirectionalFocus,
@@ -101,23 +102,20 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
     super.dispose();
   }
 
-  List<_TelevisionDestinationData> _destinations(BuildContext context) => [
-    _TelevisionDestinationData(
-      id: 'home',
-      label: context.t.navigation.home,
-      icon: FLucideIcons.house,
-    ),
-    _TelevisionDestinationData(
-      id: 'pricing',
-      label: context.t.navigation.pricing,
-      icon: FLucideIcons.badgeDollarSign,
-    ),
-    _TelevisionDestinationData(
-      id: 'settings',
-      label: context.t.navigation.settings,
-      icon: FLucideIcons.settings,
-    ),
+  static const List<(String, IconData)> _destinations = [
+    ('home', FLucideIcons.house),
+    ('pricing', FLucideIcons.badgeDollarSign),
+    ('settings', FLucideIcons.settings),
   ];
+
+  String _destinationLabel(int index) {
+    final t = context.t;
+    return switch (index) {
+      0 => t.navigation.home,
+      1 => t.navigation.pricing,
+      _ => t.navigation.settings,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,12 +124,11 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
       tokens.controlMinHeight,
       tokens.focusTargetMinSize,
     );
-    final destinations = _destinations(context);
 
     return Actions(
       actions: _directionalActions,
       child: FocusTraversalGroup(
-        policy: ReadingOrderTraversalPolicy(),
+        policy: _shellTraversalPolicy,
         child: FScaffold(
           key: const ValueKey('television-shell'),
           childPad: false,
@@ -173,16 +170,16 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
                       vertical: tokens.cardGap / 2,
                     ),
                     children: [
-                      for (final (index, destination) in destinations.indexed)
+                      for (final (index, (id, icon)) in _destinations.indexed)
                         _TelevisionDestination(
-                          id: destination.id,
-                          label: destination.label,
-                          icon: destination.icon,
+                          id: id,
+                          label: _destinationLabel(index),
+                          icon: icon,
                           selected: widget.selectedIndex == index,
                           autofocus: widget.selectedIndex == index,
                           focusNode: _destinationFocusNodes[index],
                           minimumHeight: focusTargetHeight,
-                          gap: index == destinations.length - 1 ? 0 : tokens.cardGap,
+                          gap: index == _destinations.length - 1 ? 0 : tokens.cardGap,
                           tokens: tokens,
                           onPress: () => widget.onSelectTab(index),
                         ),
@@ -289,18 +286,6 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
       }
     });
   }
-}
-
-class _TelevisionDestinationData {
-  const _TelevisionDestinationData({
-    required this.id,
-    required this.label,
-    required this.icon,
-  });
-
-  final String id;
-  final String label;
-  final IconData icon;
 }
 
 class _TelevisionDestination extends StatelessWidget {
