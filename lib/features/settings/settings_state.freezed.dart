@@ -20,12 +20,12 @@ mixin _$SettingsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.accent, accent) || other.accent == accent)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.textPreset, textPreset) || other.textPreset == textPreset)&&const DeepCollectionEquality().equals(other.localeOverride, localeOverride)&&(identical(other.hasCompletedOnboarding, hasCompletedOnboarding) || other.hasCompletedOnboarding == hasCompletedOnboarding)&&(identical(other.biometricUnlockEnabled, biometricUnlockEnabled) || other.biometricUnlockEnabled == biometricUnlockEnabled)&&(identical(other.hapticsEnabled, hapticsEnabled) || other.hapticsEnabled == hapticsEnabled)&&(identical(other.passcodeEnabled, passcodeEnabled) || other.passcodeEnabled == passcodeEnabled)&&(identical(other.autoLockDelaySeconds, autoLockDelaySeconds) || other.autoLockDelaySeconds == autoLockDelaySeconds)&&(identical(other.lockOnBackground, lockOnBackground) || other.lockOnBackground == lockOnBackground));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.accent, accent) || other.accent == accent)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.textPreset, textPreset) || other.textPreset == textPreset)&&(identical(other.localeOverride, localeOverride) || other.localeOverride == localeOverride)&&(identical(other.hasCompletedOnboarding, hasCompletedOnboarding) || other.hasCompletedOnboarding == hasCompletedOnboarding)&&(identical(other.biometricUnlockEnabled, biometricUnlockEnabled) || other.biometricUnlockEnabled == biometricUnlockEnabled)&&(identical(other.hapticsEnabled, hapticsEnabled) || other.hapticsEnabled == hapticsEnabled)&&(identical(other.passcodeEnabled, passcodeEnabled) || other.passcodeEnabled == passcodeEnabled)&&(identical(other.autoLockDelaySeconds, autoLockDelaySeconds) || other.autoLockDelaySeconds == autoLockDelaySeconds)&&(identical(other.lockOnBackground, lockOnBackground) || other.lockOnBackground == lockOnBackground));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,accent,fontScale,textPreset,const DeepCollectionEquality().hash(localeOverride),hasCompletedOnboarding,biometricUnlockEnabled,hapticsEnabled,passcodeEnabled,autoLockDelaySeconds,lockOnBackground);
+int get hashCode => Object.hash(runtimeType,themeMode,accent,fontScale,textPreset,localeOverride,hasCompletedOnboarding,biometricUnlockEnabled,hapticsEnabled,passcodeEnabled,autoLockDelaySeconds,lockOnBackground);
 
 @override
 String toString() {
