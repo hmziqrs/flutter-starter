@@ -40,7 +40,14 @@ final class AppUnit {
       );
     }
 
-    return AppUnit._(
+    final interned = _interned;
+    if (interned != null &&
+        interned.size.width == size.width &&
+        interned.devicePixelRatio == devicePixelRatio) {
+      return interned;
+    }
+
+    return _interned = AppUnit._(
       size: size,
       devicePixelRatio: devicePixelRatio,
       spacingScale: _scaleForWidth(
@@ -55,6 +62,8 @@ final class AppUnit {
       ),
     );
   }
+
+  static AppUnit? _interned;
 
   static const referenceWidth = 390.0;
   static const minimumWidth = 360.0;

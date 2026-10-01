@@ -14,11 +14,22 @@ abstract final class AppSpacing {
   static const EdgeInsets screenPadding = EdgeInsets.all(xl);
 
   static AppSpacingValues of(BuildContext context) {
-    return AppSpacingValues(
-      context.appUnit,
-      presentationScale: context.presentationTokens.spacingScale,
+    final unit = context.appUnit;
+    final presentationScale = context.presentationTokens.spacingScale;
+    final cached = _cachedValues;
+    if (cached != null &&
+        identical(cached._unit, unit) &&
+        _cachedPresentationScale == presentationScale) {
+      return cached;
+    }
+    return _cachedValues = AppSpacingValues(
+      unit,
+      presentationScale: _cachedPresentationScale = presentationScale,
     );
   }
+
+  static AppSpacingValues? _cachedValues;
+  static double? _cachedPresentationScale;
 }
 
 @immutable
