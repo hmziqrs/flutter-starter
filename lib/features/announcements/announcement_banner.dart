@@ -50,7 +50,9 @@ class _AnnouncementBannerState extends ConsumerState<AnnouncementBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final active = ref.watch(announcementsControllerProvider).active;
+    final active = ref.watch(
+      announcementsControllerProvider.select((state) => state.active),
+    );
     return _AnnouncementBannerSlot(
       active: active,
       onDismiss: active == null
