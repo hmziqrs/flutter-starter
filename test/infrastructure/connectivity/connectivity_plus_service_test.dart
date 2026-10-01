@@ -37,6 +37,30 @@ void main() {
 
   tearDown(() => ConnectivityPlatform.instance = originalPlatform);
 
+  test('defers platform seeding until the first states listener', () async {
+    final fake = _FakeConnectivityPlatform(
+      initial: const [
+        ConnectivityResult.none,
+      ],
+    );
+    ConnectivityPlatform.instance = fake;
+
+    final service = ConnectivityPlusService();
+    addTearDown(service.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(service.current, ConnectivityState.online);
+
+    final seen = <ConnectivityState>[];
+    final subscription = service.states.listen(seen.add);
+    addTearDown(subscription.cancel);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(service.current, ConnectivityState.offline);
+    expect(seen, contains(ConnectivityState.offline));
+  });
+
   test('current resolves to the seed checkConnectivity result', () async {
     final fake = _FakeConnectivityPlatform(
       initial: const [
@@ -47,6 +71,10 @@ void main() {
 
     final service = ConnectivityPlusService();
     addTearDown(service.dispose);
+
+    final seen = <ConnectivityState>[];
+    final subscription = service.states.listen(seen.add);
+    addTearDown(subscription.cancel);
 
     await Future<void>.delayed(Duration.zero);
 
@@ -59,6 +87,10 @@ void main() {
 
     final service = ConnectivityPlusService();
     addTearDown(service.dispose);
+
+    final seen = <ConnectivityState>[];
+    final subscription = service.states.listen(seen.add);
+    addTearDown(subscription.cancel);
 
     await Future<void>.delayed(Duration.zero);
     expect(service.current, ConnectivityState.online);
@@ -87,6 +119,10 @@ void main() {
     final service = ConnectivityPlusService();
     addTearDown(service.dispose);
 
+    final seen = <ConnectivityState>[];
+    final subscription = service.states.listen(seen.add);
+    addTearDown(subscription.cancel);
+
     await Future<void>.delayed(Duration.zero);
     expect(service.current, ConnectivityState.offline);
 
@@ -104,6 +140,10 @@ void main() {
     final service = ConnectivityPlusService();
     addTearDown(service.dispose);
 
+    final seen = <ConnectivityState>[];
+    final subscription = service.states.listen(seen.add);
+    addTearDown(subscription.cancel);
+
     await Future<void>.delayed(Duration.zero);
     expect(service.current, ConnectivityState.online);
 
@@ -120,7 +160,6 @@ void main() {
 
     final service = ConnectivityPlusService();
     addTearDown(service.dispose);
-    await Future<void>.delayed(Duration.zero);
 
     final seen = <ConnectivityState>[];
     final subscription = service.states.listen(seen.add);

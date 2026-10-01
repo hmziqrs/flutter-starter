@@ -8,7 +8,13 @@ import 'package:starter/infrastructure/logging/app_logger.dart';
 final class ConnectivityPlusService implements ConnectivityService {
   ConnectivityPlusService({Connectivity? connectivity, AppLogger? logger})
     : _connectivity = connectivity ?? Connectivity(),
-      _logger = logger ?? AppLogger.bootstrap() {
+      _logger = logger ?? AppLogger.bootstrap();
+
+  void _start() {
+    if (_started || _disposed) {
+      return;
+    }
+    _started = true;
     runZonedGuarded(_init, _degradeToOffline);
   }
 
@@ -42,6 +48,7 @@ final class ConnectivityPlusService implements ConnectivityService {
       StreamController<ConnectivityState>.broadcast();
   // ignore: cancel_subscriptions, app-lifetime singleton
   StreamSubscription<List<ConnectivityResult>>? _changes;
+  bool _started = false;
   bool _disposed = false;
 
   @override
@@ -59,6 +66,7 @@ final class ConnectivityPlusService implements ConnectivityService {
     final subscription = _controller.stream.listen(forward);
     outgoing
       ..add(_current)
+      ..onListen = _start
       ..onCancel = () {
         unawaited(subscription.cancel());
         unawaited(outgoing.close());
@@ -67,7 +75,10 @@ final class ConnectivityPlusService implements ConnectivityService {
   }
 
   @override
-  Future<void> refresh() => _seed();
+  Future<void> refresh() {
+    _start();
+    return _seed();
+  }
 
   Future<void> _seed() async {
     List<ConnectivityResult> results;
