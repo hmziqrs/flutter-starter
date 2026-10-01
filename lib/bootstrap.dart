@@ -25,6 +25,50 @@ import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
 
+/// Zone-guarded process entrypoint: loads the compile-time config, boots the
+/// app, and renders the startup-failure UI when loading or booting throws.
+///
+/// [inspectorHost] receives the loaded config because dev-tool hosts are
+/// derived from config values.
+Future<void> bootstrapApplication({
+  InspectorHost Function(AppConfig config)? inspectorHost,
+  ApplicationRunner runApplication = runApp,
+}) async {
+  final fallbackLogger = AppLogger.bootstrap();
+  final guardedMain = runZonedGuarded<Future<void>>(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      try {
+        final config = AppConfig.fromEnvironment();
+        await bootstrap(
+          config,
+          runApplication: runApplication,
+          inspectorHost: inspectorHost?.call(config) ?? const StubInspectorHost(),
+        );
+      } on Object catch (error, stackTrace) {
+        await showStartupFailure(
+          error: error,
+          stackTrace: stackTrace,
+          logger: fallbackLogger,
+          runApplication: runApplication,
+        );
+      }
+    },
+    (error, stackTrace) {
+      fallbackLogger.error(
+        'Unhandled zoned application error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    },
+  );
+
+  if (guardedMain != null) {
+    await guardedMain;
+  }
+}
+
 Future<void> bootstrap(
   AppConfig config, {
   AppLogger? logger,

@@ -1,10 +1,21 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/error_reporting/recording_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
 void main() {
+  group('bootstrapApplication', () {
+    test('renders the startup-failure UI when config loading throws', () async {
+      Widget? rendered;
+      await bootstrapApplication(runApplication: (application) => rendered = application);
+
+      expect(rendered, isA<StartupErrorApp>());
+    });
+  });
+
   group('installErrorHandlers', () {
     void Function(FlutterErrorDetails)? previousFlutterOnError;
     bool Function(Object, StackTrace)? previousPlatformOnError;
