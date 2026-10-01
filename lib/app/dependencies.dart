@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:starter/app/dependencies/dependency_aggregates.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
@@ -217,9 +219,23 @@ final class AppDependencies {
     InspectorHost inspectorHost = const StubInspectorHost(),
     ConnectivityService? connectivityService,
   }) async {
+    final capabilitiesFuture = _guarded(capabilitiesResolver.resolve());
+    final settingsStore = SharedPreferencesSettingsStore();
+    final repository = SettingsRepository(settingsStore);
+    final settingsFuture = _guarded(repository.load());
+    final dismissedFuture = _guarded(settingsStore.readString(DismissedAnnouncements.key));
+    final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
+    final analyticsOptInFuture = _guarded(effectiveSecureStore.readBool(analyticsOptInKey));
+    final draftMessageFuture = _guarded(settingsStore.readString(feedbackDraftMessageKey));
+    final draftEmailFuture = _guarded(settingsStore.readString(feedbackDraftEmailKey));
+    final draftScreenshotFuture = _guarded(
+      settingsStore.readBool(feedbackDraftIncludeScreenshotKey),
+    );
+    final shakeEnabledFuture = _guarded(settingsStore.readBool(feedbackShakeEnabledKey));
+
     PlatformCapabilities capabilities;
     try {
-      capabilities = await capabilitiesResolver.resolve();
+      capabilities = await capabilitiesFuture;
     } on Object catch (error) {
       logger.warning(
         'Unable to resolve optional platform capabilities; using non-TV defaults',
@@ -231,12 +247,10 @@ final class AppDependencies {
       );
     }
 
-    final settingsStore = SharedPreferencesSettingsStore();
-    final repository = SettingsRepository(settingsStore);
     SettingsState settings;
     var settingsLoaded = true;
     try {
-      settings = await repository.load();
+      settings = await settingsFuture;
     } on SettingsFailure catch (error, stackTrace) {
       logger.error(
         'Unable to load settings; using safe defaults',
@@ -246,17 +260,14 @@ final class AppDependencies {
       settings = const SettingsState.defaults();
       settingsLoaded = false;
     }
-    final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(
-      await settingsStore.readString(DismissedAnnouncements.key),
-    );
+    final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(await dismissedFuture);
     final versionGateStore = InMemoryVersionGateStore();
     final versionCheck = buildInfo == null
         ? const UpdateRequirementNone()
         : await versionGateStore.check(buildInfo);
-    final effectiveSecureStore = secureStore ?? FlutterSecureStorageStore();
     var initialAnalyticsOptIn = false;
     try {
-      initialAnalyticsOptIn = await effectiveSecureStore.readBool(analyticsOptInKey);
+      initialAnalyticsOptIn = await analyticsOptInFuture;
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read analytics opt-in; defaulting to off',
@@ -271,9 +282,9 @@ final class AppDependencies {
     var initialFeedbackDraft = const FeedbackDraft.empty();
     var initialFeedbackShakeEnabled = false;
     try {
-      final message = await settingsStore.readString(feedbackDraftMessageKey);
-      final email = await settingsStore.readString(feedbackDraftEmailKey);
-      final includeScreenshot = await settingsStore.readBool(feedbackDraftIncludeScreenshotKey);
+      final message = await draftMessageFuture;
+      final email = await draftEmailFuture;
+      final includeScreenshot = await draftScreenshotFuture;
       initialFeedbackDraft = FeedbackDraft(
         message: message ?? '',
         email: email == null || email.isEmpty ? null : email,
@@ -288,7 +299,7 @@ final class AppDependencies {
       initialFeedbackDraft = const FeedbackDraft.empty();
     }
     try {
-      initialFeedbackShakeEnabled = await settingsStore.readBool(feedbackShakeEnabledKey);
+      initialFeedbackShakeEnabled = await shakeEnabledFuture;
     } on Object catch (error, stackTrace) {
       logger.warning(
         'Unable to read shake-feedback flag; defaulting to off',
@@ -454,6 +465,12 @@ final class AppDependencies {
       _ => const NoopAppUpdateService(),
     };
   }
+}
+
+Future<T> _guarded<T>(Future<T> read) {
+  final result = Completer<T>();
+  unawaited(read.then(result.complete, onError: result.completeError));
+  return result.future..ignore();
 }
 
 class _NoOpDeepLinkService implements DeepLinkService {
