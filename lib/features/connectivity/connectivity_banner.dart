@@ -183,12 +183,8 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
     if (!_running) {
       return icon;
     }
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) => Opacity(
-        opacity: 0.45 + 0.55 * _controller.value,
-        child: child,
-      ),
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.45, end: 1).animate(_controller),
       child: icon,
     );
   }
