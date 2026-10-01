@@ -61,9 +61,7 @@ final class DeterministicExperimentSource implements ExperimentSource {
     final generated = _generateId();
     try {
       await store.writeString(stableIdKey, generated);
-    } on Object {
-      // ignored
-    }
+    } on Object {}
     _cachedStableId = generated;
     return generated;
   }

@@ -19,9 +19,7 @@ Future<({Uri baseUri, Future<void> Function() tearDown, Set<String> registered})
       }
       try {
         await request.drain<void>();
-      } on Object {
-        // ignored
-      }
+      } on Object {}
       request.response.statusCode = statusCode;
       await request.response.close();
     }),

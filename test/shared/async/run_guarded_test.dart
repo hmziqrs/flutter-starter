@@ -20,7 +20,6 @@ void main() {
   });
 
   test('absorbs a thrown Error subtype and returns null', () async {
-    // catch-all must cover Error subtypes too, not just Exception.
     final result = await runGuarded(
       () async => throw ArgumentError('bad'),
       logger: logger,

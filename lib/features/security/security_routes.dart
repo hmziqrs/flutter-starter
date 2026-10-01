@@ -67,8 +67,6 @@ void _useBiometricFallback(BuildContext context) {
       context.goNamed(AppRoutes.passcodeEntry);
       return;
     }
-  } on Object {
-    // ignored
-  }
+  } on Object {}
   _disableBiometricAndGoHome(context);
 }

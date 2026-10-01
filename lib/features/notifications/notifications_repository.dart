@@ -32,12 +32,6 @@ final class NoopNotificationsBackend extends NotificationsBackend {
   const NoopNotificationsBackend();
 }
 
-final class RemoteNotificationsBackend extends NotificationsBackend {
-  const RemoteNotificationsBackend({required this.registrationHost});
-
-  final String registrationHost;
-}
-
 abstract interface class NotificationsRepository {
   Future<NotificationPermissionStatus> requestPermission({required bool provisional});
 

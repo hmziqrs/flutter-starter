@@ -2,27 +2,20 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'feature_flags.freezed.dart';
 
-enum FeatureFlagKind { boolean, text, integer }
-
 enum FeatureFlag {
-  onboardingRevamp(kind: FeatureFlagKind.boolean, wireKey: 'onboarding_revamp'),
+  onboardingRevamp(wireKey: 'onboarding_revamp'),
 
-  homeRedesign(kind: FeatureFlagKind.boolean, wireKey: 'home_redesign'),
+  homeRedesign(wireKey: 'home_redesign'),
 
-  checkoutV2(kind: FeatureFlagKind.boolean, wireKey: 'checkout_v2'),
+  checkoutV2(wireKey: 'checkout_v2'),
 
-  profileSync(kind: FeatureFlagKind.boolean, wireKey: 'profile_sync'),
+  profileSync(wireKey: 'profile_sync'),
 
-  searchBackend(kind: FeatureFlagKind.text, wireKey: 'search_backend'),
+  searchBackend(wireKey: 'search_backend'),
 
-  checkoutRolloutPercent(
-    kind: FeatureFlagKind.integer,
-    wireKey: 'checkout_rollout_percent',
-  );
+  checkoutRolloutPercent(wireKey: 'checkout_rollout_percent');
 
-  const FeatureFlag({required this.kind, required this.wireKey});
-
-  final FeatureFlagKind kind;
+  const FeatureFlag({required this.wireKey});
 
   final String wireKey;
 }

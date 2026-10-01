@@ -21,9 +21,7 @@ final class CompositeAnalyticsClient implements AnalyticsClient {
     for (final client in _clients) {
       try {
         await call(client);
-      } on Object {
-        // ignored
-      }
+      } on Object {}
     }
   }
 }

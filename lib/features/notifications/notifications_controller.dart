@@ -134,9 +134,7 @@ final class NotificationsController extends Notifier<NotificationsState> {
     try {
       final repository = ref.read(notificationsRepositoryProvider);
       await repository.unregisterToken(previousToken);
-    } on NotificationsException {
-      // ignored
-    }
+    } on NotificationsException {}
   }
 }
 

@@ -96,9 +96,7 @@ final class HonoServerHandle {
   Future<void> close() async {
     try {
       process.kill();
-    } on Object {
-      // ignored
-    }
+    } on Object {}
     await exitOrKill(process);
   }
 }
@@ -147,9 +145,7 @@ Future<int> exitOrKill(Process process) async {
   } on TimeoutException {
     try {
       process.kill(ProcessSignal.sigkill);
-    } on Object {
-      // ignored
-    }
+    } on Object {}
     return process.exitCode;
   }
 }

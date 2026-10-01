@@ -22,9 +22,7 @@ final class CompositeCrashReporter implements CrashReporter {
     for (final reporter in _reporters) {
       try {
         await call(reporter);
-      } on Object {
-        // ignored
-      }
+      } on Object {}
     }
   }
 }

@@ -68,8 +68,6 @@ void main() {
   });
 }
 
-/// The appearance section renders the haptics tile below a default 600px
-/// viewport, so every case needs a surface tall enough to hit-test it.
 void _setViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(390, 1600);
   tester.view.devicePixelRatio = 1;
