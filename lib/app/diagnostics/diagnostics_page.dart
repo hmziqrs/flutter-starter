@@ -20,13 +20,23 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
-class DiagnosticsPage extends ConsumerWidget {
+class DiagnosticsPage extends ConsumerStatefulWidget {
   const DiagnosticsPage({required this.config, super.key});
 
   final AppConfig config;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DiagnosticsPage> createState() => _DiagnosticsPageState();
+}
+
+class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
+  late final Future<List<CacheDiagnosticRow>> _cacheDiagnostics = cacheDiagnosticsSnapshot(
+    ref.read(cacheStoreProvider),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final config = widget.config;
     final translations = context.t;
     final breakpoints = context.theme.breakpoints;
     final layoutClass = AppLayoutClass.fromWidth(
@@ -156,7 +166,7 @@ class DiagnosticsPage extends ConsumerWidget {
                             ),
                           if (config.developmentToolsEnabled)
                             FutureBuilder<List<CacheDiagnosticRow>>(
-                              future: cacheDiagnosticsSnapshot(ref.read(cacheStoreProvider)),
+                              future: _cacheDiagnostics,
                               builder: (context, snapshot) {
                                 final rows = snapshot.data ?? const <CacheDiagnosticRow>[];
                                 return Column(
@@ -221,13 +231,20 @@ class _DiagnosticTile extends StatelessWidget {
   }
 }
 
-class _BuildValue extends StatelessWidget {
+class _BuildValue extends StatefulWidget {
   const _BuildValue();
+
+  @override
+  State<_BuildValue> createState() => _BuildValueState();
+}
+
+class _BuildValueState extends State<_BuildValue> {
+  late final Future<AppBuildInfo> _buildInfo = AppBuildInfo.load();
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AppBuildInfo>(
-      future: AppBuildInfo.load(),
+      future: _buildInfo,
       builder: (context, snapshot) {
         return SelectableText(snapshot.data?.displayValue ?? '—');
       },
