@@ -8,7 +8,7 @@ mixin SettingsSaveFailureState<T extends ConsumerStatefulWidget> on ConsumerStat
     final logger = ref.read(appLoggerProvider);
     try {
       await operation();
-      if (mounted) setState(() => saveFailed = false);
+      if (mounted && saveFailed) setState(() => saveFailed = false);
     } on Object catch (error, stackTrace) {
       logger.warning(
         'settings.save_failed',
@@ -16,7 +16,7 @@ mixin SettingsSaveFailureState<T extends ConsumerStatefulWidget> on ConsumerStat
         stackTrace: stackTrace,
         context: {'tile': '$T'},
       );
-      if (mounted) setState(() => saveFailed = true);
+      if (mounted && !saveFailed) setState(() => saveFailed = true);
     }
   }
 }
