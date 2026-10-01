@@ -298,13 +298,9 @@ class _LogoRevealState extends State<_LogoReveal> with SingleTickerProviderState
   @override
   Widget build(BuildContext context) {
     _sync(!MediaQuery.disableAnimationsOf(context));
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) => Opacity(
-        opacity: _fade.value,
-        child: Transform.scale(scale: _scale.value, child: child),
-      ),
-      child: widget.child,
+    return FadeTransition(
+      opacity: _fade,
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }
