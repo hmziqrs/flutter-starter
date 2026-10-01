@@ -13,17 +13,10 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
+import '../support/pump_app_frames.dart';
 
 const ValueKey<String> _topChromeKey = ValueKey<String>('top-chrome-action');
 
-Future<void> _pumpFrames(WidgetTester tester) async {
-  for (var frame = 0; frame < 8; frame += 1) {
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
-
-/// A page whose only affordance sits flush against the top edge, mirroring the
-/// paywall's skip action.
 Widget _topEdgePage(VoidCallback onPressed) {
   return Column(
     children: [
@@ -93,10 +86,10 @@ void main() {
     await tester.pumpWidget(
       _harness(service: service, child: _topEdgePage(() => taps += 1)),
     );
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
 
     service.emit(ConnectivityState.offline);
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
     expect(find.text(t.connectivity.offline), findsOneWidget);
 
     expect(
@@ -105,7 +98,7 @@ void main() {
       reason: 'the banner must inset the page, never paint over its top chrome',
     );
     await tester.tap(find.byKey(_topChromeKey).hitTestable());
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
 
     expect(taps, 1);
   });
@@ -120,11 +113,11 @@ void main() {
         child: _topEdgePage(() => taps += 1),
       ),
     );
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
     expect(find.text(t.announcements.fixtures.welcome.title), findsOneWidget);
 
     await tester.tap(find.byKey(_topChromeKey).hitTestable());
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
 
     expect(taps, 1);
   });
@@ -134,11 +127,11 @@ void main() {
     await tester.pumpWidget(
       _harness(service: service, child: _topEdgePage(() {})),
     );
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
     final withoutBanner = tester.getTopLeft(find.byKey(_topChromeKey)).dy;
 
     service.emit(ConnectivityState.offline);
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
     final withBanner = tester.getTopLeft(find.byKey(_topChromeKey)).dy;
 
     expect(withBanner, greaterThan(withoutBanner));
@@ -158,10 +151,10 @@ void main() {
         child: _topEdgePage(() {}),
       ),
     );
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
 
     service.emit(ConnectivityState.offline);
-    await _pumpFrames(tester);
+    await pumpAppFrames(tester);
 
     final bannerBottom = tester.getBottomLeft(find.text(t.connectivity.offline)).dy;
     final contentTop = tester.getTopLeft(find.byKey(_topChromeKey)).dy;
@@ -170,6 +163,41 @@ void main() {
       contentTop - bannerBottom,
       lessThan(topPadding),
       reason: 'the banner already consumed the top inset; the page must not add it again',
+    );
+  });
+
+  testWidgets('does not consume the top inset twice when both banners are visible', (
+    tester,
+  ) async {
+    final service = FakeConnectivityService();
+    const topPadding = 44.0;
+    await tester.pumpWidget(
+      _harness(
+        service: service,
+        announcements: [AnnouncementFixtures.welcome],
+        viewPadding: const EdgeInsets.only(top: topPadding),
+        child: _topEdgePage(() {}),
+      ),
+    );
+    await pumpAppFrames(tester);
+
+    service.emit(ConnectivityState.offline);
+    await pumpAppFrames(tester);
+
+    expect(find.text(t.connectivity.offline), findsOneWidget);
+    expect(find.text(t.announcements.fixtures.welcome.title), findsOneWidget);
+
+    final connectivityBottom = tester.getBottomLeft(find.text(t.connectivity.offline)).dy;
+    final announcementTop = tester
+        .getTopLeft(
+          find.text(t.announcements.fixtures.welcome.title),
+        )
+        .dy;
+
+    expect(
+      announcementTop - connectivityBottom,
+      lessThan(topPadding),
+      reason: 'the second banner must not re-consume the top inset',
     );
   });
 }

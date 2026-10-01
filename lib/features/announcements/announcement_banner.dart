@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -88,7 +89,7 @@ class _AnnouncementBannerSlot extends StatelessWidget {
   }
 }
 
-class AnnouncementBannerView extends StatelessWidget {
+class AnnouncementBannerView extends StatefulWidget {
   const AnnouncementBannerView({
     required this.announcement,
     required this.onDismiss,
@@ -101,23 +102,32 @@ class AnnouncementBannerView extends StatelessWidget {
   final VoidCallback onAction;
 
   @override
+  State<AnnouncementBannerView> createState() => _AnnouncementBannerViewState();
+}
+
+class _AnnouncementBannerViewState extends State<AnnouncementBannerView> {
+  double _actionsExtent = 0;
+
+  @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final presentation = _presentationFor(announcement.severity, translations);
-    final actionRoute = announcement.actionRoute;
+    final presentation = _presentationFor(widget.announcement.severity, translations);
+    final actionRoute = widget.announcement.actionRoute;
+    final textExtentReserve = _actionsExtent == 0 ? 0.0 : _actionsExtent + context.spacing.sm;
 
     return Semantics(
       container: true,
       liveRegion: true,
-      label: '${announcement.title(translations)}. ${announcement.message(translations)}',
+      label:
+          '${widget.announcement.title(translations)}. ${widget.announcement.message(translations)}',
       child: Material(
         color: Colors.transparent,
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm,
+            padding: EdgeInsets.symmetric(
+              horizontal: context.spacing.lg,
+              vertical: context.spacing.sm,
             ),
             child: SizedBox(
               width: double.infinity,
@@ -131,44 +141,53 @@ class AnnouncementBannerView extends StatelessWidget {
                         size: 18,
                         semanticLabel: presentation.severityLabel,
                       ),
-                      title: Text(
-                        announcement.title(translations),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      title: _reserveActionsExtent(
+                        Text(
+                          widget.announcement.title(translations),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        textExtentReserve,
                       ),
-                      subtitle: Text(
-                        announcement.message(translations),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                      subtitle: _reserveActionsExtent(
+                        Text(
+                          widget.announcement.message(translations),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        textExtentReserve,
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (actionRoute != null) ...[
-                          FButton(
-                            key: const ValueKey('announcement-action'),
-                            variant: .outline,
-                            size: .sm,
-                            onPress: onAction,
-                            child: Text(translations.announcements.actionLearnMore),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
+                  PositionedDirectional(
+                    top: context.spacing.xs,
+                    end: context.spacing.xs,
+                    child: _MeasuredWidth(
+                      onMeasured: _updateActionsExtent,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (actionRoute != null) ...[
+                            FButton(
+                              key: const ValueKey('announcement-action'),
+                              variant: .outline,
+                              size: .sm,
+                              onPress: widget.onAction,
+                              child: Text(translations.announcements.actionLearnMore),
+                            ),
+                            SizedBox(width: context.spacing.sm),
+                          ],
+                          if (widget.announcement.dismissible)
+                            FButton.icon(
+                              key: const ValueKey('announcement-dismiss'),
+                              variant: .ghost,
+                              size: .sm,
+                              semanticsLabel: translations.announcements.dismiss,
+                              onPress: widget.onDismiss,
+                              child: const Icon(FLucideIcons.x, size: 16),
+                            ),
                         ],
-                        if (announcement.dismissible)
-                          FButton.icon(
-                            key: const ValueKey('announcement-dismiss'),
-                            variant: .ghost,
-                            size: .sm,
-                            semanticsLabel: translations.announcements.dismiss,
-                            onPress: onDismiss,
-                            child: const Icon(FLucideIcons.x, size: 16),
-                          ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -178,6 +197,56 @@ class AnnouncementBannerView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _updateActionsExtent(double extent) {
+    if (extent == _actionsExtent) {
+      return;
+    }
+    setState(() => _actionsExtent = extent);
+  }
+
+  Widget _reserveActionsExtent(Widget text, double extent) {
+    if (extent == 0) {
+      return text;
+    }
+    return Padding(
+      padding: EdgeInsetsDirectional.only(end: extent),
+      child: text,
+    );
+  }
+}
+
+class _MeasuredWidth extends SingleChildRenderObjectWidget {
+  const _MeasuredWidth({required this.onMeasured, super.child});
+
+  final ValueChanged<double> onMeasured;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderMeasuredWidth(onMeasured);
+
+  @override
+  void updateRenderObject(BuildContext context, covariant _RenderMeasuredWidth renderObject) {
+    renderObject.onMeasured = onMeasured;
+  }
+}
+
+class _RenderMeasuredWidth extends RenderProxyBox {
+  _RenderMeasuredWidth(this.onMeasured);
+
+  ValueChanged<double> onMeasured;
+
+  double? _reportedWidth;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final width = child?.size.width ?? 0;
+    if (width == _reportedWidth) {
+      return;
+    }
+    _reportedWidth = width;
+    WidgetsBinding.instance.addPostFrameCallback((_) => onMeasured(width));
   }
 }
 

@@ -100,10 +100,56 @@ void main() {
 
       expect(find.text('Welcome to the starter'), findsOneWidget);
     });
+
+    testWidgets('keeps a long title clear of the action strip in LTR', (tester) async {
+      await _pumpLongTitleBanner(tester, textDirection: TextDirection.ltr);
+
+      final title = find.text(_longTitle);
+      final dismiss = find.byKey(const ValueKey('announcement-dismiss'));
+      expect(tester.getTopRight(title).dx, lessThan(tester.getTopLeft(dismiss).dx));
+    });
+
+    testWidgets('pins the action strip to the leading edge and clears the title in RTL', (
+      tester,
+    ) async {
+      await _pumpLongTitleBanner(tester, textDirection: TextDirection.rtl);
+
+      final title = find.text(_longTitle);
+      final dismiss = find.byKey(const ValueKey('announcement-dismiss'));
+      expect(tester.getTopLeft(dismiss).dx, lessThan(400));
+      expect(tester.getTopRight(dismiss).dx, lessThan(tester.getTopLeft(title).dx));
+    });
   });
 }
 
-Widget _harness({required Widget child}) {
+const _longTitle =
+    'A deliberately long announcement title that keeps going and going and going and '
+    'going to force the banner title to wrap onto two lines and ellipsize before it '
+    'reaches the floating action controls.';
+
+Future<void> _pumpLongTitleBanner(
+  WidgetTester tester, {
+  required TextDirection textDirection,
+}) async {
+  await tester.pumpWidget(
+    _harness(
+      textDirection: textDirection,
+      child: AnnouncementBannerView(
+        announcement: Announcement(
+          id: 'long-title',
+          severity: AnnouncementSeverity.info,
+          title: (t) => _longTitle,
+          message: (t) => 'Long message body',
+        ),
+        onDismiss: () {},
+        onAction: () {},
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
+Widget _harness({required Widget child, TextDirection? textDirection}) {
   return TranslationProvider(
     child: Builder(
       builder: (context) {
@@ -115,7 +161,13 @@ Widget _harness({required Widget child}) {
           localizationsDelegates: FLocalizations.localizationsDelegates,
           theme: theme.toApproximateMaterialTheme(),
           home: Scaffold(
-            body: SafeArea(child: Center(child: child)),
+            body: SafeArea(
+              child: Center(
+                child: textDirection == null
+                    ? child
+                    : Directionality(textDirection: textDirection, child: child),
+              ),
+            ),
           ),
           builder: (context, built) => FTheme(
             data: theme,

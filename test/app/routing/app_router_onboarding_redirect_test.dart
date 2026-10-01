@@ -12,6 +12,8 @@ import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 
+import '../support/pump_app_frames.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -44,7 +46,7 @@ void main() {
     expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
 
     await _tapVisible(tester, const ValueKey('onboarding-skip'));
-    await _pumpAppFrames(tester);
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     expect(find.byKey(const ValueKey('onboarding-skip')), findsNothing);
@@ -59,7 +61,7 @@ void main() {
     expect(find.byKey(const ValueKey('paywall-skip')), findsOneWidget);
 
     await _tapVisible(tester, const ValueKey('paywall-skip'));
-    await _pumpAppFrames(tester);
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
   });
@@ -75,7 +77,7 @@ void main() {
     expect(find.byKey(const ValueKey('paywall-continue')), findsOneWidget);
 
     await _tapVisible(tester, const ValueKey('paywall-continue'));
-    await _pumpAppFrames(tester);
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
   });
@@ -148,12 +150,12 @@ void main() {
     expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
 
     await _tapVisible(tester, const ValueKey('onboarding-skip'));
-    await _pumpAppFrames(tester);
+    await pumpAppFrames(tester);
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     expect(store.snapshot[SettingsRepository.onboardingKey], 'true');
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpAppFrames(tester);
+    await pumpAppFrames(tester);
 
     final reloadedSettings = await SettingsRepository(store).load();
     expect(reloadedSettings.hasCompletedOnboarding, isTrue);
@@ -202,13 +204,7 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
     ),
   );
-  await _pumpAppFrames(tester);
-}
-
-Future<void> _pumpAppFrames(WidgetTester tester) async {
-  for (var frame = 0; frame < 8; frame += 1) {
-    await tester.pump(const Duration(milliseconds: 100));
-  }
+  await pumpAppFrames(tester);
 }
 
 Future<void> _tapVisible(WidgetTester tester, Key key) async {
@@ -216,7 +212,7 @@ Future<void> _tapVisible(WidgetTester tester, Key key) async {
   tester.binding.focusManager.primaryFocus?.unfocus();
   await tester.pump();
   await tester.ensureVisible(target);
-  await _pumpAppFrames(tester);
+  await pumpAppFrames(tester);
   await tester.tap(target.hitTestable());
-  await _pumpAppFrames(tester);
+  await pumpAppFrames(tester);
 }
