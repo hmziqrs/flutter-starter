@@ -30,6 +30,7 @@ class OtpPage extends StatelessWidget {
     required this.onSubmit,
     required this.onResend,
     this.presentation = const OtpPresentationState(),
+    this.countdownAlert,
     super.key,
   });
 
@@ -37,6 +38,10 @@ class OtpPage extends StatelessWidget {
   final OtpSubmitCallback onSubmit;
   final OtpResendCallback onResend;
   final OtpPresentationState presentation;
+
+  /// Live countdown replacement driven by the owning route; rendered instead of
+  /// the static [presentation] remaining seconds whenever provided.
+  final Widget? countdownAlert;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +51,7 @@ class OtpPage extends StatelessWidget {
         onSubmit: onSubmit,
         onResend: onResend,
         presentation: presentation,
+        countdownAlert: countdownAlert,
       ),
     );
   }
@@ -57,12 +63,14 @@ class _OtpView extends ConsumerStatefulWidget {
     required this.onSubmit,
     required this.onResend,
     required this.presentation,
+    this.countdownAlert,
   });
 
   final OtpPurpose purpose;
   final OtpSubmitCallback onSubmit;
   final OtpResendCallback onResend;
   final OtpPresentationState presentation;
+  final Widget? countdownAlert;
 
   @override
   ConsumerState<_OtpView> createState() => _OtpViewState();
@@ -295,15 +303,19 @@ class _OtpViewState extends ConsumerState<_OtpView>
   }
 
   Widget? _countdownAlert(BuildContext context) {
-    final remaining = widget.presentation.remainingSeconds;
-    if (remaining <= 0) {
-      return null;
-    }
     final status = widget.presentation.status;
     if (status == OtpPresentationStatus.expired ||
         status == OtpPresentationStatus.success ||
         status == OtpPresentationStatus.globalFailure ||
         status == OtpPresentationStatus.locked) {
+      return null;
+    }
+    final liveAlert = widget.countdownAlert;
+    if (liveAlert != null) {
+      return liveAlert;
+    }
+    final remaining = widget.presentation.remainingSeconds;
+    if (remaining <= 0) {
       return null;
     }
     return FAlert(

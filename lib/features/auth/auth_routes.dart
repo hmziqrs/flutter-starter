@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
@@ -305,11 +306,14 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
   @override
   Widget build(BuildContext context) {
     final key = (purpose: widget.purpose, identifier: widget.identifier);
-    final state = ref.watch(otpControllerProvider(key));
+    final presentation = ref.watch(
+      otpControllerProvider(key).select((state) => state.presentation),
+    );
     final controller = ref.read(otpControllerProvider(key).notifier);
     return OtpPage(
       purpose: widget.purpose,
-      presentation: state.presentation.copyWithRemainingSeconds(state.remainingSeconds),
+      presentation: presentation,
+      countdownAlert: _OtpCountdownAlert(controllerKey: key),
       onSubmit: (value) async {
         final ok = await controller.verify(value.code);
         if (!ok || !mounted) {
@@ -326,6 +330,30 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
         context.goNamed(AppRoutes.home);
       },
       onResend: controller.resend,
+    );
+  }
+}
+
+final class _OtpCountdownAlert extends ConsumerWidget {
+  const _OtpCountdownAlert({required this.controllerKey});
+
+  final OtpControllerKey controllerKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final remaining = ref.watch(
+      otpControllerProvider(controllerKey).select((state) => state.remainingSeconds),
+    );
+    if (remaining <= 0) {
+      return const SizedBox.shrink();
+    }
+    return FAlert(
+      key: const ValueKey('auth-otp-countdown'),
+      icon: const Icon(FLucideIcons.clock),
+      title: Text(
+        context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
+        textAlign: TextAlign.start,
+      ),
     );
   }
 }
