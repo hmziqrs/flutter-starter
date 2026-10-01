@@ -21,15 +21,15 @@ void showAppInformationDialog(
           key: const ValueKey('information-dialog'),
           animation: animation,
           builder: (context, style) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            padding: EdgeInsets.all(context.spacing.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(title, style: context.theme.typography.display.xl),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: context.spacing.md),
                 Text(body ?? context.t.common.legalPlaceholderBody),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 FButton(
                   key: const ValueKey('information-dialog-close'),
                   autofocus: true,

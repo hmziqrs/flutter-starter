@@ -74,11 +74,11 @@ class PagedListView<T> extends StatelessWidget {
         key: const ValueKey('paged-list-view'),
         padding:
             padding ??
-            const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
+            EdgeInsetsDirectional.fromSTEB(
+              context.spacing.lg,
+              context.spacing.lg,
+              context.spacing.lg,
+              context.spacing.lg,
             ),
         itemCount: state.items.length + (state.isLoadingNext ? 1 : 0),
         itemBuilder: (context, index) {

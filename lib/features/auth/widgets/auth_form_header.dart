@@ -23,13 +23,13 @@ class AuthFormHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(title, style: context.theme.typography.display.xl2),
-        const SizedBox(height: AppSpacing.md),
+        SizedBox(height: context.spacing.md),
         Text(body, style: context.theme.typography.body.md),
         for (final alert in alerts) ...[
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: context.spacing.xl),
           alert,
         ],
-        const SizedBox(height: AppSpacing.xl),
+        SizedBox(height: context.spacing.xl),
       ],
     );
   }

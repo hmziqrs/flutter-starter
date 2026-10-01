@@ -15,6 +15,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/forms/email_form_field.dart';
 import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/forms/form_submit_button.dart';
@@ -255,7 +256,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
                   ? translations.validation.email
                   : null,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             passwordFormField(
               activationKey: const ValueKey('auth-login-password-activation'),
               fieldKey: const ValueKey('auth-login-password'),
@@ -269,14 +270,16 @@ class _LoginViewState extends ConsumerState<_LoginView>
               textInputAction: TextInputAction.done,
               onSubmit: () => unawaited(_submit()),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             FormField<bool>(
               initialValue: false,
               onSaved: (value) => _rememberMe = value ?? false,
               onReset: () => _rememberMe = false,
               builder: (field) => MergeSemantics(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 44),
+                  constraints: BoxConstraints(
+                    minHeight: context.presentationTokens.controlMinHeight,
+                  ),
                   child: FCheckbox(
                     key: const ValueKey('auth-login-remember'),
                     value: field.value ?? false,
@@ -288,7 +291,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
@@ -305,11 +308,11 @@ class _LoginViewState extends ConsumerState<_LoginView>
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: context.spacing.sm,
+              runSpacing: context.spacing.sm,
               children: [
                 FormSubmitButton(
                   buttonKey: const ValueKey('auth-login-forgot-password'),

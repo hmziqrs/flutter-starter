@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/pricing/plan_view_data.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 
@@ -79,9 +80,9 @@ class PlanCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(FLucideIcons.check, size: 18),
+                  Padding(
+                    padding: EdgeInsets.only(top: context.appUnit.snap(2)),
+                    child: const Icon(FLucideIcons.check, size: 18),
                   ),
                   SizedBox(width: context.spacing.sm),
                   Expanded(child: Text(benefit)),

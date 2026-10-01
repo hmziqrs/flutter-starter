@@ -16,6 +16,7 @@ import 'package:starter/shared/forms/form_field_reveal.dart';
 import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
@@ -264,7 +265,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
                 );
               },
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             emailFormField(
               activationKey: const ValueKey('auth-register-email-activation'),
               fieldKey: const ValueKey('auth-register-email'),
@@ -278,7 +279,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
                   : null,
               nextFocusNode: _passwordFocus,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             passwordFormField(
               activationKey: const ValueKey('auth-register-password-activation'),
               fieldKey: const ValueKey('auth-register-password'),
@@ -295,7 +296,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
               autofillHints: const [AutofillHints.newPassword],
               nextFocusNode: _confirmPasswordFocus,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             confirmPasswordFormField(
               activationKey: const ValueKey('auth-register-confirm-password-activation'),
               fieldKey: const ValueKey('auth-register-confirm-password'),
@@ -309,7 +310,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
               forceErrorText: invalidFixture ? translations.validation.passwordMismatch : null,
               onSubmit: () => unawaited(_submit()),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             FormField<bool>(
               key: _termsFieldKey,
               initialValue: false,
@@ -317,23 +318,28 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
               validator: (value) => value ?? false ? null : translations.validation.acceptTerms,
               onSaved: (value) => _acceptTerms = value ?? false,
               onReset: _resetTerms,
-              builder: (field) => FCheckbox(
-                key: const ValueKey('auth-register-accept-terms'),
-                value: field.value ?? false,
-                enabled: !_submitting,
-                focusNode: _termsFocus,
-                label: Text(translations.auth.register.acceptTerms),
-                error: field.errorText == null ? null : Text(field.errorText!),
-                onChange: (value) {
-                  _markDirty();
-                  field.didChange(value);
-                },
+              builder: (field) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: context.presentationTokens.controlMinHeight,
+                ),
+                child: FCheckbox(
+                  key: const ValueKey('auth-register-accept-terms'),
+                  value: field.value ?? false,
+                  enabled: !_submitting,
+                  focusNode: _termsFocus,
+                  label: Text(translations.auth.register.acceptTerms),
+                  error: field.errorText == null ? null : Text(field.errorText!),
+                  onChange: (value) {
+                    _markDirty();
+                    field.didChange(value);
+                  },
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: context.spacing.sm),
             Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: context.spacing.sm,
+              runSpacing: context.spacing.sm,
               children: [
                 FormSubmitButton(
                   buttonKey: const ValueKey('auth-register-open-terms'),
@@ -353,7 +359,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-register-submit'),
               focusNode: _submitFocus,
@@ -362,7 +368,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
               busy: _submitting,
               retainFocusOnBusy: true,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-register-login'),
               variant: FButtonVariant.ghost,

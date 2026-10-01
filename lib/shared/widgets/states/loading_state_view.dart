@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 
@@ -35,7 +36,7 @@ class LoadingStateView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           BusyIndicator(value: value, semanticsLabel: resolvedSemantics),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           Text(
             title,
             key: const ValueKey('loading-state-view-title'),
@@ -49,7 +50,7 @@ class LoadingStateView extends StatelessWidget {
     return FCard(
       key: const ValueKey('loading-state-view'),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: EdgeInsets.all(context.presentationTokens.cardPadding),
         child: Center(
           child: SingleChildScrollView(
             child: MergeSemantics(

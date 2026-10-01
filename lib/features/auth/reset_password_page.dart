@@ -165,7 +165,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
               autofillHints: const [AutofillHints.newPassword],
               nextFocusNode: _confirmPasswordFocus,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             confirmPasswordFormField(
               activationKey: const ValueKey('auth-reset-password-confirm-activation'),
               fieldKey: const ValueKey('auth-reset-password-confirm'),
@@ -181,7 +181,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
                   : null,
               onSubmit: () => unawaited(_submit()),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-reset-password-submit'),
               focusNode: _submitFocus,
@@ -190,7 +190,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
               busy: _submitting,
               retainFocusOnBusy: true,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-reset-password-login'),
               variant: FButtonVariant.ghost,

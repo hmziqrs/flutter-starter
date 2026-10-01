@@ -83,26 +83,28 @@ void main() {
     });
 
     testWidgets('applies the default repo spacing padding', (tester) async {
+      AppSpacingValues? spacing;
       await tester.pumpWidget(
         _harness(
-          child: DataListView<String>(
-            items: const ['alpha'],
-            keyOf: (item) => item,
-            itemBuilder: (_, item) => SizedBox(height: 80, child: Text(item)),
+          child: Builder(
+            builder: (context) {
+              spacing ??= AppSpacing.of(context);
+              return DataListView<String>(
+                items: const ['alpha'],
+                keyOf: (item) => item,
+                itemBuilder: (_, item) => SizedBox(height: 80, child: Text(item)),
+              );
+            },
           ),
         ),
       );
       await _pumpFrames(tester);
 
+      final gutter = spacing!.lg;
       final list = tester.widget<ListView>(find.byType(ListView));
       expect(
         list.padding,
-        const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-        ),
+        EdgeInsetsDirectional.fromSTEB(gutter, gutter, gutter, gutter),
       );
     });
 

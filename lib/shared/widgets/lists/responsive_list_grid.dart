@@ -67,11 +67,11 @@ class ResponsiveListGrid<T> extends ConsumerWidget {
     final crossAxisCount = crossAxisCounts.resolve(layoutClass);
     final resolvedPadding =
         padding ??
-        const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
+        EdgeInsetsDirectional.fromSTEB(
+          context.spacing.lg,
+          context.spacing.lg,
+          context.spacing.lg,
+          context.spacing.lg,
         );
     return GridView.builder(
       key: ValueKey('responsive-grid-$crossAxisCount'),

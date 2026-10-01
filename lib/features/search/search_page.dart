@@ -8,7 +8,7 @@ import 'package:starter/features/search/search_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/state/paged_state.dart';
 import 'package:starter/shared/state/paged_state_notifier.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 import 'package:starter/shared/widgets/lists/paged_list_view.dart';
@@ -112,16 +112,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 onBack: widget.onBack,
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.md,
+                padding: EdgeInsets.fromLTRB(
+                  context.spacing.lg,
+                  context.spacing.sm,
+                  context.spacing.lg,
+                  context.spacing.md,
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSizes.readingContentMaxWidth,
+                    constraints: BoxConstraints(
+                      maxWidth: context.presentationTokens.readingContentMaxWidth,
                     ),
                     child: SearchField(
                       controller: _textController,
@@ -136,8 +136,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSizes.wideContentMaxWidth,
+                    constraints: BoxConstraints(
+                      maxWidth: context.presentationTokens.wideContentMaxWidth,
                     ),
                     child: PagedListView<SearchResultViewData>(
                       state: paged,
@@ -150,7 +150,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       emptyTitle: translations.search.emptyTitle,
                       emptyBody: translations.search.emptyBody,
                       errorTitle: translations.search.errorTitle,
-                      separator: const SizedBox(height: AppSpacing.sm),
+                      separator: SizedBox(height: context.spacing.sm),
                     ),
                   ),
                 ),
@@ -172,11 +172,11 @@ class _SearchHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.sm,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.sm,
+      padding: EdgeInsets.fromLTRB(
+        context.spacing.sm,
+        context.spacing.sm,
+        context.spacing.lg,
+        context.spacing.sm,
       ),
       child: Row(
         children: <Widget>[
@@ -191,7 +191,7 @@ class _SearchHeader extends StatelessWidget {
                   : FLucideIcons.arrowLeft,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          SizedBox(width: context.spacing.sm),
           Expanded(
             child: Text(
               title,

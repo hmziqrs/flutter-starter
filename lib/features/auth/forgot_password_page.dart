@@ -181,7 +181,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
               textInputAction: TextInputAction.done,
               onSubmit: () => unawaited(_submit()),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-forgot-password-submit'),
               focusNode: _submitFocus,
@@ -190,7 +190,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
               onPress: () => unawaited(_submit()),
               label: translations.auth.forgotPassword.submit,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-forgot-password-login'),
               variant: FButtonVariant.ghost,

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 
@@ -86,7 +87,7 @@ class _BusyBarrier extends StatelessWidget {
         child: BlockSemantics(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 280),
+              constraints: BoxConstraints(maxWidth: context.appUnit.un(280)),
               child: MergeSemantics(
                 child: Semantics(label: resolvedSemantics, child: content),
               ),

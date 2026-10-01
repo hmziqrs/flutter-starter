@@ -26,7 +26,7 @@ class AppConfirmationDialog {
     Key? actionKey,
     bool autofocusCancel = false,
     bool flexibleActions = false,
-    double titleBodySpacing = AppSpacing.sm,
+    double? titleBodySpacing,
   }) {
     final translations = context.t;
     final action = confirmLabel ?? _defaultActionLabel(intent, translations);
@@ -45,20 +45,20 @@ class AppConfirmationDialog {
           key: resolvedDialogKey,
           animation: animation,
           semanticsLabel: semantic,
-          builder: (_, _) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+          builder: (context, _) => Padding(
+            padding: EdgeInsets.all(context.spacing.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(title, style: style.titleTextStyle),
-                SizedBox(height: titleBodySpacing),
+                SizedBox(height: titleBodySpacing ?? context.spacing.sm),
                 Text(body, style: style.bodyTextStyle),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: context.spacing.xl),
                 Wrap(
                   alignment: WrapAlignment.end,
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
+                  spacing: context.spacing.sm,
+                  runSpacing: context.spacing.sm,
                   children: [
                     FButton(
                       key: resolvedCancelKey,

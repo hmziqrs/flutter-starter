@@ -109,9 +109,9 @@ class _ConnectivityBannerContent extends StatelessWidget {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm,
+            padding: EdgeInsets.symmetric(
+              horizontal: context.spacing.lg,
+              vertical: context.spacing.sm,
             ),
             child: Row(
               children: [
@@ -119,7 +119,7 @@ class _ConnectivityBannerContent extends StatelessWidget {
                   _PulsingIcon(icon: icon, color: foreground)
                 else
                   Icon(icon, size: 18, color: foreground),
-                const SizedBox(width: AppSpacing.sm),
+                SizedBox(width: context.spacing.sm),
                 Expanded(
                   child: Text(
                     message,

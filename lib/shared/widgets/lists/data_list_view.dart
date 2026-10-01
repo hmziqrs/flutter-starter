@@ -37,11 +37,11 @@ class DataListView<T> extends StatelessWidget {
     }
     final resolvedPadding =
         padding ??
-        const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
+        EdgeInsetsDirectional.fromSTEB(
+          context.spacing.lg,
+          context.spacing.lg,
+          context.spacing.lg,
+          context.spacing.lg,
         );
     if (separator != null) {
       return ListView.separated(

@@ -1,17 +1,17 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
     required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
+    this.padding,
     this.style = const FCardStyleDelta.context(),
     this.clipBehavior = Clip.none,
     super.key,
   });
 
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
 
   final FCardStyleDelta style;
 
@@ -25,7 +25,7 @@ class AppCard extends StatelessWidget {
       style: style,
       clipBehavior: clipBehavior,
       child: Padding(
-        padding: padding,
+        padding: padding ?? EdgeInsets.all(context.presentationTokens.cardPadding),
         child: child,
       ),
     );

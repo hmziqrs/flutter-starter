@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/dev_gallery/gallery_case.dart';
+import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/lists/responsive_list_grid.dart';
 import 'package:starter/shared/widgets/refresh/refreshable_list_view.dart';
 
@@ -47,7 +48,7 @@ const _previewItems = <_PreviewItem>[
 Widget _previewCell(BuildContext context, _PreviewItem item) {
   return FCard(
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Center(child: Text(item.label, style: context.theme.typography.display.lg)),
     ),
   );

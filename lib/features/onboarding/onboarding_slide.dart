@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/onboarding/onboarding_view_data.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class OnboardingSlide extends StatelessWidget {
@@ -24,30 +24,32 @@ class OnboardingSlide extends StatelessWidget {
 
     return SingleChildScrollView(
       key: ValueKey('onboarding-slide-${data.id}'),
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.xl,
+      padding: EdgeInsetsDirectional.fromSTEB(
+        context.spacing.xl,
+        context.spacing.lg,
+        context.spacing.xl,
+        context.spacing.xl,
       ),
       child: switch (layoutClass) {
         AppLayoutClass.compact => Column(
           children: [
             visual,
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             copy,
           ],
         ),
         AppLayoutClass.medium => Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.readingContentMaxWidth),
+            constraints: BoxConstraints(
+              maxWidth: context.presentationTokens.readingContentMaxWidth,
+            ),
             child: FCard(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl2),
                 child: Column(
                   children: [
                     visual,
-                    const SizedBox(height: AppSpacing.xl2),
+                    SizedBox(height: context.spacing.xl2),
                     copy,
                   ],
                 ),
@@ -57,11 +59,11 @@ class OnboardingSlide extends StatelessWidget {
         ),
         AppLayoutClass.expanded => Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.wideContentMaxWidth),
+            constraints: BoxConstraints(maxWidth: context.presentationTokens.wideContentMaxWidth),
             child: Row(
               children: [
                 Expanded(child: visual),
-                const SizedBox(width: AppSpacing.xl3),
+                SizedBox(width: context.spacing.xl3),
                 Expanded(
                   child: FCard(
                     child: Padding(
@@ -119,7 +121,7 @@ class _OnboardingCopy extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(data.title, style: context.theme.typography.display.xl2),
-        const SizedBox(height: AppSpacing.md),
+        SizedBox(height: context.spacing.md),
         Text(data.body, style: context.theme.typography.body.lg),
       ],
     );
