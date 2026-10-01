@@ -97,8 +97,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final paged = ref.watch(searchResultsControllerProvider);
-    final controller = ref.read(searchResultsControllerProvider.notifier);
 
     return EscapeDismissibleOverlay(
       child: FScaffold(
@@ -139,19 +137,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     constraints: BoxConstraints(
                       maxWidth: context.presentationTokens.wideContentMaxWidth,
                     ),
-                    child: PagedListView<SearchResultViewData>(
-                      state: paged,
-                      itemBuilder: (context, item) => _SearchResultTile(
-                        result: item,
-                      ),
-                      keyOf: (item) => item.id,
-                      onLoadNext: controller.loadNext,
-                      onRefresh: controller.refresh,
-                      emptyTitle: translations.search.emptyTitle,
-                      emptyBody: translations.search.emptyBody,
-                      errorTitle: translations.search.errorTitle,
-                      separator: SizedBox(height: context.spacing.sm),
-                    ),
+                    child: const _SearchResultsList(),
                   ),
                 ),
               ),
@@ -159,6 +145,29 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SearchResultsList extends ConsumerWidget {
+  const _SearchResultsList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final translations = context.t;
+    final paged = ref.watch(searchResultsControllerProvider);
+    final controller = ref.read(searchResultsControllerProvider.notifier);
+
+    return PagedListView<SearchResultViewData>(
+      state: paged,
+      itemBuilder: (context, item) => _SearchResultTile(result: item),
+      keyOf: (item) => item.id,
+      onLoadNext: controller.loadNext,
+      onRefresh: controller.refresh,
+      emptyTitle: translations.search.emptyTitle,
+      emptyBody: translations.search.emptyBody,
+      errorTitle: translations.search.errorTitle,
+      separator: SizedBox(height: context.spacing.sm),
     );
   }
 }
