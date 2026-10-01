@@ -32,9 +32,9 @@ The architecture decisions live in [`plans/completed/initial.md`](../plans/compl
 | theme-system | ForuiThemeFactory composes FThemeData from tokens | `lib/shared/theme/forui_theme_factory.dart` |
 | motion-and-page-transitions | Duration/curve tokens + per-platform transitions | `lib/shared/motion/app_motion.dart` |
 | features-product-screens | Callback-driven backend-free product screens | `lib/features/auth/login_page.dart` |
-| shared-widgets | Cross-feature widget abstractions (Escape dismiss) | `lib/shared/widgets/escape_dismissible_overlay.dart` |
+| shared-widgets | Cross-feature widget abstractions: states, lists, forms, feedback, refresh, Escape dismissal | `lib/shared/widgets/` |
 | dev-gallery-diagnostics | Dev-only gallery + diagnostics, gated by config | `lib/features/dev_gallery/gallery_case.dart` |
-| infrastructure | Redacting logger, platform info, sole production prefs store | `lib/infrastructure/logging/app_logger.dart` |
+| infrastructure | Cross-cutting ports + adapters: logging, http, storage, telemetry, platform services | `lib/infrastructure/` |
 | testing-analysis-ci | Linted suite, macOS goldens, integration, 5-job CI | `justfile` |
 
 ## Subsystems
@@ -145,7 +145,7 @@ Files:
 - `lib/app/shell/app_shell.dart` — adaptive shell; takes a `StatefulNavigationShell` (or `AppShell.preview` for the dev gallery)
 - `lib/app/shell/cross_fading_branch_container.dart` — owns the `StatefulShellRoute` tab cross-fade
 - `lib/app/shell/compact_app_shell.dart` — compact bottom-nav shell (go_router-agnostic)
-- `lib/app/shell/expanded_app_shell.dart` — sidebar shell (reused for medium); uses `exui` `.paddingOnly` (sole exui call site)
+- `lib/app/shell/expanded_app_shell.dart` — sidebar shell (reused for medium)
 - `lib/shared/adaptive/app_layout_class.dart` — compact/medium/expanded enum + fromWidth
 - `lib/shared/adaptive/app_layout_provider.dart` — AppLayoutScope + provider
 - `lib/shared/adaptive/app_unit.dart` — bounded logical-width spacing/type scale + physical-pixel helpers
@@ -220,14 +220,28 @@ Notes:
 
 #### shared-widgets
 
-**Cross-feature widget abstractions, extracted only after a concern repeats across features; currently just the Escape-dismissal wrapper.**
+**Cross-feature widget abstractions, extracted only after a concern repeats across features.**
 
 Files:
 - `lib/shared/widgets/escape_dismissible_overlay.dart` — `EscapeDismissibleOverlay`: binds Escape to `Navigator.maybePop` for modal content
+- `lib/shared/widgets/app_bottom_sheet.dart` — `showAppBottomSheet`: ForUI bottom sheet pre-wired with Escape dismissal + background color
+- `lib/shared/widgets/app_sidebar_item_group.dart` — `AppSidebarItemGroup`: uniformly spaced (`xs`) group column for sidebar items
+- `lib/shared/widgets/app_tv_editable_field.dart` — `AppTvEditableField`: ten-foot editable field; an activation key opens an editor whose focus/commit/dismiss the field owns
+- `lib/shared/widgets/busy_indicator.dart` + `busy_overlay.dart` — `BusyIndicator` spinner + `BusyOverlay` scrim over busy content, `BusySeverity`-aware
+- `lib/shared/widgets/reading_content_scroll_frame.dart` — `ReadingContentScrollFrame`: centered, token-padded reading scroll frame with optional title
+- `lib/shared/widgets/spaced_column.dart` — `SpacedColumn`: Column with a uniform gap
+- `lib/shared/widgets/banners/collapsing_banner_slot.dart` — `CollapsingBannerSlot`: `AnimatedSize` slot that collapses/expands banners (reduce-motion aware)
+- `lib/shared/widgets/containers/app_card.dart` — `AppCard`: ForUI card with presentation-token padding
+- `lib/shared/widgets/feedback/{app_confirmation_dialog,app_information_dialog,app_toast,legal_dialog_callbacks}.dart` — confirm/destroy dialog, information dialog, severity toast, legal-dialog callback helper
+- `lib/shared/widgets/forms/{form_scaffold,form_submit_button}.dart` — form shell (keyed fields, heading, busy submit) + policy-aware submit button
+- `lib/shared/widgets/lists/{data_list_view,paged_list_view,responsive_list_grid}.dart` — keyed item list, paged list with load-next/empty/error states, per-layout column counts
+- `lib/shared/widgets/refresh/{app_refresh_indicator,refreshable_list_view}.dart` — pull-to-refresh indicator + auto/material/cupertino refreshable list
+- `lib/shared/widgets/search/search_field.dart` — `SearchField`: hint-driven search input
+- `lib/shared/widgets/states/{empty_state_view,error_state_view,loading_state_view,skeleton_tile,skeleton_view,state_view_card}.dart` — empty/error/loading state cards, skeleton shimmer tiles, shared state-card base
 
 Notes:
-- Wrap modal/overlay/recovery content so the Escape key pops it. Callers span routing (`app_router.dart`), auth (`register_page.dart`), profile (`update_profile_page.dart`), and dev-gallery fixtures (`system_overlay_fixture.dart`, `production_gallery_cases.dart`).
-- Reuse this for new Escape-dismissable surfaces; do not re-implement per feature. Extraction is deliberately bounded per `docs/baseline_architecture_report.md` — add a `shared/widgets/` entry only when a concern genuinely repeats, never for one-off helpers.
+- Wrap modal/overlay/recovery content in `EscapeDismissibleOverlay` so the Escape key pops it; `showAppBottomSheet` and the feedback dialogs pre-wire it — do not re-implement Escape dismissal per feature.
+- Extraction is deliberately bounded per `docs/baseline_architecture_report.md` — add a `shared/widgets/` entry only when a concern genuinely repeats, never for one-off helpers.
 
 ### Features
 
@@ -277,20 +291,36 @@ Notes:
 
 #### infrastructure
 
-**Cross-cutting adapters: a redacting talker-backed logger, read-only platform/build info, and the sole production per-key prefs store.**
+**Cross-cutting adapters: each concern pairs a small port interface with platform/vendor implementations, composed through `AppDependencies`.**
 
 Files:
 - `lib/infrastructure/logging/app_logger.dart` — talker logger, verbose-gated, redacts context
 - `lib/infrastructure/logging/log_redactor.dart` — regex scrubber for tokens/passwords
-- `lib/infrastructure/platform/app_build_info.dart` — version/buildNumber
-- `lib/infrastructure/platform/platform_capabilities.dart` — read-only platform flags
-- `lib/infrastructure/platform/platform_capabilities_resolver.dart` — startup tvOS/Android TV detection
-- `lib/infrastructure/preferences/shared_preferences_settings_store.dart` — sole production SettingsStore impl
+- `lib/infrastructure/platform/{app_build_info,platform_capabilities,platform_capabilities_resolver,system_ui_controller}.dart` — version/build info, read-only platform flags, startup tvOS/Android TV detection, system-UI controller
+- `lib/infrastructure/preferences/{shared_preferences_settings_store,bool_codec}.dart` — sole production SettingsStore impl + bool key codec
+- `lib/infrastructure/http/{app_dio,app_http_repository,json_body}.dart` — Dio client factory, error-classifying HTTP repository base, JSON decoding helpers
+- `lib/infrastructure/auth/{http_auth_client,http_otp_client}.dart` — HTTP auth + OTP clients
+- `lib/infrastructure/profile/http_profile_repository.dart` — HTTP profile repository
+- `lib/infrastructure/cache/` — `CacheStore` port with file/in-memory stores, `cached_future_provider`, cache diagnostics
+- `lib/infrastructure/secure_storage/` — `SecureStore` port + flutter_secure_storage backend/provider
+- `lib/infrastructure/connectivity/` — `ConnectivityService` port + connectivity_plus and static test impls
+- `lib/infrastructure/analytics/` — `AnalyticsClient` port; composite/noop/recording impls, Firebase + PostHog clients, route observer
+- `lib/infrastructure/error_reporting/` — `CrashReporter` port; composite/noop/recording impls, Sentry + Crashlytics clients, FlutterError forwarder
+- `lib/infrastructure/firebase/` — lazy Firebase instance, Performance dio interceptor + route observer, support checks
+- `lib/infrastructure/remote_config/` — remote-config HTTP client, experiment source, feature-flags source
+- `lib/infrastructure/notifications/` — `NotificationsRegistration` port + Firebase repository + HTTP registration client
+- `lib/infrastructure/updates/` — `AppUpdateService` port + Android/iOS in-app-update impls + noop
+- `lib/infrastructure/biometric/` — `BiometricAuthenticator` port + local_auth impl + noop
+- `lib/infrastructure/permissions/` — `PermissionService` port + device impl + noop
+- `lib/infrastructure/haptics/` — `HapticService` port + device impl + noop
+- `lib/infrastructure/media/` — `MediaPicker` port + image_picker impl + noop
+- `lib/infrastructure/sharing/` — `ShareService` port + share_plus impl + noop
+- `lib/infrastructure/devtools/` — `InspectorHost` port + real/stub hosts (dev-only request inspection)
 
 Notes:
 - Route all logging through `AppLogger`; pass structured `Map<String,Object?>` context (redacted automatically, never pre-redact); debug/stacks gated behind verbose, info/warn/error always on. Diagnostics reads the injected capability provider and never performs a second native query.
 - SettingsStore is per-key only (`readString`/`writeString`/`remove`), never `clearAll`; uses `SharedPreferencesAsync`; wrap adapters in try/on Object -> `SettingsStoreException`.
-- No network/db/secure-storage adapters exist by design — do not add without escalating. Only `log_redactor` has tests.
+- Noop/recording impls back tests and unbuilt features; vendor impls (Sentry, PostHog, Crashlytics, Firebase, in-app updates) are selected per-platform through `AppDependencies`. No db/orm adapter exists by design — do not add without escalating.
 
 #### testing-analysis-ci
 
