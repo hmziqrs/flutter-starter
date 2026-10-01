@@ -97,6 +97,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
 
     return EscapeDismissibleOverlay(
       child: FScaffold(
@@ -111,15 +113,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  context.spacing.lg,
-                  context.spacing.sm,
-                  context.spacing.lg,
-                  context.spacing.md,
+                  spacing.lg,
+                  spacing.sm,
+                  spacing.lg,
+                  spacing.md,
                 ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: context.presentationTokens.readingContentMaxWidth,
+                      maxWidth: tokens.readingContentMaxWidth,
                     ),
                     child: SearchField(
                       controller: _textController,
@@ -135,7 +137,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: context.presentationTokens.wideContentMaxWidth,
+                      maxWidth: tokens.wideContentMaxWidth,
                     ),
                     child: const _SearchResultsList(),
                   ),
@@ -180,12 +182,13 @@ class _SearchHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        context.spacing.sm,
-        context.spacing.sm,
-        context.spacing.lg,
-        context.spacing.sm,
+        spacing.sm,
+        spacing.sm,
+        spacing.lg,
+        spacing.sm,
       ),
       child: Row(
         children: <Widget>[
@@ -200,7 +203,7 @@ class _SearchHeader extends StatelessWidget {
                   : FLucideIcons.arrowLeft,
             ),
           ),
-          SizedBox(width: context.spacing.sm),
+          SizedBox(width: spacing.sm),
           Expanded(
             child: Text(
               title,

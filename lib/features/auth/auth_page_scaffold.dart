@@ -24,17 +24,23 @@ class AuthPageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     return FScaffold(
       key: ValueKey('auth-$screenId-page'),
       child: SafeArea(
         child: switch (layoutClass) {
           AppLayoutClass.compact => _scrollingForm(
             context,
+            spacing: spacing,
+            tokens: tokens,
             storageKey: 'auth-$screenId-layout-compact',
             card: false,
           ),
           AppLayoutClass.medium => _scrollingForm(
             context,
+            spacing: spacing,
+            tokens: tokens,
             storageKey: 'auth-$screenId-layout-medium',
             card: true,
           ),
@@ -43,18 +49,18 @@ class AuthPageScaffold extends StatelessWidget {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: _scrollPadding(context),
+                  padding: _scrollPadding(context, spacing),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: context.presentationTokens.readingContentMaxWidth,
+                      maxWidth: tokens.readingContentMaxWidth,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(icon, size: context.spacing.xl3),
-                        SizedBox(height: context.spacing.xl),
+                        Icon(icon, size: spacing.xl3),
+                        SizedBox(height: spacing.xl),
                         Text(title, style: context.theme.typography.display.xl4),
-                        SizedBox(height: context.spacing.lg),
+                        SizedBox(height: spacing.lg),
                         Text(body, style: context.theme.typography.body.lg),
                       ],
                     ),
@@ -64,6 +70,8 @@ class AuthPageScaffold extends StatelessWidget {
               Expanded(
                 child: _scrollingForm(
                   context,
+                  spacing: spacing,
+                  tokens: tokens,
                   storageKey: 'auth-$screenId-expanded-form',
                   card: true,
                 ),
@@ -77,22 +85,24 @@ class AuthPageScaffold extends StatelessWidget {
 
   Widget _scrollingForm(
     BuildContext context, {
+    required AppSpacingValues spacing,
+    required AppPresentationTokens tokens,
     required String storageKey,
     required bool card,
   }) {
     return ListView(
       key: PageStorageKey(storageKey),
-      padding: _scrollPadding(context),
+      padding: _scrollPadding(context, spacing),
       children: [
         if (card)
           Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: context.presentationTokens.formContentMaxWidth,
+                maxWidth: tokens.formContentMaxWidth,
               ),
               child: FCard(
                 child: Padding(
-                  padding: EdgeInsets.all(context.spacing.xl),
+                  padding: EdgeInsets.all(spacing.xl),
                   child: FocusTraversalGroup(
                     policy: ReadingOrderTraversalPolicy(),
                     child: form,
@@ -110,12 +120,12 @@ class AuthPageScaffold extends StatelessWidget {
     );
   }
 
-  EdgeInsetsGeometry _scrollPadding(BuildContext context) {
+  EdgeInsetsGeometry _scrollPadding(BuildContext context, AppSpacingValues spacing) {
     return EdgeInsetsDirectional.fromSTEB(
-      context.spacing.xl,
-      context.spacing.xl2,
-      context.spacing.xl,
-      context.spacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
+      spacing.xl,
+      spacing.xl2,
+      spacing.xl,
+      spacing.xl3 + MediaQuery.viewInsetsOf(context).bottom,
     );
   }
 }

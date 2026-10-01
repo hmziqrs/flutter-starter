@@ -76,6 +76,7 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
   Widget _buildContent(BuildContext context, AppLayoutClass layoutClass) {
     _retainPageAcrossLayoutChange(layoutClass);
     final translations = context.t;
+    final spacing = context.spacing;
     final slides = widget.slides ?? OnboardingFixtures.standard(translations);
 
     return FScaffold(
@@ -86,9 +87,9 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
           children: [
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
-                context.spacing.xl,
-                context.spacing.sm,
-                context.spacing.xl,
+                spacing.xl,
+                spacing.sm,
+                spacing.xl,
                 0,
               ),
               child: Align(
@@ -118,10 +119,10 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
             ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
-                context.spacing.xl,
-                context.spacing.md,
-                context.spacing.xl,
-                context.spacing.xl,
+                spacing.xl,
+                spacing.md,
+                spacing.xl,
+                spacing.xl,
               ),
               child: Column(
                 children: [
@@ -132,7 +133,7 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                       key: const ValueKey('onboarding-progress'),
                     ),
                   ),
-                  SizedBox(height: context.spacing.md),
+                  SizedBox(height: spacing.md),
                   Row(
                     children: [
                       if (_page > 0)

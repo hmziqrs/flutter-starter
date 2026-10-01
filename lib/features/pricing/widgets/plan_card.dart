@@ -32,12 +32,13 @@ class PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = selected ? context.theme.colors.primary : context.theme.colors.border;
+    final spacing = context.spacing;
     return Semantics(
       selected: selected,
       enabled: onSelect != null,
       child: AppCard(
         key: ValueKey('plan-card-${plan.id}'),
-        padding: EdgeInsets.all(context.spacing.xl),
+        padding: EdgeInsets.all(spacing.xl),
         style: .delta(
           decoration: .shapeDelta(
             shape: RoundedSuperellipseBorder(
@@ -50,8 +51,8 @@ class PlanCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Wrap(
-              spacing: context.spacing.sm,
-              runSpacing: context.spacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(plan.name, style: context.theme.typography.display.xl),
@@ -61,21 +62,21 @@ class PlanCard extends StatelessWidget {
                   FBadge(variant: .destructive, child: Text(label)),
               ],
             ),
-            SizedBox(height: context.spacing.sm),
+            SizedBox(height: spacing.sm),
             Text(plan.description, style: context.theme.typography.body.sm),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.end,
-              spacing: context.spacing.sm,
+              spacing: spacing.sm,
               children: [
                 Text(formattedPrice, style: context.theme.typography.display.xl2),
                 Padding(
-                  padding: EdgeInsets.only(bottom: context.spacing.xs),
+                  padding: EdgeInsets.only(bottom: spacing.xs),
                   child: Text(periodLabel, style: context.theme.typography.body.sm),
                 ),
               ],
             ),
-            SizedBox(height: context.spacing.lg),
+            SizedBox(height: spacing.lg),
             for (final benefit in plan.benefits) ...[
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,13 +85,13 @@ class PlanCard extends StatelessWidget {
                     padding: EdgeInsets.only(top: context.appUnit.snap(2)),
                     child: const Icon(FLucideIcons.check, size: 18),
                   ),
-                  SizedBox(width: context.spacing.sm),
+                  SizedBox(width: spacing.sm),
                   Expanded(child: Text(benefit)),
                 ],
               ),
-              SizedBox(height: context.spacing.sm),
+              SizedBox(height: spacing.sm),
             ],
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             FButton(
               key: ValueKey('select-plan-${plan.id}'),
               variant: selected ? .primary : .outline,

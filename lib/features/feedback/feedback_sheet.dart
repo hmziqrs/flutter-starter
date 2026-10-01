@@ -101,6 +101,8 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     final isFixture = widget.presentation != null;
     final busy = presentation.isBusy;
     final includeScreenshot = isFixture ? _includeScreenshot : liveIncludeScreenshot;
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
 
     return Semantics(
       label: translations.title,
@@ -108,17 +110,17 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: context.presentationTokens.formContentMaxWidth,
+            maxWidth: tokens.formContentMaxWidth,
           ),
           child: Padding(
-            padding: EdgeInsets.all(context.spacing.xl),
+            padding: EdgeInsets.all(spacing.xl),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _Header(title: translations.title),
-                  SizedBox(height: context.spacing.md),
+                  SizedBox(height: spacing.md),
                   switch (presentation.status) {
                     FeedbackPresentationStatus.success => _SuccessCopy(
                       title: translations.successTitle,
@@ -149,6 +151,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
     required bool isFixture,
   }) {
     final translations = context.t;
+    final spacing = context.spacing;
     return Form(
       key: _formKey,
       child: Column(
@@ -177,7 +180,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               return null;
             },
           ),
-          SizedBox(height: context.spacing.md),
+          SizedBox(height: spacing.md),
           FTextFormField(
             key: const ValueKey('feedback-email'),
             control: .managed(
@@ -198,7 +201,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               );
             },
           ),
-          SizedBox(height: context.spacing.md),
+          SizedBox(height: spacing.md),
           FSwitch(
             key: const ValueKey('feedback-include-screenshot'),
             value: includeScreenshot,
@@ -207,10 +210,10 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
             onChange: isFixture ? null : _pushIncludeScreenshot,
           ),
           if (_feedbackAlert(context, presentation) case final alert?) ...[
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             alert,
           ],
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           Row(
             children: [
               if (busy) const BusyIndicator(),
@@ -223,7 +226,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               ),
             ],
           ),
-          SizedBox(height: context.spacing.sm),
+          SizedBox(height: spacing.sm),
           FButton(
             key: const ValueKey('feedback-cancel'),
             variant: .ghost,

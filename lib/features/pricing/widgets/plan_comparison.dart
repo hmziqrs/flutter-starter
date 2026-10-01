@@ -14,32 +14,34 @@ class PlanComparison extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     return AppCard(
       key: const ValueKey('plan-comparison'),
-      padding: EdgeInsets.all(context.spacing.xl),
+      padding: EdgeInsets.all(spacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: context.theme.typography.display.lg),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           Wrap(
-            spacing: context.spacing.lg,
-            runSpacing: context.spacing.lg,
+            spacing: spacing.lg,
+            runSpacing: spacing.lg,
             children: [
               for (final plan in plans)
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    minWidth: context.appUnit.un(180) * context.presentationTokens.spacingScale,
-                    maxWidth: context.appUnit.un(320) * context.presentationTokens.spacingScale,
+                    minWidth: context.appUnit.un(180) * tokens.spacingScale,
+                    maxWidth: context.appUnit.un(320) * tokens.spacingScale,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(plan.name, style: context.theme.typography.body.lg),
-                      SizedBox(height: context.spacing.sm),
+                      SizedBox(height: spacing.sm),
                       for (final benefit in plan.benefits)
                         Padding(
-                          padding: EdgeInsets.only(bottom: context.spacing.xs),
+                          padding: EdgeInsets.only(bottom: spacing.xs),
                           child: Text('• $benefit'),
                         ),
                     ],

@@ -19,25 +19,27 @@ class ReadingContentScrollFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     return ListView(
       padding: EdgeInsetsDirectional.fromSTEB(
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl,
-        context.spacing.xl2,
+        spacing.xl,
+        spacing.xl,
+        spacing.xl,
+        spacing.xl2,
       ),
       children: [
         Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: maxWidth ?? context.presentationTokens.readingContentMaxWidth,
+              maxWidth: maxWidth ?? tokens.readingContentMaxWidth,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (title != null) ...[
                   Text(title!, style: context.theme.typography.display.xl2),
-                  SizedBox(height: context.spacing.xl),
+                  SizedBox(height: spacing.xl),
                 ],
                 child,
               ],

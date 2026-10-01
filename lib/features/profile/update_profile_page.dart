@@ -216,6 +216,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
   Widget build(BuildContext context) {
     return AppLayoutScope(
       builder: (context, layoutClass) {
+        final spacing = context.spacing;
+        final tokens = context.presentationTokens;
         final form = _ProfileForm(
           formKey: _formKey,
           displayNameFieldKey: _displayNameFieldKey,
@@ -252,10 +254,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
                 controller: _scrollController,
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsetsDirectional.fromSTEB(
-                  context.spacing.xl,
-                  context.spacing.xl,
-                  context.spacing.xl,
-                  context.spacing.xl2 + MediaQuery.viewInsetsOf(context).bottom,
+                  spacing.xl,
+                  spacing.xl,
+                  spacing.xl,
+                  spacing.xl2 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
                 children: [
                   if (_isDirty) const SizedBox.shrink(key: ValueKey('profile-dirty-indicator')),
@@ -263,8 +265,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth: layoutClass == AppLayoutClass.expanded
-                            ? context.presentationTokens.wideContentMaxWidth
-                            : context.presentationTokens.formContentMaxWidth,
+                            ? tokens.wideContentMaxWidth
+                            : tokens.formContentMaxWidth,
                       ),
                       child: switch (layoutClass) {
                         AppLayoutClass.compact || AppLayoutClass.medium => form,
@@ -478,17 +480,18 @@ class _ProfileForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final translations = context.t;
     final profile = translations.profile.update;
+    final spacing = context.spacing;
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(profile.title, style: context.theme.typography.display.xl3),
-          SizedBox(height: context.spacing.sm),
+          SizedBox(height: spacing.sm),
           Text(profile.body, style: context.theme.typography.body.lg),
-          SizedBox(height: context.spacing.xl2),
+          SizedBox(height: spacing.xl2),
           _AvatarEditor(onAvatarPicked: onAvatarPicked, enabled: _enabled),
-          SizedBox(height: context.spacing.xl2),
+          SizedBox(height: spacing.xl2),
           AppTvEditableField(
             activationKey: const ValueKey('profile-display-name-activation'),
             label: profile.displayName,
@@ -518,7 +521,7 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           AppTvEditableField(
             activationKey: const ValueKey('profile-username-activation'),
             label: profile.username,
@@ -547,7 +550,7 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           FTextFormField.email(
             key: const ValueKey('profile-email'),
             control: .managed(controller: emailController),
@@ -556,7 +559,7 @@ class _ProfileForm extends StatelessWidget {
             readOnly: true,
             canRequestFocus: false,
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           AppTvEditableField(
             activationKey: const ValueKey('profile-bio-activation'),
             label: profile.bio,
@@ -592,14 +595,14 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          SizedBox(height: context.spacing.xl),
+          SizedBox(height: spacing.xl),
           if (phase == ProfilePresentationPhase.saved) ...[
             FAlert(
               key: const ValueKey('profile-saved'),
               icon: const Icon(FLucideIcons.circleCheck),
               title: Text(profile.saved),
             ),
-            SizedBox(height: context.spacing.lg),
+            SizedBox(height: spacing.lg),
           ],
           FButton(
             key: const ValueKey('profile-save'),

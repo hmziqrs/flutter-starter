@@ -21,27 +21,29 @@ class OnboardingSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final visual = _OnboardingVisual(data: data, brandLabel: brandLabel);
     final copy = _OnboardingCopy(data: data);
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
 
     return SingleChildScrollView(
       key: ValueKey('onboarding-slide-${data.id}'),
       padding: EdgeInsetsDirectional.fromSTEB(
-        context.spacing.xl,
-        context.spacing.lg,
-        context.spacing.xl,
-        context.spacing.xl,
+        spacing.xl,
+        spacing.lg,
+        spacing.xl,
+        spacing.xl,
       ),
       child: switch (layoutClass) {
         AppLayoutClass.compact => Column(
           children: [
             visual,
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             copy,
           ],
         ),
         AppLayoutClass.medium => Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: context.presentationTokens.readingContentMaxWidth,
+              maxWidth: tokens.readingContentMaxWidth,
             ),
             child: FCard(
               child: Padding(
@@ -49,7 +51,7 @@ class OnboardingSlide extends StatelessWidget {
                 child: Column(
                   children: [
                     visual,
-                    SizedBox(height: context.spacing.xl2),
+                    SizedBox(height: spacing.xl2),
                     copy,
                   ],
                 ),
@@ -59,11 +61,11 @@ class OnboardingSlide extends StatelessWidget {
         ),
         AppLayoutClass.expanded => Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: context.presentationTokens.wideContentMaxWidth),
+            constraints: BoxConstraints(maxWidth: tokens.wideContentMaxWidth),
             child: Row(
               children: [
                 Expanded(child: visual),
-                SizedBox(width: context.spacing.xl3),
+                SizedBox(width: spacing.xl3),
                 Expanded(
                   child: FCard(
                     child: Padding(

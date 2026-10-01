@@ -115,7 +115,8 @@ class _AnnouncementBannerViewState extends State<AnnouncementBannerView> {
     final translations = context.t;
     final presentation = _presentationFor(widget.announcement.severity, translations);
     final actionRoute = widget.announcement.actionRoute;
-    final textExtentReserve = _actionsExtent == 0 ? 0.0 : _actionsExtent + context.spacing.sm;
+    final spacing = context.spacing;
+    final textExtentReserve = _actionsExtent == 0 ? 0.0 : _actionsExtent + spacing.sm;
 
     return Semantics(
       container: true,
@@ -128,8 +129,8 @@ class _AnnouncementBannerViewState extends State<AnnouncementBannerView> {
           bottom: false,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: context.spacing.lg,
-              vertical: context.spacing.sm,
+              horizontal: spacing.lg,
+              vertical: spacing.sm,
             ),
             child: SizedBox(
               width: double.infinity,
@@ -162,8 +163,8 @@ class _AnnouncementBannerViewState extends State<AnnouncementBannerView> {
                     ),
                   ),
                   PositionedDirectional(
-                    top: context.spacing.xs,
-                    end: context.spacing.xs,
+                    top: spacing.xs,
+                    end: spacing.xs,
                     child: _MeasuredWidth(
                       onMeasured: _updateActionsExtent,
                       child: Row(
@@ -177,7 +178,7 @@ class _AnnouncementBannerViewState extends State<AnnouncementBannerView> {
                               onPress: widget.onAction,
                               child: Text(translations.announcements.actionLearnMore),
                             ),
-                            SizedBox(width: context.spacing.sm),
+                            SizedBox(width: spacing.sm),
                           ],
                           if (widget.announcement.dismissible)
                             FButton.icon(

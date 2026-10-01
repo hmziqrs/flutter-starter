@@ -175,6 +175,8 @@ class _LoginViewState extends ConsumerState<_LoginView>
 
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     final status = widget.presentation.status;
     final submitting = _submitting;
     final locked =
@@ -270,7 +272,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
                   ? translations.validation.email
                   : null,
             ),
-            SizedBox(height: context.spacing.lg),
+            SizedBox(height: spacing.lg),
             passwordFormField(
               activationKey: const ValueKey('auth-login-password-activation'),
               fieldKey: const ValueKey('auth-login-password'),
@@ -284,7 +286,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
               textInputAction: TextInputAction.done,
               onSubmit: () => unawaited(_submit()),
             ),
-            SizedBox(height: context.spacing.lg),
+            SizedBox(height: spacing.lg),
             FormField<bool>(
               initialValue: false,
               onSaved: (value) => _rememberMe = value ?? false,
@@ -292,7 +294,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
               builder: (field) => MergeSemantics(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: context.presentationTokens.controlMinHeight,
+                    minHeight: tokens.controlMinHeight,
                   ),
                   child: FCheckbox(
                     key: const ValueKey('auth-login-remember'),
@@ -305,7 +307,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
                 ),
               ),
             ),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             FButton(
               key: const ValueKey('auth-login-submit'),
               focusNode: _submitFocus,
@@ -322,11 +324,11 @@ class _LoginViewState extends ConsumerState<_LoginView>
                 textAlign: TextAlign.center,
               ),
             ),
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: context.spacing.sm,
-              runSpacing: context.spacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               children: [
                 FormSubmitButton(
                   buttonKey: const ValueKey('auth-login-forgot-password'),
