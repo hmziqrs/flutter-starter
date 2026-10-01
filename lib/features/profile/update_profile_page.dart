@@ -13,7 +13,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/forms/form_field_reveal.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
@@ -94,6 +94,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
   final RestorableStringN _displayNameDraft = RestorableStringN(null);
   final RestorableStringN _usernameDraft = RestorableStringN(null);
   final RestorableStringN _bioDraft = RestorableStringN(null);
+  late final ValueNotifier<ProfileDraft> _previewDraft = ValueNotifier<ProfileDraft>(
+    _currentDraft,
+  );
   bool _restored = false;
 
   ProfileDraft get _currentDraft {
@@ -148,6 +151,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     }
     _synchronizing = false;
     _restored = true;
+    _previewDraft.value = _currentDraft;
   }
 
   void _syncDrafts() {
@@ -179,6 +183,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     _replaceControllerText(_emailController, draft.email);
     _replaceControllerText(_bioController, draft.bio);
     _synchronizing = false;
+    _previewDraft.value = _currentDraft;
 
     if (_phase case ProfilePresentationPhase.invalid) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _validateInjectedState());
@@ -203,6 +208,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     _displayNameDraft.dispose();
     _usernameDraft.dispose();
     _bioDraft.dispose();
+    _previewDraft.dispose();
     super.dispose();
   }
 
@@ -257,21 +263,29 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth: layoutClass == AppLayoutClass.expanded
-                            ? AppSizes.wideContentMaxWidth
-                            : AppSizes.formContentMaxWidth,
+                            ? context.presentationTokens.wideContentMaxWidth
+                            : context.presentationTokens.formContentMaxWidth,
                       ),
                       child: switch (layoutClass) {
                         AppLayoutClass.compact || AppLayoutClass.medium => form,
-                        AppLayoutClass.expanded => Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: form),
-                            SizedBox(width: context.spacing.xl2),
-                            SizedBox(
-                              width: 320,
-                              child: _ProfilePreview(draft: _currentDraft),
-                            ),
-                          ],
+                        AppLayoutClass.expanded => LayoutBuilder(
+                          builder: (context, constraints) {
+                            final previewWidth = constraints.maxWidth * 0.27;
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: form),
+                                SizedBox(width: context.spacing.xl2),
+                                SizedBox(
+                                  width: previewWidth,
+                                  child: ValueListenableBuilder<ProfileDraft>(
+                                    valueListenable: _previewDraft,
+                                    builder: (context, draft, _) => _ProfilePreview(draft: draft),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       },
                     ),
@@ -290,11 +304,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     if (_restored) {
       _syncDrafts();
     }
+    _previewDraft.value = _currentDraft;
     final nextPhase = _isDirty ? ProfilePresentationPhase.dirty : ProfilePresentationPhase.idle;
     if (_phase != nextPhase) {
       setState(() => _phase = nextPhase);
-    } else {
-      setState(() {});
     }
   }
 
@@ -344,6 +357,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     _replaceControllerText(_usernameController, draft.username);
     _replaceControllerText(_bioController, draft.bio);
     _baselineDraft = draft;
+    _previewDraft.value = _currentDraft;
     setState(() => _phase = ProfilePresentationPhase.saved);
   }
 
@@ -467,11 +481,11 @@ class _ProfileForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(profile.title, style: context.theme.typography.display.xl3),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: context.spacing.sm),
           Text(profile.body, style: context.theme.typography.body.lg),
-          const SizedBox(height: AppSpacing.xl2),
+          SizedBox(height: context.spacing.xl2),
           _AvatarEditor(onAvatarPicked: onAvatarPicked, enabled: _enabled),
-          const SizedBox(height: AppSpacing.xl2),
+          SizedBox(height: context.spacing.xl2),
           AppTvEditableField(
             activationKey: const ValueKey('profile-display-name-activation'),
             label: profile.displayName,
@@ -501,7 +515,7 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           AppTvEditableField(
             activationKey: const ValueKey('profile-username-activation'),
             label: profile.username,
@@ -530,7 +544,7 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           FTextFormField.email(
             key: const ValueKey('profile-email'),
             control: .managed(controller: emailController),
@@ -539,7 +553,7 @@ class _ProfileForm extends StatelessWidget {
             readOnly: true,
             canRequestFocus: false,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           AppTvEditableField(
             activationKey: const ValueKey('profile-bio-activation'),
             label: profile.bio,
@@ -575,14 +589,14 @@ class _ProfileForm extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: context.spacing.xl),
           if (phase == ProfilePresentationPhase.saved) ...[
             FAlert(
               key: const ValueKey('profile-saved'),
               icon: const Icon(FLucideIcons.circleCheck),
               title: Text(profile.saved),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
           ],
           FButton(
             key: const ValueKey('profile-save'),
@@ -679,7 +693,6 @@ class _ProfilePreview extends StatelessWidget {
     final translations = context.t.profile.update;
     return AppCard(
       key: const ValueKey('profile-preview'),
-      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -711,11 +724,13 @@ String? _required(String? value, String field, Translations translations) {
 
 String? _username(String? value, Translations translations) {
   final normalized = value?.trim() ?? '';
-  if (!RegExp(r'^[A-Za-z0-9._]{3,24}$').hasMatch(normalized)) {
+  if (!_usernamePattern.hasMatch(normalized)) {
     return translations.validation.username;
   }
   return null;
 }
+
+final RegExp _usernamePattern = RegExp(r'^[A-Za-z0-9._]{3,24}$');
 
 String? _bio(String? value, Translations translations) {
   if ((value ?? '').characters.length > _UpdateProfilePageState.bioMaximum) {

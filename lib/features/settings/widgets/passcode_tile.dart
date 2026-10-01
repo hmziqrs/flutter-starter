@@ -19,7 +19,9 @@ class _PasscodeTileState extends ConsumerState<PasscodeTile> with SettingsSaveFa
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final enabled = ref.watch(settingsControllerProvider).passcodeEnabled;
+    final enabled = ref.watch(
+      settingsControllerProvider.select((state) => state.passcodeEnabled),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
     return SettingsToggleCard(
       keyName: 'passcode',

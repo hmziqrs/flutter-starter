@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/app.dart';
 import 'package:starter/app/config/app_config.dart';
@@ -13,6 +14,8 @@ import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+
+import 'support/pump_app_frames.dart';
 
 void main() {
   const localeCases = [
@@ -226,6 +229,56 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(retryCount, 1);
+  });
+
+  testWidgets('inset-only media query changes keep the active theme identical', (tester) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    _setViewport(tester, const Size(390, 844));
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpWidget(
+      App(
+        config: _developmentConfig,
+        dependencies: AppDependencies.inMemory(),
+      ),
+    );
+    await pumpAppFrames(tester);
+
+    FThemeData activeTheme() => FTheme.of(tester.element(find.text('Welcome, Alex')));
+    final before = activeTheme();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(identical(before, activeTheme()), isTrue);
+  });
+
+  testWidgets('width changes rebuild the active theme for the new typography scale', (
+    tester,
+  ) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    _setViewport(tester, const Size(390, 844));
+    await tester.pumpWidget(
+      App(
+        config: _developmentConfig,
+        dependencies: AppDependencies.inMemory(),
+      ),
+    );
+    await pumpAppFrames(tester);
+
+    FThemeData activeTheme() => FTheme.of(tester.element(find.text('Welcome, Alex')));
+    final before = activeTheme();
+
+    tester.view.physicalSize = const Size(640, 844);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    final after = activeTheme();
+    expect(identical(before, after), isFalse);
+    expect(
+      after.typography.body.md.fontSize,
+      greaterThan(before.typography.body.md.fontSize!),
+    );
   });
 }
 

@@ -20,7 +20,11 @@ class _AutoLockDelayTileState extends ConsumerState<AutoLockDelayTile>
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final state = ref.watch(settingsControllerProvider);
+    final state = ref.watch(
+      settingsControllerProvider.select(
+        (s) => (autoLockDelaySeconds: s.autoLockDelaySeconds, passcodeEnabled: s.passcodeEnabled),
+      ),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
     return SettingsToggleCard(
       keyName: 'auto-lock-delay',

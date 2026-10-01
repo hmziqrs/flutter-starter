@@ -59,6 +59,7 @@ import 'package:starter/infrastructure/platform/system_ui_controller.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_provider.dart';
 import 'package:starter/infrastructure/sharing/share_service.dart';
 import 'package:starter/infrastructure/updates/app_update_service.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
@@ -200,6 +201,13 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     ],
   );
 
+  static final _ForuiThemeMemo _lightThemeMemo = _ForuiThemeMemo();
+  static final _ForuiThemeMemo _darkThemeMemo = _ForuiThemeMemo();
+  static final _ForuiThemeMemo _activeThemeMemo = _ForuiThemeMemo();
+  final _MaterialThemeMemo _lightMaterialThemeMemo = _MaterialThemeMemo();
+  final _MaterialThemeMemo _darkMaterialThemeMemo = _MaterialThemeMemo();
+  final _MaterialThemeMemo _activeMaterialThemeMemo = _MaterialThemeMemo();
+
   @override
   void initState() {
     super.initState();
@@ -277,26 +285,35 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsControllerProvider);
+    final themeSettings = ref.watch(
+      settingsControllerProvider.select(
+        (settings) => (
+          themeMode: settings.themeMode,
+          accent: settings.accent,
+          fontScale: settings.fontScale,
+          fontFamily: settings.fontFamily,
+        ),
+      ),
+    );
     final presentationPolicy = ref.watch(presentationPolicyProvider);
     final interactionPolicy = presentationPolicy.interactionPolicy;
     final pageTransitionsTheme = presentationPolicy.isTenFoot
         ? televisionPageTransitionsTheme
         : nativePageTransitionsTheme;
     final localeData = TranslationProvider.of(context);
-    final lightTheme = ForuiThemeFactory.build(
+    final lightTheme = _lightThemeMemo.build(
       brightness: Brightness.light,
-      accent: settings.accent,
-      fontScale: settings.fontScale,
-      fontFamily: settings.fontFamily,
+      accent: themeSettings.accent,
+      fontScale: themeSettings.fontScale,
+      fontFamily: themeSettings.fontFamily,
       interactionPolicy: interactionPolicy,
       presentationPolicy: presentationPolicy,
     );
-    final darkTheme = ForuiThemeFactory.build(
+    final darkTheme = _darkThemeMemo.build(
       brightness: Brightness.dark,
-      accent: settings.accent,
-      fontScale: settings.fontScale,
-      fontFamily: settings.fontFamily,
+      accent: themeSettings.accent,
+      fontScale: themeSettings.fontScale,
+      fontFamily: themeSettings.fontFamily,
       interactionPolicy: interactionPolicy,
       presentationPolicy: presentationPolicy,
     );
@@ -309,19 +326,15 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       locale: localeData.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: FLocalizations.localizationsDelegates,
-      theme: lightTheme.toApproximateMaterialTheme().copyWith(
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      darkTheme: darkTheme.toApproximateMaterialTheme().copyWith(
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      themeMode: _materialThemeMode(settings.themeMode),
+      theme: _lightMaterialThemeMemo.build(lightTheme, pageTransitionsTheme),
+      darkTheme: _darkMaterialThemeMemo.build(darkTheme, pageTransitionsTheme),
+      themeMode: _materialThemeMode(themeSettings.themeMode),
       builder: (context, child) {
-        final activeTheme = ForuiThemeFactory.build(
+        final activeTheme = _activeThemeMemo.build(
           brightness: Theme.of(context).brightness,
-          accent: settings.accent,
-          fontScale: settings.fontScale,
-          fontFamily: settings.fontFamily,
+          accent: themeSettings.accent,
+          fontScale: themeSettings.fontScale,
+          fontFamily: themeSettings.fontFamily,
           interactionPolicy: interactionPolicy,
           responsiveFontScale: context.appUnit.typographyScale,
           presentationPolicy: presentationPolicy,
@@ -329,16 +342,14 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
 
         SystemUiController.applyOverlayStyle(
           brightness: Theme.of(context).brightness,
-          accent: settings.accent,
+          accent: themeSettings.accent,
           capabilities: PlatformCapabilities.current(),
         );
 
         return AppPresentationScope(
           policy: presentationPolicy,
           child: Theme(
-            data: activeTheme.toApproximateMaterialTheme().copyWith(
-              pageTransitionsTheme: pageTransitionsTheme,
-            ),
+            data: _activeMaterialThemeMemo.build(activeTheme, pageTransitionsTheme),
             child: AppInputObserver(
               child: FTheme(
                 data: activeTheme,
@@ -422,6 +433,75 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     if (ref.read(autoLockDelaySecondsProvider) > 0) {
       ref.read(autoLockControllerProvider.notifier).extend();
     }
+  }
+}
+
+typedef _ForuiThemeKey = ({
+  Brightness brightness,
+  AppAccent accent,
+  double fontScale,
+  AppInteractionPolicy interactionPolicy,
+  String? fontFamily,
+  double responsiveFontScale,
+  AppPresentationPolicy? presentationPolicy,
+});
+
+final class _ForuiThemeMemo {
+  _ForuiThemeKey? _key;
+  late FThemeData _theme;
+
+  FThemeData build({
+    required Brightness brightness,
+    required AppAccent accent,
+    required double fontScale,
+    required AppInteractionPolicy interactionPolicy,
+    String? fontFamily,
+    double responsiveFontScale = 1,
+    AppPresentationPolicy? presentationPolicy,
+  }) {
+    final key = (
+      brightness: brightness,
+      accent: accent,
+      fontScale: fontScale,
+      interactionPolicy: interactionPolicy,
+      fontFamily: fontFamily,
+      responsiveFontScale: responsiveFontScale,
+      presentationPolicy: presentationPolicy,
+    );
+    if (_key == key) {
+      return _theme;
+    }
+    final theme = ForuiThemeFactory.build(
+      brightness: brightness,
+      accent: accent,
+      fontScale: fontScale,
+      fontFamily: fontFamily,
+      interactionPolicy: interactionPolicy,
+      responsiveFontScale: responsiveFontScale,
+      presentationPolicy: presentationPolicy,
+    );
+    _key = key;
+    _theme = theme;
+    return theme;
+  }
+}
+
+final class _MaterialThemeMemo {
+  FThemeData? _data;
+  PageTransitionsTheme? _pageTransitionsTheme;
+  late ThemeData _theme;
+
+  ThemeData build(FThemeData data, PageTransitionsTheme pageTransitionsTheme) {
+    if (identical(_data, data) && identical(_pageTransitionsTheme, pageTransitionsTheme)) {
+      return _theme;
+    }
+    final theme = data.toApproximateMaterialTheme().copyWith(
+      pageTransitionsTheme: pageTransitionsTheme,
+    );
+    _data = data;
+    _pageTransitionsTheme = pageTransitionsTheme;
+    _theme = theme;
+    return theme;
   }
 }
 

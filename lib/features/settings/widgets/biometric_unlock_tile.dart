@@ -19,7 +19,9 @@ class _BiometricUnlockTileState extends ConsumerState<BiometricUnlockTile>
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final enabled = ref.watch(settingsControllerProvider).biometricUnlockEnabled;
+    final enabled = ref.watch(
+      settingsControllerProvider.select((state) => state.biometricUnlockEnabled),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
     final availability = ref.watch(biometricAvailabilityProvider);
     final canCheck = availability.maybeWhen(

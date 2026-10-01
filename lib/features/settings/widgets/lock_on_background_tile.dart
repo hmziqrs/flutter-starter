@@ -18,7 +18,11 @@ class _LockOnBackgroundTileState extends ConsumerState<LockOnBackgroundTile>
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final state = ref.watch(settingsControllerProvider);
+    final state = ref.watch(
+      settingsControllerProvider.select(
+        (s) => (lockOnBackground: s.lockOnBackground, passcodeEnabled: s.passcodeEnabled),
+      ),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
     return SettingsToggleCard(
       keyName: 'lock-on-background',
