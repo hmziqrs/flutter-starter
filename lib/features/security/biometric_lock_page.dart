@@ -52,9 +52,10 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
   @override
   Widget build(BuildContext context) {
     final layoutClass = ref.watch(appLayoutClassProvider);
-    final state = ref.watch(biometricUnlockControllerProvider);
     final translations = context.t.security.biometric;
-    final isUnavailable = state is BiometricLockUnavailable;
+    final isUnavailable = ref.watch(
+      biometricUnlockControllerProvider.select((s) => s is BiometricLockUnavailable),
+    );
 
     final title = isUnavailable ? translations.unavailableTitle : translations.lockTitle;
     final body = isUnavailable ? translations.unavailableBody : translations.lockBody;
