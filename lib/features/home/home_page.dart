@@ -37,17 +37,19 @@ class HomePage extends ConsumerWidget {
       AppLayoutClass.medium => 2,
       AppLayoutClass.expanded => 3,
     };
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
 
     return SafeArea(
       bottom: false,
       child: ReadingContentScrollFrame(
         key: ValueKey('home-layout-${layoutClass.name}'),
-        maxWidth: context.presentationTokens.wideContentMaxWidth,
+        maxWidth: tokens.wideContentMaxWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _HomeHeader(viewData: viewData),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             _QuickActions(
               columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
               onOpenProfile: onOpenProfile,
@@ -55,9 +57,9 @@ class HomePage extends ConsumerWidget {
               onOpenSettings: onOpenSettings,
               onOpenLogin: onOpenLogin,
             ),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             _StatusSection(viewData: viewData, columns: columns),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             _RecentActivity(viewData: viewData),
           ],
         ),
@@ -114,20 +116,20 @@ class _QuickActions extends StatelessWidget {
         SizedBox(height: context.spacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final minimumCardExtent = context.presentationTokens.focusTargetMinSize * 4;
-            final resolvedColumns =
-                constraints.maxWidth >= (minimumCardExtent * 2) + context.spacing.md
+            final spacing = context.spacing;
+            final tokens = context.presentationTokens;
+            final minimumCardExtent = tokens.focusTargetMinSize * 4;
+            final resolvedColumns = constraints.maxWidth >= (minimumCardExtent * 2) + spacing.md
                 ? math.min(columns, 2)
                 : 1;
             final tileWidth =
-                (constraints.maxWidth - context.spacing.md * (resolvedColumns - 1)) /
-                resolvedColumns;
+                (constraints.maxWidth - spacing.md * (resolvedColumns - 1)) / resolvedColumns;
             return FocusTraversalGroup(
               policy: ReadingOrderTraversalPolicy(),
               child: Wrap(
                 key: ValueKey('home-quick-actions-$resolvedColumns'),
-                spacing: context.spacing.md,
-                runSpacing: context.spacing.md,
+                spacing: spacing.md,
+                runSpacing: spacing.md,
                 children: [
                   SizedBox(
                     width: tileWidth,
@@ -217,12 +219,13 @@ class _StatusSection extends StatelessWidget {
         SizedBox(height: context.spacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final gaps = context.spacing.sm * (columns - 1);
+            final spacing = context.spacing;
+            final gaps = spacing.sm * (columns - 1);
             final cardWidth = (constraints.maxWidth - gaps) / columns;
             return Wrap(
               key: ValueKey('home-status-grid-$columns'),
-              spacing: context.spacing.sm,
-              runSpacing: context.spacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               children: [
                 for (final status in viewData.statuses)
                   SizedBox(
@@ -246,17 +249,18 @@ class _StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = _statusContent(context.t, status.kind);
+    final spacing = context.spacing;
     return FCard(
       key: ValueKey('home-status-${status.id}'),
       child: Padding(
-        padding: EdgeInsets.all(context.spacing.lg),
+        padding: EdgeInsets.all(spacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(content.icon),
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             Text(content.title, style: context.theme.typography.display.md),
-            SizedBox(height: context.spacing.sm),
+            SizedBox(height: spacing.sm),
             Text(content.body, style: context.theme.typography.body.sm),
           ],
         ),

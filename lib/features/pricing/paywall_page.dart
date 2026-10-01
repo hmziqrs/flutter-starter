@@ -72,6 +72,8 @@ class _PaywallPageState extends State<PaywallPage> {
   Widget _buildContent(BuildContext context, AppLayoutClass layoutClass) {
     final translations = context.t;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     final columns = switch (layoutClass) {
       AppLayoutClass.compact => 1,
       AppLayoutClass.medium => 2,
@@ -86,9 +88,9 @@ class _PaywallPageState extends State<PaywallPage> {
           children: [
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
-                context.spacing.xl,
-                context.spacing.sm,
-                context.spacing.xl,
+                spacing.xl,
+                spacing.sm,
+                spacing.xl,
                 0,
               ),
               child: Align(
@@ -106,16 +108,16 @@ class _PaywallPageState extends State<PaywallPage> {
             Expanded(
               child: ListView(
                 padding: EdgeInsetsDirectional.fromSTEB(
-                  context.spacing.xl,
-                  context.spacing.sm,
-                  context.spacing.xl,
-                  context.spacing.xl3,
+                  spacing.xl,
+                  spacing.sm,
+                  spacing.xl,
+                  spacing.xl3,
                 ),
                 children: [
                   Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxWidth: context.presentationTokens.wideContentMaxWidth,
+                        maxWidth: tokens.wideContentMaxWidth,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,12 +126,12 @@ class _PaywallPageState extends State<PaywallPage> {
                             translations.pricing.paywallTitle,
                             style: context.theme.typography.display.xl3,
                           ),
-                          SizedBox(height: context.spacing.md),
+                          SizedBox(height: spacing.md),
                           Text(
                             translations.pricing.paywallBody,
                             style: context.theme.typography.body.lg,
                           ),
-                          SizedBox(height: context.spacing.lg),
+                          SizedBox(height: spacing.lg),
                           _BenefitList(
                             benefits: [
                               translations.pricing.benefitAdaptive,
@@ -137,7 +139,7 @@ class _PaywallPageState extends State<PaywallPage> {
                               translations.pricing.benefitAccessible,
                             ],
                           ),
-                          SizedBox(height: context.spacing.xl),
+                          SizedBox(height: spacing.xl),
                           BillingSelector(
                             value: _billingPeriod,
                             monthlyLabel: translations.pricing.monthly,
@@ -146,22 +148,22 @@ class _PaywallPageState extends State<PaywallPage> {
                             onChanged: (period) => setState(() => _billingPeriod = period),
                           ),
                           if (!_hasAvailablePlan) ...[
-                            SizedBox(height: context.spacing.lg),
+                            SizedBox(height: spacing.lg),
                             FAlert(
                               key: const ValueKey('paywall-unavailable'),
                               variant: .destructive,
                               title: Text(translations.pricing.unavailableReason),
                             ),
                           ],
-                          SizedBox(height: context.spacing.xl),
+                          SizedBox(height: spacing.xl),
                           LayoutBuilder(
                             builder: (context, constraints) {
-                              final gaps = context.spacing.lg * (columns - 1);
+                              final gaps = spacing.lg * (columns - 1);
                               final width = (constraints.maxWidth - gaps) / columns;
                               return Wrap(
                                 key: ValueKey('paywall-layout-${layoutClass.name}'),
-                                spacing: context.spacing.lg,
-                                runSpacing: context.spacing.lg,
+                                spacing: spacing.lg,
+                                runSpacing: spacing.lg,
                                 children: [
                                   for (final plan in widget.plans)
                                     SizedBox(
@@ -193,7 +195,7 @@ class _PaywallPageState extends State<PaywallPage> {
                               );
                             },
                           ),
-                          SizedBox(height: context.spacing.xl),
+                          SizedBox(height: spacing.xl),
                           FButton(
                             key: const ValueKey('paywall-continue'),
                             onPress: _canContinue
@@ -207,17 +209,17 @@ class _PaywallPageState extends State<PaywallPage> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          SizedBox(height: context.spacing.sm),
+                          SizedBox(height: spacing.sm),
                           Text(
                             translations.pricing.staticPurchaseNotice,
                             textAlign: TextAlign.center,
                             style: context.theme.typography.body.sm,
                           ),
-                          SizedBox(height: context.spacing.md),
+                          SizedBox(height: spacing.md),
                           Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: context.spacing.sm,
-                            runSpacing: context.spacing.sm,
+                            spacing: spacing.sm,
+                            runSpacing: spacing.sm,
                             children: [
                               FButton(
                                 key: const ValueKey('paywall-restore'),
@@ -270,16 +272,17 @@ class _BenefitList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
     return AppCard(
       child: Column(
         children: [
           for (final benefit in benefits)
             Padding(
-              padding: EdgeInsets.symmetric(vertical: context.spacing.xs),
+              padding: EdgeInsets.symmetric(vertical: spacing.xs),
               child: Row(
                 children: [
                   const Icon(FLucideIcons.circleCheck, size: 20),
-                  SizedBox(width: context.spacing.sm),
+                  SizedBox(width: spacing.sm),
                   Expanded(child: Text(benefit)),
                 ],
               ),

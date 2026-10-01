@@ -229,15 +229,17 @@ class _SettingsWideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
     return _SettingsDirectionalFocusBridge(
       navigation: FocusTraversalGroup(
         policy: WidgetOrderTraversalPolicy(),
         child: FocusScope(
           debugLabel: 'settings-section-navigation',
           child: SizedBox(
-            width: context.presentationTokens.navigationWidth,
+            width: tokens.navigationWidth,
             child: Padding(
-              padding: context.screenPadding,
+              padding: EdgeInsets.all(spacing.xl),
               child: LayoutBuilder(
                 builder: (context, constraints) => SingleChildScrollView(
                   child: ConstrainedBox(
@@ -249,7 +251,7 @@ class _SettingsWideLayout extends StatelessWidget {
                           translations.settings.title,
                           style: context.theme.typography.display.xl,
                         ),
-                        SizedBox(height: context.spacing.xl),
+                        SizedBox(height: spacing.xl),
                         AppSidebarItemGroup(
                           key: const ValueKey('settings-wide-navigation'),
                           children: [
@@ -647,6 +649,7 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     final settings = ref.watch(
       settingsControllerProvider.select(
         (state) => (
@@ -666,8 +669,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
           LabeledSectionCard(
             title: translations.settings.themeMode,
             child: Wrap(
-              spacing: context.spacing.sm,
-              runSpacing: context.spacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               children: [
                 for (final mode in AppThemeMode.values)
                   FButton(
@@ -680,12 +683,12 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           LabeledSectionCard(
             title: translations.settings.accent,
             child: Wrap(
-              spacing: context.spacing.sm,
-              runSpacing: context.spacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               children: [
                 for (final accent in AppAccent.values)
                   FButton(
@@ -698,14 +701,14 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           LabeledSectionCard(
             title: translations.settings.fontScale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('${(settings.fontScale * 100).round()}%'),
-                SizedBox(height: context.spacing.md),
+                SizedBox(height: spacing.md),
                 FSlider(
                   key: const ValueKey('font-scale-slider'),
                   control: .liftedContinuous(
@@ -729,15 +732,15 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           LabeledSectionCard(
             title: translations.settings.motionPreview,
             child: const _AppearanceMotionPreview(),
           ),
-          SizedBox(height: context.spacing.lg),
+          SizedBox(height: spacing.lg),
           const HapticsTile(),
           if (saveFailed) ...[
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             InlineSaveErrorText(
               message: translations.common.notConnected,
               valueKey: 'settings-save-error',

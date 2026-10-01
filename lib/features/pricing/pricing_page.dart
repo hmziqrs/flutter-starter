@@ -53,27 +53,29 @@ class _PricingPageState extends ConsumerState<PricingPage> {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final translations = context.t;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
 
     return SafeArea(
       bottom: false,
       child: ReadingContentScrollFrame(
         key: const ValueKey('pricing-page'),
-        maxWidth: context.presentationTokens.wideContentMaxWidth,
+        maxWidth: tokens.wideContentMaxWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(translations.pricing.title, style: context.theme.typography.display.xl3),
-            SizedBox(height: context.spacing.md),
+            SizedBox(height: spacing.md),
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: context.presentationTokens.readingContentMaxWidth,
+                maxWidth: tokens.readingContentMaxWidth,
               ),
               child: Text(
                 translations.pricing.body,
                 style: context.theme.typography.body.lg,
               ),
             ),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             BillingSelector(
               value: _billingPeriod,
               monthlyLabel: translations.pricing.monthly,
@@ -82,14 +84,14 @@ class _PricingPageState extends ConsumerState<PricingPage> {
               onChanged: (period) => setState(() => _billingPeriod = period),
             ),
             if (!_hasAvailablePlan) ...[
-              SizedBox(height: context.spacing.lg),
+              SizedBox(height: spacing.lg),
               FAlert(
                 key: const ValueKey('pricing-unavailable'),
                 variant: .destructive,
                 title: Text(translations.pricing.unavailableReason),
               ),
             ],
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             _PlanGrid(
               key: ValueKey('pricing-layout-${layoutClass.name}'),
               layoutClass: layoutClass,
@@ -118,15 +120,15 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                   ),
               ],
             ),
-            SizedBox(height: context.spacing.xl2),
+            SizedBox(height: spacing.xl2),
             PlanComparison(
               title: translations.pricing.comparisonTitle,
               plans: widget.plans,
             ),
-            SizedBox(height: context.spacing.xl),
+            SizedBox(height: spacing.xl),
             FCard(
               child: Padding(
-                padding: EdgeInsets.all(context.spacing.xl),
+                padding: EdgeInsets.all(spacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -134,19 +136,19 @@ class _PricingPageState extends ConsumerState<PricingPage> {
                       translations.pricing.faqTitle,
                       style: context.theme.typography.display.lg,
                     ),
-                    SizedBox(height: context.spacing.md),
+                    SizedBox(height: spacing.md),
                     Text(
                       translations.pricing.faqQuestion,
                       style: context.theme.typography.body.lg,
                     ),
-                    SizedBox(height: context.spacing.sm),
+                    SizedBox(height: spacing.sm),
                     Text(translations.pricing.faqAnswer),
-                    SizedBox(height: context.spacing.lg),
+                    SizedBox(height: spacing.lg),
                     Text(translations.pricing.staticPurchaseNotice),
-                    SizedBox(height: context.spacing.lg),
+                    SizedBox(height: spacing.lg),
                     Wrap(
-                      spacing: context.spacing.sm,
-                      runSpacing: context.spacing.sm,
+                      spacing: spacing.sm,
+                      runSpacing: spacing.sm,
                       children: [
                         FButton(
                           key: const ValueKey('pricing-terms'),
@@ -198,8 +200,10 @@ class _PlanGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gap = context.spacing.lg;
-        final minimumCardExtent = context.presentationTokens.focusTargetMinSize * 5;
+        final spacing = context.spacing;
+        final tokens = context.presentationTokens;
+        final gap = spacing.lg;
+        final minimumCardExtent = tokens.focusTargetMinSize * 5;
         final fittingColumns = math.max(
           1,
           ((constraints.maxWidth + gap) / (minimumCardExtent + gap)).floor(),
