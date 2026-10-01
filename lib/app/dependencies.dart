@@ -232,6 +232,9 @@ final class AppDependencies {
       settingsStore.readBool(feedbackDraftIncludeScreenshotKey),
     );
     final shakeEnabledFuture = _guarded(settingsStore.readBool(feedbackShakeEnabledKey));
+    final cacheDirFuture = kIsWeb
+        ? null
+        : _guarded(FileCacheStore.resolveApplicationSupportDirectory());
 
     PlatformCapabilities capabilities;
     try {
@@ -310,11 +313,11 @@ final class AppDependencies {
       initialFeedbackShakeEnabled = false;
     }
     CacheStore cacheStore;
-    if (capabilities.isWeb) {
+    if (kIsWeb) {
       cacheStore = InMemoryCacheStore();
     } else {
       try {
-        final cacheDir = await FileCacheStore.resolveApplicationSupportDirectory();
+        final cacheDir = await cacheDirFuture!;
         cacheStore = FileCacheStore(cacheDir);
       } on Object catch (error, stackTrace) {
         logger.warning(
