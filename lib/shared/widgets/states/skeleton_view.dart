@@ -234,12 +234,19 @@ class _BonePainter extends CustomPainter {
   final TextDirection textDirection;
   final Animation<double>? animation;
 
+  late final Paint _basePaint = Paint()..color = style.baseColor;
+  late final Paint _shimmerPaint = Paint();
+  late final LinearGradient _shimmerGradient = LinearGradient(
+    colors: <Color>[style.baseColor, style.highlightColor, style.baseColor],
+    stops: const <double>[0.4, 0.5, 0.6],
+  );
+
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect);
 
-    canvas.drawRRect(rrect, Paint()..color = style.baseColor);
+    canvas.drawRRect(rrect, _basePaint);
 
     final progress = animation?.value;
     if (progress == null) return;
@@ -252,16 +259,8 @@ class _BonePainter extends CustomPainter {
       3 * w,
       rect.height,
     );
-    final gradient = LinearGradient(
-      colors: <Color>[
-        style.baseColor,
-        style.highlightColor,
-        style.baseColor,
-      ],
-      stops: const <double>[0.4, 0.5, 0.6],
-    );
-    final paint = Paint()..shader = gradient.createShader(virtual, textDirection: textDirection);
-    canvas.drawRRect(rrect, paint);
+    _shimmerPaint.shader = _shimmerGradient.createShader(virtual, textDirection: textDirection);
+    canvas.drawRRect(rrect, _shimmerPaint);
   }
 
   @override
