@@ -1,3 +1,6 @@
+final RegExp _uppercasePattern = RegExp('[A-Z]');
+final RegExp _digitPattern = RegExp('[0-9]');
+
 String? validateRequired(String? value, String message) {
   return value == null || value.isEmpty ? message : null;
 }
@@ -23,8 +26,8 @@ String? validatePassword(
   required String weakMessage,
 }) {
   if (value == null || value.isEmpty) return requiredMessage;
-  final hasUppercase = value.contains(RegExp('[A-Z]'));
-  final hasNumber = value.contains(RegExp('[0-9]'));
+  final hasUppercase = value.contains(_uppercasePattern);
+  final hasNumber = value.contains(_digitPattern);
   if (value.length < 8 || !hasUppercase || !hasNumber) return weakMessage;
   return null;
 }

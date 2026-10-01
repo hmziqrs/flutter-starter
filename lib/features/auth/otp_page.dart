@@ -238,15 +238,12 @@ class _OtpViewState extends ConsumerState<_OtpView>
                       ),
                       keyboardType: TextInputType.number,
                       textDirection: TextDirection.ltr,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp('[0-9]')),
-                        LengthLimitingTextInputFormatter(6),
-                      ],
+                      inputFormatters: _otpCodeFormatters,
                       enabled: !(_submitting || _locked),
                       autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                       forceErrorText: forcedError,
                       validator: (value) {
-                        if (value == null || !RegExp(r'^[0-9]{6}$').hasMatch(value)) {
+                        if (value == null || !_otpCodePattern.hasMatch(value)) {
                           return translations.validation.otpDigits;
                         }
                         return null;
@@ -437,6 +434,13 @@ class _OtpViewState extends ConsumerState<_OtpView>
     }
   }
 }
+
+final RegExp _otpCodePattern = RegExp(r'^[0-9]{6}$');
+
+final List<TextInputFormatter> _otpCodeFormatters = [
+  FilteringTextInputFormatter.allow(RegExp('[0-9]')),
+  LengthLimitingTextInputFormatter(6),
+];
 
 String _fixtureCode(OtpPresentationStatus status) {
   return switch (status) {
