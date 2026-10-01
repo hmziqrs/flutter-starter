@@ -25,6 +25,7 @@ void main() {
     expect(plan.priceFor(BillingPeriod.annual), 180);
     expect(plan.formattedPrice(BillingPeriod.monthly, locale: 'en'), contains(r'$'));
     expect(plan.formattedPrice(BillingPeriod.annual, locale: 'en'), contains('180'));
+    expect(plan.formattedPrice(BillingPeriod.monthly, locale: 'de'), contains('18,00'));
   });
 
   test('fixtures cover recommended and unavailable presentation states', () {

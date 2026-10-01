@@ -56,13 +56,19 @@ class PlanViewData with _$PlanViewData {
   @override
   final PricingAvailability availability;
 
+  static final _currencyFormats = <(String, String), NumberFormat>{};
+
   num priceFor(BillingPeriod period) => switch (period) {
     BillingPeriod.monthly => monthlyPrice,
     BillingPeriod.annual => annualPrice,
   };
 
   String formattedPrice(BillingPeriod period, {required String locale}) {
-    return NumberFormat.simpleCurrency(name: currencyCode, locale: locale).format(priceFor(period));
+    final format = _currencyFormats.putIfAbsent(
+      (currencyCode, locale),
+      () => NumberFormat.simpleCurrency(name: currencyCode, locale: locale),
+    );
+    return format.format(priceFor(period));
   }
 }
 
