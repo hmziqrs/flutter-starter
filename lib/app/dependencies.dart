@@ -213,7 +213,7 @@ final class AppDependencies {
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
-    AppBuildInfo? buildInfo,
+    Future<AppBuildInfo>? buildInfo,
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
@@ -262,9 +262,10 @@ final class AppDependencies {
     }
     final initialDismissedAnnouncementIds = DismissedAnnouncements.decode(await dismissedFuture);
     final versionGateStore = InMemoryVersionGateStore();
-    final versionCheck = buildInfo == null
+    final resolvedBuildInfo = await buildInfo;
+    final versionCheck = resolvedBuildInfo == null
         ? const UpdateRequirementNone()
-        : await versionGateStore.check(buildInfo);
+        : await versionGateStore.check(resolvedBuildInfo);
     var initialAnalyticsOptIn = false;
     try {
       initialAnalyticsOptIn = await analyticsOptInFuture;
@@ -324,7 +325,8 @@ final class AppDependencies {
         cacheStore = InMemoryCacheStore();
       }
     }
-    final effectiveBuildInfo = buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0');
+    final effectiveBuildInfo =
+        resolvedBuildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0');
     final feedbackAppMetadata = FeedbackAppMetadata(
       appVersion: '${effectiveBuildInfo.version}+${effectiveBuildInfo.buildNumber}',
       platform: capabilities.platform,
@@ -396,7 +398,7 @@ final class AppDependencies {
       ),
       platform: PlatformDependencies(
         platformCapabilities: capabilities,
-        buildInfo: buildInfo,
+        buildInfo: resolvedBuildInfo,
         connectivityService: connectivityService ?? ConnectivityPlusService(logger: logger),
         hapticService: const DeviceHapticService(),
         permissionService: _selectPermissionService(capabilities, logger: logger),
@@ -412,7 +414,7 @@ final class AppDependencies {
         ),
       ),
       appStartupResult: AppStartupResult(
-        buildInfo: buildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
+        buildInfo: resolvedBuildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),
         settingsLoaded: settingsLoaded,
         localeApplied: true,
       ),

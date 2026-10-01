@@ -102,13 +102,15 @@ Future<App> createApplication(
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemUiController.applyEdgeToEdge(capabilities: PlatformCapabilities.current());
+  final edgeToEdgeFuture = SystemUiController.applyEdgeToEdge(
+    capabilities: PlatformCapabilities.current(),
+  )..ignore();
+  final buildInfoFuture = AppBuildInfo.load()..ignore();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  final buildInfo = await AppBuildInfo.load();
   final dependencies = await AppDependencies.production(
     appLogger,
-    buildInfo: buildInfo,
+    buildInfo: buildInfoFuture,
     iosAppleId: config.iosAppleId,
     allowedDeepLinkHosts: config.allowedDeepLinkHosts,
     backendBaseUrl: config.backendBaseUrl,
@@ -157,6 +159,8 @@ Future<App> createApplication(
       effectiveInitialLocation = null;
     }
   }
+
+  await edgeToEdgeFuture;
 
   return App(
     config: config,
