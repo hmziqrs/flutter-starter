@@ -647,7 +647,15 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final settings = ref.watch(settingsControllerProvider);
+    final settings = ref.watch(
+      settingsControllerProvider.select(
+        (state) => (
+          themeMode: state.themeMode,
+          accent: state.accent,
+          fontScale: state.fontScale,
+        ),
+      ),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
 
     return ReadingContentScrollFrame(
@@ -753,7 +761,9 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final settings = ref.watch(settingsControllerProvider);
+    final localeOverride = ref.watch(
+      settingsControllerProvider.select((state) => state.localeOverride),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
     final options = <(String, AppLocale?, String)>[
       ('locale-system', null, translations.settings.languageSystem),
@@ -769,7 +779,7 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
           for (final (key, locale, label) in options)
             _LocaleTile(
               key: ValueKey(key),
-              selected: settings.localeOverride == locale,
+              selected: localeOverride == locale,
               label: label,
               onPress: () => runSave(() => controller.setLocale(locale)),
             ),

@@ -37,9 +37,10 @@ class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPrese
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final settings = ref.watch(settingsControllerProvider);
+    final selected = ref.watch(
+      settingsControllerProvider.select((state) => state.textPreset),
+    );
     final controller = ref.read(settingsControllerProvider.notifier);
-    final selected = settings.textPreset;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
