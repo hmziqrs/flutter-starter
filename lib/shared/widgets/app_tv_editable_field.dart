@@ -6,6 +6,8 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 
+final _whitespacePattern = RegExp(r'\s+');
+
 typedef AppTvEditableFieldBuilder =
     Widget Function(
       BuildContext context,
@@ -231,7 +233,7 @@ class _AppTvEditableFieldState extends State<AppTvEditableField> {
     if (widget.secure) {
       return _maskedSummary;
     }
-    final normalized = widget.controller.text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final normalized = widget.controller.text.replaceAll(_whitespacePattern, ' ').trim();
     return normalized.isEmpty ? _emptySummary : normalized;
   }
 
@@ -280,8 +282,13 @@ class _AppTvEditableFieldState extends State<AppTvEditableField> {
   }
 
   void _handleControllerChanged() {
-    if (mounted) {
-      setState(() {});
+    if (!mounted) {
+      return;
     }
+    final isTenFoot = AppPresentationPolicy.maybeOf(context)?.isTenFoot ?? false;
+    if (!isTenFoot || _editing) {
+      return;
+    }
+    setState(() {});
   }
 }

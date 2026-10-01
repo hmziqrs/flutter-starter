@@ -87,6 +87,68 @@ void main() {
     expect(FocusManager.instance.primaryFocus, same(logicalFocusNode));
   });
 
+  testWidgets('near-field controller changes skip the wrapper rebuild', (tester) async {
+    var builderRuns = 0;
+    await _pumpField(
+      tester,
+      policy: _nearFieldPolicy,
+      controller: controller,
+      logicalFocusNode: logicalFocusNode,
+      onBuilderRun: () => builderRuns++,
+    );
+    final runsAfterPump = builderRuns;
+
+    controller.text = 'near@example.com';
+    await tester.pump();
+
+    expect(builderRuns, runsAfterPump);
+    expect(find.text('near@example.com'), findsOneWidget);
+  });
+
+  testWidgets('TV activation summary refreshes when the controller changes outside editing', (
+    tester,
+  ) async {
+    await _pumpField(
+      tester,
+      policy: _tenFootPolicy,
+      controller: controller,
+      logicalFocusNode: logicalFocusNode,
+    );
+
+    expect(find.text('—'), findsOneWidget);
+
+    controller.text = 'viewer@example.com';
+    await tester.pump();
+
+    expect(find.text('viewer@example.com'), findsOneWidget);
+  });
+
+  testWidgets('TV controller changes while editing wait for the finish transition', (tester) async {
+    var builderRuns = 0;
+    await _pumpField(
+      tester,
+      policy: _tenFootPolicy,
+      controller: controller,
+      logicalFocusNode: logicalFocusNode,
+      autofocus: true,
+      onBuilderRun: () => builderRuns++,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    final runsWhileEditing = builderRuns;
+
+    controller.text = 'viewer@example.com';
+    await tester.pump();
+    expect(builderRuns, runsWhileEditing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+
+    expect(find.byKey(_activationKey), findsOneWidget);
+    expect(find.text('viewer@example.com'), findsOneWidget);
+  });
+
   testWidgets('secure TV summary never exposes the value or its length', (tester) async {
     controller.text = 's3cr3t-with-variable-length';
     final semantics = tester.ensureSemantics();
@@ -131,6 +193,7 @@ Future<void> _pumpField(
   bool secure = false,
   bool autofocus = false,
   GlobalKey<FormState>? formKey,
+  void Function()? onBuilderRun,
 }) async {
   final theme = ForuiThemeFactory.build(
     brightness: Brightness.light,
@@ -164,6 +227,7 @@ Future<void> _pumpField(
                 secure: secure,
                 autofocus: autofocus,
                 builder: (context, editorFocusNode, completeEditing) {
+                  onBuilderRun?.call();
                   return FTextFormField(
                     key: _editorKey,
                     control: .managed(controller: controller),
