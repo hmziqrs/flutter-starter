@@ -304,8 +304,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
     if (_restored) {
       _syncDrafts();
     }
-    _previewDraft.value = _currentDraft;
-    final nextPhase = _isDirty ? ProfilePresentationPhase.dirty : ProfilePresentationPhase.idle;
+    final draft = _currentDraft;
+    _previewDraft.value = draft;
+    final nextPhase = draft != _baselineDraft
+        ? ProfilePresentationPhase.dirty
+        : ProfilePresentationPhase.idle;
     if (_phase != nextPhase) {
       setState(() => _phase = nextPhase);
     }
