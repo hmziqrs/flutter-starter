@@ -34,13 +34,7 @@ class DiagnosticsPage extends ConsumerWidget {
       compactMax: breakpoints.sm,
       expandedMin: breakpoints.lg,
     );
-    final interactionPolicy = ref.watch(interactionPolicyProvider);
-    final lifecyclePhase = ref.watch(appLifecyclePhaseProvider);
-    final presentationPolicy = ref.watch(presentationPolicyProvider);
-    final capabilities = ref.watch(platformCapabilitiesProvider);
     final locale = TranslationProvider.of(context).locale;
-    final analyticsBackend = ref.watch(analyticsClientBackendProvider);
-    final flags = ref.watch(featureFlagsControllerProvider);
 
     return FScaffold(
       child: SafeArea(
@@ -74,58 +68,92 @@ class DiagnosticsPage extends ConsumerWidget {
                             label: translations.diagnostics.layout,
                             value: layoutClass.name,
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.interaction,
-                            value: interactionPolicy.name,
+                            watchValue: (ref) => ref.watch(
+                              interactionPolicyProvider.select((policy) => policy.name),
+                            ),
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.lifecycle,
-                            value: lifecyclePhase.kind.name,
+                            watchValue: (ref) => ref.watch(
+                              appLifecyclePhaseProvider.select((phase) => phase.kind.name),
+                            ),
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.viewingEnvironment,
-                            value: presentationPolicy.viewingEnvironment.name,
+                            watchValue: (ref) => ref.watch(
+                              presentationPolicyProvider.select(
+                                (policy) => policy.viewingEnvironment.name,
+                              ),
+                            ),
                           ),
                           _DiagnosticTile(
                             label: translations.diagnostics.locale,
                             value: locale.languageTag,
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.capabilities,
-                            value: capabilities.redactedSummary,
+                            watchValue: (ref) => ref.watch(
+                              platformCapabilitiesProvider.select(
+                                (capabilities) => capabilities.redactedSummary,
+                              ),
+                            ),
                           ),
                           _DiagnosticTile(
                             label: translations.diagnostics.secureStorage,
                             value: resolveSecureStoreBackend().name,
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.crashReporting,
-                            value: switch (ref.watch(crashReporterBackendProvider)) {
-                              NoopCrashReporterBackend() =>
-                                translations.diagnostics.crashReportingNone,
-                              RemoteCrashReporterBackend(:final host) => host,
-                            },
+                            watchValue: (ref) => ref.watch(
+                              crashReporterBackendProvider.select(
+                                (backend) => switch (backend) {
+                                  NoopCrashReporterBackend() =>
+                                    translations.diagnostics.crashReportingNone,
+                                  RemoteCrashReporterBackend(:final host) => host,
+                                },
+                              ),
+                            ),
                           ),
-                          _DiagnosticTile(
+                          _WatchedTile(
                             label: translations.diagnostics.analytics,
-                            value: switch (analyticsBackend) {
-                              NoopAnalyticsBackend() => translations.diagnostics.analyticsNone,
-                              RemoteAnalyticsBackend(:final host) => host,
-                            },
+                            watchValue: (ref) => ref.watch(
+                              analyticsClientBackendProvider.select(
+                                (backend) => switch (backend) {
+                                  NoopAnalyticsBackend() => translations.diagnostics.analyticsNone,
+                                  RemoteAnalyticsBackend(:final host) => host,
+                                },
+                              ),
+                            ),
                           ),
                           if (config.developmentToolsEnabled)
                             for (final flag in FeatureFlag.values)
-                              _DiagnosticTile(
+                              _WatchedTile(
                                 label: '${translations.diagnostics.featureFlags}.${flag.wireKey}',
-                                value: flags.isEnabled(flag).toString(),
+                                watchValue: (ref) => ref.watch(
+                                  featureFlagsControllerProvider.select(
+                                    (flags) => flags.isEnabled(flag).toString(),
+                                  ),
+                                ),
                               ),
                           if (config.developmentToolsEnabled)
-                            for (final assignment in ref.watch(experimentAssignmentsProvider))
-                              _DiagnosticTile(
-                                label:
-                                    '${translations.diagnostics.experiments.title}.${assignment.key.wireKey}',
-                                value: '${assignment.variant.wireName} (${assignment.source.name})',
-                              ),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final assignments = ref.watch(experimentAssignmentsProvider);
+                                return Column(
+                                  children: [
+                                    for (final assignment in assignments)
+                                      _DiagnosticTile(
+                                        label:
+                                            '${translations.diagnostics.experiments.title}.${assignment.key.wireKey}',
+                                        value:
+                                            '${assignment.variant.wireName} (${assignment.source.name})',
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
                           if (config.developmentToolsEnabled)
                             FutureBuilder<List<CacheDiagnosticRow>>(
                               future: cacheDiagnosticsSnapshot(ref.read(cacheStoreProvider)),
@@ -158,6 +186,18 @@ class DiagnosticsPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _WatchedTile extends ConsumerWidget {
+  const _WatchedTile({required this.label, required this.watchValue});
+
+  final String label;
+  final String Function(WidgetRef ref) watchValue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _DiagnosticTile(label: label, value: watchValue(ref));
   }
 }
 
