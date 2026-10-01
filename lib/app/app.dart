@@ -301,6 +301,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
         ? televisionPageTransitionsTheme
         : nativePageTransitionsTheme;
     final localeData = TranslationProvider.of(context);
+    final materialThemeMode = _materialThemeMode(themeSettings.themeMode);
     final lightTheme = _lightThemeMemo.build(
       brightness: Brightness.light,
       accent: themeSettings.accent,
@@ -309,14 +310,16 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       interactionPolicy: interactionPolicy,
       presentationPolicy: presentationPolicy,
     );
-    final darkTheme = _darkThemeMemo.build(
-      brightness: Brightness.dark,
-      accent: themeSettings.accent,
-      fontScale: themeSettings.fontScale,
-      fontFamily: themeSettings.fontFamily,
-      interactionPolicy: interactionPolicy,
-      presentationPolicy: presentationPolicy,
-    );
+    final darkTheme = materialThemeMode == ThemeMode.light
+        ? null
+        : _darkThemeMemo.build(
+            brightness: Brightness.dark,
+            accent: themeSettings.accent,
+            fontScale: themeSettings.fontScale,
+            fontFamily: themeSettings.fontFamily,
+            interactionPolicy: interactionPolicy,
+            presentationPolicy: presentationPolicy,
+          );
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
@@ -327,8 +330,10 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: FLocalizations.localizationsDelegates,
       theme: _lightMaterialThemeMemo.build(lightTheme, pageTransitionsTheme),
-      darkTheme: _darkMaterialThemeMemo.build(darkTheme, pageTransitionsTheme),
-      themeMode: _materialThemeMode(themeSettings.themeMode),
+      darkTheme: darkTheme == null
+          ? null
+          : _darkMaterialThemeMemo.build(darkTheme, pageTransitionsTheme),
+      themeMode: materialThemeMode,
       builder: (context, child) {
         final activeTheme = _activeThemeMemo.build(
           brightness: Theme.of(context).brightness,

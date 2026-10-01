@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -279,6 +279,43 @@ void main() {
       after.typography.body.md.fontSize,
       greaterThan(before.typography.body.md.fontSize!),
     );
+  });
+
+  testWidgets('pinned light mode defers the dark theme until the mode needs it', (tester) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    _setViewport(tester, const Size(390, 844));
+    await tester.pumpWidget(
+      App(
+        config: _developmentConfig,
+        dependencies: AppDependencies.inMemory(),
+      ),
+    );
+    await pumpAppFrames(tester);
+
+    MaterialApp materialApp() => tester.widget(find.byType(MaterialApp));
+    expect(materialApp().themeMode, ThemeMode.system);
+    expect(materialApp().darkTheme, isNotNull);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('Welcome, Alex')),
+    );
+    unawaited(
+      container.read(settingsControllerProvider.notifier).setThemeMode(AppThemeMode.light),
+    );
+    await pumpAppFrames(tester);
+
+    expect(materialApp().themeMode, ThemeMode.light);
+    expect(materialApp().darkTheme, isNull);
+    expect(Theme.of(tester.element(find.text('Welcome, Alex'))).brightness, Brightness.light);
+
+    unawaited(
+      container.read(settingsControllerProvider.notifier).setThemeMode(AppThemeMode.dark),
+    );
+    await pumpAppFrames(tester);
+
+    expect(materialApp().themeMode, ThemeMode.dark);
+    expect(materialApp().darkTheme, isNotNull);
+    expect(Theme.of(tester.element(find.text('Welcome, Alex'))).brightness, Brightness.dark);
   });
 }
 
