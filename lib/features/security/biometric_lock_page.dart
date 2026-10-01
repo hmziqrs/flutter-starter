@@ -145,6 +145,19 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
 
 final _motionScale = MovieTweenProperty<double>();
 final _motionOpacity = MovieTweenProperty<double>();
+final _motionTween = MovieTween()
+  ..tween<double>(
+    _motionScale,
+    Tween(begin: 0.85, end: 1),
+    duration: AppMotion.standard,
+    curve: AppMotion.emphasizedCurve,
+  )
+  ..tween<double>(
+    _motionOpacity,
+    Tween(begin: 0, end: 1),
+    duration: AppMotion.standard,
+    curve: AppMotion.standardCurve,
+  );
 
 class _BiometricLockIcon extends StatelessWidget {
   const _BiometricLockIcon({required this.unavailable});
@@ -162,23 +175,9 @@ class _BiometricLockIcon extends StatelessWidget {
       return icon;
     }
 
-    final tween = MovieTween()
-      ..tween<double>(
-        _motionScale,
-        Tween(begin: 0.85, end: 1),
-        duration: AppMotion.standard,
-        curve: AppMotion.emphasizedCurve,
-      )
-      ..tween<double>(
-        _motionOpacity,
-        Tween(begin: 0, end: 1),
-        duration: AppMotion.standard,
-        curve: AppMotion.standardCurve,
-      );
-
     return PlayAnimationBuilder<Movie>(
-      tween: tween,
-      duration: tween.duration,
+      tween: _motionTween,
+      duration: _motionTween.duration,
       child: KeyedSubtree(key: ValueKey(unavailable), child: icon),
       builder: (context, movie, child) {
         return Opacity(

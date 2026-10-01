@@ -432,16 +432,9 @@ class _Dot extends StatelessWidget {
     if (!pulse || MediaQuery.disableAnimationsOf(context)) {
       return icon;
     }
-    final tween = MovieTween()
-      ..tween<double>(
-        _dotScale,
-        Tween(begin: 1, end: 0.8),
-        duration: AppMotion.deliberate,
-        curve: AppMotion.standardCurve,
-      );
     return LoopAnimationBuilder<Movie>(
-      tween: tween,
-      duration: tween.duration,
+      tween: _dotTween,
+      duration: _dotTween.duration,
       builder: (context, movie, child) =>
           Transform.scale(scale: _dotScale.from(movie), child: child),
       child: icon,
@@ -480,21 +473,9 @@ class _ShakeGuard extends StatelessWidget {
     if (!shaking || MediaQuery.disableAnimationsOf(context)) {
       return child;
     }
-    final tween = MovieTween()
-      ..tween<double>(
-        _shakeX,
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 0, end: -8), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: -8, end: 8), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: 8, end: -4), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: -4, end: 0), weight: 1),
-        ]),
-        duration: AppMotion.standard,
-        curve: AppMotion.standardCurve,
-      );
     return PlayAnimationBuilder<Movie>(
-      tween: tween,
-      duration: tween.duration,
+      tween: _shakeTween,
+      duration: _shakeTween.duration,
       builder: (context, movie, child) => Transform.translate(
         offset: Offset(_shakeX.from(movie), 0),
         child: child,
@@ -506,3 +487,22 @@ class _ShakeGuard extends StatelessWidget {
 
 final _dotScale = MovieTweenProperty<double>();
 final _shakeX = MovieTweenProperty<double>();
+final _dotTween = MovieTween()
+  ..tween<double>(
+    _dotScale,
+    Tween(begin: 1, end: 0.8),
+    duration: AppMotion.deliberate,
+    curve: AppMotion.standardCurve,
+  );
+final _shakeTween = MovieTween()
+  ..tween<double>(
+    _shakeX,
+    TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -8, end: 8), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 8, end: -4), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -4, end: 0), weight: 1),
+    ]),
+    duration: AppMotion.standard,
+    curve: AppMotion.standardCurve,
+  );
