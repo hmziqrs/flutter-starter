@@ -189,6 +189,41 @@ void main() {
     }
   });
 
+  testWidgets('lockout countdown disables the form until the seconds reach zero', (tester) async {
+    await tester.pumpWidget(
+      authTestApp(
+        home: _login(presentation: const LoginPresentationState.locked(lockedSeconds: 2)),
+      ),
+    );
+    expect(find.text('Try again in 2 seconds.'), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+      isNull,
+    );
+    expect(
+      tester.widget<FCheckbox>(find.byKey(const ValueKey('auth-login-remember'))).enabled,
+      isFalse,
+    );
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Try again in 1 second.'), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+      isNull,
+    );
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Try again now.'), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+      isNotNull,
+    );
+    expect(
+      tester.widget<FCheckbox>(find.byKey(const ValueKey('auth-login-remember'))).enabled,
+      isTrue,
+    );
+  });
+
   testWidgets('retains entered values through failure state and live resize', (tester) async {
     setAuthTestViewport(tester, const Size(390, 844));
     await tester.pumpWidget(

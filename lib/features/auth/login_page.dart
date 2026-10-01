@@ -82,6 +82,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
   late final VoidCallback _syncEmailDraft;
   final _submitFocus = FocusNode(debugLabel: 'login.submit');
   final LockoutCountdownController _lockoutCountdown = LockoutCountdownController();
+  bool _lockGateActive = false;
   bool _rememberMe = false;
 
   bool get _submitting =>
@@ -93,8 +94,18 @@ class _LoginViewState extends ConsumerState<_LoginView>
     _emailController = TextEditingController();
     _syncEmailDraft = textDraftSyncer(_emailDraft, _emailController);
     _emailController.addListener(_syncEmailDraft);
-    _lockoutCountdown.syncFrom(widget.presentation.lockedSeconds);
+    _lockoutCountdown
+      ..syncFrom(widget.presentation.lockedSeconds)
+      ..addListener(_onLockoutChanged);
+    _lockGateActive = _lockoutCountdown.remainingSeconds > 0;
     _requestFixtureFocus();
+  }
+
+  void _onLockoutChanged() {
+    final active = _lockoutCountdown.remainingSeconds > 0;
+    if (active == _lockGateActive) return;
+    _lockGateActive = active;
+    if (mounted) setState(() {});
   }
 
   @override
@@ -129,7 +140,9 @@ class _LoginViewState extends ConsumerState<_LoginView>
 
   @override
   void dispose() {
-    _lockoutCountdown.dispose();
+    _lockoutCountdown
+      ..removeListener(_onLockoutChanged)
+      ..dispose();
     _emailController
       ..removeListener(_syncEmailDraft)
       ..dispose();
@@ -155,19 +168,17 @@ class _LoginViewState extends ConsumerState<_LoginView>
         icon: FLucideIcons.shieldCheck,
         title: translations.title,
         body: translations.body,
-        form: ValueListenableBuilder<int>(
-          valueListenable: _lockoutCountdown,
-          builder: (context, liveLockedSeconds, _) => _buildForm(context, liveLockedSeconds),
-        ),
+        form: _buildForm(context),
       ),
     );
   }
 
-  Widget _buildForm(BuildContext context, int liveLockedSeconds) {
+  Widget _buildForm(BuildContext context) {
     final translations = context.t;
     final status = widget.presentation.status;
     final submitting = _submitting;
-    final locked = status == LoginPresentationStatus.locked && liveLockedSeconds > 0;
+    final locked =
+        status == LoginPresentationStatus.locked && _lockoutCountdown.remainingSeconds > 0;
     final invalidFixture = status == LoginPresentationStatus.invalid;
     final fieldFailureFixture = status == LoginPresentationStatus.fieldFailure;
     final enabled = !(submitting || locked);
@@ -214,10 +225,13 @@ class _LoginViewState extends ConsumerState<_LoginView>
           key: const ValueKey('auth-login-locked'),
           variant: .destructive,
           title: Text(translations.auth.login.lockedTitle),
-          subtitle: Text(
-            translations.auth.login.lockedBody(
-              n: liveLockedSeconds,
-              seconds: liveLockedSeconds,
+          subtitle: ValueListenableBuilder<int>(
+            valueListenable: _lockoutCountdown,
+            builder: (context, liveLockedSeconds, _) => Text(
+              translations.auth.login.lockedBody(
+                n: liveLockedSeconds,
+                seconds: liveLockedSeconds,
+              ),
             ),
           ),
         ),

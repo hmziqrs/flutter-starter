@@ -93,6 +93,7 @@ class _OtpViewState extends ConsumerState<_OtpView>
 
   late final LockoutCountdownController _lockout = LockoutCountdownController();
   late final VoidCallback _syncCodeDraft;
+  bool _lockGateActive = false;
 
   bool get _submitting =>
       callbackSubmitting || widget.presentation.status == OtpPresentationStatus.submitting;
@@ -126,11 +127,15 @@ class _OtpViewState extends ConsumerState<_OtpView>
     _syncCodeDraft = textDraftSyncer(_codeDraft, _otpController);
     _otpController.addListener(_syncCodeDraft);
     _lockout
-      ..addListener(_onLockoutChanged)
-      ..syncFrom(widget.presentation.lockedSeconds);
+      ..syncFrom(widget.presentation.lockedSeconds)
+      ..addListener(_onLockoutChanged);
+    _lockGateActive = _lockout.remainingSeconds > 0;
   }
 
   void _onLockoutChanged() {
+    final active = _lockout.remainingSeconds > 0;
+    if (active == _lockGateActive) return;
+    _lockGateActive = active;
     if (mounted) setState(() {});
   }
 
@@ -354,10 +359,13 @@ class _OtpViewState extends ConsumerState<_OtpView>
           key: const ValueKey('auth-otp-locked'),
           variant: .destructive,
           title: Text(translations.auth.otp.lockedTitle),
-          subtitle: Text(
-            translations.auth.otp.lockedBody(
-              n: _lockout.remainingSeconds,
-              seconds: _lockout.remainingSeconds,
+          subtitle: ValueListenableBuilder<int>(
+            valueListenable: _lockout,
+            builder: (context, liveLockedSeconds, _) => Text(
+              translations.auth.otp.lockedBody(
+                n: liveLockedSeconds,
+                seconds: liveLockedSeconds,
+              ),
             ),
           ),
         ),

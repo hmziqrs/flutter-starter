@@ -153,6 +153,27 @@ void main() {
     expect(resendCount, 1);
   });
 
+  testWidgets('lockout countdown disables the code entry until the seconds reach zero', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      authTestApp(
+        home: _page(presentation: const OtpPresentationState.locked(lockedSeconds: 2)),
+      ),
+    );
+    expect(find.byKey(const ValueKey('auth-otp-locked')), findsOneWidget);
+    expect(find.text('Try again in 2 seconds.'), findsOneWidget);
+    expect(tester.widget<FOtpField>(find.byKey(const ValueKey('auth-otp-code'))).enabled, isFalse);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Try again in 1 second.'), findsOneWidget);
+    expect(tester.widget<FOtpField>(find.byKey(const ValueKey('auth-otp-code'))).enabled, isFalse);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Try again now.'), findsOneWidget);
+    expect(tester.widget<FOtpField>(find.byKey(const ValueKey('auth-otp-code'))).enabled, isTrue);
+  });
+
   testWidgets('TV submit retains focus and rejects duplicates while in flight', (tester) async {
     final completer = Completer<void>();
     var submitCount = 0;
