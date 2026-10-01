@@ -13,10 +13,19 @@ typedef AppLayoutBuilder =
       AppLayoutClass layoutClass,
     );
 
-class AppLayoutScope extends StatelessWidget {
+class AppLayoutScope extends StatefulWidget {
   const AppLayoutScope({required this.builder, super.key});
 
   final AppLayoutBuilder builder;
+
+  @override
+  State<AppLayoutScope> createState() => _AppLayoutScopeState();
+}
+
+class _AppLayoutScopeState extends State<AppLayoutScope> {
+  AppLayoutBuilder? _cachedBuilder;
+  AppLayoutClass? _cachedLayoutClass;
+  late Widget _cachedChild;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +37,18 @@ class AppLayoutScope extends StatelessWidget {
           compactMax: breakpoints.sm,
           expandedMin: breakpoints.lg,
         );
-
-        return ProviderScope(
-          overrides: [appLayoutClassProvider.overrideWithValue(layoutClass)],
-          child: Builder(
-            builder: (context) => builder(context, layoutClass),
-          ),
-        );
+        final builder = widget.builder;
+        if (builder != _cachedBuilder || layoutClass != _cachedLayoutClass) {
+          _cachedBuilder = builder;
+          _cachedLayoutClass = layoutClass;
+          _cachedChild = ProviderScope(
+            overrides: [appLayoutClassProvider.overrideWithValue(layoutClass)],
+            child: Builder(
+              builder: (context) => builder(context, layoutClass),
+            ),
+          );
+        }
+        return _cachedChild;
       },
     );
   }
