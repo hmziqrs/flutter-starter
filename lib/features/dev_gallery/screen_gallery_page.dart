@@ -243,7 +243,13 @@ class _GalleryControls extends StatefulWidget {
 }
 
 class _GalleryControlsState extends State<_GalleryControls> {
-  String _query = '';
+  final ValueNotifier<String> _query = ValueNotifier<String>('');
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -257,21 +263,6 @@ class _GalleryControlsState extends State<_GalleryControls> {
     final onCaseSelected = widget.onCaseSelected;
     final onEnvironmentChanged = widget.onEnvironmentChanged;
     final onReset = widget.onReset;
-    final normalizedQuery = _query.trim().toLowerCase();
-    final matchingCases = cases
-        .where((galleryCase) {
-          if (normalizedQuery.isEmpty) return true;
-          return galleryCase.screenLabel(translations).toLowerCase().contains(normalizedQuery) ||
-              galleryCase.caseLabel(translations).toLowerCase().contains(normalizedQuery);
-        })
-        .toList(growable: false);
-    final screenIds = <String>[];
-    for (final galleryCase in matchingCases) {
-      if (!screenIds.contains(galleryCase.screenId)) screenIds.add(galleryCase.screenId);
-    }
-    final visibleCases = matchingCases
-        .where((galleryCase) => galleryCase.screenId == selectedScreenId)
-        .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -279,35 +270,63 @@ class _GalleryControlsState extends State<_GalleryControls> {
         FTextField(
           key: const ValueKey('gallery-search'),
           label: Text(gallery.search),
-          control: .managed(onChange: (value) => setState(() => _query = value.text)),
+          control: .managed(onChange: (value) => _query.value = value.text),
         ),
         const SizedBox(height: AppSpacing.lg),
-        _ControlGroup(
-          title: gallery.screen,
-          children: [
-            for (final screenId in screenIds)
-              _ChoiceButton(
-                buttonKey: ValueKey('gallery-screen-$screenId'),
-                label: matchingCases
-                    .firstWhere((galleryCase) => galleryCase.screenId == screenId)
-                    .screenLabel(translations),
-                selected: screenId == selectedScreenId,
-                onPress: () => onScreenSelected(screenId),
-              ),
-          ],
-        ),
-        _ControlGroup(
-          title: gallery.galleryCase,
-          emptyLabel: gallery.caseNotFound,
-          children: [
-            for (final galleryCase in visibleCases)
-              _ChoiceButton(
-                buttonKey: ValueKey('gallery-case-${galleryCase.id}'),
-                label: galleryCase.caseLabel(translations),
-                selected: galleryCase.id == selectedCaseId,
-                onPress: () => onCaseSelected(galleryCase.id),
-              ),
-          ],
+        ValueListenableBuilder<String>(
+          valueListenable: _query,
+          builder: (context, query, _) {
+            final normalizedQuery = query.trim().toLowerCase();
+            final matchingCases = cases
+                .where((galleryCase) {
+                  if (normalizedQuery.isEmpty) return true;
+                  return galleryCase
+                          .screenLabel(translations)
+                          .toLowerCase()
+                          .contains(normalizedQuery) ||
+                      galleryCase.caseLabel(translations).toLowerCase().contains(normalizedQuery);
+                })
+                .toList(growable: false);
+            final screenIds = <String>[];
+            for (final galleryCase in matchingCases) {
+              if (!screenIds.contains(galleryCase.screenId)) screenIds.add(galleryCase.screenId);
+            }
+            final visibleCases = matchingCases
+                .where((galleryCase) => galleryCase.screenId == selectedScreenId)
+                .toList(growable: false);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ControlGroup(
+                  title: gallery.screen,
+                  children: [
+                    for (final screenId in screenIds)
+                      _ChoiceButton(
+                        buttonKey: ValueKey('gallery-screen-$screenId'),
+                        label: matchingCases
+                            .firstWhere((galleryCase) => galleryCase.screenId == screenId)
+                            .screenLabel(translations),
+                        selected: screenId == selectedScreenId,
+                        onPress: () => onScreenSelected(screenId),
+                      ),
+                  ],
+                ),
+                _ControlGroup(
+                  title: gallery.galleryCase,
+                  emptyLabel: gallery.caseNotFound,
+                  children: [
+                    for (final galleryCase in visibleCases)
+                      _ChoiceButton(
+                        buttonKey: ValueKey('gallery-case-${galleryCase.id}'),
+                        label: galleryCase.caseLabel(translations),
+                        selected: galleryCase.id == selectedCaseId,
+                        onPress: () => onCaseSelected(galleryCase.id),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
         _ControlGroup(
           title: gallery.viewport,
