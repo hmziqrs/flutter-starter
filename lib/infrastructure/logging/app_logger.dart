@@ -18,6 +18,8 @@ final class AppLogger {
   final LogRedactor _redactor;
   final Talker _talker;
 
+  bool get verbose => _verbose;
+
   void debug(String message, {Map<String, Object?> context = const {}}) {
     if (!_verbose) {
       return;

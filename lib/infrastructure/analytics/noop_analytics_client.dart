@@ -9,11 +9,19 @@ final class NoopAnalyticsClient implements AnalyticsClient {
 
   @override
   Future<void> track(AnalyticsEvent event) async {
+    if (!logger.verbose) {
+      return;
+    }
+
     logger.debug('analytics.track', context: _describeEvent(event));
   }
 
   @override
   Future<void> setUserProperty(UserProperty property) async {
+    if (!logger.verbose) {
+      return;
+    }
+
     logger.debug(
       'analytics.setUserProperty',
       context: <String, Object?>{'key': property.key},
@@ -22,6 +30,10 @@ final class NoopAnalyticsClient implements AnalyticsClient {
 
   @override
   Future<void> setUserId(String? userId) async {
+    if (!logger.verbose) {
+      return;
+    }
+
     logger.debug(
       'analytics.setUserId',
       context: <String, Object?>{'present': userId != null},
