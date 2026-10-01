@@ -34,7 +34,6 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
   late String? _selectedScreenId;
   late String? _selectedCaseId;
   Future<void> _localeChanges = Future<void>.value();
-  String _query = '';
 
   GalleryCase? get _selectedCase {
     for (final galleryCase in widget.cases) {
@@ -79,10 +78,8 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
             final controls = _GalleryControls(
               cases: widget.cases,
               environment: _environment,
-              query: _query,
               selectedScreenId: _selectedScreenId,
               selectedCaseId: _selectedCaseId,
-              onQueryChanged: (query) => setState(() => _query = query),
               onScreenSelected: _selectScreen,
               onCaseSelected: (id) => setState(() => _selectedCaseId = id),
               onEnvironmentChanged: _setEnvironment,
@@ -220,14 +217,12 @@ class _GalleryPreview extends StatelessWidget {
   }
 }
 
-class _GalleryControls extends StatelessWidget {
+class _GalleryControls extends StatefulWidget {
   const _GalleryControls({
     required this.cases,
     required this.environment,
-    required this.query,
     required this.selectedScreenId,
     required this.selectedCaseId,
-    required this.onQueryChanged,
     required this.onScreenSelected,
     required this.onCaseSelected,
     required this.onEnvironmentChanged,
@@ -236,20 +231,33 @@ class _GalleryControls extends StatelessWidget {
 
   final List<GalleryCase> cases;
   final GalleryEnvironment environment;
-  final String query;
   final String? selectedScreenId;
   final String? selectedCaseId;
-  final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onScreenSelected;
   final ValueChanged<String> onCaseSelected;
   final ValueChanged<GalleryEnvironment> onEnvironmentChanged;
   final VoidCallback onReset;
 
   @override
+  State<_GalleryControls> createState() => _GalleryControlsState();
+}
+
+class _GalleryControlsState extends State<_GalleryControls> {
+  String _query = '';
+
+  @override
   Widget build(BuildContext context) {
     final translations = context.t;
     final gallery = translations.devGallery;
-    final normalizedQuery = query.trim().toLowerCase();
+    final cases = widget.cases;
+    final environment = widget.environment;
+    final selectedScreenId = widget.selectedScreenId;
+    final selectedCaseId = widget.selectedCaseId;
+    final onScreenSelected = widget.onScreenSelected;
+    final onCaseSelected = widget.onCaseSelected;
+    final onEnvironmentChanged = widget.onEnvironmentChanged;
+    final onReset = widget.onReset;
+    final normalizedQuery = _query.trim().toLowerCase();
     final matchingCases = cases
         .where((galleryCase) {
           if (normalizedQuery.isEmpty) return true;
@@ -271,7 +279,7 @@ class _GalleryControls extends StatelessWidget {
         FTextField(
           key: const ValueKey('gallery-search'),
           label: Text(gallery.search),
-          control: .managed(onChange: (value) => onQueryChanged(value.text)),
+          control: .managed(onChange: (value) => setState(() => _query = value.text)),
         ),
         const SizedBox(height: AppSpacing.lg),
         _ControlGroup(
