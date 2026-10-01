@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 
+import '../../app/support/pump_app_frames.dart';
+
 void main() {
   group('AppUnit', () {
     test('uses neutral scales at the reference width', () {
@@ -67,6 +69,69 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+
+    testWidgets('appUnit readers rebuild only on size or devicePixelRatio changes', (
+      tester,
+    ) async {
+      var buildCount = 0;
+      var observedWidth = 0.0;
+
+      final reader = Builder(
+        builder: (context) {
+          buildCount += 1;
+          observedWidth = context.appUnit.un(16);
+          return SizedBox(width: observedWidth, height: 1);
+        },
+      );
+
+      var size = const Size(AppUnit.referenceWidth, 844);
+      var devicePixelRatio = 3.0;
+      var viewInsets = EdgeInsets.zero;
+      late StateSetter setMediaQuery;
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            setMediaQuery = setState;
+            return MediaQuery(
+              data: MediaQueryData(
+                size: size,
+                devicePixelRatio: devicePixelRatio,
+                viewInsets: viewInsets,
+              ),
+              child: reader,
+            );
+          },
+        ),
+      );
+
+      expect(buildCount, 1);
+      expect(observedWidth, 16);
+
+      setMediaQuery(() {
+        viewInsets = const EdgeInsets.only(bottom: 120);
+      });
+      await pumpAppFrames(tester);
+      expect(buildCount, 1, reason: 'viewInsets changes must not rebuild appUnit readers');
+
+      final expanded = AppUnit.fromSize(
+        const Size(560, 844),
+        devicePixelRatio: 3,
+      );
+      setMediaQuery(() {
+        size = const Size(560, 844);
+      });
+      await pumpAppFrames(tester);
+      expect(buildCount, 2, reason: 'size changes must rebuild appUnit readers');
+      expect(observedWidth, expanded.un(16));
+
+      setMediaQuery(() {
+        devicePixelRatio = 2;
+      });
+      await pumpAppFrames(tester);
+      expect(buildCount, 3, reason: 'devicePixelRatio changes must rebuild appUnit readers');
+      expect(observedWidth, expanded.un(16));
     });
   });
 }

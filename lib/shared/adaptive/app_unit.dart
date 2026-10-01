@@ -12,7 +12,10 @@ final class AppUnit {
   });
 
   factory AppUnit.of(BuildContext context) {
-    return AppUnit.fromMediaQuery(MediaQuery.of(context));
+    return AppUnit.fromSize(
+      MediaQuery.sizeOf(context),
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    );
   }
 
   factory AppUnit.fromMediaQuery(MediaQueryData mediaQuery) {
