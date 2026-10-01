@@ -138,25 +138,31 @@ Future<App> createApplication(
           appStartupResult: dependencies.appStartupResult.copyWith(localeApplied: localeApplied),
         );
 
-  String? coldStartInitialLocation;
-  try {
-    final initialLink = await dependencies.platform.appLinkHandler.getInitialLink();
-    if (initialLink != null) {
-      coldStartInitialLocation = _initialLocationFromResolvedLink(initialLink);
-    }
-  } on Object {
-    coldStartInitialLocation = null;
-  }
-
-  var effectiveInitialLocation = initialLocation ?? coldStartInitialLocation;
+  var effectiveInitialLocation = initialLocation;
   if (effectiveInitialLocation == null) {
+    final initialLinkFuture = dependencies.platform.appLinkHandler.getInitialLink();
+    final savedRouteFuture = dependenciesWithStartup.settings.settingsStore.readString(
+      lastRouteKey,
+    );
+    String? coldStartInitialLocation;
     try {
-      final saved = await dependenciesWithStartup.settings.settingsStore.readString(lastRouteKey);
-      if (saved != null && saved.isNotEmpty) {
-        effectiveInitialLocation = saved;
+      final initialLink = await initialLinkFuture;
+      if (initialLink != null) {
+        coldStartInitialLocation = _initialLocationFromResolvedLink(initialLink);
       }
     } on Object {
-      effectiveInitialLocation = null;
+      coldStartInitialLocation = null;
+    }
+    String? savedRoute;
+    try {
+      savedRoute = await savedRouteFuture;
+    } on Object {
+      savedRoute = null;
+    }
+    if (coldStartInitialLocation != null) {
+      effectiveInitialLocation = coldStartInitialLocation;
+    } else if (savedRoute != null && savedRoute.isNotEmpty) {
+      effectiveInitialLocation = savedRoute;
     }
   }
 
