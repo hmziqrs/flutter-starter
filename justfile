@@ -7,7 +7,10 @@
 
 dev_config  := "config/development.json"
 prod_config := "config/production.json"
-flutter     := "flutter"
+# Run through mise when available so every recipe uses the Flutter SDK pinned
+# in mise.toml (matching the pubspec.yaml constraint) instead of whatever
+# `flutter` is first on PATH; environments without mise keep using PATH.
+flutter     := `command -v mise >/dev/null 2>&1 && echo 'mise exec -- flutter' || echo 'flutter'`
 
 # List available recipes.
 default:
@@ -108,8 +111,23 @@ run-backend dev='macos' host='127.0.0.1':
 
 # --- tests --------------------------------------------------------------------
 # All non-golden unit + widget tests (the main quality gate).
+# Full output goes to build/test.log; stdout carries only the verdict so gate
+# runners with small log caps don't drown in per-test progress lines. On
+# failure it dumps the log minus passing-test progress lines (capped).
 test:
-    {{flutter}} test $(find test -type f -name '*_test.dart' ! -path 'test/goldens/*')
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p build
+    log=build/test.log
+    if {{flutter}} test $(find test -type f -name '*_test.dart' ! -path 'test/goldens/*') >"$log"; then
+        tail -n 1 "$log"
+    else
+        status=$?
+        echo "Tests failed (exit $status). Full log: $log"
+        awk '!(/^[0-9][0-9]:[0-9][0-9] \+[0-9]+: / && $0 !~ /\[E\]/)' "$log" |
+            tail -c 250000 || true
+        exit "$status"
+    fi
 
 # Canonical golden baseline (run on macOS; see test/goldens/README.md).
 test-goldens:

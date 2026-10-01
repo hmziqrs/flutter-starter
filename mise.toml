@@ -1,0 +1,5 @@
+# Pin the Flutter SDK the repo supports (see pubspec.yaml's `flutter`
+# constraint and AGENTS.md). mise users get this version automatically;
+# everyone else should install Flutter 3.44.x manually.
+[tools]
+flutter = "3.44.7"
