@@ -834,6 +834,19 @@ class _AccessibilitySettingsContent extends StatelessWidget {
 
 final _motionScale = MovieTweenProperty<double>();
 final _motionTurn = MovieTweenProperty<double>();
+final _motionTween = MovieTween()
+  ..tween<double>(
+    _motionScale,
+    Tween(begin: 0.75, end: 1),
+    duration: AppMotion.deliberate,
+    curve: AppMotion.emphasizedCurve,
+  )
+  ..tween<double>(
+    _motionTurn,
+    Tween(begin: -0.04, end: 0),
+    duration: AppMotion.deliberate,
+    curve: AppMotion.standardCurve,
+  );
 
 class _AppearanceMotionPreview extends StatelessWidget {
   const _AppearanceMotionPreview();
@@ -849,23 +862,9 @@ class _AppearanceMotionPreview extends StatelessWidget {
       return Center(child: child);
     }
 
-    final tween = MovieTween()
-      ..tween<double>(
-        _motionScale,
-        Tween(begin: 0.75, end: 1),
-        duration: AppMotion.deliberate,
-        curve: AppMotion.emphasizedCurve,
-      )
-      ..tween<double>(
-        _motionTurn,
-        Tween(begin: -0.04, end: 0),
-        duration: AppMotion.deliberate,
-        curve: AppMotion.standardCurve,
-      );
-
     return PlayAnimationBuilder<Movie>(
-      tween: tween,
-      duration: tween.duration,
+      tween: _motionTween,
+      duration: _motionTween.duration,
       child: child,
       builder: (context, movie, child) {
         return Center(
