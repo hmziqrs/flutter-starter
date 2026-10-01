@@ -201,18 +201,16 @@ double _lerp(double a, double b, double t) => lerpDouble(a, b, t)!;
 
 extension AppPresentationTokensBuildContext on BuildContext {
   AppPresentationTokens get presentationTokens {
-    for (final extension in theme.extensions) {
-      if (extension is AppPresentationTokens) {
-        return extension;
-      }
+    try {
+      return theme.extension<AppPresentationTokens>();
+    } on Object {
+      return AppPresentationTokens.resolve(
+        policy: const AppPresentationPolicy(
+          viewingEnvironment: AppViewingEnvironment.nearField,
+          interactionPolicy: AppInteractionPolicy.touch,
+        ),
+        focusColor: theme.colors.primary,
+      );
     }
-
-    return AppPresentationTokens.resolve(
-      policy: const AppPresentationPolicy(
-        viewingEnvironment: AppViewingEnvironment.nearField,
-        interactionPolicy: AppInteractionPolicy.touch,
-      ),
-      focusColor: theme.colors.primary,
-    );
   }
 }
