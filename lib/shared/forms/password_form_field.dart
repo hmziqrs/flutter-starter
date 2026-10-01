@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart';
-import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/forms/password_field_toggle.dart';
+import 'package:starter/shared/forms/tv_editable_text_field.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 
 AppTvEditableField passwordFormField({
@@ -22,49 +21,28 @@ AppTvEditableField passwordFormField({
   FocusNode? nextFocusNode,
   VoidCallback? onSubmit,
 }) {
-  return AppTvEditableField(
+  return tvEditableTextField(
     activationKey: activationKey,
+    fieldKey: fieldKey,
     label: label,
     controller: controller,
     focusNode: focusNode,
-    enabled: enabled,
+    formFieldKey: formFieldKey,
     secure: true,
+    validator: (value, translations) => validatePassword(
+      value,
+      requiredMessage: translations.validation.required(field: label),
+      weakMessage: translations.validation.passwordWeak,
+    ),
+    enabled: enabled,
     autofocus: autofocus,
-    builder: (context, editorFocusNode, completeEditing) {
-      final translations = context.t;
-      return FTextFormField.password(
-        key: fieldKey,
-        formFieldKey: formFieldKey,
-        control: .managed(controller: controller),
-        focusNode: editorFocusNode,
-        label: Text(label),
-        description: description,
-        autofillHints: autofillHints,
-        textInputAction: textInputAction,
-        enabled: enabled,
-        autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-        forceErrorText: forceErrorText,
-        validator: (value) => validatePassword(
-          value,
-          requiredMessage: translations.validation.required(field: label),
-          weakMessage: translations.validation.passwordWeak,
-        ),
-        suffixBuilder: buildPasswordToggle(key: toggleKey),
-        onEditingComplete: nextFocusNode == null
-            ? null
-            : () => completeEditing(nextFocusNode: nextFocusNode),
-        onSubmit: onSubmit == null
-            ? null
-            : (_) {
-                completeEditing();
-                onSubmit();
-              },
-        onReset: () {
-          controller.clear();
-          focusNode.unfocus();
-        },
-      );
-    },
+    forceErrorText: forceErrorText,
+    description: description,
+    autofillHints: autofillHints,
+    textInputAction: textInputAction,
+    suffixBuilder: buildPasswordToggle(key: toggleKey),
+    nextFocusNode: nextFocusNode,
+    onSubmit: onSubmit,
   );
 }
 
@@ -84,50 +62,31 @@ AppTvEditableField confirmPasswordFormField({
   TextInputAction textInputAction = TextInputAction.done,
   VoidCallback? onSubmit,
 }) {
-  return AppTvEditableField(
+  return tvEditableTextField(
     activationKey: activationKey,
+    fieldKey: fieldKey,
     label: label,
     controller: controller,
     focusNode: focusNode,
-    enabled: enabled,
+    formFieldKey: formFieldKey,
     secure: true,
-    autofocus: autofocus,
-    builder: (context, editorFocusNode, completeEditing) {
-      final translations = context.t;
-      return FTextFormField.password(
-        key: fieldKey,
-        formFieldKey: formFieldKey,
-        control: .managed(controller: controller),
-        focusNode: editorFocusNode,
-        label: Text(label),
-        autofillHints: autofillHints,
-        textInputAction: textInputAction,
-        enabled: enabled,
-        autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-        forceErrorText: forceErrorText,
-        validator: (value) {
-          final requiredError = validateRequired(
-            value,
-            translations.validation.required(field: label),
-          );
-          if (requiredError != null) return requiredError;
-          if (value != matchTarget.text) {
-            return translations.validation.passwordMismatch;
-          }
-          return null;
-        },
-        suffixBuilder: buildPasswordToggle(key: toggleKey),
-        onSubmit: onSubmit == null
-            ? null
-            : (_) {
-                completeEditing();
-                onSubmit();
-              },
-        onReset: () {
-          controller.clear();
-          focusNode.unfocus();
-        },
+    validator: (value, translations) {
+      final requiredError = validateRequired(
+        value,
+        translations.validation.required(field: label),
       );
+      if (requiredError != null) return requiredError;
+      if (value != matchTarget.text) {
+        return translations.validation.passwordMismatch;
+      }
+      return null;
     },
+    enabled: enabled,
+    autofocus: autofocus,
+    forceErrorText: forceErrorText,
+    autofillHints: autofillHints,
+    textInputAction: textInputAction,
+    suffixBuilder: buildPasswordToggle(key: toggleKey),
+    onSubmit: onSubmit,
   );
 }

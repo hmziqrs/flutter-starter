@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/app_spacing.dart';
-
-typedef StateViewAction = ({String label, VoidCallback onTap});
+import 'package:starter/shared/widgets/states/state_view_card.dart';
 
 class EmptyStateView extends StatelessWidget {
   const EmptyStateView({
@@ -23,39 +21,12 @@ class EmptyStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
-      key: const ValueKey('empty-state-view'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 32),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              title,
-              key: const ValueKey('empty-state-view-title'),
-              style: context.theme.cardStyle.titleTextStyle,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              body,
-              key: const ValueKey('empty-state-view-body'),
-              style: context.theme.cardStyle.subtitleTextStyle,
-              textAlign: TextAlign.center,
-            ),
-            if (action != null) ...<Widget>[
-              const SizedBox(height: AppSpacing.lg),
-              FButton(
-                key: const ValueKey('empty-state-view-action'),
-                onPress: action!.onTap,
-                child: Text(action!.label),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return StateViewCard(
+      keyPrefix: 'empty-state-view',
+      icon: icon,
+      title: title,
+      body: body,
+      action: action,
     );
   }
 }

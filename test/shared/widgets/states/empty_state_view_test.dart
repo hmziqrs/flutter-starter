@@ -72,6 +72,27 @@ void main() {
       expect(tester.widget<Icon>(find.byType(Icon)).icon, FLucideIcons.search);
     });
 
+    testWidgets('scrolls instead of overflowing in a short bounded region', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: SizedBox(
+            width: 320,
+            height: 120,
+            child: EmptyStateView(
+              title: 'Nothing here yet',
+              body: 'Content will appear here.',
+              action: (label: 'Retry', onTap: () {}),
+            ),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(find.text('Nothing here yet'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('renders localized ar strings under RTL without errors', (tester) async {
       LocaleSettings.setLocaleSync(AppLocale.ar);
       await tester.pumpWidget(
