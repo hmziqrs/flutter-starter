@@ -30,29 +30,31 @@ class ForceUpdatePage extends StatelessWidget {
               ),
               child: Padding(
                 padding: AppSpacing.screenPadding,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      translations.forceUpdate.title,
-                      key: const ValueKey('force-update-title'),
-                      style: context.theme.typography.display.xl,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      state.message ?? translations.forceUpdate.body,
-                      key: const ValueKey('force-update-body'),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    FButton(
-                      key: const ValueKey('force-update-update-now'),
-                      onPress: onUpdateNow,
-                      child: Text(translations.forceUpdate.updateNow),
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        translations.forceUpdate.title,
+                        key: const ValueKey('force-update-title'),
+                        style: context.theme.typography.display.xl,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        state.message ?? translations.forceUpdate.body,
+                        key: const ValueKey('force-update-body'),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      FButton(
+                        key: const ValueKey('force-update-update-now'),
+                        onPress: onUpdateNow,
+                        child: Text(translations.forceUpdate.updateNow),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

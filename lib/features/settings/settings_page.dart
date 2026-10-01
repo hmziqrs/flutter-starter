@@ -238,62 +238,69 @@ class _SettingsWideLayout extends StatelessWidget {
             width: context.presentationTokens.navigationWidth,
             child: Padding(
               padding: context.screenPadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    translations.settings.title,
-                    style: context.theme.typography.display.xl,
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          translations.settings.title,
+                          style: context.theme.typography.display.xl,
+                        ),
+                        SizedBox(height: context.spacing.xl),
+                        AppSidebarItemGroup(
+                          key: const ValueKey('settings-wide-navigation'),
+                          children: [
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-appearance'),
+                              selected: section == SettingsSection.appearance,
+                              icon: const Icon(FLucideIcons.palette),
+                              label: Text(translations.settings.appearance),
+                              onPress: onOpenAppearance,
+                            ),
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-language'),
+                              selected: section == SettingsSection.language,
+                              icon: const Icon(FLucideIcons.languages),
+                              label: Text(translations.settings.language),
+                              onPress: onOpenLanguage,
+                            ),
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-accessibility'),
+                              selected: section == SettingsSection.accessibility,
+                              icon: const Icon(FLucideIcons.accessibility),
+                              label: Text(translations.settings.accessibility.title),
+                              onPress: onOpenAccessibility,
+                            ),
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-account'),
+                              selected: section == SettingsSection.account,
+                              icon: const Icon(FLucideIcons.userRound),
+                              label: Text(translations.settings.account),
+                              onPress: onOpenAccount,
+                            ),
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-subscription'),
+                              selected: section == SettingsSection.subscription,
+                              icon: const Icon(FLucideIcons.creditCard),
+                              label: Text(translations.settings.subscription),
+                              onPress: onOpenSubscription,
+                            ),
+                            FSidebarItem(
+                              key: const ValueKey('settings-wide-privacy-about'),
+                              selected: section == SettingsSection.privacyAbout,
+                              icon: const Icon(FLucideIcons.shieldCheck),
+                              label: Text(translations.settings.privacyAbout),
+                              onPress: onOpenPrivacyAbout,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: context.spacing.xl),
-                  AppSidebarItemGroup(
-                    key: const ValueKey('settings-wide-navigation'),
-                    children: [
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-appearance'),
-                        selected: section == SettingsSection.appearance,
-                        icon: const Icon(FLucideIcons.palette),
-                        label: Text(translations.settings.appearance),
-                        onPress: onOpenAppearance,
-                      ),
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-language'),
-                        selected: section == SettingsSection.language,
-                        icon: const Icon(FLucideIcons.languages),
-                        label: Text(translations.settings.language),
-                        onPress: onOpenLanguage,
-                      ),
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-accessibility'),
-                        selected: section == SettingsSection.accessibility,
-                        icon: const Icon(FLucideIcons.accessibility),
-                        label: Text(translations.settings.accessibility.title),
-                        onPress: onOpenAccessibility,
-                      ),
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-account'),
-                        selected: section == SettingsSection.account,
-                        icon: const Icon(FLucideIcons.userRound),
-                        label: Text(translations.settings.account),
-                        onPress: onOpenAccount,
-                      ),
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-subscription'),
-                        selected: section == SettingsSection.subscription,
-                        icon: const Icon(FLucideIcons.creditCard),
-                        label: Text(translations.settings.subscription),
-                        onPress: onOpenSubscription,
-                      ),
-                      FSidebarItem(
-                        key: const ValueKey('settings-wide-privacy-about'),
-                        selected: section == SettingsSection.privacyAbout,
-                        icon: const Icon(FLucideIcons.shieldCheck),
-                        label: Text(translations.settings.privacyAbout),
-                        onPress: onOpenPrivacyAbout,
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -476,7 +483,7 @@ class _AccountSettingsContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(translations.settings.accountBody),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           SpacedColumn(
             children: [
               FTile(
@@ -517,7 +524,7 @@ class _SubscriptionSettingsContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(translations.settings.subscriptionBody),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             FButton(
               key: const ValueKey('settings-view-pricing'),
               onPress: onOpenPricing,
@@ -561,7 +568,7 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(translations.settings.privacyBody),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           SpacedColumn(
             children: [
               FTile(
@@ -651,8 +658,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
           LabeledSectionCard(
             title: translations.settings.themeMode,
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: context.spacing.sm,
+              runSpacing: context.spacing.sm,
               children: [
                 for (final mode in AppThemeMode.values)
                   FButton(
@@ -665,12 +672,12 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           LabeledSectionCard(
             title: translations.settings.accent,
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: context.spacing.sm,
+              runSpacing: context.spacing.sm,
               children: [
                 for (final accent in AppAccent.values)
                   FButton(
@@ -683,14 +690,14 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           LabeledSectionCard(
             title: translations.settings.fontScale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('${(settings.fontScale * 100).round()}%'),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: context.spacing.md),
                 FSlider(
                   key: const ValueKey('font-scale-slider'),
                   control: .liftedContinuous(
@@ -714,15 +721,15 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           LabeledSectionCard(
             title: translations.settings.motionPreview,
             child: const _AppearanceMotionPreview(),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           const HapticsTile(),
           if (saveFailed) ...[
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             InlineSaveErrorText(
               message: translations.common.notConnected,
               valueKey: 'settings-save-error',
@@ -768,7 +775,7 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
             ),
           if (saveFailed)
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: EdgeInsets.all(context.spacing.md),
               child: InlineSaveErrorText(
                 message: translations.common.notConnected,
                 valueKey: 'locale-save-error',

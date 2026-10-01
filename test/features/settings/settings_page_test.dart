@@ -9,6 +9,7 @@ import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
@@ -186,19 +187,43 @@ void main() {
       'television.navigation.settings',
     );
   });
+
+  testWidgets('wide settings navigation scrolls instead of overflowing at maximum font scale', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(640, 400));
+    await LocaleSettings.setLocale(AppLocale.en);
+    await tester.pumpWidget(
+      _app(
+        initialLocation: '/settings/appearance',
+        dependencies: AppDependencies.inMemory(
+          settingsStore: InMemorySettingsStore(seed: {'appearance.font_scale': '1.60'}),
+        ),
+      ),
+    );
+    for (var frame = 0; frame < 8; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const ValueKey('settings-wide-navigation')), findsOneWidget);
+  });
 }
 
 Widget _app({
   required String initialLocation,
   AuthSession? initialSession,
   PlatformCapabilities? capabilities,
+  AppDependencies? dependencies,
 }) {
   return App(
     config: _developmentConfig,
-    dependencies: AppDependencies.inMemory(
-      initialSession: initialSession,
-      platformCapabilities: capabilities ?? const PlatformCapabilities.nonTelevision(),
-    ),
+    dependencies:
+        dependencies ??
+        AppDependencies.inMemory(
+          initialSession: initialSession,
+          platformCapabilities: capabilities ?? const PlatformCapabilities.nonTelevision(),
+        ),
     initialLocation: initialLocation,
   );
 }

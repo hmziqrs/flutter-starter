@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/features/profile/widgets/permission_rationale_assets.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_bottom_sheet.dart';
 
@@ -54,33 +55,42 @@ class PermissionRationaleBody extends StatelessWidget {
     return Semantics(
       label: copy.title,
       container: true,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(copy.icon, size: 28),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(copy.title, style: context.theme.typography.display.lg),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(copy.rationale, style: context.theme.typography.body.md),
-            if (permanentlyDenied) ...[
-              const SizedBox(height: AppSpacing.md),
-              FAlert(
-                icon: const Icon(FLucideIcons.octagonAlert),
-                title: Text(translations.permission.permanentlyDenied),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: context.presentationTokens.formContentMaxWidth,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(copy.icon, size: 28),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(copy.title, style: context.theme.typography.display.lg),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(copy.rationale, style: context.theme.typography.body.md),
+                  if (permanentlyDenied) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    FAlert(
+                      icon: const Icon(FLucideIcons.octagonAlert),
+                      title: Text(translations.permission.permanentlyDenied),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  _actions(translations),
+                ],
               ),
-            ],
-            const SizedBox(height: AppSpacing.xl),
-            _actions(translations),
-          ],
+            ),
+          ),
         ),
       ),
     );

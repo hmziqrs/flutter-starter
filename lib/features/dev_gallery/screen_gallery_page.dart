@@ -11,6 +11,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
+import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class ScreenGalleryPage extends StatefulWidget {
@@ -93,7 +94,7 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
             );
 
             if (constraints.maxWidth < context.theme.breakpoints.lg) {
-              final previewHeight = (constraints.maxHeight * 0.52).clamp(320, 640).toDouble();
+              final previewHeight = (constraints.maxHeight * 0.52).clamp(0, 640).toDouble();
               return Column(
                 key: const ValueKey('gallery-compact-layout'),
                 children: [
@@ -126,7 +127,7 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
               key: const ValueKey('gallery-expanded-layout'),
               children: [
                 SizedBox(
-                  width: 360,
+                  width: context.appUnit.un(360),
                   child: ListView(
                     key: const ValueKey('gallery-controls-scroll'),
                     padding: const EdgeInsets.all(AppSpacing.lg),

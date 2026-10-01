@@ -9,7 +9,7 @@ import 'package:starter/features/splash/app_startup_result_provider.dart';
 import 'package:starter/features/splash/splash_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
-import 'package:starter/shared/theme/app_sizes.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
@@ -98,36 +98,38 @@ class _SplashLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     final translations = context.t;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const _LogoReveal(child: _BrandMark()),
-        const SizedBox(height: AppSpacing.xl),
-        Text(
-          translations.app.name,
-          key: const ValueKey('splash-title'),
-          style: context.theme.typography.display.xl2,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-          child: Text(
-            translations.splash.tagline,
-            key: const ValueKey('splash-tagline'),
-            style: context.theme.typography.body.lg,
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl2),
-        if (reduceMotion)
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _LogoReveal(child: _BrandMark()),
+          const SizedBox(height: AppSpacing.xl),
           Text(
-            translations.splash.loading,
-            key: const ValueKey('splash-loading-label'),
-            style: context.theme.typography.body.md,
-          )
-        else
-          _Spinner(semanticsLabel: translations.splash.loading),
-      ],
+            translations.app.name,
+            key: const ValueKey('splash-title'),
+            style: context.theme.typography.display.xl2,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: context.presentationTokens.formContentMaxWidth),
+            child: Text(
+              translations.splash.tagline,
+              key: const ValueKey('splash-tagline'),
+              style: context.theme.typography.body.lg,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl2),
+          if (reduceMotion)
+            Text(
+              translations.splash.loading,
+              key: const ValueKey('splash-loading-label'),
+              style: context.theme.typography.body.md,
+            )
+          else
+            _Spinner(semanticsLabel: translations.splash.loading),
+        ],
+      ),
     );
   }
 }
@@ -140,30 +142,32 @@ class _SplashDone extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const _BrandMark(),
-        const SizedBox(height: AppSpacing.lg),
-        Icon(
-          FLucideIcons.circleCheck,
-          size: 32,
-          color: context.theme.colors.primary,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          translations.app.name,
-          style: context.theme.typography.display.xl2,
-        ),
-        if (viewData.buildLabel case final label?) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            label,
-            key: const ValueKey('splash-build-label'),
-            style: context.theme.typography.body.sm,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _BrandMark(),
+          const SizedBox(height: AppSpacing.lg),
+          Icon(
+            FLucideIcons.circleCheck,
+            size: 32,
+            color: context.theme.colors.primary,
           ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            translations.app.name,
+            style: context.theme.typography.display.xl2,
+          ),
+          if (viewData.buildLabel case final label?) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              label,
+              key: const ValueKey('splash-build-label'),
+              style: context.theme.typography.body.sm,
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -177,32 +181,34 @@ class _SplashError extends StatelessWidget {
   Widget build(BuildContext context) {
     final translations = context.t;
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Icon(
-            FLucideIcons.triangleAlert,
-            size: 40,
-            color: context.theme.colors.error,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            translations.splash.error,
-            key: const ValueKey('splash-error'),
-            style: context.theme.typography.display.xl,
-            textAlign: TextAlign.center,
-          ),
-          if (viewData.errorDiagnosticId case final id?) ...[
+      constraints: BoxConstraints(maxWidth: context.presentationTokens.formContentMaxWidth),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              FLucideIcons.triangleAlert,
+              size: 40,
+              color: context.theme.colors.error,
+            ),
             const SizedBox(height: AppSpacing.lg),
-            SelectableText(
-              translations.startupFailure.diagnosticId(id: id),
-              key: const ValueKey('splash-diagnostic-id'),
+            Text(
+              translations.splash.error,
+              key: const ValueKey('splash-error'),
+              style: context.theme.typography.display.xl,
               textAlign: TextAlign.center,
             ),
+            if (viewData.errorDiagnosticId case final id?) ...[
+              const SizedBox(height: AppSpacing.lg),
+              SelectableText(
+                translations.startupFailure.diagnosticId(id: id),
+                key: const ValueKey('splash-diagnostic-id'),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

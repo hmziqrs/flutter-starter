@@ -235,15 +235,14 @@ class _AppKeyboardChordOverlay extends StatelessWidget {
             horizontal: context.spacing.md,
             vertical: context.spacing.sm,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            spacing: context.spacing.xs,
+            runSpacing: context.spacing.xs,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               for (var index = 0; index < chord.labels.length; index++) ...[
-                if (index > 0) ...[
-                  SizedBox(width: context.spacing.xs),
-                  Text('+', style: context.theme.typography.body.sm),
-                  SizedBox(width: context.spacing.xs),
-                ],
+                if (index > 0) Text('+', style: context.theme.typography.body.sm),
                 FBadge(
                   key: ValueKey('app-keyboard-chord-key-$index'),
                   variant: .outline,

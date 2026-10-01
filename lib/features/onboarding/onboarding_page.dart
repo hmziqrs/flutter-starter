@@ -141,7 +141,13 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                           variant: .outline,
                           mainAxisSize: .min,
                           onPress: _previous,
-                          child: Text(translations.common.back),
+                          builder: (_, _, _, _, _, child) => Flexible(child: child!),
+                          child: Text(
+                            translations.common.back,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
                         )
                       else
                         const Spacer(),
@@ -150,10 +156,14 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                         key: const ValueKey('onboarding-continue'),
                         mainAxisSize: .min,
                         onPress: _page == slides.length - 1 ? widget.onOpenPaywall : _next,
+                        builder: (_, _, _, _, _, child) => Flexible(child: child!),
                         child: Text(
                           _page == slides.length - 1
                               ? translations.onboarding.openPaywall
                               : translations.common.continueAction,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ],

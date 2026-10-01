@@ -7,6 +7,7 @@ import 'package:starter/features/feedback/feedback_controller.dart';
 import 'package:starter/features/feedback/feedback_presentation_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/forms/form_validators.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_bottom_sheet.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
@@ -91,38 +92,49 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.feedback;
-    final live = ref.watch(feedbackControllerProvider);
-    final presentation = widget.presentation ?? live.presentation;
+    final (livePresentation, liveIncludeScreenshot) = ref.watch(
+      feedbackControllerProvider.select(
+        (state) => (state.presentation, state.draft.includeScreenshot),
+      ),
+    );
+    final presentation = widget.presentation ?? livePresentation;
     final isFixture = widget.presentation != null;
     final busy = presentation.isBusy;
-    final includeScreenshot = isFixture ? _includeScreenshot : live.draft.includeScreenshot;
+    final includeScreenshot = isFixture ? _includeScreenshot : liveIncludeScreenshot;
 
     return Semantics(
       label: translations.title,
       container: true,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Header(title: translations.title),
-              const SizedBox(height: AppSpacing.md),
-              switch (presentation.status) {
-                FeedbackPresentationStatus.success => _SuccessCopy(
-                  title: translations.successTitle,
-                  body: translations.successBody,
-                ),
-                _ => _buildForm(
-                  context: context,
-                  presentation: presentation,
-                  includeScreenshot: includeScreenshot,
-                  busy: busy,
-                  isFixture: isFixture,
-                ),
-              },
-            ],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: context.presentationTokens.formContentMaxWidth,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(context.spacing.xl),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Header(title: translations.title),
+                  SizedBox(height: context.spacing.md),
+                  switch (presentation.status) {
+                    FeedbackPresentationStatus.success => _SuccessCopy(
+                      title: translations.successTitle,
+                      body: translations.successBody,
+                    ),
+                    _ => _buildForm(
+                      context: context,
+                      presentation: presentation,
+                      includeScreenshot: includeScreenshot,
+                      busy: busy,
+                      isFixture: isFixture,
+                    ),
+                  },
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -165,7 +177,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               return null;
             },
           ),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           FTextFormField(
             key: const ValueKey('feedback-email'),
             control: .managed(
@@ -186,7 +198,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               );
             },
           ),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           FSwitch(
             key: const ValueKey('feedback-include-screenshot'),
             value: includeScreenshot,
@@ -195,10 +207,10 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
             onChange: isFixture ? null : _pushIncludeScreenshot,
           ),
           if (_feedbackAlert(context, presentation) case final alert?) ...[
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             alert,
           ],
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           Row(
             children: [
               if (busy) const BusyIndicator(),
@@ -211,7 +223,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: context.spacing.sm),
           FButton(
             key: const ValueKey('feedback-cancel'),
             variant: .ghost,
@@ -283,7 +295,7 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         const Icon(FLucideIcons.messageSquare, size: 24),
-        const SizedBox(width: AppSpacing.md),
+        SizedBox(width: context.spacing.md),
         Expanded(
           child: Text(title, style: context.theme.typography.display.lg),
         ),

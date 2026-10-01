@@ -75,6 +75,34 @@ void main() {
     expect(find.text('Critical security patch'), findsOneWidget);
   });
 
+  testWidgets('a long server message scrolls instead of overflowing the blocked page', (
+    tester,
+  ) async {
+    tester.view
+      ..devicePixelRatio = 1
+      ..physicalSize = const Size(390, 300);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final longMessage = 'Critical security patch, update required immediately. ' * 12;
+    await tester.pumpWidget(
+      _localizedApp(
+        home: ForceUpdatePage(
+          state: ForceUpdateState(
+            latestVersion: '2.1.0',
+            storeUrl: 'https://example.test/store',
+            message: longMessage,
+          ),
+          onUpdateNow: _noop,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.byKey(const ValueKey('force-update-update-now')), findsOneWidget);
+  });
+
   testWidgets('Update now invokes the callback', (tester) async {
     var pressed = 0;
     await tester.pumpWidget(

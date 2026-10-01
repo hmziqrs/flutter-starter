@@ -265,7 +265,7 @@ class _OtpViewState extends ConsumerState<_OtpView>
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            SizedBox(height: context.spacing.xl),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-otp-submit'),
               focusNode: _submitFocus,
@@ -275,7 +275,7 @@ class _OtpViewState extends ConsumerState<_OtpView>
               locked: _locked,
               retainFocusOnBusy: true,
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             FormSubmitButton(
               buttonKey: const ValueKey('auth-otp-resend'),
               focusNode: _resendFocus,
@@ -304,15 +304,12 @@ class _OtpViewState extends ConsumerState<_OtpView>
         status == OtpPresentationStatus.locked) {
       return null;
     }
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: FAlert(
-        key: const ValueKey('auth-otp-countdown'),
-        icon: const Icon(FLucideIcons.clock),
-        title: Text(
-          context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
-          textAlign: TextAlign.start,
-        ),
+    return FAlert(
+      key: const ValueKey('auth-otp-countdown'),
+      icon: const Icon(FLucideIcons.clock),
+      title: Text(
+        context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
+        textAlign: TextAlign.start,
       ),
     );
   }

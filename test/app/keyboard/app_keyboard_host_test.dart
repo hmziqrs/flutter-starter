@@ -45,6 +45,32 @@ void main() {
     expect(find.byKey(const ValueKey('app-keyboard-chord-overlay')), findsNothing);
   });
 
+  testWidgets('long modifier chords wrap instead of overflowing narrow viewports', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.85;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await _pumpApp(tester, size: const Size(320, 844));
+
+    for (final key in [
+      LogicalKeyboardKey.metaLeft,
+      LogicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.altLeft,
+      LogicalKeyboardKey.shiftLeft,
+      LogicalKeyboardKey.keyQ,
+    ]) {
+      await tester.sendKeyDownEvent(key);
+    }
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const ValueKey('app-keyboard-chord-overlay')), findsOneWidget);
+    expect(find.text('Meta'), findsOneWidget);
+    expect(find.text('Shift'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('command backspace pops a pushed login screen without an on-screen back button', (
     tester,
   ) async {
@@ -219,10 +245,11 @@ Future<void> _pumpApp(
   WidgetTester tester, {
   PlatformCapabilities capabilities = const PlatformCapabilities.nonTelevision(),
   String? initialLocation,
+  Size size = const Size(1024, 844),
 }) async {
   tester.view
     ..devicePixelRatio = 1
-    ..physicalSize = const Size(1024, 844);
+    ..physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
   await LocaleSettings.setLocale(AppLocale.en);

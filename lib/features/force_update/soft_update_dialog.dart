@@ -63,43 +63,45 @@ class SoftUpdateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          translations.softUpdate.title,
-          key: const ValueKey('soft-update-title'),
-          style: titleStyle ?? context.theme.typography.display.lg,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          state.message ?? translations.softUpdate.body,
-          key: const ValueKey('soft-update-body'),
-          style: bodyStyle,
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            FButton(
-              key: const ValueKey('soft-update-later'),
-              variant: FButtonVariant.outline,
-              mainAxisSize: MainAxisSize.min,
-              onPress: onLater,
-              child: Text(translations.softUpdate.later),
-            ),
-            FButton(
-              key: const ValueKey('soft-update-update'),
-              mainAxisSize: MainAxisSize.min,
-              onPress: onUpdate,
-              child: Text(translations.softUpdate.update),
-            ),
-          ],
-        ),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            translations.softUpdate.title,
+            key: const ValueKey('soft-update-title'),
+            style: titleStyle ?? context.theme.typography.display.lg,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            state.message ?? translations.softUpdate.body,
+            key: const ValueKey('soft-update-body'),
+            style: bodyStyle,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              FButton(
+                key: const ValueKey('soft-update-later'),
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: onLater,
+                child: Text(translations.softUpdate.later),
+              ),
+              FButton(
+                key: const ValueKey('soft-update-update'),
+                mainAxisSize: MainAxisSize.min,
+                onPress: onUpdate,
+                child: Text(translations.softUpdate.update),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

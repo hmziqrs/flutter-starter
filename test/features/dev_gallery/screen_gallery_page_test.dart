@@ -30,6 +30,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('compact preview shrinks with the host instead of overflowing', (tester) async {
+    await _pumpGallery(tester, size: const Size(390, 300));
+
+    expect(find.byKey(const ValueKey('gallery-compact-layout')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('filters localized screens and cases, then selects a case', (tester) async {
     await _pumpGallery(tester);
     expect(find.byKey(const ValueKey('case-probe-home-default')), findsOneWidget);
@@ -112,10 +119,14 @@ final _cases = <GalleryCase>[
   ),
 ];
 
-Future<void> _pumpGallery(WidgetTester tester, {bool setLocale = true}) async {
+Future<void> _pumpGallery(
+  WidgetTester tester, {
+  Size size = const Size(390, 844),
+  bool setLocale = true,
+}) async {
   tester.view
     ..devicePixelRatio = 1
-    ..physicalSize = const Size(390, 844);
+    ..physicalSize = size;
   if (setLocale) await LocaleSettings.setLocale(AppLocale.en);
   final theme = ForuiThemeFactory.build(
     brightness: Brightness.light,

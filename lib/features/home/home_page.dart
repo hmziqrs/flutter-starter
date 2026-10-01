@@ -7,7 +7,6 @@ import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
@@ -108,8 +107,6 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.home;
-    final minimumButtonHeight =
-        context.theme.buttonStyles.primary.md.contentStyle.constraints.minHeight;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -122,43 +119,51 @@ class _QuickActions extends StatelessWidget {
                 constraints.maxWidth >= (minimumCardExtent * 2) + context.spacing.md
                 ? math.min(columns, 2)
                 : 1;
+            final tileWidth =
+                (constraints.maxWidth - context.spacing.md * (resolvedColumns - 1)) /
+                resolvedColumns;
             return FocusTraversalGroup(
               policy: ReadingOrderTraversalPolicy(),
-              child: GridView.count(
+              child: Wrap(
                 key: ValueKey('home-quick-actions-$resolvedColumns'),
-                crossAxisCount: resolvedColumns,
-                mainAxisSpacing: context.spacing.md,
-                crossAxisSpacing: context.spacing.md,
-                mainAxisExtent: math.max(
-                  minimumButtonHeight,
-                  context.appUnit.un(minimumButtonHeight),
-                ),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                spacing: context.spacing.md,
+                runSpacing: context.spacing.md,
                 children: [
-                  _QuickAction(
-                    buttonKey: const ValueKey('home-open-profile'),
-                    icon: FLucideIcons.userRound,
-                    label: translations.editProfile,
-                    onPress: onOpenProfile,
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickAction(
+                      buttonKey: const ValueKey('home-open-profile'),
+                      icon: FLucideIcons.userRound,
+                      label: translations.editProfile,
+                      onPress: onOpenProfile,
+                    ),
                   ),
-                  _QuickAction(
-                    buttonKey: const ValueKey('home-open-pricing'),
-                    icon: FLucideIcons.creditCard,
-                    label: translations.openPricing,
-                    onPress: onOpenPricing,
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickAction(
+                      buttonKey: const ValueKey('home-open-pricing'),
+                      icon: FLucideIcons.creditCard,
+                      label: translations.openPricing,
+                      onPress: onOpenPricing,
+                    ),
                   ),
-                  _QuickAction(
-                    buttonKey: const ValueKey('home-open-settings'),
-                    icon: FLucideIcons.settings,
-                    label: translations.openSettings,
-                    onPress: onOpenSettings,
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickAction(
+                      buttonKey: const ValueKey('home-open-settings'),
+                      icon: FLucideIcons.settings,
+                      label: translations.openSettings,
+                      onPress: onOpenSettings,
+                    ),
                   ),
-                  _QuickAction(
-                    buttonKey: const ValueKey('home-open-login'),
-                    icon: FLucideIcons.logIn,
-                    label: translations.openLogin,
-                    onPress: onOpenLogin,
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickAction(
+                      buttonKey: const ValueKey('home-open-login'),
+                      icon: FLucideIcons.logIn,
+                      label: translations.openLogin,
+                      onPress: onOpenLogin,
+                    ),
                   ),
                 ],
               ),
