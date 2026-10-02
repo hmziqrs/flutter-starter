@@ -8,15 +8,17 @@ import 'package:starter/app/platform_capabilities_provider.dart';
 import 'package:starter/app/presentation/app_presentation_viewport.dart';
 import 'package:starter/app/presentation_policy_controller.dart';
 import 'package:starter/features/dev_gallery/gallery_environment.dart';
+import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/adaptive/app_unit.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
-class PreviewFrame extends StatelessWidget {
+class PreviewFrame extends StatefulWidget {
   const PreviewFrame({
     required this.environment,
     required this.child,
@@ -31,7 +33,17 @@ class PreviewFrame extends StatelessWidget {
   final Widget child;
 
   @override
+  State<PreviewFrame> createState() => _PreviewFrameState();
+}
+
+class _PreviewFrameState extends State<PreviewFrame> {
+  final _ForuiThemeMemo _themeMemo = _ForuiThemeMemo();
+  final _MaterialThemeMemo _materialThemeMemo = _MaterialThemeMemo();
+
+  @override
   Widget build(BuildContext context) {
+    final environment = widget.environment;
+    final child = widget.child;
     final size = environment.viewport.size;
     final devicePixelRatio = environment.viewport.devicePixelRatio;
     final unit = AppUnit.fromSize(size, devicePixelRatio: devicePixelRatio);
@@ -48,7 +60,7 @@ class PreviewFrame extends StatelessWidget {
       isWeb: false,
       tvPlatform: environment.tvPlatform,
     );
-    final theme = ForuiThemeFactory.build(
+    final theme = _themeMemo.build(
       brightness: environment.brightness,
       accent: environment.accent,
       fontScale: environment.appFontScale,
@@ -56,7 +68,7 @@ class PreviewFrame extends StatelessWidget {
       responsiveFontScale: unit.typographyScale,
       presentationPolicy: presentationPolicy,
     );
-    final safeArea = environment.safeAreaEnabled ? safeAreaPadding : EdgeInsets.zero;
+    final safeArea = environment.safeAreaEnabled ? PreviewFrame.safeAreaPadding : EdgeInsets.zero;
     final keyboardInsets = environment.keyboardInsetsEnabled
         ? PreviewFrame.keyboardInsets
         : EdgeInsets.zero;
@@ -65,9 +77,9 @@ class PreviewFrame extends StatelessWidget {
       GalleryDisplayFeature.verticalFold => [
         DisplayFeature(
           bounds: Rect.fromLTWH(
-            (size.width - verticalFoldWidth) / 2,
+            (size.width - PreviewFrame.verticalFoldWidth) / 2,
             0,
-            verticalFoldWidth,
+            PreviewFrame.verticalFoldWidth,
             size.height,
           ),
           type: DisplayFeatureType.fold,
@@ -123,7 +135,7 @@ class PreviewFrame extends StatelessWidget {
                       policy: presentationPolicy,
                       child: Theme(
                         key: const ValueKey('gallery-preview-material-theme'),
-                        data: theme.toApproximateMaterialTheme(),
+                        data: _materialThemeMemo.build(theme),
                         child: FTheme(
                           key: const ValueKey('gallery-preview-forui-theme'),
                           data: theme,
@@ -176,5 +188,66 @@ class PreviewFrame extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+typedef _ForuiThemeKey = ({
+  Brightness brightness,
+  AppAccent accent,
+  double fontScale,
+  AppInteractionPolicy interactionPolicy,
+  double responsiveFontScale,
+  AppPresentationPolicy presentationPolicy,
+});
+
+final class _ForuiThemeMemo {
+  _ForuiThemeKey? _key;
+  late FThemeData _theme;
+
+  FThemeData build({
+    required Brightness brightness,
+    required AppAccent accent,
+    required double fontScale,
+    required AppInteractionPolicy interactionPolicy,
+    required double responsiveFontScale,
+    required AppPresentationPolicy presentationPolicy,
+  }) {
+    final key = (
+      brightness: brightness,
+      accent: accent,
+      fontScale: fontScale,
+      interactionPolicy: interactionPolicy,
+      responsiveFontScale: responsiveFontScale,
+      presentationPolicy: presentationPolicy,
+    );
+    if (_key == key) {
+      return _theme;
+    }
+    final theme = ForuiThemeFactory.build(
+      brightness: brightness,
+      accent: accent,
+      fontScale: fontScale,
+      interactionPolicy: interactionPolicy,
+      responsiveFontScale: responsiveFontScale,
+      presentationPolicy: presentationPolicy,
+    );
+    _key = key;
+    _theme = theme;
+    return theme;
+  }
+}
+
+final class _MaterialThemeMemo {
+  FThemeData? _data;
+  late ThemeData _theme;
+
+  ThemeData build(FThemeData data) {
+    if (identical(_data, data)) {
+      return _theme;
+    }
+    final theme = data.toApproximateMaterialTheme();
+    _data = data;
+    _theme = theme;
+    return theme;
   }
 }
