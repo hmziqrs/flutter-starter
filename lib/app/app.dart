@@ -207,6 +207,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   final _MaterialThemeMemo _lightMaterialThemeMemo = _MaterialThemeMemo();
   final _MaterialThemeMemo _darkMaterialThemeMemo = _MaterialThemeMemo();
   final _MaterialThemeMemo _activeMaterialThemeMemo = _MaterialThemeMemo();
+  final Stopwatch _autoLockInteractionClock = Stopwatch()..start();
+  Duration? _lastAutoLockExtendAt;
 
   @override
   void initState() {
@@ -434,10 +436,19 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return true;
   }
 
+  static const Duration _autoLockExtendWindow = Duration(milliseconds: 16);
+
   void _maybeExtendAutoLock() {
-    if (ref.read(autoLockDelaySecondsProvider) > 0) {
-      ref.read(autoLockControllerProvider.notifier).extend();
+    if (ref.read(autoLockDelaySecondsProvider) <= 0) {
+      return;
     }
+    final elapsed = _autoLockInteractionClock.elapsed;
+    final lastExtendAt = _lastAutoLockExtendAt;
+    if (lastExtendAt != null && elapsed - lastExtendAt < _autoLockExtendWindow) {
+      return;
+    }
+    _lastAutoLockExtendAt = elapsed;
+    ref.read(autoLockControllerProvider.notifier).extend();
   }
 }
 

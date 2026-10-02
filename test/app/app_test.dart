@@ -11,6 +11,7 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
+import 'package:starter/features/security/auto_lock_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -316,6 +317,51 @@ void main() {
     expect(materialApp().themeMode, ThemeMode.dark);
     expect(materialApp().darkTheme, isNotNull);
     expect(Theme.of(tester.element(find.text('Welcome, Alex'))).brightness, Brightness.dark);
+  });
+
+  testWidgets('pointer activity postpones the idle auto-lock', (tester) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    _setViewport(tester, const Size(390, 844));
+    await tester.pumpWidget(
+      App(config: _developmentConfig, dependencies: AppDependencies.inMemory()),
+    );
+    await pumpAppFrames(tester);
+
+    final container = ProviderScope.containerOf(tester.element(find.text('Welcome, Alex')));
+    unawaited(container.read(settingsControllerProvider.notifier).setAutoLockDelaySeconds(3));
+    await tester.pump();
+
+    Future<void> interact() async {
+      final origin = tester.getCenter(find.text('Welcome, Alex'));
+      final gesture = await tester.startGesture(origin);
+      await gesture.moveBy(const Offset(30, 0));
+      await gesture.moveBy(const Offset(-30, 0));
+      await gesture.up();
+    }
+
+    Future<void> passRealExtendWindow() {
+      return tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+    }
+
+    await tester.pump(const Duration(seconds: 2));
+    await passRealExtendWindow();
+    await interact();
+    await tester.pump(const Duration(seconds: 2));
+    expect(container.read(autoLockControllerProvider).locked, isFalse);
+
+    await passRealExtendWindow();
+    await interact();
+    await interact();
+    await interact();
+    await tester.pump(const Duration(seconds: 2));
+    expect(container.read(autoLockControllerProvider).locked, isFalse);
+
+    await tester.pump(const Duration(seconds: 2));
+    final state = container.read(autoLockControllerProvider);
+    expect(state.locked, isTrue);
+    expect(state.lockedReason, AutoLockReason.idleTimeout);
   });
 }
 
