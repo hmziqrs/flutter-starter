@@ -1,3 +1,1 @@
-# CLAUDE.md
-
-READ @AGENTS.md
+AGENTS.md
