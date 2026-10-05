@@ -466,7 +466,7 @@ final class AppDependencies {
         permissionService: _selectPermissionService(capabilities, logger: logger),
         mediaPicker: _selectMediaPicker(capabilities, logger: logger),
         shareService: _selectShareService(capabilities, logger: logger),
-        appUpdateService: _selectAppUpdateService(
+        appUpdateService: selectAppUpdateService(
           capabilities,
           iosAppleId: iosAppleId,
           logger: logger,
@@ -520,13 +520,18 @@ final class AppDependencies {
         : const NoopShareService();
   }
 
-  static AppUpdateService _selectAppUpdateService(
+  @visibleForTesting
+  static AppUpdateService selectAppUpdateService(
     PlatformCapabilities caps, {
     required String iosAppleId,
     required AppLogger logger,
   }) {
     if (caps.isWeb) return const NoopAppUpdateService();
-    return switch (caps.platform) {
+    // PlatformCapabilities.platform carries the TargetPlatform name ('iOS',
+    // 'android'), so match case-insensitively to keep real devices off the
+    // noop path regardless of spelling.
+    final platform = caps.platform.toLowerCase();
+    return switch (platform) {
       'android' => AndroidAppUpdateService(logger: logger),
       'ios' => IosAppUpdateService(appleId: iosAppleId, logger: logger),
       _ => const NoopAppUpdateService(),

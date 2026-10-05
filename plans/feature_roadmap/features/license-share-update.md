@@ -7,8 +7,9 @@
 > `appUpdateServiceProvider`), `createApplication` coverage exists on device
 > (`integration_test/license_share_update_test.dart`) and headless
 > (`test/app/diagnostics/diagnostics_page_test.dart`), and both services now have a real
-> app-surface caller on `/dev/diagnostics` beyond tests/gallery. All audit items pass with
-> current evidence; status flipped to done (2026-10-05) with no open gaps.
+> app-surface caller on `/dev/diagnostics` beyond tests/gallery. A 2026-10-05 re-review caught the
+> iOS update adapter unreachable (see the composition-root correction below) and fixed it; with
+> that fix in, the audit items pass with current evidence and the done status (2026-10-05) holds.
 
 ## Summary
 A bundle of three small platform-polish features that each touch the same native/settings seams:
@@ -111,7 +112,11 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 - [x] Composition root confined — **pass**: `shareServiceProvider`/`appUpdateServiceProvider`
   throw unless overridden; overridden only at the `ProviderScope` (`app.dart:143-144`);
   platform selection (SharePlus on ios/android, `IosAppUpdateService` with `config.iosAppleId`,
-  `AndroidAppUpdateService`, Noops elsewhere/web) only in `dependencies.dart`.
+  `AndroidAppUpdateService`, Noops elsewhere/web) only in `dependencies.dart`. Correction
+  (2026-10-05): the iOS branch here was originally dead code — the switch matched lowercase
+  `'ios'` while `PlatformCapabilitiesResolver` yields `TargetPlatform.iOS.name` (`'iOS'`), so
+  real devices fell to the Noop adapter; the match is now case-insensitive and covered for both
+  spellings in `test/app/dependencies_test.dart`.
 - [x] Motion guarded — **n/a**: no custom animation.
 - [x] i18n synced en/ar/zh-Hans — **pass**: `settings.about.license`, `share.{success,unavailable,
   cancelled}`, `update.{checkForUpdates,available,notAvailable,required}` verified present in all

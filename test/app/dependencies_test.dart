@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_tvos/flutter_tvos.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:starter/app/dependencies.dart';
@@ -14,6 +16,11 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/http_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/infrastructure/updates/android_app_update_service.dart';
+import 'package:starter/infrastructure/updates/app_update_service.dart';
+import 'package:starter/infrastructure/updates/ios_app_update_service.dart';
+import 'package:starter/infrastructure/updates/noop_app_update_service.dart';
 
 void main() {
   test('settings persistence keys are explicit and unique', () {
@@ -116,4 +123,52 @@ void main() {
   test('known cache keys cover the search corpus cache key', () {
     expect(knownCacheKeys, contains(searchCorpusCacheKey));
   });
+
+  test('update adapter selection matches both iOS platform spellings', () {
+    AppUpdateService selectFor(String platform, {bool isWeb = false}) {
+      return AppDependencies.selectAppUpdateService(
+        PlatformCapabilities(platform: platform, isWeb: isWeb),
+        iosAppleId: '123456789',
+        logger: AppLogger.bootstrap(),
+      );
+    }
+
+    // The resolver yields TargetPlatform.iOS.name ('iOS'); the lowercase
+    // spelling is matched too so real devices never fall to the noop.
+    final enumNamed = selectFor('iOS');
+    expect(enumNamed, isA<IosAppUpdateService>());
+    expect((enumNamed as IosAppUpdateService).appleId, '123456789');
+
+    expect(selectFor('ios'), isA<IosAppUpdateService>());
+    expect(selectFor('android'), isA<AndroidAppUpdateService>());
+    expect(selectFor('macos'), isA<NoopAppUpdateService>());
+    expect(selectFor('iOS', isWeb: true), isA<NoopAppUpdateService>());
+  });
+
+  test('production routes a resolved iOS device to the iOS update adapter', () async {
+    final previousTargetPlatform = debugDefaultTargetPlatformOverride;
+    TvOSInfo.bindingsOverride = _FakeTvOsBindings(isTvOS: false);
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+      final deps = await AppDependencies.production(
+        AppLogger.bootstrap(),
+        iosAppleId: '123456789',
+        allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+      );
+
+      expect(deps.platform.platformCapabilities.platform, 'iOS');
+      expect(deps.platform.appUpdateService, isA<IosAppUpdateService>());
+    } finally {
+      debugDefaultTargetPlatformOverride = previousTargetPlatform;
+      TvOSInfo.bindingsOverride = null;
+    }
+  });
+}
+
+final class _FakeTvOsBindings extends TvOSNativeBindings {
+  _FakeTvOsBindings({required this.isTvOS}) : super.forTesting();
+
+  @override
+  final bool isTvOS;
 }
