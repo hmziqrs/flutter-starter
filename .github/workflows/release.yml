@@ -333,3 +333,18 @@ jobs:
             - `windows-x64.zip` — Windows x64 build (arm64 unavailable; firebase_cpp_sdk ships x64-only libs)
             - `linux-x64.tar.gz` / `linux-arm64.tar.gz` — Linux bundles
             - `android/*` — per-ABI APKs (armeabi-v7a, arm64-v8a, x86_64) + AAB
+
+      - name: Prune assets retired from the matrix
+        # softprops overwrites same-name assets but never drops ones the matrix
+        # no longer builds; anything not refreshed by this run goes stale.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_STARTED: ${{ github.run_started_at }}
+        run: |
+          IDS="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/latest" \
+            --arg rs "$RUN_STARTED" \
+            --jq '.assets[] | select(.updated_at < $rs) | .id')"
+          for id in $IDS; do
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/$id"
+          done
+          echo "Pruned stale assets: ${IDS:-none}"
