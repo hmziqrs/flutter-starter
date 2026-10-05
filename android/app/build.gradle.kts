@@ -6,7 +6,9 @@ plugins {
 
 android {
     namespace = "com.example.starter"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications 23.x, permission_handler, and androidx.core
+    // 1.19 all require API 37; Flutter 3.44.7's default is still 36.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
