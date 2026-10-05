@@ -19,6 +19,7 @@ ProviderContainer _container({
   required FeedbackTransport transport,
   FeedbackDraft initialDraft = const FeedbackDraft.empty(),
   SettingsStore? store,
+  FeedbackScreenshotCapture? capture,
 }) {
   final settingsStore = store ?? InMemorySettingsStore();
   final container = ProviderContainer(
@@ -28,6 +29,7 @@ ProviderContainer _container({
       initialFeedbackDraftProvider.overrideWithValue(initialDraft),
       initialFeedbackShakeEnabledProvider.overrideWithValue(false),
       feedbackAppMetadataProvider.overrideWithValue(_metadata),
+      if (capture != null) feedbackScreenshotCaptureProvider.overrideWithValue(capture),
     ],
   );
   addTearDown(container.dispose);
@@ -141,6 +143,56 @@ void main() {
       expect(
         container.read(feedbackControllerProvider).presentation.status,
         FeedbackPresentationStatus.failed,
+      );
+    });
+
+    test('includeScreenshot attaches an injected capture to the submission', () async {
+      final transport = InMemoryFeedbackTransport();
+      final container = _container(
+        transport: transport,
+        capture: () async => const FeedbackScreenshot(mime: 'image/png', base64: 'aGk='),
+      );
+      final controller = container.read(feedbackControllerProvider.notifier)
+        ..setMessage('with screenshot')
+        ..setIncludeScreenshot(value: true);
+
+      expect(await controller.submit(), isTrue);
+      expect(transport.submissions.single.hasScreenshot, isTrue);
+      expect(transport.submissions.single.screenshotMime, 'image/png');
+      expect(transport.submissions.single.screenshotBase64, 'aGk=');
+    });
+
+    test('default and failing captures submit without a faked attachment', () async {
+      final intentOnly = _container(transport: InMemoryFeedbackTransport());
+      final intentController = intentOnly.read(feedbackControllerProvider.notifier)
+        ..setMessage('intent only')
+        ..setIncludeScreenshot(value: true);
+      await intentController.submit();
+
+      final intentSubmission =
+          (intentOnly.read(feedbackTransportProvider) as InMemoryFeedbackTransport)
+              .submissions
+              .single;
+      expect(intentSubmission.hasScreenshot, isFalse);
+      expect(
+        intentOnly.read(feedbackControllerProvider).presentation.status,
+        FeedbackPresentationStatus.success,
+      );
+
+      final failing = _container(
+        transport: InMemoryFeedbackTransport(),
+        capture: () async => throw const FeedbackTransportException.unknown(),
+      );
+      final failingController = failing.read(feedbackControllerProvider.notifier)
+        ..setMessage('capture blew up')
+        ..setIncludeScreenshot(value: true);
+      expect(await failingController.submit(), isTrue);
+      expect(
+        (failing.read(feedbackTransportProvider) as InMemoryFeedbackTransport)
+            .submissions
+            .single
+            .hasScreenshot,
+        isFalse,
       );
     });
 

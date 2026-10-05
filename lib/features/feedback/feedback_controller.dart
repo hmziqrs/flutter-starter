@@ -35,6 +35,28 @@ final feedbackAppMetadataProvider = Provider<FeedbackAppMetadata>(
   ),
 );
 
+/// A captured screenshot attachment for the transport payload, produced by a
+/// [FeedbackScreenshotCapture] seam.
+final class FeedbackScreenshot {
+  const FeedbackScreenshot({required this.mime, required this.base64});
+
+  final String mime;
+
+  final String base64;
+}
+
+typedef FeedbackScreenshotCapture = Future<FeedbackScreenshot?> Function();
+
+/// The honest default capture: none — an opted-in draft submits without an
+/// attachment rather than faking one (feedback.md).
+Future<FeedbackScreenshot?> captureNoFeedbackScreenshot() async => null;
+
+/// Injectable capture. Defaults to [captureNoFeedbackScreenshot]; the starter
+/// wires no platform capture, so `includeScreenshot` is intent until injected.
+final feedbackScreenshotCaptureProvider = Provider<FeedbackScreenshotCapture>(
+  (ref) => captureNoFeedbackScreenshot,
+);
+
 @freezed
 abstract class FeedbackControllerState with _$FeedbackControllerState {
   const factory FeedbackControllerState({
@@ -91,10 +113,16 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
     }
     state = state.copyWith(presentation: const FeedbackPresentationState.validating());
     final formValue = _buildFormValue();
+    // The draft flag is an intent: an attachment is only sent when the
+    // injected capture actually produces one (none by default — never fake an
+    // attachment, feedback.md Risks).
+    final screenshot = formValue.includeScreenshot ? await _captureScreenshot() : null;
     final submission = FeedbackSubmission(
       message: formValue.message,
       email: formValue.email,
       appMetadata: formValue.appMetadata,
+      screenshotMime: screenshot?.mime,
+      screenshotBase64: screenshot?.base64,
     );
     state = state.copyWith(presentation: const FeedbackPresentationState.submitting());
     try {
@@ -108,7 +136,7 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
           );
           _logger.debug(
             'feedback.submit.accepted',
-            context: {'id': result.id ?? ''},
+            context: {'id': result.id ?? '', 'screenshot': submission.hasScreenshot},
           );
           return true;
         case FeedbackOutcome.rejected:
@@ -165,6 +193,20 @@ final class FeedbackController extends Notifier<FeedbackControllerState> {
       includeScreenshot: state.draft.includeScreenshot,
       appMetadata: ref.read(feedbackAppMetadataProvider),
     );
+  }
+
+  /// A failed capture must never lose the report — submit without the shot.
+  Future<FeedbackScreenshot?> _captureScreenshot() async {
+    try {
+      return await ref.read(feedbackScreenshotCaptureProvider)();
+    } on Object catch (error, stackTrace) {
+      _logger.warning(
+        'feedback.screenshot.capture.failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
   }
 
   void _schedulePersist(FeedbackDraft draft) {

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/feedback/feedback_controller.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
@@ -66,6 +68,31 @@ void main() {
 
     expect(find.byKey(const ValueKey('settings-toggle-save-error')), findsNothing);
   });
+
+  testWidgets('privacy section exposes the shake-to-feedback opt-in and persists it', (
+    tester,
+  ) async {
+    _setViewport(tester);
+    final store = InMemorySettingsStore();
+    await tester.pumpWidget(_harness(store: store, section: SettingsSection.privacyAbout));
+    await _settle(tester);
+
+    final toggle = find.byKey(const ValueKey('settings-toggle-feedback-shake'));
+    await tester.ensureVisible(toggle);
+    await _settle(tester);
+    expect(find.text('Open feedback on shake'), findsOneWidget);
+    expect(
+      tester.widget<FSwitch>(toggle).value,
+      isFalse,
+      reason: 'shake-to-feedback is divisive and defaults to off',
+    );
+
+    await tester.tap(toggle);
+    await _settle(tester);
+
+    expect(tester.widget<FSwitch>(toggle).value, isTrue);
+    expect(store.snapshot[feedbackShakeEnabledKey], 'true');
+  });
 }
 
 void _setViewport(WidgetTester tester) {
@@ -80,7 +107,11 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
-Widget _harness({bool failWrites = false, InMemorySettingsStore? store}) {
+Widget _harness({
+  bool failWrites = false,
+  InMemorySettingsStore? store,
+  SettingsSection section = SettingsSection.appearance,
+}) {
   final settingsStore = store ?? (InMemorySettingsStore()..failWrites = failWrites);
   final repository = SettingsRepository(settingsStore);
   const initialState = SettingsState(
@@ -102,6 +133,7 @@ Widget _harness({bool failWrites = false, InMemorySettingsStore? store}) {
     overrides: [
       settingsRepositoryProvider.overrideWithValue(repository),
       initialSettingsProvider.overrideWithValue(initialState),
+      settingsStoreProvider.overrideWithValue(settingsStore),
     ],
     child: TranslationProvider(
       child: MaterialApp(
@@ -116,7 +148,7 @@ Widget _harness({bool failWrites = false, InMemorySettingsStore? store}) {
         ),
         home: AppLayoutScope(
           builder: (context, _) => SettingsPage(
-            section: SettingsSection.appearance,
+            section: section,
             onOpenAppearance: () {},
             onOpenLanguage: () {},
             onOpenAccessibility: () {},

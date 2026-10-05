@@ -3,11 +3,9 @@
 > **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** in-progress · **Depends on:** settings, platform-capabilities
 >
 > Implementation audit (2026-10-04): port + honest Noop default + controller/sheet/shake +
-> i18n + widget tests verified. Remaining gaps: the optional real impl named in Backend &
-> test surface (`HttpFeedbackTransport`) does not exist anywhere in the repo, and the
-> live-server integration test claimed in Tests (submit over `POST /v1/feedback`, assert
-> ingest + `success`) does not exist — the route is covered only by the server's TS contract
-> tests.
+> i18n + widget tests verified. Fix round (2026-10-05): the optional real impl exists
+> (`HttpFeedbackTransport`) with the live submit e2e, plus the shake settings tile, the
+> screenshot capture seam (default none — see Risks), and Escape-dismissal coverage.
 
 ## Summary
 
@@ -41,6 +39,7 @@ backend; the optional real impl is an override.
   - `lib/features/feedback/feedback_presentation_state.dart`
   - `lib/features/feedback/feedback_transport.dart` (port)
   - `lib/features/feedback/noop_feedback_transport.dart` (production default)
+  - `lib/features/feedback/http_feedback_transport.dart` (optional real impl, override-only)
   - `lib/features/feedback/feedback_controller.dart`
   - `lib/features/feedback/feedback_sheet.dart`
   - `lib/features/feedback/shake_feedback_trigger.dart` (see Audit §3 — keep feature-local)
@@ -62,9 +61,10 @@ fakes success.
 - **Noop production default** — `NoopFeedbackTransport.submit` returns `FeedbackResult.unavailable`
   and the controller surfaces `context.t.common.notConnected` with the `failed` presentation
   state; it never returns `accepted`. Constructed in `AppDependencies.production`.
-- **Optional real override** — `HttpFeedbackTransport` posts to the backend; a consumer
-  constructs it (with endpoint + auth headers) and overrides `feedbackTransportProvider`. Never
-  constructed by default.
+- **Optional real override** — `HttpFeedbackTransport`
+  (`lib/features/feedback/http_feedback_transport.dart`) maps 201→accepted, 422/413→rejected,
+  network errors→unavailable; a consumer constructs it (with endpoint + auth headers) and
+  overrides `feedbackTransportProvider`. Never constructed by default.
 - **Test-server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   implements the feedback ingest route group:
   - `POST /v1/feedback` `{message, email?, screenshotMime?, screenshotBase64?, appMetadata:{version,platform,locale}}`
@@ -106,15 +106,15 @@ fakes success.
 
 ## Audit
 
-- [ ] **No-backend honored as a port** — **warn**: port + honest Noop default + server route
+- [x] **No-backend honored as a port** — **pass**: port + honest Noop default + server route
   verified: `FeedbackTransport` (`lib/features/feedback/feedback_transport.dart:87`),
   `NoopFeedbackTransport.submit` returns `FeedbackResult.unavailable`
   (`noop_feedback_transport.dart:7-8`), constructed in `AppDependencies.production`
   (`lib/app/dependencies.dart:397`); `POST /v1/feedback` + `/v1/feedback/:id/status` at
-  `tools/hono_server/src/index.ts:327-363` with TS contract tests. Missing: the optional real
-  impl `HttpFeedbackTransport` named in Backend & test surface does not exist (grep clean
-  across the repo — no Dart code posts to `/v1/feedback`), and the live-server integration
-  test claimed in Tests is absent.
+  `tools/hono_server/src/index.ts:327-363` with TS contract tests. Resolved 2026-10-05:
+  `HttpFeedbackTransport` exists and the live submit e2e
+  (`test/e2e/feedback_submit_e2e_test.dart`) drives it: accepted + status round-trip,
+  screenshot fixture, 422/413 rejected.
 - [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: form trio + transport +
   controller + sheet + shake trigger all under `lib/features/feedback/`.
 - [x] **Shared extraction >=3 consumers** — **pass**: shake detection stayed feature-local at
@@ -170,7 +170,10 @@ fakes success.
   listener unless both are true; unlisten on dispose.
 - **Screenshot capture needs a real backend to be useful.** Without a backend the screenshot
   toggle is inert (the Noop path returns `unavailable`); never fake "screenshot attached
-  successfully" in the UI.
+  successfully" in the UI. `includeScreenshot` flows through an injectable
+  `feedbackScreenshotCaptureProvider` (mime + base64 into `FeedbackSubmission`); the default
+  capture returns none and a failed capture still submits the report — wiring a real
+  platform capture is the consumer's (`feedback_controller.dart`).
 - **Draft persistence scope.** Draft persists in `SettingsStore` under `feedback.draft` so a
   user does not lose a half-written report across backgrounding; clear it only on confirmed
   `accepted` (not on `failed` — a failed submit should retain the text for retry).

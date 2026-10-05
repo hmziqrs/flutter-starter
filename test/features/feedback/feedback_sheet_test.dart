@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -134,6 +137,36 @@ void main() {
 
       expect(dismissed, isTrue);
       expect(_transportOf(tester).submissions, isEmpty);
+    });
+
+    testWidgets('Escape dismisses the opened sheet without submitting', (tester) async {
+      final transport = InMemoryFeedbackTransport();
+      await tester.pumpWidget(
+        _harness(
+          transport: transport,
+          child: Builder(
+            builder: (context) => FButton(
+              key: const ValueKey('open-feedback-sheet'),
+              onPress: () => unawaited(showFeedbackSheet(context: context)),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      await tester.tap(find.byKey(const ValueKey('open-feedback-sheet')));
+      await _pumpFrames(tester);
+      expect(find.byType(FeedbackSheetBody), findsOneWidget);
+
+      await tester.enterText(find.byKey(const ValueKey('feedback-message')), 'draft');
+      await _pumpFrames(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await _pumpFrames(tester);
+
+      expect(find.byType(FeedbackSheetBody), findsNothing);
+      expect(transport.submissions, isEmpty);
     });
 
     testWidgets('screenshot toggle is reachable and flips intent', (tester) async {

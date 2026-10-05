@@ -12,6 +12,7 @@ import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/widgets/analytics_opt_in_tile.dart';
 import 'package:starter/features/settings/widgets/auto_lock_delay_tile.dart';
 import 'package:starter/features/settings/widgets/biometric_unlock_tile.dart';
+import 'package:starter/features/settings/widgets/feedback_shake_tile.dart';
 import 'package:starter/features/settings/widgets/haptics_tile.dart';
 import 'package:starter/features/settings/widgets/inline_save_error_text.dart';
 import 'package:starter/features/settings/widgets/labeled_section_card.dart';
@@ -610,6 +611,7 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenLicense,
               ),
+              const FeedbackShakeTile(),
               FTile(
                 key: const ValueKey('settings-send-feedback'),
                 title: Text(translations.feedback.title),
