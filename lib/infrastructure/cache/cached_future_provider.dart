@@ -42,17 +42,47 @@ final class CachedValue<T> {
   String toString() => 'CachedValue<$T>(status: $status, updated: $updated)';
 }
 
+/// Outcome of one cache fetch: new content, or an HTTP 304 "not modified".
+sealed class CacheFetch<T> {
+  const CacheFetch();
+}
+
+/// New content, optionally with its validator (`etag`) and server TTL.
+final class CacheFetchModified<T> extends CacheFetch<T> {
+  const CacheFetchModified({required this.value, this.etag, this.ttlSeconds});
+
+  final T value;
+
+  final String? etag;
+
+  final int? ttlSeconds;
+}
+
+/// Content unchanged since the entry with the sent `etag`; fresh-extend it.
+final class CacheFetchNotModified<T> extends CacheFetch<T> {
+  const CacheFetchNotModified();
+}
+
+/// Receives the cached etag (null when nothing is cached) and reports whether
+/// the content changed; backends map a `304` to [CacheFetchNotModified].
+typedef CacheConditionalFetch<T> = Future<CacheFetch<T>> Function(String? etag);
+
 final class CachedFutureSpec<T> {
   const CachedFutureSpec({
     required this.key,
     required this.fetch,
     required this.codec,
     required this.ttlSeconds,
+    this.conditionalFetch,
   }) : assert(ttlSeconds >= 0, 'ttlSeconds must not be negative.');
 
   final String key;
 
   final Future<T> Function() fetch;
+
+  /// When set, used instead of [fetch]: it receives the cached etag (null on
+  /// the first population) so unchanged content short-circuits as a 304.
+  final CacheConditionalFetch<T>? conditionalFetch;
 
   final CacheCodec<T> codec;
 
@@ -93,22 +123,44 @@ FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> 
     }
 
     try {
+      final conditional = spec.conditionalFetch;
+      if (conditional != null) {
+        // Conditional path: the cached etag (null on first population) lets the
+        // fetch send `If-None-Match`; the first 200's etag + TTL are stored too.
+        final prior = cached;
+        final fetchedAt = clock.now().millisecondsSinceEpoch;
+        switch (await conditional(prior?.etag)) {
+          case CacheFetchNotModified<T>():
+            if (prior == null) {
+              throw const FormatException('Not-modified (304) without a cached entry.');
+            }
+            // 304: unchanged content — fresh-extend instead of re-downloading.
+            final extended = CacheEntry<T>(
+              value: prior.value,
+              fetchedAt: fetchedAt,
+              ttlSeconds: spec.ttlSeconds,
+              etag: prior.etag,
+            );
+            await _persist(store, spec, extended, logger);
+            return CachedValue<T>.cached(extended);
+          case CacheFetchModified<T>(:final value, :final etag, :final ttlSeconds):
+            final entry = CacheEntry<T>(
+              value: value,
+              fetchedAt: fetchedAt,
+              ttlSeconds: ttlSeconds ?? spec.ttlSeconds,
+              etag: etag,
+            );
+            await _persist(store, spec, entry, logger);
+            return CachedValue<T>.fresh(entry);
+        }
+      }
       final value = await spec.fetch();
       final entry = CacheEntry<T>(
         value: value,
-        fetchedAt: now.millisecondsSinceEpoch,
+        fetchedAt: clock.now().millisecondsSinceEpoch,
         ttlSeconds: spec.ttlSeconds,
       );
-      try {
-        await store.write<T>(spec.key, entry, codec: spec.codec);
-      } on Object catch (error, stackTrace) {
-        logger.warning(
-          'cache.write_failed',
-          error: error,
-          stackTrace: stackTrace,
-          context: {'key': spec.key},
-        );
-      }
+      await _persist(store, spec, entry, logger);
       return CachedValue<T>.fresh(entry);
     } on Object catch (error, stackTrace) {
       logger.warning(
@@ -123,4 +175,22 @@ FutureProvider<CachedValue<T>> buildCachedFutureProvider<T>(CachedFutureSpec<T> 
       rethrow;
     }
   });
+}
+
+Future<void> _persist<T>(
+  CacheStore store,
+  CachedFutureSpec<T> spec,
+  CacheEntry<T> entry,
+  AppLogger logger,
+) async {
+  try {
+    await store.write<T>(spec.key, entry, codec: spec.codec);
+  } on Object catch (error, stackTrace) {
+    logger.warning(
+      'cache.write_failed',
+      error: error,
+      stackTrace: stackTrace,
+      context: {'key': spec.key},
+    );
+  }
 }

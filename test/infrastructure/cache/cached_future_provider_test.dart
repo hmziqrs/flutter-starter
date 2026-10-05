@@ -33,6 +33,34 @@ final FutureProvider<CachedValue<int>> counterProvider = buildCachedFutureProvid
   const CachedFutureSpec<int>(key: _key, fetch: fetch, codec: _intCodec, ttlSeconds: 1000),
 );
 
+const String _conditionalKey = 'test.conditional';
+CacheFetch<int> conditionalResult = const CacheFetchModified<int>(value: 9);
+int conditionalCalls = 0;
+String? sentEtag;
+
+Future<CacheFetch<int>> conditionalFetch(String? etag) async {
+  conditionalCalls += 1;
+  sentEtag = etag;
+  return conditionalResult;
+}
+
+final FutureProvider<CachedValue<int>> conditionalProvider = buildCachedFutureProvider<int>(
+  const CachedFutureSpec<int>(
+    key: _conditionalKey,
+    fetch: fetch,
+    codec: _intCodec,
+    ttlSeconds: 1000,
+    conditionalFetch: conditionalFetch,
+  ),
+);
+
+CacheEntry<int> _staleWithEtag(int value, String etag) => CacheEntry<int>(
+  value: value,
+  fetchedAt: DateTime.now().millisecondsSinceEpoch - 10000,
+  ttlSeconds: 1,
+  etag: etag,
+);
+
 Future<void> settle() async {
   for (var i = 0; i < 8; i++) {
     await Future<void>.delayed(Duration.zero);
@@ -68,6 +96,9 @@ void main() {
     fetchCallCount = 0;
     fetchError = null;
     fetchValue = 2;
+    conditionalCalls = 0;
+    sentEtag = null;
+    conditionalResult = const CacheFetchModified<int>(value: 9);
   });
 
   test('a fresh cache hit is served without calling fetch', () async {
@@ -236,5 +267,77 @@ void main() {
     expect(CachedValue<int>.fresh(entry).isStale, isFalse);
     expect(CachedValue<int>.cached(entry).isStale, isFalse);
     expect(CachedValue<int>.stale(entry).isStale, isTrue);
+  });
+
+  test('a 304 fresh-extends a stale entry: value kept, etag sent, window restarted', () async {
+    final store = InMemoryCacheStore();
+    await store.write(_conditionalKey, _staleWithEtag(4, '"v1"'), codec: _intCodec);
+    conditionalResult = const CacheFetchNotModified<int>();
+    final container = _container(
+      store: store,
+      connectivity: FakeConnectivityService(),
+    );
+    addTearDown(container.dispose);
+    await settle();
+
+    final result = await container.read(conditionalProvider.future);
+
+    expect(result.value, 4, reason: 'the cached value is kept on a 304');
+    expect(result.status, CacheStatus.fresh, reason: 'the TTL window restarts');
+    expect(result.updated, isFalse, reason: 'no new content was downloaded');
+    expect(conditionalCalls, 1);
+    expect(sentEtag, '"v1"', reason: 'the stored etag is sent for revalidation');
+    expect(fetchCallCount, 0, reason: 'the plain fetch is not used');
+
+    final extended = await store.read<int>(_conditionalKey, codec: _intCodec);
+    expect(extended, isNotNull);
+    expect(extended!.etag, '"v1"');
+    expect(extended.statusAt(DateTime.now()), CacheStatus.fresh);
+  });
+
+  test('a modified conditional result stores the new value, etag, and server TTL', () async {
+    final store = InMemoryCacheStore();
+    await store.write(_conditionalKey, _staleWithEtag(4, '"v1"'), codec: _intCodec);
+    conditionalResult = const CacheFetchModified<int>(value: 9, etag: '"v2"', ttlSeconds: 50);
+    final container = _container(
+      store: store,
+      connectivity: FakeConnectivityService(),
+    );
+    addTearDown(container.dispose);
+    await settle();
+
+    final result = await container.read(conditionalProvider.future);
+
+    expect(result.value, 9);
+    expect(result.status, CacheStatus.fresh);
+    expect(result.updated, isTrue);
+    expect(sentEtag, '"v1"');
+
+    final cached = await store.read<int>(_conditionalKey, codec: _intCodec);
+    expect(cached!.value, 9);
+    expect(cached.etag, '"v2"');
+    expect(cached.ttlSeconds, 50, reason: 'the server-advertised TTL wins over the spec default');
+  });
+
+  test('with no cached entry the conditional fetch runs with a null etag and stores it', () async {
+    final store = InMemoryCacheStore();
+    conditionalResult = const CacheFetchModified<int>(value: 5, etag: '"v1"');
+    final container = _container(
+      store: store,
+      connectivity: FakeConnectivityService(),
+    );
+    addTearDown(container.dispose);
+    await settle();
+
+    final result = await container.read(conditionalProvider.future);
+
+    expect(result.value, 5);
+    expect(result.updated, isTrue);
+    expect(conditionalCalls, 1);
+    expect(sentEtag, isNull, reason: 'there is no etag to condition on yet');
+    expect(fetchCallCount, 0, reason: 'the conditional fetcher replaces the plain one');
+
+    final cached = await store.read<int>(_conditionalKey, codec: _intCodec);
+    expect(cached!.etag, '"v1"', reason: 'the etag of the first 200 is stored');
   });
 }
