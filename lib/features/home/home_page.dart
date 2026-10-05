@@ -27,6 +27,7 @@ class HomePage extends ConsumerWidget {
     required this.onOpenPricing,
     required this.onOpenSettings,
     required this.onOpenLogin,
+    this.feedLoader,
     super.key,
   });
 
@@ -35,6 +36,13 @@ class HomePage extends ConsumerWidget {
   final VoidCallback onOpenPricing;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLogin;
+
+  /// Per-instance feed source for deterministic previews (dev gallery).
+  ///
+  /// Production leaves this null so the backend-free `homeRecentActivityProvider`
+  /// composes the feed; previews pass the case's `recentActivity` so the mounted
+  /// state matches the gallery case instead of the provider's default list.
+  final Future<List<HomeActivityViewData>> Function()? feedLoader;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,8 +54,9 @@ class HomePage extends ConsumerWidget {
     };
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
+    final previewFeedLoader = feedLoader;
 
-    return SafeArea(
+    final body = SafeArea(
       bottom: false,
       child: AppRefreshIndicator(
         onRefresh: () => _refreshRecentActivity(context, ref),
@@ -74,6 +83,18 @@ class HomePage extends ConsumerWidget {
           ),
         ),
       ),
+    );
+
+    if (previewFeedLoader == null) {
+      return body;
+    }
+    // Same nested-scope pattern as `AppLayoutScope`: previews scope the feed to
+    // this page instance so the rendered state tracks the case's view data.
+    return ProviderScope(
+      overrides: [
+        homeRecentActivityProvider.overrideWith((ref) => previewFeedLoader()),
+      ],
+      child: body,
     );
   }
 

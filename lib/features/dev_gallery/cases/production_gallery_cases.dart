@@ -240,6 +240,10 @@ List<GalleryCase> _buildHomeCases() {
     ],
     pageFactory: (context, state) => HomePage(
       viewData: state,
+      // Deterministic previewability (checklist #10): scope the feed to the
+      // case's own `recentActivity` so `home.empty` previews the empty state,
+      // not the provider's default activity list.
+      feedLoader: () => Future.value(state.recentActivity),
       onOpenProfile: () => _showUnavailableFeedback(context),
       onOpenPricing: () => _showUnavailableFeedback(context),
       onOpenSettings: () => _showUnavailableFeedback(context),

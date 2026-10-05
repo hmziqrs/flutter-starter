@@ -134,6 +134,68 @@ void main() {
     expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
   });
 
+  testWidgets('the per-instance feed seam previews the empty activity state', (tester) async {
+    // The dev-gallery home cases scope the feed through `HomePage.feedLoader`;
+    // without any harness-level override the empty case must render empty.
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      settle: false,
+      page: HomePage(
+        viewData: HomeViewData.emptyActivity(),
+        feedLoader: () => Future.value(HomeViewData.emptyActivity().recentActivity),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    // Bounded frames: the scoped feed resolves after the first frame.
+    for (var frame = 0; frame < 4; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final empty = find.byKey(const ValueKey('home-activity-empty'));
+    await tester.ensureVisible(empty);
+    expect(empty, findsOneWidget);
+    expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
+    expect(find.byKey(const ValueKey('home-activity-skeleton')), findsNothing);
+  });
+
+  testWidgets('surfaces the error state view when the feed fails to compose', (tester) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      settle: false,
+      // An `Error` (not an arbitrary exception) so Riverpod's default retry
+      // policy skips its backoff and settles the feed into `AsyncError`.
+      feedLoader: () async => throw StateError('feed failed'),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    // First frame: the feed future still pends, so bones mirror the tiles.
+    expect(find.byKey(const ValueKey('home-activity-skeleton')), findsOneWidget);
+
+    // Bounded frames until the failed compose settles into the error arm.
+    for (var frame = 0; frame < 4; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final error = find.byKey(const ValueKey('home-activity-error'));
+    await tester.ensureVisible(error);
+    expect(error, findsOneWidget);
+    expect(find.text('Could not load this'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
+    expect(find.byKey(const ValueKey('home-activity-skeleton')), findsNothing);
+  });
+
   testWidgets('mirrors the recent-activity feed with skeleton bones before content', (
     tester,
   ) async {
