@@ -2,12 +2,12 @@
 
 > **Tier:** P2 · **Domain:** engagement · **Backend:** test-server · **Status:** in-progress · **Depends on:** settings
 >
-> Implementation-audit gaps (2026-10-04): SettingsStore persistence of token/permission is unwired
-> (`persistedPermissionKey`/`persistedTokenKey` at `notifications_controller.dart:141-142` are dead
-> constants); no test drives a tap through the router drain (`app.dart:228-252`) to
-> `context.pushNamed`; the foreground-message rendering path
-> (`FirebaseNotificationsRepository._renderForeground` via `flutter_local_notifications`) is never
-> exercised by a test.
+> Implementation-audit gaps (2026-10-04) — closed 2026-10-05: SettingsStore persistence is wired
+> (`persistedPermissionKey`/`persistedTokenKey` seed on build, persist on change); the router drain
+> (`app.dart:228-252`) is driven to `pushNamed` by
+> `test/features/notifications/notification_tap_dispatch_test.dart`; the foreground rendering path
+> (`_renderForeground` via `flutter_local_notifications`) is exercised by
+> `test/infrastructure/notifications/firebase_notifications_repository_test.dart`.
 
 ## Summary
 
@@ -86,7 +86,10 @@ fakes success.
 
 - **Unit/widget:** `notifications_controller_test.dart` — permission state machine, tap queue
   ordering, cold-start tap replayed after router mount, Noop surfaces `notConnected` and never
-  reports a granted token. Value-object equality on `NotificationTap`.
+  reports a granted token, SettingsStore persistence round-trips. Value-object equality on
+  `NotificationTap`. The tap-to-`pushNamed` drain is covered by
+  `notification_tap_dispatch_test.dart`; foreground rendering by
+  `firebase_notifications_repository_test.dart` (recording plugin fake).
 - **Integration:** reuse `createApplication`; drive the registration client against the
   `tools/hono_server` with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`.
   Verify a foreground tap issues `context.pushNamed` to the existing route, not a raw URI.
@@ -111,17 +114,16 @@ fakes success.
 Implementation audit (2026-10-04) against the 13-item checklist in
 [contracts.md](../contracts.md):
 
-- [x] No-backend honored as a port — **warn**: all four C2 parts exist — port
+- [x] No-backend honored as a port — **pass**: all four C2 parts exist — port
   (`notifications_repository.dart`), honest Noop production default
   (`dependencies.dart:390-395`; Noop returns `denied` + throws `notConnected`, verified by
   `notifications_controller_test.dart:13-31`), opt-in `FirebaseNotificationsRepository` (never
   constructed in the default graph), and the test-server contract (`POST/DELETE
   /v1/notifications/register-token`, `POST /v1/notifications/permission-revoked` at
   `hono_server/src/index.ts:393-421`, contract-tested `hono_server/test/contract.test.ts:432-456`,
-  driven e2e `test/e2e/hono_server_e2e_test.dart:103`) — but the declared test surface is
-  incomplete: no test exercises foreground-message rendering through
-  `flutter_local_notifications` (`_renderForeground` untested) and no test drives a tap to
-  `context.pushNamed` (the app-level drain `app.dart:228-252` is untested).
+  driven e2e `test/e2e/hono_server_e2e_test.dart:103`). The declared test surface is complete:
+  foreground rendering via a recording plugin fake and a tap driven through the app-level drain
+  to `pushNamed`.
 - [x] Feature-first ownership — **pass**: port + controller + value objects + Noop + InMemory fake
   under `lib/features/notifications/`; only the optional Firebase/HTTP adapters live in
   `lib/infrastructure/notifications/`.
@@ -152,10 +154,11 @@ Implementation audit (2026-10-04) against the 13-item checklist in
   connectivity port introduced (token deliberately stays out of `SecureStore`).
 - [x] Config rule respected — **pass**: no runtime env switching; the Noop default is the
   production graph; gallery behind `developmentToolsEnabled`.
-- [x] Honest feedback, no faked success — **warn**: the Noop never fakes (unavailable + denied
-  asserted in `notifications_controller_test.dart:13-31`), but the Contract's SettingsStore
-  persistence claim is not implemented: `persistedPermissionKey`/`persistedTokenKey`
-  (`notifications_controller.dart:141-142`) are declared and never read or written anywhere.
+- [x] Honest feedback, no faked success — **pass**: the Noop never fakes (unavailable + denied
+  asserted in `notifications_controller_test.dart:13-31`), and the Contract's SettingsStore
+  persistence claim is implemented: `persistedPermissionKey`/`persistedTokenKey`
+  (`notifications_controller.dart`) seed the controller on build and persist on every
+  permission/token change (covered by the `SettingsStore persistence` test group).
 
 ## Risks / notes
 

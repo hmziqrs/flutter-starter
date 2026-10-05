@@ -6,6 +6,8 @@ import 'package:starter/features/notifications/notification_permission_status.da
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_controller.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/settings/in_memory_settings_store.dart';
+import 'package:starter/features/settings/settings_store.dart';
 
 void main() {
   group('NotificationsController', () {
@@ -64,7 +66,8 @@ void main() {
     group('requestPermission', () {
       test('persists granted status on the happy path', () async {
         final repository = InMemoryNotificationsRepository();
-        final container = _buildContainer(repository: repository);
+        final store = InMemorySettingsStore();
+        final container = _buildContainer(repository: repository, store: store);
         addTearDown(container.dispose);
         final status = await container
             .read(notificationsControllerProvider.notifier)
@@ -73,6 +76,10 @@ void main() {
         expect(
           container.read(notificationsControllerProvider).permission,
           NotificationPermissionStatus.granted,
+        );
+        expect(
+          store.snapshot[persistedPermissionKey],
+          NotificationPermissionStatus.granted.name,
         );
         addTearDown(repository.dispose);
       });
@@ -87,6 +94,62 @@ void main() {
         expect(
           container.read(notificationsControllerProvider).registration,
           NotificationsRegistrationState.failed,
+        );
+        addTearDown(repository.dispose);
+      });
+    });
+
+    group('SettingsStore persistence', () {
+      test('register persists the permission and token under the declared keys', () async {
+        final repository = InMemoryNotificationsRepository();
+        final store = InMemorySettingsStore();
+        final container = _buildContainer(repository: repository, store: store);
+        addTearDown(container.dispose);
+        await container.read(notificationsControllerProvider.notifier).register();
+        expect(
+          store.snapshot[persistedPermissionKey],
+          NotificationPermissionStatus.granted.name,
+        );
+        expect(
+          store.snapshot[persistedTokenKey],
+          container.read(notificationsControllerProvider).token,
+        );
+        addTearDown(repository.dispose);
+      });
+
+      test('a relaunch seeds state from the persisted permission and token', () async {
+        final store = InMemorySettingsStore(
+          seed: {
+            persistedPermissionKey: NotificationPermissionStatus.provisional.name,
+            persistedTokenKey: 'persisted-token',
+          },
+        );
+        final repository = InMemoryNotificationsRepository();
+        final container = _buildContainer(repository: repository, store: store);
+        addTearDown(container.dispose);
+        container.read(notificationsControllerProvider);
+        await Future<void>.delayed(Duration.zero);
+        final state = container.read(notificationsControllerProvider);
+        expect(state.token, 'persisted-token');
+        expect(state.permission, NotificationPermissionStatus.provisional);
+        expect(state.registration, NotificationsRegistrationState.registered);
+        addTearDown(repository.dispose);
+      });
+
+      test('unregister removes the persisted token but keeps the permission', () async {
+        final repository = InMemoryNotificationsRepository(
+          permission: NotificationPermissionStatus.granted,
+          token: 'seeded-token',
+        );
+        final store = InMemorySettingsStore();
+        final container = _buildContainer(repository: repository, store: store);
+        addTearDown(container.dispose);
+        await container.read(notificationsControllerProvider.notifier).register();
+        await container.read(notificationsControllerProvider.notifier).unregister();
+        expect(store.snapshot.containsKey(persistedTokenKey), isFalse);
+        expect(
+          store.snapshot[persistedPermissionKey],
+          NotificationPermissionStatus.granted.name,
         );
         addTearDown(repository.dispose);
       });
@@ -152,8 +215,14 @@ void main() {
   });
 }
 
-ProviderContainer _buildContainer({required NotificationsRepository repository}) {
+ProviderContainer _buildContainer({
+  required NotificationsRepository repository,
+  SettingsStore? store,
+}) {
   return ProviderContainer(
-    overrides: [notificationsRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      notificationsRepositoryProvider.overrideWithValue(repository),
+      settingsStoreProvider.overrideWithValue(store ?? InMemorySettingsStore()),
+    ],
   );
 }

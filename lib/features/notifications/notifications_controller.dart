@@ -5,6 +5,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:starter/features/notifications/notification_permission_status.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
+import 'package:starter/features/settings/settings_store.dart';
+import 'package:starter/infrastructure/logging/app_logger.dart';
 
 part 'notifications_controller.freezed.dart';
 
@@ -69,13 +71,69 @@ final notificationsControllerProvider =
 
 final class NotificationsController extends Notifier<NotificationsState> {
   @override
-  NotificationsState build() => NotificationsState(
-    permission: ref.watch(initialNotificationPermissionProvider),
-    token: ref.watch(initialNotificationTokenProvider),
-    registration: ref.watch(initialNotificationTokenProvider) == null
-        ? NotificationsRegistrationState.idle
-        : NotificationsRegistrationState.registered,
+  NotificationsState build() {
+    final initialToken = ref.watch(initialNotificationTokenProvider);
+    final seeded = NotificationsState(
+      permission: ref.watch(initialNotificationPermissionProvider),
+      token: initialToken,
+      registration: initialToken == null
+          ? NotificationsRegistrationState.idle
+          : NotificationsRegistrationState.registered,
+    );
+    unawaited(_hydrateFromStore());
+    return seeded;
+  }
+
+  /// Seeds state from the previous session's [persistedTokenKey] /
+  /// [persistedPermissionKey] values so notification state survives a relaunch.
+  Future<void> _hydrateFromStore() async {
+    final NotificationPermissionStatus? permission;
+    final String? token;
+    try {
+      final store = ref.read(settingsStoreProvider);
+      permission = _permissionFromName(await store.readString(persistedPermissionKey));
+      final storedToken = await store.readString(persistedTokenKey);
+      token = storedToken == null || storedToken.isEmpty ? null : storedToken;
+    } on Object catch (error, stackTrace) {
+      // A failed read only degrades persistence; the seed stays authoritative.
+      ref
+          .read(appLoggerProvider)
+          .warning('notifications.hydrate failed', error: error, stackTrace: stackTrace);
+      return;
+    }
+    if (!ref.mounted || (permission == null && token == null)) {
+      return;
+    }
+    state = state.copyWith(
+      permission: permission,
+      token: token,
+      registration: token == null ? null : NotificationsRegistrationState.registered,
+    );
+  }
+
+  static NotificationPermissionStatus? _permissionFromName(String? name) =>
+      name == null ? null : NotificationPermissionStatus.values.asNameMap()[name];
+
+  // Persistence is a cross-launch cache: the in-memory state (OS truth from
+  // this session) stays authoritative when a write fails.
+  Future<void> _persistPermission(NotificationPermissionStatus status) =>
+      _persist((store) => store.writeString(persistedPermissionKey, status.name));
+
+  Future<void> _persistToken(String? token) => _persist(
+    (store) => token == null
+        ? store.remove(persistedTokenKey)
+        : store.writeString(persistedTokenKey, token),
   );
+
+  Future<void> _persist(Future<void> Function(SettingsStore store) write) async {
+    try {
+      await write(ref.read(settingsStoreProvider));
+    } on Object catch (error, stackTrace) {
+      ref
+          .read(appLoggerProvider)
+          .warning('notifications.persist failed', error: error, stackTrace: stackTrace);
+    }
+  }
 
   Future<NotificationPermissionStatus> requestPermission({bool provisional = false}) async {
     final previous = state;
@@ -83,6 +141,7 @@ final class NotificationsController extends Notifier<NotificationsState> {
     try {
       final status = await repository.requestPermission(provisional: provisional);
       state = previous.copyWith(permission: status);
+      await _persistPermission(status);
       return status;
     } on NotificationsException {
       state = previous.copyWith(registration: NotificationsRegistrationState.failed);
@@ -97,6 +156,7 @@ final class NotificationsController extends Notifier<NotificationsState> {
       try {
         final status = await repository.requestPermission(provisional: provisional);
         state = state.copyWith(permission: status);
+        await _persistPermission(status);
       } on NotificationsException catch (error) {
         state = state.copyWith(registration: _landFromException(error));
         return;
@@ -109,9 +169,11 @@ final class NotificationsController extends Notifier<NotificationsState> {
           clearToken: true,
           registration: NotificationsRegistrationState.idle,
         );
+        await _persistToken(null);
         return;
       }
       state = state.copyWith(token: token, registration: NotificationsRegistrationState.registered);
+      await _persistToken(token);
     } on NotificationsException catch (error) {
       state = state.copyWith(registration: _landFromException(error));
     }
@@ -131,6 +193,7 @@ final class NotificationsController extends Notifier<NotificationsState> {
       return;
     }
     state = state.copyWith(clearToken: true, registration: NotificationsRegistrationState.idle);
+    await _persistToken(null);
     try {
       final repository = ref.read(notificationsRepositoryProvider);
       await repository.unregisterToken(previousToken);
@@ -138,6 +201,8 @@ final class NotificationsController extends Notifier<NotificationsState> {
   }
 }
 
+/// SettingsStore keys backing the Contract's persistence claim: one key each
+/// for the last-known permission status and the registered delivery token.
 const String persistedPermissionKey = 'notifications.permission';
 const String persistedTokenKey = 'notifications.token';
 
