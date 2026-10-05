@@ -16,6 +16,12 @@ import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/http_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
+import 'package:starter/infrastructure/media/image_picker_media_picker.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/media/noop_media_picker.dart';
+import 'package:starter/infrastructure/permissions/device_permission_service.dart';
+import 'package:starter/infrastructure/permissions/noop_permission_service.dart';
+import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/updates/android_app_update_service.dart';
 import 'package:starter/infrastructure/updates/app_update_service.dart';
@@ -159,10 +165,42 @@ void main() {
 
       expect(deps.platform.platformCapabilities.platform, 'iOS');
       expect(deps.platform.appUpdateService, isA<IosAppUpdateService>());
+      expect(deps.platform.permissionService, isA<DevicePermissionService>());
+      expect(deps.platform.mediaPicker, isA<ImagePickerMediaPicker>());
     } finally {
       debugDefaultTargetPlatformOverride = previousTargetPlatform;
       TvOSInfo.bindingsOverride = null;
     }
+  });
+
+  test('permission and media picker selection match both iOS platform spellings', () {
+    PermissionService permissionFor(String platform, {bool isWeb = false}) {
+      return AppDependencies.selectPermissionService(
+        PlatformCapabilities(platform: platform, isWeb: isWeb),
+        logger: AppLogger.bootstrap(),
+      );
+    }
+
+    MediaPicker pickerFor(String platform, {bool isWeb = false}) {
+      return AppDependencies.selectMediaPicker(
+        PlatformCapabilities(platform: platform, isWeb: isWeb),
+        logger: AppLogger.bootstrap(),
+      );
+    }
+
+    // The resolver yields TargetPlatform.iOS.name ('iOS'); both spellings must
+    // keep real devices off the noop adapters.
+    expect(permissionFor('iOS'), isA<DevicePermissionService>());
+    expect(permissionFor('ios'), isA<DevicePermissionService>());
+    expect(permissionFor('android'), isA<DevicePermissionService>());
+    expect(permissionFor('macos'), isA<NoopPermissionService>());
+    expect(permissionFor('iOS', isWeb: true), isA<NoopPermissionService>());
+
+    expect(pickerFor('iOS'), isA<ImagePickerMediaPicker>());
+    expect(pickerFor('ios'), isA<ImagePickerMediaPicker>());
+    expect(pickerFor('android'), isA<ImagePickerMediaPicker>());
+    expect(pickerFor('macos'), isA<NoopMediaPicker>());
+    expect(pickerFor('iOS', isWeb: true), isA<NoopMediaPicker>());
   });
 }
 

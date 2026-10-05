@@ -463,8 +463,8 @@ final class AppDependencies {
         buildInfo: resolvedBuildInfo,
         connectivityService: connectivityService ?? ConnectivityPlusService(logger: logger),
         hapticService: const DeviceHapticService(),
-        permissionService: _selectPermissionService(capabilities, logger: logger),
-        mediaPicker: _selectMediaPicker(capabilities, logger: logger),
+        permissionService: selectPermissionService(capabilities, logger: logger),
+        mediaPicker: selectMediaPicker(capabilities, logger: logger),
         shareService: _selectShareService(capabilities, logger: logger),
         appUpdateService: selectAppUpdateService(
           capabilities,
@@ -488,23 +488,22 @@ final class AppDependencies {
     );
   }
 
-  static PermissionService _selectPermissionService(
+  @visibleForTesting
+  static PermissionService selectPermissionService(
     PlatformCapabilities caps, {
     required AppLogger logger,
   }) {
     if (caps.isWeb) return const NoopPermissionService();
-    return switch (caps.platform) {
+    return switch (caps.platform.toLowerCase()) {
       'ios' || 'android' => DevicePermissionService(logger: logger),
       _ => const NoopPermissionService(),
     };
   }
 
-  static MediaPicker _selectMediaPicker(
-    PlatformCapabilities caps, {
-    required AppLogger logger,
-  }) {
+  @visibleForTesting
+  static MediaPicker selectMediaPicker(PlatformCapabilities caps, {required AppLogger logger}) {
     if (caps.isWeb) return const NoopMediaPicker();
-    return switch (caps.platform) {
+    return switch (caps.platform.toLowerCase()) {
       'ios' || 'android' => ImagePickerMediaPicker(logger: logger),
       _ => const NoopMediaPicker(),
     };
