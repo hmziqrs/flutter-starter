@@ -1,16 +1,16 @@
 # Pull-to-refresh + list virtualization
 
-> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** in-progress · **Depends on:** none (pairs with toast-dialogs)
+> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** done · **Depends on:** none (pairs with toast-dialogs)
 
 Implementation note: all four widgets, the home migration, tests, and gallery fixtures are
 done and verified (including the `PlatformCapabilities.isApplePlatform` addition this doc
 recommended). Home's scroll frame now also wires a real `onRefresh` through
 `AppRefreshIndicator` — the backend-free outcome surfaces `common.notConnected` via `AppToast`
-and the indicator dismisses (asserted in `integration_test/home_lists_test.dart`). The feature
-stays `in-progress` solely on checklist item 3 — `home_page` is the only production consumer
-(`DataListView` + `AppRefreshIndicator`); `RefreshableListView` and `ResponsiveListGrid` are
-gallery-only, and this doc does not designate ≥3 deferred consumers. Adopt on further real
-lists (pricing/search/settings) or record the designation to close it.
+and the indicator dismisses (asserted in `integration_test/home_lists_test.dart`).
+`pricing_page.dart` now wraps its scroll frame in `AppRefreshIndicator` with a real
+`onRefresh` that recomposes the deferred plans and surfaces the honest `common.notConnected`
+outcome (`pricing_pages_test.dart`). Checklist item 3 closed 2026-10-05: three distinct
+concrete consumers — home, pricing, and the dev gallery.
 
 ## Summary
 
@@ -75,7 +75,7 @@ synthesized.
 
 - [x] No-backend honored as a port — **n/a**: backend-free; `onRefresh` is feature-supplied and a no-backend refresh surfaces `notConnected` (e.g. via `AppToast` in the connectivity/announcements banners), never a faked successful refresh; no plugin calls in the widgets.
 - [x] Feature-first ownership — **pass**: `lib/shared/widgets/refresh/{app_refresh_indicator,refreshable_list_view}.dart` + `lib/shared/widgets/lists/{data_list_view,responsive_list_grid}.dart`; no `core/`/`utils/` buckets.
-- [ ] shared/widgets extraction ≥3 consumers — **warn**: concrete consumers today are `home_page.dart` (`DataListView` for the activity tiles plus `AppRefreshIndicator` wrapping the home scroll frame with a real `onRefresh`) and the dev gallery (`pull_refresh_gallery_cases.dart` imports `RefreshableListView` + `ResponsiveListGrid`); search landed its own `PagedListView` without adopting `DataListView` — 2 distinct consumers, no ≥3 designation, so the bar is unmet.
+- [x] shared/widgets extraction ≥3 consumers — **pass**: three distinct concrete consumers — `home_page.dart` (`DataListView` for the activity tiles plus `AppRefreshIndicator` wrapping the home scroll frame with a real `onRefresh`), `pricing_page.dart` (`AppRefreshIndicator` with a real `onRefresh` over the pricing scroll frame, covered in `test/features/pricing/pricing_pages_test.dart`), and the dev gallery (`pull_refresh_gallery_cases.dart` imports `RefreshableListView` + `ResponsiveListGrid`).
 - [x] Composition root confined — **pass**: no providers or adapters; pure widgets, nothing to wire in `AppDependencies`/`ProviderScope`.
 - [x] Motion guarded — **pass**: `app_refresh_indicator.dart:47` reads `MediaQuery.disableAnimationsOf` and renders the spinner transparent under reduce-motion while the `onRefresh` `Future` still completes (`app_refresh_indicator_test.dart:45`); `refreshable_list_view.dart:49-50` falls back from Cupertino to the Material indicator under reduce-motion; native indicator animation otherwise; feature tests never use `pumpAndSettle`.
 - [x] i18n synced en/ar/zh-Hans — **pass**: no new keys; reuses `common.loading` / `common.notConnected` (`app_refresh_indicator.dart:48`); RTL exercised in `app_refresh_indicator_test.dart:60`.

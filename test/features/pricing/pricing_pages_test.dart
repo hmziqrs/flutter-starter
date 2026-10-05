@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,6 +116,109 @@ void main() {
 
     expect(find.byKey(const ValueKey('pricing-layout-expanded')), findsOneWidget);
     expect(selectedBilling, BillingPeriod.annual);
+  });
+
+  testWidgets('deferred plans load shows bones, then the plan cards', (tester) async {
+    final plans = PricingFixtures.standard(AppLocale.en.buildSync());
+    final load = Completer<List<PlanViewData>>();
+    _setViewport(tester, const Size(390, 900));
+
+    await tester.pumpWidget(
+      _FeatureTestApp(
+        child: PricingPage(
+          plans: plans,
+          plansLoader: () => load.future,
+          onSelectPlan: (_, _) {},
+          onOpenTerms: () {},
+          onOpenPrivacy: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Pending: the grid mirrors skeleton bones, never the plan cards.
+    expect(find.byKey(const ValueKey('pricing-plans-skeleton')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pricing-skeleton-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsNothing);
+
+    load.complete(plans);
+    await tester.pump();
+
+    // Loaded: the real cards replace the bones.
+    expect(find.byKey(const ValueKey('pricing-plans-skeleton')), findsNothing);
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pricing-layout-compact')), findsOneWidget);
+  });
+
+  testWidgets('deferred plans load shows the honest error state when the source fails', (
+    tester,
+  ) async {
+    final plans = PricingFixtures.standard(AppLocale.en.buildSync());
+    _setViewport(tester, const Size(390, 900));
+
+    await tester.pumpWidget(
+      _FeatureTestApp(
+        child: PricingPage(
+          plans: plans,
+          plansLoader: () => Future.error(StateError('plans unavailable')),
+          onSelectPlan: (_, _) {},
+          onOpenTerms: () {},
+          onOpenPrivacy: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('pricing-plans-error')), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsNothing);
+  });
+
+  testWidgets('pull-to-refresh recomposes the plans and completes with the notConnected toast', (
+    tester,
+  ) async {
+    final plans = PricingFixtures.standard(AppLocale.en.buildSync());
+    final reload = Completer<List<PlanViewData>>();
+    var loads = 0;
+    _setViewport(tester, const Size(390, 900));
+
+    await tester.pumpWidget(
+      _FeatureTestApp(
+        child: PricingPage(
+          plans: plans,
+          plansLoader: () {
+            loads += 1;
+            return loads == 1 ? Future.value(plans) : reload.future;
+          },
+          onSelectPlan: (_, _) {},
+          onOpenTerms: () {},
+          onOpenPrivacy: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
+
+    await tester.fling(
+      find.byKey(const ValueKey('pricing-page')),
+      const Offset(0, 350),
+      1000,
+    );
+    // onRefresh starts after the show animation; bounded frames until it holds.
+    for (var frame = 0; frame < 4; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // The refresh future is held open, so the indicator stays up.
+    expect(loads, 2);
+    expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+
+    reload.complete(plans);
+    await tester.pumpAndSettle();
+
+    // Honest backend-free completion: indicator dismissed + notConnected toast.
+    expect(find.byType(RefreshProgressIndicator), findsNothing);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
   });
 
   testWidgets('paywall keeps Skip visible and forwards honest feedback actions', (tester) async {

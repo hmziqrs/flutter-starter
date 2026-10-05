@@ -50,8 +50,8 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | In-app announcements | P1 | engagement | none | done | [announcements](features/announcements.md) |
 | Animated in-app splash | P2 | startup | none | done | [in-app-splash](features/in-app-splash.md) |
 | Update blocker (hard + soft) | P2 | startup | server | done | [update-blocker](features/update-blocker.md) |
-| Skeleton loading | P2 | ux | none | in-progress | [skeleton](features/skeleton.md) |
-| Pull-to-refresh + virtualization | P2 | ux | none | in-progress | [pull-refresh](features/pull-refresh.md) |
+| Skeleton loading | P2 | ux | none | done | [skeleton](features/skeleton.md) |
+| Pull-to-refresh + virtualization | P2 | ux | none | done | [pull-refresh](features/pull-refresh.md) |
 | MFA / OTP completion | P2 | security | server | done | [mfa-otp](features/mfa-otp.md) |
 | Auth rate-limit / lockout | P2 | security | none | done | [auth-ratelimit](features/auth-ratelimit.md) |
 | Push notifications | P2 | engagement | server | done | [push-notifications](features/push-notifications.md) |

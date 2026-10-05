@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
@@ -12,7 +13,12 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
+import 'package:starter/shared/widgets/refresh/app_refresh_indicator.dart';
+import 'package:starter/shared/widgets/states/error_state_view.dart';
+import 'package:starter/shared/widgets/states/skeleton_tile.dart';
+import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
 class PricingPage extends ConsumerStatefulWidget {
   PricingPage({
@@ -20,6 +26,7 @@ class PricingPage extends ConsumerStatefulWidget {
     required this.onSelectPlan,
     required this.onOpenTerms,
     required this.onOpenPrivacy,
+    this.plansLoader,
     this.initialBillingPeriod = BillingPeriod.monthly,
     this.initialPlanId,
     this.availability = PricingAvailability.available,
@@ -33,6 +40,14 @@ class PricingPage extends ConsumerStatefulWidget {
        plans = List.unmodifiable(plans);
 
   final List<PlanViewData> plans;
+
+  /// Deferred plan source. Backend-free by contract
+  /// (`plans/feature_roadmap/features/skeleton.md`): the loader composes the
+  /// plans locally (no network) and the page mirrors skeleton bones over the
+  /// plan grid while it pends, then transitions to the loaded cards. Null
+  /// (paywall and direct constructions) renders [plans] synchronously.
+  final Future<List<PlanViewData>> Function()? plansLoader;
+
   final PlanSelectionCallback onSelectPlan;
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
@@ -47,6 +62,62 @@ class PricingPage extends ConsumerStatefulWidget {
 class _PricingPageState extends ConsumerState<PricingPage> {
   late BillingPeriod _billingPeriod = widget.initialBillingPeriod;
   late String _selectedPlanId = widget.initialPlanId ?? preferredPlan(widget.plans).id;
+  List<PlanViewData>? _loadedPlans;
+  Object? _plansError;
+  Future<List<PlanViewData>>? _plansFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _plansFuture = widget.plansLoader?.call();
+    unawaited(_plansFuture?.then(_onPlansReady, onError: _onPlansFailed));
+  }
+
+  /// The plans the page renders: the loaded set once the deferred source
+  /// resolves, the injected [PricingPage.plans] before that (and always for
+  /// direct constructions without a loader).
+  List<PlanViewData> get _effectivePlans => _loadedPlans ?? widget.plans;
+
+  bool get _showingSkeleton => _plansFuture != null && _loadedPlans == null && _plansError == null;
+
+  void _onPlansReady(List<PlanViewData> plans) {
+    if (!mounted) return;
+    setState(() {
+      _loadedPlans = plans;
+      _plansError = null;
+      if (widget.initialPlanId == null) {
+        _selectedPlanId = preferredPlan(plans).id;
+      }
+    });
+  }
+
+  void _onPlansFailed(Object error) {
+    if (!mounted) return;
+    setState(() => _plansError = error);
+  }
+
+  /// Backend-free by contract (`plans/feature_roadmap/features/pull-refresh.md`):
+  /// recompose the local plans, then report the honest `common.notConnected`
+  /// outcome — never faked success.
+  Future<void> _refreshPlans(BuildContext context) async {
+    final loader = widget.plansLoader;
+    if (loader != null) {
+      final future = loader();
+      if (!mounted) return;
+      setState(() {
+        _plansFuture = future;
+        _plansError = null;
+      });
+      unawaited(future.then(_onPlansReady, onError: _onPlansFailed));
+      await future;
+    }
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      severity: ToastSeverity.warning,
+      message: context.t.common.notConnected,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,125 +126,147 @@ class _PricingPageState extends ConsumerState<PricingPage> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
+    final plans = _effectivePlans;
 
     return SafeArea(
       bottom: false,
-      child: ReadingContentScrollFrame(
-        key: const ValueKey('pricing-page'),
-        maxWidth: tokens.wideContentMaxWidth,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(translations.pricing.title, style: context.theme.typography.display.xl3),
-            SizedBox(height: spacing.md),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: tokens.readingContentMaxWidth,
+      child: AppRefreshIndicator(
+        onRefresh: () => _refreshPlans(context),
+        child: ReadingContentScrollFrame(
+          key: const ValueKey('pricing-page'),
+          maxWidth: tokens.wideContentMaxWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(translations.pricing.title, style: context.theme.typography.display.xl3),
+              SizedBox(height: spacing.md),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: tokens.readingContentMaxWidth),
+                child: Text(translations.pricing.body, style: context.theme.typography.body.lg),
               ),
-              child: Text(
-                translations.pricing.body,
-                style: context.theme.typography.body.lg,
+              SizedBox(height: spacing.xl),
+              BillingSelector(
+                value: _billingPeriod,
+                monthlyLabel: translations.pricing.monthly,
+                annualLabel: translations.pricing.annual,
+                enabled: _hasAvailablePlan,
+                onChanged: (period) => setState(() => _billingPeriod = period),
               ),
-            ),
-            SizedBox(height: spacing.xl),
-            BillingSelector(
-              value: _billingPeriod,
-              monthlyLabel: translations.pricing.monthly,
-              annualLabel: translations.pricing.annual,
-              enabled: _hasAvailablePlan,
-              onChanged: (period) => setState(() => _billingPeriod = period),
-            ),
-            if (!_hasAvailablePlan) ...[
-              SizedBox(height: spacing.lg),
-              FAlert(
-                key: const ValueKey('pricing-unavailable'),
-                variant: .destructive,
-                title: Text(translations.pricing.unavailableReason),
-              ),
-            ],
-            SizedBox(height: spacing.xl),
-            _PlanGrid(
-              key: ValueKey('pricing-layout-${layoutClass.name}'),
-              layoutClass: layoutClass,
-              children: [
-                for (final plan in widget.plans)
-                  PlanCard(
-                    plan: plan,
-                    formattedPrice: plan.formattedPrice(
-                      _billingPeriod,
-                      locale: locale,
-                    ),
-                    periodLabel: _billingPeriod == BillingPeriod.monthly
-                        ? translations.pricing.periodMonth
-                        : translations.pricing.periodYear,
-                    actionLabel: translations.pricing.choosePlan(plan: plan.name),
-                    recommendedLabel: translations.pricing.recommended,
-                    currentLabel: translations.pricing.current,
-                    unavailableLabel: _isAvailable(plan) ? null : translations.pricing.unavailable,
-                    selected: plan.id == _selectedPlanId,
-                    onSelect: _isAvailable(plan)
-                        ? () {
-                            setState(() => _selectedPlanId = plan.id);
-                            widget.onSelectPlan(plan, _billingPeriod);
-                          }
-                        : null,
-                  ),
+              if (!_hasAvailablePlan) ...[
+                SizedBox(height: spacing.lg),
+                FAlert(
+                  key: const ValueKey('pricing-unavailable'),
+                  variant: .destructive,
+                  title: Text(translations.pricing.unavailableReason),
+                ),
               ],
-            ),
-            SizedBox(height: spacing.xl2),
-            PlanComparison(
-              title: translations.pricing.comparisonTitle,
-              plans: widget.plans,
-            ),
-            SizedBox(height: spacing.xl),
-            FCard(
-              child: Padding(
-                padding: EdgeInsets.all(spacing.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      translations.pricing.faqTitle,
-                      style: context.theme.typography.display.lg,
-                    ),
-                    SizedBox(height: spacing.md),
-                    Text(
-                      translations.pricing.faqQuestion,
-                      style: context.theme.typography.body.lg,
-                    ),
-                    SizedBox(height: spacing.sm),
-                    Text(translations.pricing.faqAnswer),
-                    SizedBox(height: spacing.lg),
-                    Text(translations.pricing.staticPurchaseNotice),
-                    SizedBox(height: spacing.lg),
-                    Wrap(
-                      spacing: spacing.sm,
-                      runSpacing: spacing.sm,
-                      children: [
-                        FButton(
-                          key: const ValueKey('pricing-terms'),
-                          variant: .ghost,
-                          mainAxisSize: .min,
-                          onPress: widget.onOpenTerms,
-                          child: Text(translations.pricing.terms),
+              SizedBox(height: spacing.xl),
+              if (_showingSkeleton)
+                SkeletonView(
+                  key: const ValueKey('pricing-plans-skeleton'),
+                  child: _PlanGrid(
+                    layoutClass: layoutClass,
+                    children: [
+                      for (var index = 0; index < _skeletonBoneCount; index++)
+                        SizedBox(
+                          key: ValueKey('pricing-skeleton-$index'),
+                          height: tokens.focusTargetMinSize * 5,
+                          child: const SkeletonTile(),
                         ),
-                        FButton(
-                          key: const ValueKey('pricing-privacy'),
-                          variant: .ghost,
-                          mainAxisSize: .min,
-                          onPress: widget.onOpenPrivacy,
-                          child: Text(translations.pricing.privacy),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
+                )
+              else if (_plansError != null)
+                ErrorStateView(
+                  key: const ValueKey('pricing-plans-error'),
+                  title: translations.states.errorTitle,
+                  body: translations.states.errorBody,
+                )
+              else
+                _PlanGrid(
+                  key: ValueKey('pricing-layout-${layoutClass.name}'),
+                  layoutClass: layoutClass,
+                  children: _planCards(translations, locale, plans),
+                ),
+              SizedBox(height: spacing.xl2),
+              if (!_showingSkeleton && _plansError == null)
+                PlanComparison(title: translations.pricing.comparisonTitle, plans: plans),
+              SizedBox(height: spacing.xl),
+              FCard(
+                child: Padding(
+                  padding: EdgeInsets.all(spacing.xl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        translations.pricing.faqTitle,
+                        style: context.theme.typography.display.lg,
+                      ),
+                      SizedBox(height: spacing.md),
+                      Text(
+                        translations.pricing.faqQuestion,
+                        style: context.theme.typography.body.lg,
+                      ),
+                      SizedBox(height: spacing.sm),
+                      Text(translations.pricing.faqAnswer),
+                      SizedBox(height: spacing.lg),
+                      Text(translations.pricing.staticPurchaseNotice),
+                      SizedBox(height: spacing.lg),
+                      Wrap(
+                        spacing: spacing.sm,
+                        runSpacing: spacing.sm,
+                        children: [
+                          FButton(
+                            key: const ValueKey('pricing-terms'),
+                            variant: .ghost,
+                            mainAxisSize: .min,
+                            onPress: widget.onOpenTerms,
+                            child: Text(translations.pricing.terms),
+                          ),
+                          FButton(
+                            key: const ValueKey('pricing-privacy'),
+                            variant: .ghost,
+                            mainAxisSize: .min,
+                            onPress: widget.onOpenPrivacy,
+                            child: Text(translations.pricing.privacy),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  static const _skeletonBoneCount = 3;
+
+  List<Widget> _planCards(Translations translations, String locale, List<PlanViewData> plans) {
+    return [
+      for (final plan in plans)
+        PlanCard(
+          plan: plan,
+          formattedPrice: plan.formattedPrice(_billingPeriod, locale: locale),
+          periodLabel: _billingPeriod == BillingPeriod.monthly
+              ? translations.pricing.periodMonth
+              : translations.pricing.periodYear,
+          actionLabel: translations.pricing.choosePlan(plan: plan.name),
+          recommendedLabel: translations.pricing.recommended,
+          currentLabel: translations.pricing.current,
+          unavailableLabel: _isAvailable(plan) ? null : translations.pricing.unavailable,
+          selected: plan.id == _selectedPlanId,
+          onSelect: _isAvailable(plan)
+              ? () {
+                  setState(() => _selectedPlanId = plan.id);
+                  widget.onSelectPlan(plan, _billingPeriod);
+                }
+              : null,
+        ),
+    ];
   }
 
   bool _isAvailable(PlanViewData plan) {
@@ -181,7 +274,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
         plan.availability == PricingAvailability.available;
   }
 
-  bool get _hasAvailablePlan => widget.plans.any(_isAvailable);
+  bool get _hasAvailablePlan => _effectivePlans.any(_isAvailable);
 }
 
 class _PlanGrid extends StatelessWidget {
