@@ -32,7 +32,9 @@ import 'package:starter/features/splash/app_startup_result.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/analytics/composite_analytics_client.dart';
 import 'package:starter/infrastructure/analytics/firebase_analytics_client.dart';
+import 'package:starter/infrastructure/analytics/http_analytics_client.dart';
 import 'package:starter/infrastructure/analytics/noop_analytics_client.dart';
+import 'package:starter/infrastructure/analytics/opt_in_gated_analytics_client.dart';
 import 'package:starter/infrastructure/auth/http_auth_client.dart';
 import 'package:starter/infrastructure/auth/http_otp_client.dart';
 import 'package:starter/infrastructure/biometric/local_auth_authenticator.dart';
@@ -346,6 +348,8 @@ final class AppDependencies {
     final ProfileRepository profileRepository;
     final CrashReporter crashReporter;
     final CrashReporterBackend crashReporterBackend;
+    final AnalyticsClientBackend analyticsClientBackend;
+    final HttpAnalyticsClient? httpAnalyticsClient;
     if (backendBaseUrl != null) {
       final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost, logger: logger);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
@@ -365,6 +369,10 @@ final class AppDependencies {
       crashReporterBackend = RemoteCrashReporterBackend(
         host: backendBaseUrl.host.isEmpty ? backendBaseUrl.toString() : backendBaseUrl.host,
       );
+      analyticsClientBackend = RemoteAnalyticsBackend(
+        host: backendBaseUrl.host.isEmpty ? backendBaseUrl.toString() : backendBaseUrl.host,
+      );
+      httpAnalyticsClient = HttpAnalyticsClient(baseUrl: backendBaseUrl, dio: dio);
     } else {
       authRepository = InMemoryAuthRepository();
       otpRepository = const InMemoryOtpRepository();
@@ -374,6 +382,8 @@ final class AppDependencies {
         FirebaseCrashlyticsCrashReporter(verbose: verboseLoggingEnabled),
       ]);
       crashReporterBackend = const NoopCrashReporterBackend();
+      analyticsClientBackend = const NoopAnalyticsBackend();
+      httpAnalyticsClient = null;
     }
     return AppDependencies(
       logger: logger,
@@ -398,11 +408,19 @@ final class AppDependencies {
       telemetry: TelemetryDependencies(
         crashReporter: crashReporter,
         crashReporterBackend: crashReporterBackend,
+        // Every real backend emits only behind the SecureStore opt-in gate
+        // (default off); the Noop logger stays ungated for verbose dev traces.
         analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
           NoopAnalyticsClient(logger: logger),
-          FirebaseAnalyticsClient(),
+          OptInGatedAnalyticsClient(
+            delegate: CompositeAnalyticsClient(<AnalyticsClient>[
+              FirebaseAnalyticsClient(),
+              ?httpAnalyticsClient,
+            ]),
+            secureStore: effectiveSecureStore,
+          ),
         ]),
-        analyticsClientBackend: const NoopAnalyticsBackend(),
+        analyticsClientBackend: analyticsClientBackend,
         initialAnalyticsOptIn: initialAnalyticsOptIn,
       ),
       remoteConfig: RemoteConfigDependencies(

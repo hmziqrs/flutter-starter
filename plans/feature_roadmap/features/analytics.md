@@ -2,10 +2,13 @@
 
 > **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** secure-store
 >
-> Implementation audit (2026-10-04): port + Noop default + optional real impls + router-observer
-> seam + SecureStore opt-in + i18n verified. Remaining gap: the live-server integration test
-> claimed in Tests below (navigate and assert a `screen_view` per route landed on the server)
-> does not exist — `POST /v1/events` is covered only by the server's TS contract tests.
+> Implementation audit (2026-10-05): port + Noop default + optional real impls + router-observer
+> seam + SecureStore opt-in + i18n verified. `HttpAnalyticsClient` batches onto `POST /v1/events`
+> (backendBaseUrl-gated) and the production composite routes every real backend through
+> `OptInGatedAnalyticsClient` (default off). Closed gap: the live-server e2e now exists —
+> `test/e2e/analytics_events_e2e_test.dart` drives `screen_view` through the gate + HTTP client
+> against the live JS Hono server. Still open: unit coverage for `PosthogAnalyticsClient` and
+> the opt-in surface (controller persist/rollback + settings-tile widget test).
 
 ## Summary
 
@@ -109,13 +112,14 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 
 ## Audit
 
-- [ ] **No-backend honored as a port** — **warn**: port + Noop default + optional real impls +
+- [x] **No-backend honored as a port** — **pass**: port + Noop default + optional real impls +
   server route all verified (`lib/infrastructure/analytics/analytics_client.dart:7`,
   `noop_analytics_client.dart` (verbose-gated `AppLogger` routing),
   `posthog_analytics_client.dart` + `firebase_analytics_client.dart` (lazily inert — no
-  `Firebase.initializeApp` in `lib/`); `POST /v1/events` at `tools/hono_server/src/index.ts:72`
-  with TS contract tests). Missing: the Dart-side live-server navigation integration test
-  claimed in Tests.
+  `Firebase.initializeApp` in `lib/`), `http_analytics_client.dart` (`backendBaseUrl`-gated
+  batching onto `POST /v1/events`); `POST /v1/events` at `tools/hono_server/src/index.ts:96`
+  with TS contract tests). The Dart-side live-server e2e exists
+  (`test/e2e/analytics_events_e2e_test.dart`). Resolves the pre-written warn.
 - [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: adapter family under
   `lib/infrastructure/analytics/`; opt-in controller feature-owned at
   `lib/features/settings/analytics_opt_in_controller.dart`; tile at
