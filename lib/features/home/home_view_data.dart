@@ -30,7 +30,7 @@ abstract class HomeViewData with _$HomeViewData {
     return HomeViewData(
       greetingName: greetingName,
       statuses: _defaultStatuses,
-      recentActivity: _defaultActivity,
+      recentActivity: defaultActivity,
     );
   }
 
@@ -48,7 +48,8 @@ abstract class HomeViewData with _$HomeViewData {
     HomeStatusViewData(id: 'localized', kind: HomeStatusKind.localized),
   ];
 
-  static const _defaultActivity = [
+  /// The locally composed recent-activity feed for `homeRecentActivityProvider`.
+  static const defaultActivity = [
     HomeActivityViewData(id: 'foundation-ready', kind: HomeStatusKind.ready),
     HomeActivityViewData(id: 'adaptive-connected', kind: HomeStatusKind.adaptive),
   ];

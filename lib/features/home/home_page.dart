@@ -3,15 +3,22 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/home/home_controller.dart';
 import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
+import 'package:starter/shared/widgets/refresh/app_refresh_indicator.dart';
+import 'package:starter/shared/widgets/spaced_column.dart';
 import 'package:starter/shared/widgets/states/empty_state_view.dart';
+import 'package:starter/shared/widgets/states/error_state_view.dart';
+import 'package:starter/shared/widgets/states/skeleton_tile.dart';
+import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({
@@ -42,28 +49,44 @@ class HomePage extends ConsumerWidget {
 
     return SafeArea(
       bottom: false,
-      child: ReadingContentScrollFrame(
-        key: ValueKey('home-layout-${layoutClass.name}'),
-        maxWidth: tokens.wideContentMaxWidth,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _HomeHeader(viewData: viewData),
-            SizedBox(height: spacing.xl),
-            _QuickActions(
-              columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
-              onOpenProfile: onOpenProfile,
-              onOpenPricing: onOpenPricing,
-              onOpenSettings: onOpenSettings,
-              onOpenLogin: onOpenLogin,
-            ),
-            SizedBox(height: spacing.xl),
-            _StatusSection(viewData: viewData, columns: columns),
-            SizedBox(height: spacing.xl),
-            _RecentActivity(viewData: viewData),
-          ],
+      child: AppRefreshIndicator(
+        onRefresh: () => _refreshRecentActivity(context, ref),
+        child: ReadingContentScrollFrame(
+          key: ValueKey('home-layout-${layoutClass.name}'),
+          maxWidth: tokens.wideContentMaxWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HomeHeader(viewData: viewData),
+              SizedBox(height: spacing.xl),
+              _QuickActions(
+                columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
+                onOpenProfile: onOpenProfile,
+                onOpenPricing: onOpenPricing,
+                onOpenSettings: onOpenSettings,
+                onOpenLogin: onOpenLogin,
+              ),
+              SizedBox(height: spacing.xl),
+              _StatusSection(viewData: viewData, columns: columns),
+              SizedBox(height: spacing.xl),
+              const _RecentActivity(),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Backend-free by contract (`pull-refresh.md`): recompose the local feed,
+  /// then report the honest `common.notConnected` outcome — never faked success.
+  Future<void> _refreshRecentActivity(BuildContext context, WidgetRef ref) async {
+    ref.invalidate(homeRecentActivityProvider);
+    await ref.read(homeRecentActivityProvider.future);
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      severity: ToastSeverity.warning,
+      message: context.t.common.notConnected,
     );
   }
 }
@@ -269,36 +292,56 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _RecentActivity extends StatelessWidget {
-  const _RecentActivity({required this.viewData});
-
-  final HomeViewData viewData;
+class _RecentActivity extends ConsumerWidget {
+  const _RecentActivity();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final translations = context.t.home;
+    final feed = ref.watch(homeRecentActivityProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(translations.recentTitle, style: context.theme.typography.display.lg),
         SizedBox(height: context.spacing.sm),
-        if (!viewData.hasRecentActivity)
-          EmptyStateView(
-            key: const ValueKey('home-activity-empty'),
-            title: translations.recentEmptyTitle,
-            body: translations.recentEmptyBody,
-          )
-        else
-          DataListView<HomeActivityViewData>(
-            key: const ValueKey('home-activity-list'),
-            items: viewData.recentActivity,
-            itemBuilder: (context, activity) => _ActivityTile(activity: activity),
-            keyOf: (activity) => activity.id,
-            padding: EdgeInsets.zero,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            separator: SizedBox(height: context.spacing.sm),
+        switch (feed) {
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? EmptyStateView(
+                    key: const ValueKey('home-activity-empty'),
+                    title: translations.recentEmptyTitle,
+                    body: translations.recentEmptyBody,
+                  )
+                : DataListView<HomeActivityViewData>(
+                    key: const ValueKey('home-activity-list'),
+                    items: value,
+                    itemBuilder: (context, activity) => _ActivityTile(activity: activity),
+                    keyOf: (activity) => activity.id,
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    separator: SizedBox(height: context.spacing.sm),
+                  ),
+          AsyncError() => ErrorStateView(
+            key: const ValueKey('home-activity-error'),
+            title: context.t.states.errorTitle,
+            body: context.t.states.errorBody,
           ),
+          // Feed composes after the first frame; bones mirror incoming tiles.
+          AsyncLoading() => SkeletonView(
+            key: const ValueKey('home-activity-skeleton'),
+            child: SpacedColumn(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var index = 0; index < HomeViewData.defaultActivity.length; index++)
+                  SizedBox(
+                    key: ValueKey('home-activity-skeleton-$index'),
+                    child: const SkeletonTile(),
+                  ),
+              ],
+            ),
+          ),
+        },
       ],
     );
   }

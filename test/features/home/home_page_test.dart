@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/home/home_controller.dart';
 import 'package:starter/features/home/home_page.dart';
 import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/features/settings/settings_state.dart';
@@ -114,8 +117,9 @@ void main() {
     await _pumpHome(
       tester,
       size: const Size(390, 900),
+      feedLoader: () async => const [],
       page: HomePage(
-        viewData: HomeViewData.emptyActivity(),
+        viewData: HomeViewData.defaults(),
         onOpenProfile: _noop,
         onOpenPricing: _noop,
         onOpenSettings: _noop,
@@ -128,6 +132,81 @@ void main() {
     expect(empty, findsOneWidget);
     expect(find.text('Nothing here yet'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
+  });
+
+  testWidgets('mirrors the recent-activity feed with skeleton bones before content', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      settle: false,
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    // First frame: the feed is still composing, so bones mirror the tiles.
+    expect(find.byKey(const ValueKey('home-activity-skeleton')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-activity-skeleton-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-activity-list')), findsNothing);
+
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('home-activity-skeleton')), findsNothing);
+    expect(find.byKey(const ValueKey('home-activity-list')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('home-activity-foundation-ready')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('pull-to-refresh holds the indicator, then completes with the notConnected toast', (
+    tester,
+  ) async {
+    final reload = Completer<List<HomeActivityViewData>>();
+    var loads = 0;
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      feedLoader: () {
+        loads += 1;
+        return loads == 1 ? Future.value(HomeViewData.defaultActivity) : reload.future;
+      },
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    await tester.fling(
+      find.byKey(const ValueKey('home-layout-compact')),
+      const Offset(0, 350),
+      1000,
+    );
+    // onRefresh starts after the show animation; bounded frames until it holds.
+    for (var frame = 0; frame < 4; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // The refresh future is held open, so the accent indicator stays up.
+    expect(loads, 2);
+    expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+
+    reload.complete(HomeViewData.defaultActivity);
+    await tester.pumpAndSettle();
+
+    // Honest backend-free completion: indicator dismissed + notConnected toast.
+    expect(find.byType(RefreshProgressIndicator), findsNothing);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-activity-list')), findsOneWidget);
   });
 
   testWidgets('uses one repeated-item gap across status and activity sections', (tester) async {
@@ -178,6 +257,8 @@ Future<void> _pumpHome(
   required Size size,
   required HomePage page,
   EdgeInsets safePadding = EdgeInsets.zero,
+  bool settle = true,
+  Future<List<HomeActivityViewData>> Function()? feedLoader,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -202,25 +283,32 @@ Future<void> _pumpHome(
         builder: (context, child) {
           return FTheme(
             data: theme,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final layoutClass = AppLayoutClass.fromWidth(
-                  constraints.maxWidth,
-                  compactMax: context.theme.breakpoints.sm,
-                  expandedMin: context.theme.breakpoints.lg,
-                );
-                final content = ProviderScope(
-                  overrides: [appLayoutClassProvider.overrideWithValue(layoutClass)],
-                  child: child ?? const SizedBox.shrink(),
-                );
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    padding: safePadding,
-                    viewPadding: safePadding,
-                  ),
-                  child: content,
-                );
-              },
+            // FToaster hosts AppToast feedback, matching the app shell.
+            child: FToaster(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final layoutClass = AppLayoutClass.fromWidth(
+                    constraints.maxWidth,
+                    compactMax: context.theme.breakpoints.sm,
+                    expandedMin: context.theme.breakpoints.lg,
+                  );
+                  final content = ProviderScope(
+                    overrides: [
+                      appLayoutClassProvider.overrideWithValue(layoutClass),
+                      if (feedLoader != null)
+                        homeRecentActivityProvider.overrideWith((ref) => feedLoader()),
+                    ],
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                  return MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      padding: safePadding,
+                      viewPadding: safePadding,
+                    ),
+                    child: content,
+                  );
+                },
+              ),
             ),
           );
         },
@@ -228,7 +316,9 @@ Future<void> _pumpHome(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  }
 }
 
 void _noop() {}
