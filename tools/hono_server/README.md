@@ -37,8 +37,10 @@ default `8080`. The server binds to loopback (`127.0.0.1`) and prints
 | Method | Path                                        | Status / Shape                                                       | Notes |
 | ------ | ------------------------------------------- | -------------------------------------------------------------------- | ----- |
 | GET    | `/healthz`                                  | `200 {ok:true}`                                                      | Liveness probe. |
-| POST   | `/v1/crashes`                               | `204`                                                                | `{message, stack?, context, platform, appVersion}` -> 204; malformed -> `400 {error:'invalid json'}`. |
-| POST   | `/v1/events`                                | `204`                                                                | Batched `{events:[...]}` -> 204; empty body / missing `events` -> `400`. |
+| POST   | `/v1/crashes`                               | `204` \| `400`                                                       | `{message, stack?, context, platform, appVersion}` -> 204 and retained for `/v1/crashes/last`; malformed JSON -> `400 {error:'invalid json'}`; bad shape -> `400 {error:'invalid crash report'}`. |
+| GET    | `/v1/crashes/last`                          | `200 {crashes:[...]}`                                                | Last 20 retained reports, oldest first (final element is the newest); the inspection surface crash-reporting.md documents. |
+| POST   | `/v1/events`                                | `204` \| `400`                                                       | Batched `{events:[{type,name,props,ts}], userId?}` -> 204 and retained for `/v1/events/last`; `type` ∈ {screen_view, tap, funnel_step}, `ts` ISO-8601; empty body / missing `events` -> `400 {error:'invalid json'}`; bad entry -> `400 {error:'invalid event batch'}`. |
+| GET    | `/v1/events/last`                           | `200 {events:[...]}`                                                 | Last 100 retained events, oldest first (final element is the newest). |
 | POST   | `/v1/auth/issue`                            | `200 {accessToken, refreshToken, expiresAt, userId}`                 | `{email,password}` -> tokens; bad creds -> `401`. |
 | POST   | `/v1/auth/register`                         | `200 {attempt_token, expires_at, channel, dev_code}` \| `409`        | `{email,password,displayName}` -> registration OTP envelope (creates a `pending` account); duplicate email -> `409 {error:'conflict'}`. |
 | POST   | `/v1/auth/refresh`                          | `200 {accessToken, refreshToken, expiresAt}`                         | `{refreshToken}` -> **rotated** token; replay of the old one -> `401`. |
@@ -49,7 +51,7 @@ default `8080`. The server binds to loopback (`127.0.0.1`) and prints
 | POST   | `/v1/otp/issue`                             | `200 {attempt_token, expires_at, channel, dev_code}`                 | `{purpose, identifier}`; `purpose` ∈ {registration, password-reset, mfa}. |
 | POST   | `/v1/otp/verify`                            | `200 {valid}` \| `200 {valid,access_token,refresh_token,expires_at,user_id}` \| `409 {error:'expired'}` \| `429 {error:'locked'}` | `{attempt_token, code}`; a **registration** verify activates the pending account and mints a session inline; unknown/expired token -> 409; too many wrong codes -> 429. |
 | POST   | `/v1/otp/resend`                            | `200 {attempt_token, expires_at, channel, dev_code}`                 | `{identifier, purpose}`. |
-| POST   | `/v1/feedback`                              | `200 {id}`                                                           | `{message, email?, screenshotMime?, screenshotBase64?, appMetadata?}`; invalid -> `422`; screenshot too large -> `413`. |
+| POST   | `/v1/feedback`                              | `201 {id}`                                                           | `{message, email?, screenshotMime?, screenshotBase64?, appMetadata?}`; invalid -> `422`; screenshot too large -> `413`. |
 | GET    | `/v1/feedback/:id/status`                   | `200 {state}` \| `404`                                               | Known id -> `{state:'queued'}`; unknown -> 404. |
 | GET    | `/v1/cache/:key`                            | `200 {data, etag, ttlSeconds, epoch}` \| `304` \| `404`              | `If-None-Match` / `*` / `?minEpoch=<ts>` -> 304; canonical fixture at key `welcome`. |
 | POST   | `/v1/notifications/register-token`          | `204`                                                                | `{token, platform, deviceId}`. |
@@ -80,6 +82,10 @@ except where the contract itself needs a round-trip between two calls:
   the same response, so the client is authenticated immediately. `/v1/auth/issue`
   mints tokens directly against the email-derived user id without checking the
   account (the dev login shortcut).
+- **crash/event retention** — `POST /v1/crashes` and `POST /v1/events` validate
+  the documented shapes and retain the last 20 reports / 100 events in bounded
+  ring buffers, exposed on `GET /v1/crashes/last` and `GET /v1/events/last`
+  (oldest first) so a test can assert an ingest actually landed.
 
 State lives in `src/state.ts` and is per-process; nothing persists across
 restarts, exactly like the Dart test server.

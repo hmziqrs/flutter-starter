@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from 'bun:test';
 import { buildApp } from '../src/index.js';
+import { MAX_RETAINED_CRASHES, MAX_RETAINED_EVENTS } from '../src/state.js';
 
 interface CallInit {
   method?: string;
@@ -43,14 +44,58 @@ describe('GET /healthz', () => {
   });
 });
 
+const validCrash = {
+  message: 'boom',
+  context: { route: '/home' },
+  platform: 'macos',
+  appVersion: '1.0.0',
+};
+
+const validEvent = {
+  type: 'tap',
+  name: 'n',
+  props: {},
+  ts: '2026-01-01T00:00:00Z',
+};
+
 describe('POST /v1/crashes', () => {
   it('returns 204 for a valid crash report', async () => {
     const app = buildApp();
     const res = await call(app, '/v1/crashes', {
       method: 'POST',
-      body: { message: 'boom', context: {}, platform: 'macos', appVersion: '1.0.0' },
+      body: { ...validCrash, stack: '#0 main (dart:core)' },
     });
     expect(res.status).toBe(204);
+  });
+
+  it('returns 204 when the optional stack is omitted', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/crashes', { method: 'POST', body: validCrash });
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 400 for an empty object', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/crashes', { method: 'POST', body: {} });
+    expect(res.status).toBe(400);
+    expect((await json(res))['error']).toBe('invalid crash report');
+  });
+
+  it('returns 400 {error:"invalid crash report"} for a missing/mistyped field', async () => {
+    const app = buildApp();
+    const invalid: unknown[] = [
+      {}, // the round-0 live probe: an empty object must not pass
+      { context: {}, platform: 'macos', appVersion: '1.0.0' }, // message missing
+      { ...validCrash, context: ['not', 'an', 'object'] },
+      { ...validCrash, platform: 3 },
+      { ...validCrash, appVersion: '' },
+      { ...validCrash, stack: ['#0 main'] }, // stack must be a string when present
+    ];
+    for (const body of invalid) {
+      const res = await call(app, '/v1/crashes', { method: 'POST', body });
+      expect(res.status).toBe(400);
+      expect((await json(res))['error']).toBe('invalid crash report');
+    }
   });
 
   it('returns 400 for malformed JSON', async () => {
@@ -65,13 +110,66 @@ describe('POST /v1/crashes', () => {
   });
 });
 
+describe('GET /v1/crashes/last', () => {
+  it('retains validated reports oldest-first with stack normalized to null', async () => {
+    const app = buildApp();
+    expect(((await json(await call(app, '/v1/crashes/last')))['crashes'] as unknown[]).length).toBe(0);
+
+    await call(app, '/v1/crashes', { method: 'POST', body: { ...validCrash, message: 'first' } });
+    await call(app, '/v1/crashes', {
+      method: 'POST',
+      body: { ...validCrash, message: 'second', stack: '#0 main' },
+    });
+
+    const res = await call(app, '/v1/crashes/last');
+    expect(res.status).toBe(200);
+    const crashes = (await json(res))['crashes'] as Record<string, unknown>[];
+    expect(crashes.length).toBe(2);
+    expect(crashes[0]).toEqual({ ...validCrash, message: 'first', stack: null });
+    expect(crashes[1]).toEqual({ ...validCrash, message: 'second', stack: '#0 main' });
+  });
+
+  it('bounds retention to the last N reports and drops rejected ones', async () => {
+    const app = buildApp();
+    const total = MAX_RETAINED_CRASHES + 5;
+    for (let i = 0; i < total; i++) {
+      await call(app, '/v1/crashes', { method: 'POST', body: { ...validCrash, message: `boom-${i}` } });
+    }
+    // A rejected report must not enter the buffer.
+    const rejected = await call(app, '/v1/crashes', { method: 'POST', body: {} });
+    expect(rejected.status).toBe(400);
+
+    const crashes = (await json(await call(app, '/v1/crashes/last')))['crashes'] as Record<string, unknown>[];
+    expect(crashes.length).toBe(MAX_RETAINED_CRASHES);
+    expect(crashes[0]).toEqual({ ...validCrash, message: `boom-${total - MAX_RETAINED_CRASHES}`, stack: null });
+    expect(crashes[crashes.length - 1]).toEqual({
+      ...validCrash,
+      message: `boom-${total - 1}`,
+      stack: null,
+    });
+  });
+});
+
 describe('POST /v1/events', () => {
-  it('returns 204 for a valid batch', async () => {
+  it('returns 204 for a valid batch covering every documented type', async () => {
     const app = buildApp();
     const res = await call(app, '/v1/events', {
       method: 'POST',
-      body: { events: [{ type: 'tap', name: 'n', props: {}, ts: '2026-01-01T00:00:00Z' }] },
+      body: {
+        events: [
+          { ...validEvent, type: 'screen_view', name: '/home' },
+          { ...validEvent, type: 'funnel_step', name: 'onboarding/step-1' },
+          validEvent,
+        ],
+        userId: 'user-abc',
+      },
     });
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 204 for an empty batch', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/events', { method: 'POST', body: { events: [] } });
     expect(res.status).toBe(204);
   });
 
@@ -89,6 +187,60 @@ describe('POST /v1/events', () => {
     const app = buildApp();
     const res = await call(app, '/v1/events', { method: 'POST', body: {} });
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 {error:"invalid event batch"} for a bad entry or batch field', async () => {
+    const app = buildApp();
+    const invalid: unknown[] = [
+      { events: [{ bogus: true }] }, // the round-0 live probe payload
+      { events: [{ ...validEvent, type: 'impression' }] }, // outside the enum
+      { events: [{ ...validEvent, name: '' }] },
+      { events: [{ ...validEvent, props: ['nope'] }] },
+      { events: [{ ...validEvent, props: null }] },
+      { events: [{ ...validEvent, ts: 1767225600000 }] }, // ts must be a string
+      { events: [{ ...validEvent, ts: 'not-a-date' }] }, // ts must be ISO-8601
+      { events: [validEvent], userId: 7 }, // optional userId must be a string
+    ];
+    for (const body of invalid) {
+      const res = await call(app, '/v1/events', { method: 'POST', body });
+      expect(res.status).toBe(400);
+      expect((await json(res))['error']).toBe('invalid event batch');
+    }
+  });
+});
+
+describe('GET /v1/events/last', () => {
+  it('retains validated events oldest-first; rejected batches are not stored', async () => {
+    const app = buildApp();
+    expect(((await json(await call(app, '/v1/events/last')))['events'] as unknown[]).length).toBe(0);
+
+    await call(app, '/v1/events', {
+      method: 'POST',
+      body: { events: [{ ...validEvent, type: 'screen_view', name: '/home' }] },
+    });
+    const rejected = await call(app, '/v1/events', {
+      method: 'POST',
+      body: { events: [{ bogus: true }] },
+    });
+    expect(rejected.status).toBe(400);
+
+    const events = (await json(await call(app, '/v1/events/last')))['events'] as Record<string, unknown>[];
+    expect(events).toEqual([{ ...validEvent, type: 'screen_view', name: '/home' }]);
+  });
+
+  it('bounds retention to the last N events', async () => {
+    const app = buildApp();
+    const total = MAX_RETAINED_EVENTS + 10;
+    for (let i = 0; i < total; i++) {
+      await call(app, '/v1/events', {
+        method: 'POST',
+        body: { events: [{ ...validEvent, name: `e-${i}` }] },
+      });
+    }
+    const events = (await json(await call(app, '/v1/events/last')))['events'] as Record<string, unknown>[];
+    expect(events.length).toBe(MAX_RETAINED_EVENTS);
+    expect(events[0]).toEqual({ ...validEvent, name: `e-${total - MAX_RETAINED_EVENTS}` });
+    expect(events[events.length - 1]).toEqual({ ...validEvent, name: `e-${total - 1}` });
   });
 });
 
@@ -371,13 +523,13 @@ describe('POST /v1/otp/{issue,verify,resend}', () => {
 });
 
 describe('POST /v1/feedback + GET /v1/feedback/:id/status', () => {
-  it('POST -> 200 {id}; status -> 200 {state:queued}; unknown -> 404', async () => {
+  it('POST -> 201 {id}; status -> 200 {state:queued}; unknown -> 404', async () => {
     const app = buildApp();
     const submit = await call(app, '/v1/feedback', {
       method: 'POST',
       body: { message: 'hello', email: 'a@b.com' },
     });
-    expect(submit.status).toBe(200);
+    expect(submit.status).toBe(201);
     const id = (await json(submit))['id'] as string;
     expect(typeof id).toBe('string');
 

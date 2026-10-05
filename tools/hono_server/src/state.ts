@@ -7,8 +7,34 @@
  * verify). Those live here so `buildApp(state?)` can hand a fresh state to each
  * test.
  *
+ * The contract also asks the server to retain the last N crashes / events "for
+ * inspection"; those bounded buffers live here too.
+ *
  * Single-process only — no persistence across restarts.
  */
+
+/** Retention caps: only the last N crashes / events are kept, so a long-running
+ * dev process cannot grow without limit (crash-reporting.md / analytics.md). */
+export const MAX_RETAINED_CRASHES = 20;
+export const MAX_RETAINED_EVENTS = 100;
+
+/** A crash report exactly as validated on `POST /v1/crashes`
+ * (`stack` normalized to null when the client omitted it). */
+export interface CrashRecord {
+  message: string;
+  stack: string | null;
+  context: unknown;
+  platform: string;
+  appVersion: string;
+}
+
+/** An analytics event exactly as validated on `POST /v1/events`. */
+export interface EventRecord {
+  type: string;
+  name: string;
+  props: unknown;
+  ts: string;
+}
 
 export interface IssuedOtp {
   attemptToken: string;
@@ -64,6 +90,12 @@ export interface ServerState {
   accountsByEmail: Map<string, Account>;
   /** Primed cacheable entries (canonical `welcome` fixture included). */
   cacheEntries: Map<string, CacheRecord>;
+  /** Bounded ring buffer of the last MAX_RETAINED_CRASHES crash reports
+   * (oldest first; the final element is the newest). */
+  crashes: CrashRecord[];
+  /** Bounded ring buffer of the last MAX_RETAINED_EVENTS analytics events
+   * (oldest first; the final element is the newest). */
+  events: EventRecord[];
   /** Monotonic counters so issued tokens/ids never collide in one process. */
   counters: { auth: number; otp: number; feedback: number };
 }
@@ -91,5 +123,23 @@ export function createState(): ServerState {
       ],
     ]),
     counters: { auth: 0, otp: 0, feedback: 0 },
+    crashes: [],
+    events: [],
   };
+}
+
+/** Append `entry` to the bounded `buffer`, dropping the oldest entries past `cap`. */
+function pushBounded<T>(buffer: T[], entry: T, cap: number): void {
+  buffer.push(entry);
+  if (buffer.length > cap) buffer.splice(0, buffer.length - cap);
+}
+
+/** Record a validated crash report into the last-N ring buffer. */
+export function recordCrash(state: ServerState, crash: CrashRecord): void {
+  pushBounded(state.crashes, crash, MAX_RETAINED_CRASHES);
+}
+
+/** Record a validated analytics event into the last-N ring buffer. */
+export function recordEvent(state: ServerState, event: EventRecord): void {
+  pushBounded(state.events, event, MAX_RETAINED_EVENTS);
 }

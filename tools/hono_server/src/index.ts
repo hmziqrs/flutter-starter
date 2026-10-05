@@ -10,6 +10,9 @@
  *   - `/v1/otp/issue` returns an `attempt_token` + `dev_code`; `/v1/otp/verify`
  *     accepts that fixed valid code, returns 409 expired / 429 locked per the
  *     OTP contract.
+ *   - `/v1/crashes` + `/v1/events` validate the documented shapes, retain the
+ *     last N reports/events in memory, and expose them for inspection on
+ *     `GET /v1/crashes/last` + `GET /v1/events/last`.
  *
  * The server prints `LISTENING <port>` once bound — the readiness line the test
  * harness pairs with a `GET /healthz` poll to detect when it is ready. A dev/
@@ -19,7 +22,16 @@
 import { Hono, type Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { pathToFileURL } from 'node:url';
-import { createState, type Account, type IssuedOtp, type ServerState } from './state.js';
+import {
+  createState,
+  recordCrash,
+  recordEvent,
+  type Account,
+  type CrashRecord,
+  type EventRecord,
+  type IssuedOtp,
+  type ServerState,
+} from './state.js';
 
 const JSON_HEADERS: Record<string, string> = { 'content-type': 'application/json; charset=utf-8' };
 
@@ -46,6 +58,9 @@ const OTP_FREE_ATTEMPTS_BEFORE_LOCKOUT = 2;
 const OTP_LOCKED_TTL_MS = 30_000;
 const FIXED_VALID_CODE = '123456';
 const KNOWN_OTP_PURPOSES = new Set(['registration', 'password-reset', 'mfa']);
+// --- events: the per-entry `type` enum from the analytics contract
+// (plans/feature_roadmap/features/analytics.md).
+const KNOWN_EVENT_TYPES = new Set(['screen_view', 'tap', 'funnel_step']);
 
 const KNOWN_IMAGE_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const ACCESS_TTL_MS = 60 * 60 * 1000;
@@ -65,22 +80,32 @@ export function buildApp(state: ServerState = createState()): Hono {
   app.post('/v1/crashes', async (c) => {
     const decoded = await parseJsonObjectStrict(c);
     if (decoded === null) return jsonError(c, 400, 'invalid json');
+    const report = parseCrashReport(decoded);
+    if (report === null) return jsonError(c, 400, 'invalid crash report');
+    // Retain the last N reports so the doc'd "assert the ingest arrived"
+    // inspection can run against the live server.
+    recordCrash(state, report);
     return new Response(null, { status: 204 });
   });
+
+  // Last N retained crash reports, oldest first (the final element is the
+  // newest) — the inspection surface the crash-reporting contract documents.
+  app.get('/v1/crashes/last', (c) => c.json({ crashes: state.crashes }, 200, JSON_HEADERS));
 
   // ---------------- events ----------------
   app.post('/v1/events', async (c) => {
     const decoded = await parseJsonObjectStrict(c);
     if (decoded === null) return jsonError(c, 400, 'invalid json');
-    const events = decoded['events'];
-    if (!Array.isArray(events)) return jsonError(c, 400, 'invalid json');
-    for (const entry of events) {
-      if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
-        return jsonError(c, 400, 'invalid json');
-      }
-    }
+    const batch = parseEventBatch(decoded);
+    if (batch === null) return jsonError(c, 400, 'invalid event batch');
+    for (const event of batch) recordEvent(state, event);
     return new Response(null, { status: 204 });
   });
+
+  // Last N retained analytics events, oldest first (the final element is the
+  // newest) — makes the doc'd "a screen_view landed on the server" assertion
+  // possible against the live server.
+  app.get('/v1/events/last', (c) => c.json({ events: state.events }, 200, JSON_HEADERS));
 
   // ---------------- auth ----------------
   app.post('/v1/auth/issue', async (c) => {
@@ -352,7 +377,9 @@ export function buildApp(state: ServerState = createState()): Hono {
     }
     const id = issueFeedbackId(state);
     state.feedback.set(id, { state: 'queued', acceptedAt: Date.now() });
-    return c.json({ id }, 200, JSON_HEADERS);
+    // 201 Created — a successful ingest creates a feedback resource
+    // (plans/feature_roadmap/features/feedback.md).
+    return c.json({ id }, 201, JSON_HEADERS);
   });
 
   app.get('/v1/feedback/:id/status', (c) => {
@@ -365,7 +392,9 @@ export function buildApp(state: ServerState = createState()): Hono {
   // ---------------- cache ----------------
   app.get('/v1/cache/:key', (c) => {
     const key = c.req.param('key');
-    // Mirror the Dart route's `[A-Za-z0-9_.\-]+` path constraint.
+    // Keys are limited to `[A-Za-z0-9_.-]+`; anything outside that charset is
+    // simply an unknown key (404). The cacheable route group is documented in
+    // plans/feature_roadmap/features/offline-cache.md.
     if (!/^[A-Za-z0-9_.-]+$/.test(key)) {
       return jsonError(c, 404, 'unknown cache key');
     }
@@ -463,6 +492,81 @@ async function parseJsonObjectTolerant(c: Context): Promise<Record<string, unkno
 
 function jsonError(c: Context, status: ContentfulStatusCode, message: string): Response {
   return c.json({ error: message }, status, JSON_HEADERS);
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Validate the crash-report contract shape
+ * `{message, stack?, context, platform, appVersion}`
+ * (plans/feature_roadmap/features/crash-reporting.md). Returns the normalized
+ * record, or null when a required field is missing/mistyped (or `stack` is
+ * present but not a string).
+ */
+function parseCrashReport(body: Record<string, unknown>): CrashRecord | null {
+  const message = body['message'];
+  const context = body['context'];
+  const platform = body['platform'];
+  const appVersion = body['appVersion'];
+  const stack = body['stack'];
+  if (
+    typeof message !== 'string' ||
+    message.length === 0 ||
+    !isPlainObject(context) ||
+    typeof platform !== 'string' ||
+    platform.length === 0 ||
+    typeof appVersion !== 'string' ||
+    appVersion.length === 0
+  ) {
+    return null;
+  }
+  if (stack !== undefined && typeof stack !== 'string') return null;
+  return {
+    message,
+    stack: typeof stack === 'string' ? stack : null,
+    context,
+    platform,
+    appVersion,
+  };
+}
+
+/**
+ * Validate the event-batch contract shape
+ * `{events: [{type, name, props, ts}], userId?}`
+ * (plans/feature_roadmap/features/analytics.md): every entry must carry a
+ * `type` from the documented enum, a non-empty `name`, a plain-object `props`,
+ * and an ISO-8601 `ts`; an optional `userId` must be a string. Returns the
+ * parsed entries (an empty batch is valid), or null on any violation.
+ */
+function parseEventBatch(body: Record<string, unknown>): EventRecord[] | null {
+  const events = body['events'];
+  if (!Array.isArray(events)) return null;
+  const userId = body['userId'];
+  if (userId !== undefined && typeof userId !== 'string') return null;
+  const parsed: EventRecord[] = [];
+  for (const entry of events) {
+    if (!isPlainObject(entry)) return null;
+    const type = entry['type'];
+    const name = entry['name'];
+    const props = entry['props'];
+    const ts = entry['ts'];
+    if (
+      typeof type !== 'string' ||
+      !KNOWN_EVENT_TYPES.has(type) ||
+      typeof name !== 'string' ||
+      name.length === 0 ||
+      !isPlainObject(props) ||
+      typeof ts !== 'string' ||
+      ts.length === 0 ||
+      Number.isNaN(Date.parse(ts))
+    ) {
+      return null;
+    }
+    parsed.push({ type, name, props, ts });
+  }
+  return parsed;
 }
 
 function issueToken(state: ServerState, prefix: string): string {
