@@ -46,12 +46,12 @@ void main() {
 
   tearDown(() => server.close(force: true));
 
-  ProviderContainer container({CacheStore? cacheStore}) {
+  // `source` null (the default) leaves searchCorpusSourceProvider unoverridden,
+  // so the no-source rung exercises the composition-root default itself.
+  ProviderContainer container({CacheStore? cacheStore, HttpCacheDataSource? source}) {
     return ProviderContainer(
       overrides: [
-        searchCorpusSourceProvider.overrideWithValue(
-          HttpCacheDataSource(baseUrl: Uri.parse('http://127.0.0.1:${server.port}')),
-        ),
+        if (source != null) searchCorpusSourceProvider.overrideWithValue(source),
         cacheStoreProvider.overrideWithValue(cacheStore ?? InMemoryCacheStore()),
         connectivityServiceProvider.overrideWithValue(FakeConnectivityService()),
       ],
@@ -72,7 +72,10 @@ void main() {
 
   test('an online source serves the fetched corpus and caches its etag', () async {
     final store = InMemoryCacheStore();
-    final c = container(cacheStore: store);
+    final c = container(
+      cacheStore: store,
+      source: HttpCacheDataSource(baseUrl: Uri.parse('http://127.0.0.1:${server.port}')),
+    );
     addTearDown(c.dispose);
 
     expect(await readCorpus(c), <String>['remote-alpha', 'remote-beta']);
@@ -80,9 +83,21 @@ void main() {
     expect(cached?.etag, '"search-corpus-1"', reason: 'the fetched corpus is cached');
   });
 
+  test('no source wired keeps search on the bundled fixtures', () async {
+    final c = container();
+    addTearDown(c.dispose);
+
+    final ids = await readCorpus(c);
+    expect(ids, isNotEmpty);
+    expect(ids.first, 'search-result-auth', reason: 'the bundled fixture corpus, verbatim');
+    expect(ids, everyElement(startsWith('search-result-')));
+  });
+
   test('an unknown cache key degrades honestly to the bundled corpus', () async {
     serveCorpus = false;
-    final c = container();
+    final c = container(
+      source: HttpCacheDataSource(baseUrl: Uri.parse('http://127.0.0.1:${server.port}')),
+    );
     addTearDown(c.dispose);
 
     final ids = await readCorpus(c);

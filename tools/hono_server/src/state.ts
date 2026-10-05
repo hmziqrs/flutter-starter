@@ -56,6 +56,29 @@ export interface CacheRecord {
   epoch: number;
 }
 
+/** Fixture corpus served at `GET /v1/cache/search-corpus` — the head of the
+ * app's bundled fixture corpus (`SearchViewData.defaults()` in
+ * `lib/features/search/search_view_data.dart`), in the `[{id, title, subtitle}]`
+ * wire shape `searchCorpusCodec` decodes. Exists so a run-backend wiring can
+ * serve the wired corpus fetch end-to-end without priming. */
+const SEARCH_CORPUS_FIXTURE: unknown = [
+  {
+    id: 'search-result-auth',
+    title: 'Authentication',
+    subtitle: 'Login, register, and password reset flows',
+  },
+  {
+    id: 'search-result-connectivity',
+    title: 'Connectivity',
+    subtitle: 'Online/offline banner and network state',
+  },
+  {
+    id: 'search-result-settings',
+    title: 'Settings',
+    subtitle: 'Appearance, language, and accessibility preferences',
+  },
+];
+
 export interface FeedbackRecord {
   state: string;
   acceptedAt: number;
@@ -88,7 +111,8 @@ export interface ServerState {
   otpIssues: Map<string, IssuedOtp>;
   /** email -> account (register creates pending; verify activates). */
   accountsByEmail: Map<string, Account>;
-  /** Primed cacheable entries (canonical `welcome` fixture included). */
+  /** Primed cacheable entries (the canonical `welcome` and `search-corpus`
+   * fixtures included). */
   cacheEntries: Map<string, CacheRecord>;
   /** Bounded ring buffer of the last MAX_RETAINED_CRASHES crash reports
    * (oldest first; the final element is the newest). */
@@ -101,8 +125,9 @@ export interface ServerState {
 }
 
 /**
- * Build a fresh state. The canonical `welcome` cache fixture is restored so a
- * freshly started server serves at least one known key without priming.
+ * Build a fresh state. The canonical `welcome` and `search-corpus` cache
+ * fixtures are restored so a freshly started server serves at least the keys
+ * the app's wired fetch paths ask for without priming.
  */
 export function createState(): ServerState {
   return {
@@ -117,6 +142,17 @@ export function createState(): ServerState {
         {
           data: { message: 'Welcome to the starter.' },
           etag: '"welcome-1"',
+          ttlSeconds: 300,
+          epoch: 1,
+        },
+      ],
+      [
+        'search-corpus',
+        {
+          // ETag / TTL match the app's conventions for this key
+          // (`"search-corpus-1"`, `searchCorpusTtlSeconds` = 300).
+          data: SEARCH_CORPUS_FIXTURE,
+          etag: '"search-corpus-1"',
           ttlSeconds: 300,
           epoch: 1,
         },

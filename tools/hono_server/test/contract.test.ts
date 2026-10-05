@@ -561,6 +561,43 @@ describe('GET /v1/cache/:key', () => {
     expect(typeof body['epoch']).toBe('number');
   });
 
+  it('known key search-corpus -> 200 with the fixture corpus wire shape', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/cache/search-corpus');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('etag')).toBe('"search-corpus-1"');
+    const body = await json(res);
+    // The corpus wire shape the app's searchCorpusCodec decodes:
+    // [{id, title, subtitle}] with non-empty string id/title.
+    const data = body['data'] as Record<string, string>[];
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(0);
+    for (const entry of data) {
+      expect(typeof entry['id']).toBe('string');
+      expect(entry['id'].length).toBeGreaterThan(0);
+      expect(typeof entry['title']).toBe('string');
+      expect(entry['title'].length).toBeGreaterThan(0);
+      expect(typeof entry['subtitle']).toBe('string');
+    }
+    expect(data[0]).toEqual({
+      id: 'search-result-auth',
+      title: 'Authentication',
+      subtitle: 'Login, register, and password reset flows',
+    });
+    expect(body['etag']).toBe('"search-corpus-1"');
+    expect(typeof body['ttlSeconds']).toBe('number');
+    expect(typeof body['epoch']).toBe('number');
+  });
+
+  it('search-corpus honors If-None-Match with its etag -> 304', async () => {
+    const app = buildApp();
+    const res = await call(app, '/v1/cache/search-corpus', {
+      headers: { 'if-none-match': '"search-corpus-1"' },
+    });
+    expect(res.status).toBe(304);
+    expect(res.headers.get('etag')).toBe('"search-corpus-1"');
+  });
+
   it('unknown key -> 404', async () => {
     const app = buildApp();
     const res = await call(app, '/v1/cache/nope');
