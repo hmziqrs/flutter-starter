@@ -4,7 +4,7 @@
 >
 > Implementation-audit gaps (2026-10-04) — closed 2026-10-05: SettingsStore persistence is wired
 > (`persistedPermissionKey`/`persistedTokenKey` seed on build, persist on change); the router drain
-> (`app.dart:228-252`) is driven to `pushNamed` by
+> (`app.dart:246-270`) is driven to `pushNamed` by
 > `test/features/notifications/notification_tap_dispatch_test.dart`; the foreground rendering path
 > (`_renderForeground` via `flutter_local_notifications`) is exercised by
 > `test/infrastructure/notifications/firebase_notifications_repository_test.dart`.
@@ -51,8 +51,11 @@ Firebase wiring is an opt-in override a consumer constructs only after adding cr
     [`lib/app/app.dart`](../../../lib/app/app.dart) (`ProviderScope` override + foreground-tap
     wiring in `_AppViewState`).
 - **Dependencies:** `firebase_core`, `firebase_messaging`, `flutter_local_notifications`. All
-  three are opt-in — added to `pubspec.yaml` only when a consumer wires the real impl; the Noop
-  default keeps the dependency tree backend-free.
+  three are declared in `pubspec.yaml` (compiled into every build — the starter does not keep
+  them out of the dependency tree). The opt-in boundary is at runtime, not at dependency level:
+  `AppDependencies.production` constructs the Noop default, and the Firebase impl is only ever
+  constructed when a consumer passes credentials, so no `firebase_*` plugin is initialized in the
+  default graph.
 
 ## Backend & test surface
 
@@ -63,7 +66,8 @@ fakes success.
 - **Noop production default** — `NoopNotificationsRepository` returns
   `NotificationPermissionStatus.denied` and an empty token stream; the controller surfaces
   `context.t.common.notConnected` for any subscribe/schedule action and records the unavailable
-  state. `AppDependencies.production` constructs this; no `firebase_*` dependency is pulled.
+  state. `AppDependencies.production` constructs this, so no `firebase_*` plugin is ever
+  initialized in the default graph.
 - **Optional real override** — `FirebaseNotificationsRepository` wraps `firebase_messaging` +
   `flutter_local_notifications`; a consumer constructs it (with platform credentials) and
   overrides `notificationsRepositoryProvider`. It is never constructed by default.
@@ -90,9 +94,13 @@ fakes success.
   `NotificationTap`. The tap-to-`pushNamed` drain is covered by
   `notification_tap_dispatch_test.dart`; foreground rendering by
   `firebase_notifications_repository_test.dart` (recording plugin fake).
-- **Integration:** reuse `createApplication`; drive the registration client against the
-  `tools/hono_server` with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`.
-  Verify a foreground tap issues `context.pushNamed` to the existing route, not a raw URI.
+- **Integration:** what landed is client-level plus widget-level, not an app-level `createApplication`
+  flow against the server. `test/e2e/hono_server_e2e_test.dart:103` drives the real
+  `HttpNotificationsRegistrationClient` against the running `tools/hono_server` (live server on a
+  random port) and round-trips register-token / unregister-token / permission-revoked; the
+  tap-to-`context.pushNamed` dispatch (to the existing named route, not a raw URI) is covered at
+  widget level by `test/features/notifications/notification_tap_dispatch_test.dart` using
+  `pumpAppFrames` (bounded frames, **never** `pumpAndSettle`).
 - **Golden impact:** none — no persistent UI surface (the foreground banner is transient and
   rendered by the OS). A dev-gallery fixture renders the in-app permission rationale only.
 - **Dev-gallery fixture:** one `TypedGalleryCase` behind `developmentToolsEnabled` previewing
@@ -116,8 +124,8 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 
 - [x] No-backend honored as a port — **pass**: all four C2 parts exist — port
   (`notifications_repository.dart`), honest Noop production default
-  (`dependencies.dart:390-395`; Noop returns `denied` + throws `notConnected`, verified by
-  `notifications_controller_test.dart:13-31`), opt-in `FirebaseNotificationsRepository` (never
+  (`dependencies.dart:444-449`; Noop returns `denied` + throws `notConnected`, verified by
+  `notifications_controller_test.dart:16-35`), opt-in `FirebaseNotificationsRepository` (never
   constructed in the default graph), and the test-server contract (`POST/DELETE
   /v1/notifications/register-token`, `POST /v1/notifications/permission-revoked` at
   `hono_server/src/index.ts:393-421`, contract-tested `hono_server/test/contract.test.ts:432-456`,
@@ -130,15 +138,15 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 - [x] Shared extraction ≥3 consumers — **pass**: the rationale preview stays feature-local (inside
   `notifications_gallery_cases.dart`); nothing promoted to `lib/shared/widgets/`.
 - [x] Composition root confined — **pass**: repository + backend + initial permission/token
-  overridden only at the `ProviderScope` (`app.dart:129-140`), constructed only in
-  `AppDependencies` (`dependencies.dart:141-146,390-395`); widgets never touch a plugin.
+  overridden only at the `ProviderScope` (`app.dart:138-147`), constructed only in
+  `AppDependencies` (`dependencies.dart:149-154,444-449`); widgets never touch a plugin.
 - [x] Motion guarded — **pass**: the rationale surface is static text; the OS notification UI is
   out of scope; no custom animation added.
 - [x] i18n synced en/ar/zh-Hans — **pass**: `notifications.*` (enableTitle/Body, allow, deny,
   enableBlockedTitle/Body, disabled) verified present in all three `lib/i18n/*.i18n.json`.
 - [x] Strict analysis clean — **pass**: exhaustive switches over permission status
   (`FirebaseNotificationsRepository._mapAuthorizationStatus`,
-  `NotificationsController._landFromException` at `notifications_controller.dart:120-126`);
+  `NotificationsController._landFromException` at `notifications_controller.dart:186-192`);
   typed `NotificationTap`/`NotificationMessage` Freezed values.
 - [x] Generated code untouched — **pass**: `notification_tap.freezed.dart` +
   `notifications_controller.freezed.dart` committed alongside their `part` sources.
@@ -155,7 +163,7 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 - [x] Config rule respected — **pass**: no runtime env switching; the Noop default is the
   production graph; gallery behind `developmentToolsEnabled`.
 - [x] Honest feedback, no faked success — **pass**: the Noop never fakes (unavailable + denied
-  asserted in `notifications_controller_test.dart:13-31`), and the Contract's SettingsStore
+  asserted in `notifications_controller_test.dart:16-35`), and the Contract's SettingsStore
   persistence claim is implemented: `persistedPermissionKey`/`persistedTokenKey`
   (`notifications_controller.dart`) seed the controller on build and persist on every
   permission/token change (covered by the `SettingsStore persistence` test group).

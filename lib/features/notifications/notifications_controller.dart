@@ -80,13 +80,17 @@ final class NotificationsController extends Notifier<NotificationsState> {
           ? NotificationsRegistrationState.idle
           : NotificationsRegistrationState.registered,
     );
-    unawaited(_hydrateFromStore());
+    unawaited(_hydrateFromStore(seeded));
     return seeded;
   }
 
   /// Seeds state from the previous session's [persistedTokenKey] /
   /// [persistedPermissionKey] values so notification state survives a relaunch.
-  Future<void> _hydrateFromStore() async {
+  ///
+  /// The store read races anything that mutates state after [build]; the seed
+  /// passed in is only replaced when state is still exactly that seed, so a
+  /// slower read never clobbers a fresher permission/token change.
+  Future<void> _hydrateFromStore(NotificationsState seeded) async {
     final NotificationPermissionStatus? permission;
     final String? token;
     try {
@@ -101,7 +105,7 @@ final class NotificationsController extends Notifier<NotificationsState> {
           .warning('notifications.hydrate failed', error: error, stackTrace: stackTrace);
       return;
     }
-    if (!ref.mounted || (permission == null && token == null)) {
+    if (!ref.mounted || (permission == null && token == null) || state != seeded) {
       return;
     }
     state = state.copyWith(

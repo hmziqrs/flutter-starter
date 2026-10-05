@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/notifications/in_memory_notifications_repository.dart';
@@ -136,6 +138,37 @@ void main() {
         addTearDown(repository.dispose);
       });
 
+      test('a slow hydration read never clobbers a fresher permission/token change', () async {
+        final store = _SlowReadSettingsStore(
+          seed: {
+            persistedPermissionKey: NotificationPermissionStatus.provisional.name,
+            persistedTokenKey: 'stale-persisted-token',
+          },
+        );
+        final repository = InMemoryNotificationsRepository();
+        final container = _buildContainer(repository: repository, store: store);
+        addTearDown(container.dispose);
+        // build() kicks off hydration, which parks on the store's gated reads.
+        container.read(notificationsControllerProvider);
+        // While that read is still pending, a real registration lands fresher
+        // OS truth than whatever the previous session persisted.
+        await container.read(notificationsControllerProvider.notifier).register();
+        final fresh = container.read(notificationsControllerProvider);
+        expect(fresh.permission, NotificationPermissionStatus.granted);
+        expect(fresh.token, isNot('stale-persisted-token'));
+
+        store.releaseReads();
+        for (var attempt = 0; attempt < 4; attempt += 1) {
+          await Future<void>.delayed(Duration.zero);
+        }
+
+        final state = container.read(notificationsControllerProvider);
+        expect(state.permission, NotificationPermissionStatus.granted);
+        expect(state.token, fresh.token);
+        expect(state.registration, NotificationsRegistrationState.registered);
+        addTearDown(repository.dispose);
+      });
+
       test('unregister removes the persisted token but keeps the permission', () async {
         final repository = InMemoryNotificationsRepository(
           permission: NotificationPermissionStatus.granted,
@@ -225,4 +258,36 @@ ProviderContainer _buildContainer({
       settingsStoreProvider.overrideWithValue(store ?? InMemorySettingsStore()),
     ],
   );
+}
+
+/// A [SettingsStore] whose reads serve a frozen snapshot of the seed and park
+/// on a [Completer], so a test can land a fresher permission/token change while
+/// the controller's hydration read is still in flight, then let the read finish
+/// and assert the previous session's values did not clobber the fresh ones.
+final class _SlowReadSettingsStore implements SettingsStore {
+  _SlowReadSettingsStore({required Map<String, String> seed})
+    : _seeded = Map.unmodifiable({...seed}),
+      _values = {...seed};
+
+  final Map<String, String> _seeded;
+  final Map<String, String> _values;
+  final Completer<void> _reads = Completer<void>();
+
+  void releaseReads() => _reads.complete();
+
+  @override
+  Future<String?> readString(String key) async {
+    await _reads.future;
+    return _seeded[key];
+  }
+
+  @override
+  Future<void> remove(String key) async {
+    _values.remove(key);
+  }
+
+  @override
+  Future<void> writeString(String key, String value) async {
+    _values[key] = value;
+  }
 }

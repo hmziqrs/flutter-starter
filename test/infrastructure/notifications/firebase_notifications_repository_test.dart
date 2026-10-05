@@ -1,6 +1,3 @@
-// The two platform-interface imports below are transitive deps that pubspec
-// deliberately does not declare (firebase_* stay opt-in per the contract).
-// ignore_for_file: depend_on_referenced_packages
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
