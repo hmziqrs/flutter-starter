@@ -41,6 +41,7 @@ import 'package:starter/infrastructure/biometric/local_auth_authenticator.dart';
 import 'package:starter/infrastructure/biometric/noop_biometric_authenticator.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/cache/file_cache_store.dart';
+import 'package:starter/infrastructure/cache/http_cache_data_source.dart';
 import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_plus_service.dart';
 import 'package:starter/infrastructure/connectivity/connectivity_service.dart';
@@ -91,6 +92,7 @@ final class AppDependencies {
     required this.platform,
     required this.appStartupResult,
     required this.initialDismissedAnnouncementIds,
+    this.searchCorpusSource,
     this.inspectorHost = const StubInspectorHost(),
   });
 
@@ -195,6 +197,10 @@ final class AppDependencies {
 
   final Set<String> initialDismissedAnnouncementIds;
 
+  /// The remote search-corpus fetcher; `null` keeps search on the bundled
+  /// corpus (contracts C2 — the real impl exists only behind a wired backend).
+  final HttpCacheDataSource? searchCorpusSource;
+
   final InspectorHost inspectorHost;
 
   AppDependencies copyWith({AppStartupResult? appStartupResult}) {
@@ -210,6 +216,7 @@ final class AppDependencies {
       platform: platform,
       appStartupResult: appStartupResult ?? this.appStartupResult,
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
+      searchCorpusSource: searchCorpusSource,
       inspectorHost: inspectorHost,
     );
   }
@@ -350,6 +357,7 @@ final class AppDependencies {
     final CrashReporterBackend crashReporterBackend;
     final AnalyticsClientBackend analyticsClientBackend;
     final HttpAnalyticsClient? httpAnalyticsClient;
+    final HttpCacheDataSource? searchCorpusSource;
     if (backendBaseUrl != null) {
       final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost, logger: logger);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
@@ -373,6 +381,9 @@ final class AppDependencies {
         host: backendBaseUrl.host.isEmpty ? backendBaseUrl.toString() : backendBaseUrl.host,
       );
       httpAnalyticsClient = HttpAnalyticsClient(baseUrl: backendBaseUrl, dio: dio);
+      // The corpus fetch degrades to stale/fixture data, so it keeps the cache
+      // source's own tightly timed Dio instead of the shared client.
+      searchCorpusSource = HttpCacheDataSource(baseUrl: backendBaseUrl);
     } else {
       authRepository = InMemoryAuthRepository();
       otpRepository = const InMemoryOtpRepository();
@@ -384,6 +395,7 @@ final class AppDependencies {
       crashReporterBackend = const NoopCrashReporterBackend();
       analyticsClientBackend = const NoopAnalyticsBackend();
       httpAnalyticsClient = null;
+      searchCorpusSource = null;
     }
     return AppDependencies(
       logger: logger,
@@ -466,6 +478,7 @@ final class AppDependencies {
         localeApplied: true,
       ),
       initialDismissedAnnouncementIds: initialDismissedAnnouncementIds,
+      searchCorpusSource: searchCorpusSource,
       inspectorHost: inspectorHost,
     );
   }

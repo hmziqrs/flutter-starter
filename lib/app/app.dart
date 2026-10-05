@@ -35,6 +35,7 @@ import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_controller.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
 import 'package:starter/features/profile/profile_repository.dart';
+import 'package:starter/features/search/search_corpus.dart';
 import 'package:starter/features/security/auto_lock_controller.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/analytics_opt_in_controller.dart';
@@ -153,6 +154,7 @@ class App extends StatelessWidget {
         appLinkHandlerProvider.overrideWithValue(dependencies.platform.appLinkHandler),
         experimentSourceProvider.overrideWithValue(dependencies.remoteConfig.experimentSource),
         cacheStoreProvider.overrideWithValue(dependencies.storage.cacheStore),
+        searchCorpusSourceProvider.overrideWithValue(dependencies.searchCorpusSource),
         feedbackTransportProvider.overrideWithValue(dependencies.feedback.feedbackTransport),
         initialFeedbackDraftProvider.overrideWithValue(dependencies.feedback.initialFeedbackDraft),
         initialFeedbackShakeEnabledProvider.overrideWithValue(

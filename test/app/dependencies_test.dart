@@ -3,10 +3,12 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
+import 'package:starter/features/search/search_corpus.dart';
 import 'package:starter/features/settings/settings_repository.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/cache/cache_diagnostics.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
 void main() {
@@ -67,5 +69,26 @@ void main() {
     );
 
     expect(reconstructed.settings.initialSettings, expected);
+  });
+
+  test('production wires the search corpus source only behind a backend base url', () async {
+    final offline = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
+    expect(offline.searchCorpusSource, isNull);
+
+    final wired = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+      backendBaseUrl: Uri.parse('http://127.0.0.1:8123'),
+    );
+    expect(wired.searchCorpusSource, isNotNull);
+  });
+
+  test('known cache keys cover the search corpus cache key', () {
+    expect(knownCacheKeys, contains(searchCorpusCacheKey));
   });
 }
