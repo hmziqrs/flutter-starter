@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/search/debounced_query_controller.dart';
+import 'package:starter/features/search/search_corpus.dart';
 import 'package:starter/features/search/search_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/state/paged_state.dart';
@@ -13,10 +14,6 @@ import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 import 'package:starter/shared/widgets/lists/paged_list_view.dart';
 import 'package:starter/shared/widgets/search/search_field.dart';
-
-final searchCorpusProvider = Provider<List<SearchResultViewData>>(
-  (ref) => SearchViewData.defaults().results,
-);
 
 final searchResultsControllerProvider =
     NotifierProvider<SearchResultsController, PagedState<SearchResultViewData>>(
@@ -29,21 +26,33 @@ final class SearchResultsController extends PagedStateNotifierBase<SearchResultV
   @override
   PageFetcher<SearchResultViewData> get fetcher => _fetch;
 
-  List<SearchResultViewData> get _corpus => ref.read(searchCorpusProvider);
   String get _query => ref.read(debouncedQueryProvider);
 
   @override
   PagedState<SearchResultViewData> build() {
-    ref.listen<String>(debouncedQueryProvider, (previous, next) {
-      if (previous != next) {
-        unawaited(refresh());
-      }
-    });
+    ref
+      ..listen<String>(debouncedQueryProvider, (previous, next) {
+        if (previous != next) {
+          unawaited(refresh());
+        }
+      })
+      // Re-paginate when the corpus resolves (bundled fixtures → fetched).
+      ..listen<AsyncValue<List<SearchResultViewData>>>(searchCorpusProvider, (
+        previous,
+        next,
+      ) {
+        if (previous?.value != next.value) {
+          unawaited(refresh());
+        }
+      });
     return const PagedState<SearchResultViewData>();
   }
 
   Future<PagedResult<SearchResultViewData>> _fetch(int? cursor) async {
-    final matches = _corpus.where((item) => item.matches(_query)).toList();
+    // The corpus itself loads through the offline-aware cache (see
+    // search_corpus.dart); pagination stays a pure local slice over it.
+    final corpus = await ref.read(searchCorpusProvider.future);
+    final matches = corpus.where((item) => item.matches(_query)).toList();
     final offset = cursor ?? 0;
     final page = matches.skip(offset).take(searchPageSize).toList();
     final nextOffset = offset + page.length;

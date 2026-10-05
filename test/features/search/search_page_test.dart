@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/search/debounced_query_controller.dart';
+import 'package:starter/features/search/search_corpus.dart';
 import 'package:starter/features/search/search_page.dart';
+import 'package:starter/features/search/search_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/cache/cache_store.dart';
+import 'package:starter/infrastructure/cache/cached_future_provider.dart';
+import 'package:starter/infrastructure/cache/in_memory_cache_store.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
+
+import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
@@ -98,6 +106,48 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('search-back')));
       await _pumpFrames(tester);
       expect(backCalls, 1);
+    });
+
+    testWidgets('renders a corpus fetched through the offline-aware cache seam', (
+      tester,
+    ) async {
+      // A real buildCachedFutureProvider with a local spec — widget tests run
+      // under flutter_test's HttpOverrides mock; the socket path is covered by
+      // search_corpus_test.dart against a loopback server.
+      final cachedCorpusProvider = buildCachedFutureProvider<List<SearchResultViewData>>(
+        CachedFutureSpec<List<SearchResultViewData>>(
+          key: searchCorpusCacheKey,
+          fetch: () async => const <SearchResultViewData>[
+            SearchResultViewData(id: 'remote-alpha', title: 'Remote Alpha'),
+          ],
+          codec: searchCorpusCodec,
+          ttlSeconds: searchCorpusTtlSeconds,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            searchCorpusCachedProvider.overrideWith((ref) => cachedCorpusProvider),
+            cacheStoreProvider.overrideWithValue(InMemoryCacheStore()),
+            connectivityServiceProvider.overrideWithValue(FakeConnectivityService()),
+          ],
+          child: TranslationProvider(
+            child: FTheme(
+              data: generated.lightTheme,
+              child: MaterialApp(
+                theme: generated.lightTheme.toApproximateMaterialTheme(),
+                home: SearchPage(autofocus: false, onBack: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+      await _pumpFrames(tester);
+
+      expect(find.text('Remote Alpha'), findsOneWidget);
+      expect(find.text('Authentication'), findsNothing);
     });
   });
 }
