@@ -1,13 +1,12 @@
 # Deep linking
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 >
-> Implementation-audit gap (2026-10-04): resolver/allowlist/cold-start are implemented and
-> exhaustively unit-tested, but the claimed integration coverage is missing at the wiring level —
-> no test pushes a URI through the stream and asserts the router lands on the named destination
-> (`app.dart:254-271` `_listenAppLinkStream`/`_dispatchAppLink` untested), and no bootstrap-level
-> test asserts the cold-start link seeds `initialLocation`
-> (`bootstrap.dart` `_initialLocationFromResolvedLink` untested).
+> Implementation-audit gap (2026-10-04) — closed 2026-10-05: the wiring-level coverage this doc
+> claimed now exists in `test/app/routing/deep_link_wiring_test.dart` — streamed URIs land the
+> router on the named destinations with foreign hosts dropped, and the resolved cold-start link
+> seeds `initialLocation` (`bootstrap.dart` `_initialLocationFromResolvedLink` covered at the
+> `createApplication` level).
 
 ## Summary
 Intercept inbound native URIs (iOS Universal Links, Android App Links, custom schemes) and route them
@@ -78,13 +77,14 @@ driven by a `StreamController<Uri>` — no Mocktail.
 Implementation audit (2026-10-04) against the 13-item checklist in
 [contracts.md](../contracts.md):
 
-- [x] No-backend honored as a port — **warn**: backend-free receive-only; the `AppLinks` plugin
-  is reached only via `AppLinksDeepLinkService`/`AppLinkInbox` (`app_link_handler.dart`) — no
-  other `lib/` file imports `app_links` (grep-verified); no widget calls a plugin. The warn is
-  the missing wiring-level integration coverage this doc claims: no test asserts a streamed URI
-  lands the router on the named destination (`app.dart:254-271` untested) or that the cold-start
-  link seeds `initialLocation` (`bootstrap.dart` `_initialLocationFromResolvedLink` untested;
-  only service-level `getInitialLink` is covered, `app_link_handler_test.dart:219-235,274-285`).
+- [x] No-backend honored as a port — **pass (warn resolved 2026-10-05)**: backend-free
+  receive-only; the `AppLinks` plugin is reached only via
+  `AppLinksDeepLinkService`/`AppLinkInbox` (`app_link_handler.dart`) — no other `lib/` file
+  imports `app_links` (grep-verified); no widget calls a plugin. The wiring-level coverage the
+  warn flagged now exists: `test/app/routing/deep_link_wiring_test.dart` pushes URIs through the
+  stream and asserts the router lands on the named destinations with foreign hosts dropped
+  (`deep_link_wiring_test.dart:43-82`), and the resolved cold-start link seeds `initialLocation`
+  at the `createApplication` level (`:86-122`; a foreign host resolves to `null`).
 - [x] Feature-first ownership — **pass**: handler lives under `lib/app/routing/` (composition-root-
   adjacent, the correct home for routing concerns — not a feature bucket); no `core/`/`utils/`.
 - [x] Shared extraction ≥3 consumers — **n/a**: no widget extracted.

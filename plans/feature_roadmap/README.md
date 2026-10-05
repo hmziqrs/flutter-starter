@@ -53,12 +53,12 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | Skeleton loading | P2 | ux | none | in-progress | [skeleton](features/skeleton.md) |
 | Pull-to-refresh + virtualization | P2 | ux | none | in-progress | [pull-refresh](features/pull-refresh.md) |
 | MFA / OTP completion | P2 | security | server | done | [mfa-otp](features/mfa-otp.md) |
-| Auth rate-limit / lockout | P2 | security | none | in-progress | [auth-ratelimit](features/auth-ratelimit.md) |
-| Push notifications | P2 | engagement | server | in-progress | [push-notifications](features/push-notifications.md) |
+| Auth rate-limit / lockout | P2 | security | none | done | [auth-ratelimit](features/auth-ratelimit.md) |
+| Push notifications | P2 | engagement | server | done | [push-notifications](features/push-notifications.md) |
 | System UI / edge-to-edge | P2 | platform | none | done | [system-ui](features/system-ui.md) |
 | Haptic feedback | P2 | platform | none | done | [haptics](features/haptics.md) |
 | Accessibility presets | P2 | platform | none | done | [a11y-presets](features/a11y-presets.md) |
-| Deep linking | P2 | platform | none | in-progress | [deep-linking](features/deep-linking.md) |
+| Deep linking | P2 | platform | none | done | [deep-linking](features/deep-linking.md) |
 | Runtime permissions + media picker | P2 | platform | none | done | [permissions-media](features/permissions-media.md) |
 | License / share / in-app updates | P2 | platform | none | done | [license-share-update](features/license-share-update.md) |
 | State restoration + last-screen | P3 | startup | none | done | [state-restoration](features/state-restoration.md) |
@@ -67,7 +67,7 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | PIN / passcode + auto-lock | P3 | security | none | done | [pin-autolock](features/pin-autolock.md) |
 | In-app feedback / shake | P3 | engagement | server | done | [feedback](features/feedback.md) |
 | A/B experiment hooks | P3 | engagement | server | done | [ab-experiments](features/ab-experiments.md) |
-| Offline-first caching layer | P3 | infra | server | in-progress | [offline-cache](features/offline-cache.md) |
+| Offline-first caching layer | P3 | infra | server | done | [offline-cache](features/offline-cache.md) |
 
 ## Sequencing
 

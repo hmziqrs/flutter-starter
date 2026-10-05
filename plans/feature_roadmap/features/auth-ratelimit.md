@@ -1,6 +1,6 @@
 # Auth rate-limit / lockout
 
-> **Tier:** P2 · **Domain:** security · **Backend:** none · **Status:** in-progress · **Depends on:** none (consumers: mfa-otp, pin-autolock)
+> **Tier:** P2 · **Domain:** security · **Backend:** none · **Status:** done · **Depends on:** none (consumers: mfa-otp, pin-autolock)
 
 ## Summary
 
@@ -68,8 +68,8 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
   from source.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: pure Dart.
 - [x] Goldens + dev-gallery fixture — **n/a** (per this doc): no canonical matrix case
-  (countdown text is timing-sensitive); repo-wide re-baseline pending the pinned macOS 26 run
-  (tracked repo-wide).
+  (countdown text is timing-sensitive); the committed baselines are outdated vs HEAD and the
+  pinned macOS 26 CI re-baseline is outstanding (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: one tracker consumed by three call sites; identifier
   keys are FNV-1a hashed (`hashIdentifier`), so raw email/phone PII never sits in the map
   (identifier-hygiene risk satisfied).

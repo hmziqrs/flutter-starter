@@ -40,8 +40,9 @@ one spec because they share the content-scale primitives (`DataListView`, shared
   - add `lib/features/search/search_page.dart` + `lib/features/search/search_view_data.dart`
     (page + typed view-data trio)
   - add `lib/shared/state/paged_state.dart` + `lib/shared/state/paged_state_notifier.dart`
-  - add `lib/shared/widgets/lists/paged_list_view.dart` — built on `DataListView` from
-    [pull-refresh.md](pull-refresh.md)
+  - add `lib/shared/widgets/lists/paged_list_view.dart` — sibling of `DataListView` from
+    [pull-refresh.md](pull-refresh.md) in the shared lists bucket; renders via `ListView.builder`
+    directly (`paged_list_view.dart:73`), not on top of `DataListView`
   - edit `lib/app/routing/app_routes.dart` + `app_router.dart` — search route (**root composition
     edits**, checklist #4 — the only composition-root touches)
   - add `test/features/search/debounced_query_controller_test.dart` +
@@ -108,8 +109,9 @@ constructed in `AppDependencies` only when a consumer wires a source;
 
 ## Risks / notes
 
-- **Depends on pull-refresh.** `PagedListView` builds on the `DataListView` virtualization from
-  [pull-refresh.md](pull-refresh.md) — sequence after it.
+- **Sibling of pull-refresh's `DataListView`, not built on it.** `PagedListView` renders via
+  `ListView.builder` directly (`paged_list_view.dart:73`) — same shared lists bucket, but there
+  is no `DataListView` dependency to sequence after.
 - **Top-level route.** The full-screen search `GoRoute` is top-level (architecture.md routing:
   full-screen flows live outside the `ShellRoute`);
   [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) gives

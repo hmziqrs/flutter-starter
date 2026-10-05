@@ -1,10 +1,12 @@
 # Offline-first caching layer
 
-> **Tier:** P3 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** connectivity
+> **Tier:** P3 · **Domain:** infra · **Backend:** test-server · **Status:** done · **Depends on:** connectivity
 >
 > Implementation audit (2026-10-04, updated 2026-10-05): port + file-backed production store +
   connectivity-gated read primitive with conditional-get (etag/`If-None-Match`/304
   fresh-extend) + `HttpCacheDataSource` + unit tests + diagnostics + live-server e2e verified.
+  The primitive has its first production consumer: search's corpus fetch
+  (`lib/features/search/search_corpus.dart:24,39`).
 
 ## Summary
 
@@ -46,8 +48,8 @@ remote data source a feature uses to populate it, exercised against the test ser
   - `lib/infrastructure/cache/file_cache_store.dart` (production default, file-backed)
   - `lib/infrastructure/cache/cached_future_provider.dart` (the offline-aware read primitive;
     watches the existing `connectivityStatusProvider` from [`connectivity`](connectivity.md),
-    never defines its own — kept here with the port until a consumer lands; no designated
-    consumer today)
+    never defines its own — kept here with the port; consumed by search's corpus fetch
+    (`lib/features/search/search_corpus.dart:24,39`))
   - `lib/infrastructure/cache/http_cache_data_source.dart` (the reference HTTP data source:
     conditional `GET /v1/cache/{key}`, parses `{data, etag, ttlSeconds, epoch}`, and wires a
     `CachedFutureSpec` via `spec()` so the primitive is drivable against a real socket)
@@ -134,12 +136,13 @@ and "no backend" means no remote data source is wired — features that try to r
 - [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: the port and the
   offline-aware read primitive live in `lib/infrastructure/cache/` (cross-cutting adapter,
   peer of `SharedPreferencesSettingsStore`); no buckets.
-- [x] **Shared extraction >=3 consumers** — **pass**: nothing was extracted to `lib/shared/`;
-  the `cachedFutureProvider` primitive is deliberately held under
-  `lib/infrastructure/cache/` until a consumer lands (only tests consume it today —
-  `test/infrastructure/cache/cached_future_provider_test.dart:32`), exactly as this doc
-  records, so the >=1-consumer bar for shared state helpers is not violated. Resolves the
-  pre-written warn.
+- [x] **Shared extraction >=3 consumers** — **pass** (updated 2026-10-05): nothing was
+  extracted to `lib/shared/`; the `cachedFutureProvider` primitive stays under
+  `lib/infrastructure/cache/` and now has a production consumer — search's corpus fetch wires
+  it via `searchCorpusSourceProvider` → `buildCachedFutureProvider`
+  (`lib/features/search/search_corpus.dart:24,39`, pinned by
+  `test/features/search/search_corpus_test.dart`), so the >=1-consumer bar for shared state
+  helpers is met outright. Resolves the pre-written warn.
 - [x] **Composition root confined** — **pass**: `FileCacheStore` wired only in
   `lib/app/dependencies.dart:315-330`; `cacheStoreProvider` overridden in
   `lib/app/app.dart:147`; `connectivityStatusProvider` is read, never redeclared
@@ -194,6 +197,8 @@ and "no backend" means no remote data source is wired — features that try to r
 - **No `clearAll`.** Per-key `remove` only, mirroring `SettingsStore`; a "clear cache" affordance
   (if ever added) iterates known keys, not a bulk wipe — do not widen the port interface.
 - **Sequencing.** P3 — the last infra piece; depends on [`connectivity`](connectivity.md)
-  (shared port) and is most useful once a real data-source feature consumes it — no consumer is
-  designated today ([`search-pagination`](search-pagination.md) defines its own `PageFetcher<T>` +
-  `PagedState<T>` and does not consume `cachedFutureProvider`). No UI/golden impact of its own.
+  (shared port). Its first real data-source consumer has landed: search's corpus fetch goes
+  through `cachedFutureProvider` ([`search-pagination`](search-pagination.md) —
+  `search_corpus.dart:24,39`), while pagination itself keeps its own `PageFetcher<T>` +
+  `PagedState<T>` (paged fetching is a different shape than single-value caching, by design).
+  No UI/golden impact of its own.

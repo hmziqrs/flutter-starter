@@ -1,6 +1,6 @@
 # Push notifications
 
-> **Tier:** P2 · **Domain:** engagement · **Backend:** test-server · **Status:** in-progress · **Depends on:** settings
+> **Tier:** P2 · **Domain:** engagement · **Backend:** test-server · **Status:** done · **Depends on:** settings
 >
 > Implementation-audit gaps (2026-10-04) — closed 2026-10-05: SettingsStore persistence is wired
 > (`persistedPermissionKey`/`persistedTokenKey` seed on build, persist on change); the router drain
