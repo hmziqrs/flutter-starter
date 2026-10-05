@@ -1,11 +1,13 @@
 # In-app feedback
 
-> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** in-progress · **Depends on:** settings, platform-capabilities
+> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** done · **Depends on:** settings, platform-capabilities
 >
 > Implementation audit (2026-10-04): port + honest Noop default + controller/sheet/shake +
 > i18n + widget tests verified. Fix round (2026-10-05): the optional real impl exists
 > (`HttpFeedbackTransport`) with the live submit e2e, plus the shake settings tile, the
-> screenshot capture seam (default none — see Risks), and Escape-dismissal coverage.
+> screenshot capture seam (default none — see Risks), and Escape-dismissal coverage. All
+> audit items pass with current evidence; status flipped to done (2026-10-05) with no open
+> gaps.
 
 ## Summary
 
@@ -145,9 +147,10 @@ fakes success.
   trigger is platform-gated off web.
 - [x] **Goldens re-baselined + dev-gallery fixture** — **pass**: the doc documents the
   minimal/modal golden impact; `TypedGalleryCase` fixtures for
-  drafting/submitting/failed/success exist (`feedback_gallery_cases.dart:10-40`); the
-  repo-wide golden re-baseline is pending the pinned macOS 26 CI run (tracked repo-wide per
-  `test/goldens/README.md`, not failed here).
+  drafting/submitting/failed/success exist (`feedback_gallery_cases.dart:10-40`); the pinned
+  macOS 26 CI re-baseline is outstanding — the committed baselines predate this work and are
+  outdated vs HEAD (13/14 canonical comparisons fail locally), tracked repo-wide per
+  `test/goldens/README.md`, not failed here.
 - [x] **Port-reuse consistency** — **pass**: own transport, deliberately not folded into
   analytics event ingest (distinct human-triaged channel per Risks); persistence goes through
   the existing `SettingsStore` per-key discipline (`feedback_controller.dart:15-26`).

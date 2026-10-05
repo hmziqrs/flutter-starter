@@ -45,15 +45,15 @@ Backend-free; restoration is Flutter framework state. The optional last-route pe
 ## Audit
 
 - [x] No-backend honored as a port — **pass**: backend-free; reuses `SettingsStore` for the last-route key only (`lib/app/last_route.dart` `writeString` under `nav.last_route`; read in `lib/bootstrap.dart:144-166`); no `clearAll`, no faked success.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `RestorationMixin` edits are feature-local (auth pages, `onboarding_page.dart:34-46`, `update_profile_page.dart:68-141`); the shared binding lives under `lib/shared/forms/restorable_text_controller.dart` with five page consumers.
-- [x] shared/widgets extraction >=3 consumers — **pass**: `RestorableTextControllerBinding` (shared/forms) consumed by login, register, forgot-password, otp, and update-profile pages (>=3 concrete).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `RestorationMixin` edits are feature-local (auth pages, `onboarding_page.dart:34-46`, `update_profile_page.dart:68-141`); the shared binding lives under `lib/shared/forms/restorable_text_controller.dart` with four page consumers (login, register, forgot-password, otp).
+- [x] shared/widgets extraction >=3 consumers — **pass**: `RestorableTextControllerBinding` (shared/forms) consumed by login, register, forgot-password, and otp pages — four concrete consumers (>=3); update-profile restores via `RestorationMixin` directly with its own `RestorableStringN` drafts rather than the binding.
 - [x] Composition root confined — **pass**: `LastRouteObserver` constructed only as a router observer in `_AppViewState` (`lib/app/app.dart:198`); last-route read confined to `createApplication`; `restorationScopeId` is the shared `appRestorationScopeId` constant (`lib/app/app.dart`) referenced by both the root `MaterialApp.router` and the per-page test harnesses, so production and test buckets cannot drift.
 - [x] Motion guarded — **n/a**: no animation.
 - [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**: no new keys.
 - [x] Strict-analysis clean — **pass**: typed `RestorableString`/`RestorableStringN` drafts; exhaustive `pathForLastRouteName` switch over route names (`last_route.dart:11-44`); no `dynamic`.
 - [x] Generated code untouched — **pass**: no generated files in scope.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass**: fixture n/a (framework mechanism) as documented; `RestorationMixin` golden impact documented in Tests — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: fixture n/a (framework mechanism) as documented; `RestorationMixin` golden impact documented in Tests — the committed baselines are outdated vs HEAD and the pinned macOS 26 CI re-baseline is outstanding (tracked repo-wide, not per-feature).
 - [x] Port-reuse consistency — **pass**: reuses `SettingsStore` (no parallel persistence port); the observer reuses the router `observers:` seam like analytics.
 - [x] Config rule respected — **pass**: dev-only routes excluded from last-route persistence (`pathForLastRouteName` returns null for `developmentScreens`/`diagnostics`), asserted in `test/app/state_restoration_test.dart:53-57`.
 - [x] Honest feedback, no faked success — **pass**: store failures never throw and never block navigation (`runGuarded` around every write, `last_route.dart:76-88`; tested 'never throws and never blocks').

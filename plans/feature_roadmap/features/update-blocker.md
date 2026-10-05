@@ -93,9 +93,10 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
   `runGuarded` (`route_guards.dart:171-181`); no entitlement.
 - [x] Goldens re-baselined + dev-gallery fixture — **pass**: doc documents the full-screen
   golden impact; `PreviewFrame` fixtures for `hard` + `soft` exist
-  (`lib/features/dev_gallery/cases/force_update_gallery_cases.dart:10-33`); the repo-wide
-  golden re-baseline is pending the pinned macOS 26 CI run (tracked repo-wide per
-  `test/goldens/README.md`, not failed here). Resolves the pre-written warn.
+  (`lib/features/dev_gallery/cases/force_update_gallery_cases.dart:10-33`); the pinned macOS
+  26 CI re-baseline is outstanding — the committed baselines predate this work and are
+  outdated vs HEAD (13/14 canonical comparisons fail locally), tracked repo-wide per
+  `test/goldens/README.md`, not failed here. Resolves the pre-written warn.
 - [x] Port-reuse consistency — **pass**: `VersionGateStore` is the peer reader of the one
   `RemoteConfigClient` family; no second remote-config source.
 - [x] Config rule respected — **pass**: the check runs once at boot in dependencies, never

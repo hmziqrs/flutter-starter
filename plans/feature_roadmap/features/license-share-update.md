@@ -1,13 +1,14 @@
 # License / share / in-app updates
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 >
-> Implementation-audit gaps (2026-10-04): the `/dev/diagnostics` share + update dev triggers from
-> the file list never landed (the dev gallery renders static state cards only, no live triggers),
-> and the claimed `createApplication` integration test (share trigger + update check via
-> in-memory fakes) does not exist; `ShareService`/`AppUpdateService` currently have no caller
-> outside tests/gallery — permitted by C1's port + Noop + test-surface gate, but the surfaces this
-> doc planned are missing.
+> Implementation-audit gaps (2026-10-04, closed 2026-10-05): the `/dev/diagnostics` share + update
+> dev triggers landed behind `developmentToolsEnabled` (wired to `shareServiceProvider` /
+> `appUpdateServiceProvider`), `createApplication` coverage exists on device
+> (`integration_test/license_share_update_test.dart`) and headless
+> (`test/app/diagnostics/diagnostics_page_test.dart`), and both services now have a real
+> app-surface caller on `/dev/diagnostics` beyond tests/gallery. All audit items pass with
+> current evidence; status flipped to done (2026-10-05) with no open gaps.
 
 ## Summary
 A bundle of three small platform-polish features that each touch the same native/settings seams:
@@ -73,8 +74,11 @@ Mocktail — the noop impls are the fakes.
 - **Unit/widget:** license page builds with a `package_info_plus` fixture; `NoopShareService` returns
   `unavailable`; `NoopAppUpdateService` returns `noUpdate`; `UpdateAvailability`/`ShareResult`
   equality. Widget: settings "About" tile navigates to the license route.
-- **Integration:** share trigger and update check via in-memory fakes (reuse `createApplication`;
-  `pumpAppFrames`, never `pumpAndSettle`). Real `in_app_update` cannot run in CI (needs a Play Store
+- **Integration:** share trigger and update check via the noop adapters (reusing `createApplication`;
+  `pumpAppFrames`, never `pumpAndSettle`) — landed as complementary device
+  (`integration_test/license_share_update_test.dart`; `flutter test` needs `-d` for
+  `integration_test/` paths) and headless (`test/app/diagnostics/diagnostics_page_test.dart`;
+  pins desktop capabilities) coverage. Real `in_app_update` cannot run in CI (needs a Play Store
   device) — that path is noop-only in automated tests.
 - **Golden impact:** add a `PreviewFrame` case for the license page (legal text); no full-matrix
   change.
@@ -93,14 +97,13 @@ Mocktail — the noop impls are the fakes.
 Implementation audit (2026-10-04) against the 13-item checklist in
 [contracts.md](../contracts.md):
 
-- [x] No-backend honored as a port — **warn**: both ports exist (`ShareService`,
+- [x] No-backend honored as a port — **pass**: both ports exist (`ShareService`,
   `AppUpdateService`) with honest noop defaults (`unavailable`/`noUpdate`, tested
   `noop_share_service_test.dart`, `noop_app_update_service_test.dart`) and device adapters never
   constructed outside `AppDependencies` platform selection (`dependencies.dart:451-472`). The
-  gap: the doc's planned trigger surfaces are missing — no `/dev/diagnostics` share/update
-  triggers and no `createApplication` integration test; the gallery renders static result cards
-  only (`license_share_update_gallery_cases.dart`), so neither service is ever invoked by an app
-  surface (C1 permits port + Noop + tests with no caller, but this doc promised more).
+  `/dev/diagnostics` dev triggers (`diagnostics_page.dart`, `developmentToolsEnabled`-gated,
+  providers read only on tap, honest `share.unavailable`/`update.notAvailable` outcomes) are the
+  app-surface caller; the gallery keeps its static enum-state cards alongside them.
 - [x] Feature-first ownership — **pass** (bundle discipline held): license page + route + About
   tile owned by settings (`license_page.dart`, `settings_routes.dart:41-44,68`); share/updates
   ports + adapters confined to `lib/infrastructure/{sharing,updates}/`; no grab-bag files.
@@ -124,7 +127,8 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 - [x] Goldens re-baselined + dev-gallery fixture — **pass**: license page is a gallery case
   (`license_share_update_gallery_cases.dart`, registered `gallery_registry.dart:49`) and is
   tested with a `package_info_plus` fixture (`license_page_test.dart:15-38`); no full-matrix
-  change — repo-wide re-baseline still pending the pinned macOS 26 CI run (tracked repo-wide).
+  change — the committed baselines are outdated vs HEAD and the pinned macOS 26 CI re-baseline
+  is outstanding (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: no parallel update gate — the OS-store path feeds the
   existing update-blocker gate (`route_guards.dart` `UpdateRequirementHard/Soft`), never a second
   blocking route; license needs no port (local Flutter registry) per this doc.

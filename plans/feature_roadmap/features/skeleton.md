@@ -76,7 +76,7 @@ empty/error state-view ([state-views.md](state-views.md)).
 - [x] Strict analysis clean — **pass**: immutable typed `SkeletonStyle` with `==`/`hashCode` (`skeleton_view.dart:8-45`), no `dynamic`; deterministic bone primitives.
 - [x] Generated code untouched — **pass**: no codegen for this feature; working-tree generated-file changes trace to source edits via `just gen`.
 - [x] Native entitlements flagged — **n/a**: no native surface.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed `PreviewFrame` cases `skeleton.staticList` (frozen/static, golden-safe) + `skeleton.shimmerList` (`skeleton_gallery_cases.dart`, registered in `gallery_registry.dart:36`) — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed `PreviewFrame` cases `skeleton.staticList` (frozen/static, golden-safe) + `skeleton.shimmerList` (`skeleton_gallery_cases.dart`, registered in `gallery_registry.dart:36`) — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (the committed baselines are outdated vs HEAD; that re-baseline is outstanding).
 - [x] Port-reuse consistency — **n/a**: introduces no port.
 - [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
 - [x] Honest feedback, no faked success — **pass**: the skeleton carries a loading semantics label and transitions to real content or the error/empty state-view; it never renders data-shaped bones as a success claim.

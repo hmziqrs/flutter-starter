@@ -33,9 +33,9 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 
 | Feature | Tier | Domain | Backend | Status | Doc |
 |---|---|---|---|---|---|
-| App lifecycle observer | P0 | startup | none | in-progress | [lifecycle-observer](features/lifecycle-observer.md) |
+| App lifecycle observer | P0 | startup | none | done | [lifecycle-observer](features/lifecycle-observer.md) |
 | SecureStore port | P0 | security | none | done | [secure-store](features/secure-store.md) |
-| Crash & error reporting | P0 | infra | server | in-progress | [crash-reporting](features/crash-reporting.md) |
+| Crash & error reporting | P0 | infra | server | done | [crash-reporting](features/crash-reporting.md) |
 | Real-time connectivity indicator | P1 | startup | none | done | [connectivity](features/connectivity.md) |
 | First-launch onboarding gate | P1 | startup | none | done | [onboarding-gate](features/onboarding-gate.md) |
 | Native splash | P1 | startup | none | done | [native-splash](features/native-splash.md) |
@@ -59,13 +59,13 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | Haptic feedback | P2 | platform | none | done | [haptics](features/haptics.md) |
 | Accessibility presets | P2 | platform | none | done | [a11y-presets](features/a11y-presets.md) |
 | Deep linking | P2 | platform | none | in-progress | [deep-linking](features/deep-linking.md) |
-| Runtime permissions + media picker | P2 | platform | none | in-progress | [permissions-media](features/permissions-media.md) |
-| License / share / in-app updates | P2 | platform | none | in-progress | [license-share-update](features/license-share-update.md) |
-| State restoration + last-screen | P3 | startup | none | in-progress | [state-restoration](features/state-restoration.md) |
-| In-app search + pagination | P3 | ux | none | in-progress | [search-pagination](features/search-pagination.md) |
+| Runtime permissions + media picker | P2 | platform | none | done | [permissions-media](features/permissions-media.md) |
+| License / share / in-app updates | P2 | platform | none | done | [license-share-update](features/license-share-update.md) |
+| State restoration + last-screen | P3 | startup | none | done | [state-restoration](features/state-restoration.md) |
+| In-app search + pagination | P3 | ux | none | done | [search-pagination](features/search-pagination.md) |
 | Toast + confirmation wrappers | P3 | ux | none | done | [toast-dialogs](features/toast-dialogs.md) |
 | PIN / passcode + auto-lock | P3 | security | none | done | [pin-autolock](features/pin-autolock.md) |
-| In-app feedback / shake | P3 | engagement | server | in-progress | [feedback](features/feedback.md) |
+| In-app feedback / shake | P3 | engagement | server | done | [feedback](features/feedback.md) |
 | A/B experiment hooks | P3 | engagement | server | done | [ab-experiments](features/ab-experiments.md) |
 | Offline-first caching layer | P3 | infra | server | in-progress | [offline-cache](features/offline-cache.md) |
 

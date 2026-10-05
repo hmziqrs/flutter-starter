@@ -144,8 +144,9 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   consumer-wired; none committed.
 - [x] **Goldens re-baselined + dev-gallery fixture** — **pass**: doc documents the
   `settings_800x1000_zh_light_language` matrix impact; `analytics_gallery_cases.dart` opt-in
-  on/off fixtures exist; the repo-wide golden re-baseline is pending the pinned macOS 26 CI
-  run (tracked repo-wide per `test/goldens/README.md`, not failed here). Resolves the
+  on/off fixtures exist; the pinned macOS 26 CI re-baseline is outstanding — the committed
+  baselines predate this work and are outdated vs HEAD (13/14 canonical comparisons fail
+  locally), tracked repo-wide per `test/goldens/README.md`, not failed here. Resolves the
   pre-written warn.
 - [x] **Port-reuse consistency** — **pass**: one `GoRouter` `observers:` entry
   (`app.dart:197`, forwarding through `buildAppRouter`'s `observers` param at

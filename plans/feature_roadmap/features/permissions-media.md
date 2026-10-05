@@ -1,12 +1,13 @@
 # Runtime permissions + media picker
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 >
-> Implementation-audit gaps (2026-10-04): the granted→pick→`onAvatarPicked(media)` happy path has
-> no test (only the dismiss path is covered, and the claimed `createApplication` integration test
-> with a fixture-returning fake picker does not exist); the `/dev/diagnostics` dev trigger from the
-> file list never landed; and `profile_routes.dart:62-70` ignores a successfully picked image
-> (null shows `avatarUnavailable`, non-null is a silent no-op).
+> Implementation-audit gaps (2026-10-04, closed 2026-10-05): the granted→pick→`onAvatarPicked(media)`
+> happy path, the fixture-picker integration flow, and the `profile_routes.dart` non-null avatar
+> branch are now tested (`update_profile_page_test.dart`, `deeplink_permissions_test.dart`); the
+> `/dev/diagnostics` dev trigger from the original file list never landed and is dropped from this
+> contract — the dev gallery is the preview surface. All audit items pass with current evidence;
+> status flipped to done (2026-10-05) with no open gaps.
 
 ## Summary
 Request device permissions (camera, photos, notifications, location) with a pre-prompt rationale and
@@ -48,9 +49,9 @@ port so goldens/integration stay hermetic.
     [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart).
   - `lib/features/profile/update_profile_page.dart` — **edit**; consume `PickedMedia?`.
   - `lib/app/routing/app_router.dart` — **edit**; rewire `onAvatarFeedback` → picker.
-  - `lib/app/diagnostics/diagnostics_page.dart` — **edit**; dev trigger (gated by
-    `developmentToolsEnabled`).
   - `lib/app/dependencies.dart` + `lib/app/app.dart` — **edit (root composition)**; overrides.
+  - Dropped from the original list: a `/dev/diagnostics` permissions trigger — the dev gallery
+    (`permissions_gallery_cases.dart`) is the preview surface; no route trigger is planned.
 - **Dependencies:** `permission_handler`, `app_settings`, `image_picker` (none currently in
   `pubspec.lock`).
 
@@ -123,14 +124,14 @@ Implementation audit (2026-10-04) against the 13-item checklist in
   owned by push-notifications, incl. `POST_NOTIFICATIONS`).
 - [x] Goldens re-baselined + dev-gallery fixture — **pass**: rationale sheet + denied/
   permanently-denied gallery cases exist (`permissions_gallery_cases.dart`, registered
-  `gallery_registry.dart:48`); no full-matrix change — repo-wide re-baseline still pending the
-  pinned macOS 26 CI run (tracked repo-wide).
+  `gallery_registry.dart:48`); no full-matrix change — the committed baselines are outdated
+  vs HEAD and the pinned macOS 26 CI re-baseline is outstanding (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: no `notifications` kind declared (OS notification
   permission stays owned by push-notifications, as this doc requires); `MediaPicker` is the single
   pick port for future share/feedback flows.
 - [x] Config rule respected — **pass**: no config surface; gallery behind
-  `developmentToolsEnabled`. The planned `/dev/diagnostics` trigger never landed (gap noted in
-  the header) — the dev gallery is the preview surface.
+  `developmentToolsEnabled`. The planned `/dev/diagnostics` trigger was dropped from this
+  contract — the dev gallery is the preview surface.
 - [x] Honest feedback, no faked success — **pass**: noop picker returns null → route surfaces
   `profile.update.avatarUnavailable` (`profile_routes.dart:62-70`); noop permission service never
   fakes a grant (tested); permanently-denied offers open-settings, not a re-prompt
