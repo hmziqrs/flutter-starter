@@ -460,6 +460,8 @@ class _Translations$diagnostics$zh_Hans extends Translations$diagnostics$en {
 	@override String get analytics => '分析';
 	@override String get analyticsNone => '未配置';
 	@override String get featureFlags => '功能开关';
+	@override String get triggerIdle => '尚未运行';
+	@override String get triggerRunning => '正在运行…';
 	@override String get redactedNotice => '诊断信息不包含凭据或用户内容。';
 	@override late final _Translations$diagnostics$experiments$zh_Hans experiments = _Translations$diagnostics$experiments$zh_Hans._(_root);
 }
@@ -701,6 +703,7 @@ class _Translations$share$zh_Hans extends Translations$share$en {
 	@override String get success => '已分享';
 	@override String get unavailable => '此设备不支持分享。';
 	@override String get cancelled => '已取消分享。';
+	@override String get trigger => '分享诊断摘要';
 }
 
 // Path: update
@@ -1483,6 +1486,8 @@ extension on TranslationsZhHans {
 			'diagnostics.analytics' => '分析',
 			'diagnostics.analyticsNone' => '未配置',
 			'diagnostics.featureFlags' => '功能开关',
+			'diagnostics.triggerIdle' => '尚未运行',
+			'diagnostics.triggerRunning' => '正在运行…',
 			'diagnostics.redactedNotice' => '诊断信息不包含凭据或用户内容。',
 			'diagnostics.experiments.title' => '实验',
 			'diagnostics.experiments.source' => '来源',
@@ -1660,10 +1665,10 @@ extension on TranslationsZhHans {
 			'devGallery.caseToastError' => '错误提示',
 			'devGallery.caseDialogConfirm' => '确认对话框',
 			'devGallery.caseDialogDestroy' => '删除对话框',
-			'devGallery.screenPasscodeEntry' => '密码输入',
-			'devGallery.screenPasscodeSetup' => '密码设置',
 			_ => null,
 		} ?? switch (path) {
+			'devGallery.screenPasscodeEntry' => '密码输入',
+			'devGallery.screenPasscodeSetup' => '密码设置',
 			'devGallery.casePasscodeIdle' => '空闲',
 			'devGallery.casePasscodeError' => '错误',
 			'devGallery.casePasscodeLockedOut' => '已锁定',
@@ -1694,6 +1699,7 @@ extension on TranslationsZhHans {
 			'share.success' => '已分享',
 			'share.unavailable' => '此设备不支持分享。',
 			'share.cancelled' => '已取消分享。',
+			'share.trigger' => '分享诊断摘要',
 			'update.checkForUpdates' => '检查更新',
 			'update.available' => '有可用更新。',
 			'update.notAvailable' => '已是最新版本。',

@@ -432,6 +432,8 @@
     "analytics": "分析",
     "analyticsNone": "未配置",
     "featureFlags": "功能开关",
+    "triggerIdle": "尚未运行",
+    "triggerRunning": "正在运行…",
     "redactedNotice": "诊断信息不包含凭据或用户内容。",
     "experiments": {
       "title": "实验",
@@ -656,7 +658,8 @@
   "share": {
     "success": "已分享",
     "unavailable": "此设备不支持分享。",
-    "cancelled": "已取消分享。"
+    "cancelled": "已取消分享。",
+    "trigger": "分享诊断摘要"
   },
   "update": {
     "checkForUpdates": "检查更新",

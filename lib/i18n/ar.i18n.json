@@ -462,6 +462,8 @@
     "analytics": "التحليلات",
     "analyticsNone": "غير مُهيّأ",
     "featureFlags": "ميزات تجريبية",
+    "triggerIdle": "لم يتم التشغيل بعد",
+    "triggerRunning": "قيد التشغيل…",
     "redactedNotice": "لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.",
     "experiments": {
       "title": "التجارب",
@@ -686,7 +688,8 @@
   "share": {
     "success": "تمت المشاركة",
     "unavailable": "المشاركة غير متاحة على هذا الجهاز.",
-    "cancelled": "تم إلغاء المشاركة."
+    "cancelled": "تم إلغاء المشاركة.",
+    "trigger": "مشاركة مقتطف تشخيصي"
   },
   "update": {
     "checkForUpdates": "التحقق من التحديثات",

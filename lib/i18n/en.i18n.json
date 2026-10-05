@@ -437,6 +437,8 @@
     "analytics": "Analytics",
     "analyticsNone": "Not configured",
     "featureFlags": "Feature flags",
+    "triggerIdle": "Not run yet",
+    "triggerRunning": "Running…",
     "redactedNotice": "Diagnostics exclude credentials and user content.",
     "experiments": {
       "title": "Experiments",
@@ -661,7 +663,8 @@
   "share": {
     "success": "Shared",
     "unavailable": "Sharing is not available on this device.",
-    "cancelled": "Share cancelled."
+    "cancelled": "Share cancelled.",
+    "trigger": "Share a diagnostics snippet"
   },
   "update": {
     "checkForUpdates": "Check for updates",

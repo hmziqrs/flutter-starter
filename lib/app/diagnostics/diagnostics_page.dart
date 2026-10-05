@@ -16,6 +16,8 @@ import 'package:starter/infrastructure/cache/cache_store.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/platform/app_build_info.dart';
 import 'package:starter/infrastructure/secure_storage/secure_store_backend.dart';
+import 'package:starter/infrastructure/sharing/share_service.dart';
+import 'package:starter/infrastructure/updates/app_update_service.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
@@ -32,6 +34,7 @@ class DiagnosticsPage extends ConsumerStatefulWidget {
 class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
   late final Future<List<CacheDiagnosticRow>> _cacheDiagnostics = cacheDiagnosticsSnapshot(
     ref.read(cacheStoreProvider),
+    keys: knownCacheKeys,
   );
 
   @override
@@ -183,6 +186,30 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
                                 );
                               },
                             ),
+                          if (config.developmentToolsEnabled) ...[
+                            _DevTriggerTile(
+                              key: const ValueKey('diagnostics-share-trigger'),
+                              title: translations.share.trigger,
+                              idleLabel: translations.diagnostics.triggerIdle,
+                              runningLabel: translations.diagnostics.triggerRunning,
+                              run: (ref) async => _shareOutcomeLabel(
+                                translations,
+                                await ref
+                                    .read(shareServiceProvider)
+                                    .shareText('starter · ${config.environment.name}'),
+                              ),
+                            ),
+                            _DevTriggerTile(
+                              key: const ValueKey('diagnostics-update-check'),
+                              title: translations.update.checkForUpdates,
+                              idleLabel: translations.diagnostics.triggerIdle,
+                              runningLabel: translations.diagnostics.triggerRunning,
+                              run: (ref) async => _updateOutcomeLabel(
+                                translations,
+                                await ref.read(appUpdateServiceProvider).checkForUpdate(),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -229,6 +256,76 @@ class _DiagnosticTile extends StatelessWidget {
       details: valueBuilder?.call() ?? SelectableText(value),
     );
   }
+}
+
+/// A dev-only action tile on `/dev/diagnostics` that runs a platform port on
+/// tap and surfaces the honest outcome as its detail value. The provider is
+/// only read inside [run] (never during build) so harnesses that do not
+/// override the port still render the page.
+class _DevTriggerTile extends ConsumerStatefulWidget {
+  const _DevTriggerTile({
+    required this.title,
+    required this.idleLabel,
+    required this.runningLabel,
+    required this.run,
+    super.key,
+  });
+
+  final String title;
+  final String idleLabel;
+  final String runningLabel;
+  final Future<String> Function(WidgetRef ref) run;
+
+  @override
+  ConsumerState<_DevTriggerTile> createState() => _DevTriggerTileState();
+}
+
+class _DevTriggerTileState extends ConsumerState<_DevTriggerTile> {
+  bool _running = false;
+  String? _outcome;
+
+  Future<void> _run() async {
+    if (_running) return;
+    setState(() => _running = true);
+    String? outcome;
+    try {
+      outcome = await widget.run(ref);
+    } on Object {
+      // Adapters are total, but a stray throw must never wedge the tile on
+      // "running" — keep the last reported outcome instead.
+    }
+    if (!mounted) return;
+    setState(() {
+      _running = false;
+      if (outcome != null) _outcome = outcome;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final outcome = _outcome;
+    return FTile(
+      onPress: _run,
+      title: Text(widget.title),
+      details: Text(outcome ?? (_running ? widget.runningLabel : widget.idleLabel)),
+    );
+  }
+}
+
+String _shareOutcomeLabel(Translations translations, ShareResult result) {
+  return switch (result) {
+    ShareResult.success => translations.share.success,
+    ShareResult.unavailable => translations.share.unavailable,
+    ShareResult.cancelled => translations.share.cancelled,
+  };
+}
+
+String _updateOutcomeLabel(Translations translations, UpdateAvailability availability) {
+  return switch (availability) {
+    UpdateAvailability.noUpdate => translations.update.notAvailable,
+    UpdateAvailability.available => translations.update.available,
+    UpdateAvailability.required => translations.update.required,
+  };
 }
 
 class _BuildValue extends StatefulWidget {

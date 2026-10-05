@@ -844,6 +844,12 @@ class Translations$diagnostics$en {
 	/// en: 'Feature flags'
 	String get featureFlags => 'Feature flags';
 
+	/// en: 'Not run yet'
+	String get triggerIdle => 'Not run yet';
+
+	/// en: 'Running…'
+	String get triggerRunning => 'Running…';
+
 	/// en: 'Diagnostics exclude credentials and user content.'
 	String get redactedNotice => 'Diagnostics exclude credentials and user content.';
 
@@ -1487,6 +1493,9 @@ class Translations$share$en {
 
 	/// en: 'Share cancelled.'
 	String get cancelled => 'Share cancelled.';
+
+	/// en: 'Share a diagnostics snippet'
+	String get trigger => 'Share a diagnostics snippet';
 }
 
 // Path: update
@@ -2619,6 +2628,8 @@ extension on Translations {
 			'diagnostics.analytics' => 'Analytics',
 			'diagnostics.analyticsNone' => 'Not configured',
 			'diagnostics.featureFlags' => 'Feature flags',
+			'diagnostics.triggerIdle' => 'Not run yet',
+			'diagnostics.triggerRunning' => 'Running…',
 			'diagnostics.redactedNotice' => 'Diagnostics exclude credentials and user content.',
 			'diagnostics.experiments.title' => 'Experiments',
 			'diagnostics.experiments.source' => 'Source',
@@ -2796,10 +2807,10 @@ extension on Translations {
 			'devGallery.caseToastError' => 'Error toast',
 			'devGallery.caseDialogConfirm' => 'Confirm dialog',
 			'devGallery.caseDialogDestroy' => 'Destroy dialog',
-			'devGallery.screenPasscodeEntry' => 'Passcode entry',
-			'devGallery.screenPasscodeSetup' => 'Passcode setup',
 			_ => null,
 		} ?? switch (path) {
+			'devGallery.screenPasscodeEntry' => 'Passcode entry',
+			'devGallery.screenPasscodeSetup' => 'Passcode setup',
 			'devGallery.casePasscodeIdle' => 'Idle',
 			'devGallery.casePasscodeError' => 'Incorrect',
 			'devGallery.casePasscodeLockedOut' => 'Locked out',
@@ -2830,6 +2841,7 @@ extension on Translations {
 			'share.success' => 'Shared',
 			'share.unavailable' => 'Sharing is not available on this device.',
 			'share.cancelled' => 'Share cancelled.',
+			'share.trigger' => 'Share a diagnostics snippet',
 			'update.checkForUpdates' => 'Check for updates',
 			'update.available' => 'An update is available.',
 			'update.notAvailable' => 'You\'re on the latest version.',

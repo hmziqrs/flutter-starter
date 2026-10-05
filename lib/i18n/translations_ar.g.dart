@@ -460,6 +460,8 @@ class _Translations$diagnostics$ar extends Translations$diagnostics$en {
 	@override String get analytics => 'التحليلات';
 	@override String get analyticsNone => 'غير مُهيّأ';
 	@override String get featureFlags => 'ميزات تجريبية';
+	@override String get triggerIdle => 'لم يتم التشغيل بعد';
+	@override String get triggerRunning => 'قيد التشغيل…';
 	@override String get redactedNotice => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.';
 	@override late final _Translations$diagnostics$experiments$ar experiments = _Translations$diagnostics$experiments$ar._(_root);
 }
@@ -701,6 +703,7 @@ class _Translations$share$ar extends Translations$share$en {
 	@override String get success => 'تمت المشاركة';
 	@override String get unavailable => 'المشاركة غير متاحة على هذا الجهاز.';
 	@override String get cancelled => 'تم إلغاء المشاركة.';
+	@override String get trigger => 'مشاركة مقتطف تشخيصي';
 }
 
 // Path: update
@@ -1513,6 +1516,8 @@ extension on TranslationsAr {
 			'diagnostics.analytics' => 'التحليلات',
 			'diagnostics.analyticsNone' => 'غير مُهيّأ',
 			'diagnostics.featureFlags' => 'ميزات تجريبية',
+			'diagnostics.triggerIdle' => 'لم يتم التشغيل بعد',
+			'diagnostics.triggerRunning' => 'قيد التشغيل…',
 			'diagnostics.redactedNotice' => 'لا تتضمن التشخيصات بيانات الاعتماد أو محتوى المستخدم.',
 			'diagnostics.experiments.title' => 'التجارب',
 			'diagnostics.experiments.source' => 'المصدر',
@@ -1690,10 +1695,10 @@ extension on TranslationsAr {
 			'devGallery.caseToastError' => 'إشعار خطأ',
 			'devGallery.caseDialogConfirm' => 'مربع تأكيد',
 			'devGallery.caseDialogDestroy' => 'مربع حذف',
-			'devGallery.screenPasscodeEntry' => 'إدخال رمز المرور',
-			'devGallery.screenPasscodeSetup' => 'إعداد رمز المرور',
 			_ => null,
 		} ?? switch (path) {
+			'devGallery.screenPasscodeEntry' => 'إدخال رمز المرور',
+			'devGallery.screenPasscodeSetup' => 'إعداد رمز المرور',
 			'devGallery.casePasscodeIdle' => 'خامل',
 			'devGallery.casePasscodeError' => 'غير صحيح',
 			'devGallery.casePasscodeLockedOut' => 'مقفل',
@@ -1724,6 +1729,7 @@ extension on TranslationsAr {
 			'share.success' => 'تمت المشاركة',
 			'share.unavailable' => 'المشاركة غير متاحة على هذا الجهاز.',
 			'share.cancelled' => 'تم إلغاء المشاركة.',
+			'share.trigger' => 'مشاركة مقتطف تشخيصي',
 			'update.checkForUpdates' => 'التحقق من التحديثات',
 			'update.available' => 'يتوفر تحديث.',
 			'update.notAvailable' => 'أنت على أحدث إصدار.',
