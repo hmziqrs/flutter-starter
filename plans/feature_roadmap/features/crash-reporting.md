@@ -1,11 +1,11 @@
 # Crash & error reporting
 
-> **Tier:** P0 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** none
+> **Tier:** P0 · **Domain:** infra · **Backend:** test-server · **Status:** done · **Depends on:** none
 >
 > Implementation audit (2026-10-04): port + Noop default + optional real impls + bootstrap
 > threading verified. Remaining gap: the live-server crash-ingest integration test claimed in
 > Tests below (Dart-side assert against `POST /v1/crashes`) does not exist — the route is
-> covered only by the server's TS contract tests.
+> covered only by the server's TS contract tests. Closed 2026-10-05 (see the audit box).
 
 ## Summary
 
@@ -24,32 +24,37 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   Implementations wrap their SDK in `try/on Object` and **never rethrow** — crash reporting
   must not break the error path it is observing.
 - **Providers:** `crashReporterProvider` handwritten Riverpod `Provider<CrashReporter`,
-  overridden at the `ProviderScope` in [`lib/app/app.dart`](../../../lib/app/app.dart) — used by
-  widget-side readers (the `DiagnosticsPage` status row). Default value is `NoopCrashReporter`
-  (honors the no-backend boundary); a real impl is constructed in
-  [`AppDependencies.production`](../../../lib/app/dependencies.dart) only when a consumer
-  supplies a DSN. **The bootstrap error path does not read this provider** — `_installErrorHandlers`
-  receives the reporter as a direct parameter (see Files), because it runs before the
-  `ProviderScope` exists.
+  overridden at the `ProviderScope` in [`lib/app/app.dart`](../../../lib/app/app.dart). It has
+  **no widget readers today** — the `DiagnosticsPage` status row reads the sibling
+  `crashReporterBackendProvider` — so it stays the widget-path override seam. Default is
+  `NoopCrashReporter`; the real impl (`HttpCrashReporter`) is constructed in
+  [`AppDependencies.production`](../../../lib/app/dependencies.dart) only when
+  `AppConfig.backendBaseUrl` is set. **The bootstrap error path does not read this provider** —
+  `_installErrorHandlers` receives the reporter as a direct parameter (see Files), because it
+  runs before the `ProviderScope` exists.
 - **Routes:** none.
 - **Files:**
   - `lib/infrastructure/error_reporting/crash_reporter.dart` (port + `CrashReport` value object)
   - `lib/infrastructure/error_reporting/noop_crash_reporter.dart` (production default)
+  - `lib/infrastructure/error_reporting/http_crash_reporter.dart` (wired real impl — dio,
+    `POST /v1/crashes`)
   - `lib/infrastructure/error_reporting/sentry_crash_reporter.dart` (optional real impl)
   - **EDIT** `lib/bootstrap.dart` — thread the reporter as a parameter mirroring `AppLogger`:
     change the signature to `_installErrorHandlers(AppLogger logger, CrashReporter reporter)`
-    (constructed in `bootstrap()` before the call — `NoopCrashReporter` by default, or the real
-    impl when a DSN is configured). The body calls BOTH `logger.error(...)` AND
+    (constructed in `bootstrap()` before the call — `NoopCrashReporter` plus the inert SDK
+    impls; the wired `HttpCrashReporter` arrives in `AppDependencies.production`). The body calls BOTH `logger.error(...)` AND
     `reporter.recordError(...)`. Do **not** `ref.read(crashReporterProvider)` here —
     `_installErrorHandlers` runs before `createApplication`/the `ProviderScope` exists
     (bootstrap.dart:20 vs :26), so there is no `ref` at the install site.
-  - **EDIT** `lib/app/dependencies.dart` — wire default noop; optional real when DSN present
+  - **EDIT** `lib/app/dependencies.dart` — wire default noop; the real `HttpCrashReporter`
+    when `backendBaseUrl` is configured
   - **EDIT** `lib/app/app.dart` — `ProviderScope` override
   - `test/infrastructure/error_reporting/crash_reporter_test.dart`
   - `test/infrastructure/error_reporting/noop_crash_reporter_test.dart`
-- **Dependencies:** `sentry_flutter` (recommended real impl) or `firebase_crashlytics` —
-  **optional**, declared but not constructed unless a consumer wires a DSN. No dep for the
-  port or the Noop default.
+- **Dependencies:** `dio` (the wired real impl — no new dependency); `sentry_flutter` or
+  `firebase_crashlytics` for the optional SDK impls — declared but never constructed from a
+  Dart config field (their native credentials are consumer-wired). No dep for the port or
+  the Noop default.
 
 ## Backend & test surface
 
@@ -57,15 +62,18 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   silently after `AppLogger.error` has already logged them locally. It does **not** fake
   upload success (the [honest-feedback guardrail](../contracts.md#13--honest-feedback-no-faked-success)
   is satisfied trivially because crash ingest has no user-facing success state).
-- **Optional real impl** — `SentryCrashReporter` (or `FirebaseCrashReporter`) constructed in
-  `AppDependencies.production` **only** when `AppConfig` exposes a DSN. The consumer flips one
-  override; the default path never depends on a backend.
+- **Real impl — `HttpCrashReporter`** — constructed in `AppDependencies.production`
+  **only when `AppConfig.backendBaseUrl` is set** (same signal as every other `/v1/*`
+  client); reuses the shared app dio, POSTs the redacted `CrashReport` to `/v1/crashes`,
+  never rethrows, and wires `RemoteCrashReporterBackend(host)` in the same branch so the
+  diagnostics row shows the backend host. The SDK impls are not gated by any Dart config
+  field — no `AppConfig` key carries a DSN; their native credentials are consumer-wired.
 - **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server))**
   — `tools/hono_server/` exposes `POST /v1/crashes` accepting
   `{ "message": string, "stack": string?, "context": object, "platform": string,
   "appVersion": string }`, returning `204 No Content`. It stores the last N crashes in memory
   for inspection. The real-impl integration test starts the server on a random port, points
-  `SentryCrashReporter` at it, forces a synthetic error through `_installErrorHandlers`, and
+  `HttpCrashReporter` at it, forces a synthetic error through `_installErrorHandlers`, and
   asserts the ingest arrived.
 - **Fakes** — in-memory/test only, no Mocktail: a `RecordingCrashReporter` (list-backed) for
   unit tests; the test server for the live network path.
@@ -73,17 +81,18 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 ## Tests
 
 - **Unit/widget:** `crash_reporter_test.dart` exercises `NoopCrashReporter` (no-op, never
-  throws) and `RecordingCrashReporter` capture; verifies `_installErrorHandlers(logger, reporter)`
-  calls BOTH `logger.error` and `reporter.recordError`. Invoke `_installErrorHandlers` directly
-  with fakes (`createApplication` does not install error handlers today), then drive a synthetic
-  `FlutterError`/platform error.
-- **Integration:** start `tools/hono_server/`, override `crashReporterProvider` with
-  `SentryCrashReporter` pointed at it, drive a synthetic throw via `createApplication`, assert
-  the server recorded it. Use `pumpAppFrames` (8 frames), never `pumpAndSettle`.
+  throws) and `RecordingCrashReporter` capture; `http_crash_reporter_test.dart` covers the
+  wire payload (verbose-gated stack) and never-rethrow via a recording dio adapter;
+  `bootstrap_test.dart` asserts `_installErrorHandlers` calls BOTH `logger.error` (captured
+  console sink) AND the reporter for every error source.
+- **Integration:** `test/e2e/crash_ingest_e2e_test.dart` starts `tools/hono_server/` on a
+  random port (graceful skip without a JS runtime), drives synthetic framework + platform
+  errors through `installErrorHandlers` with `HttpCrashReporter` over the app dio, and
+  asserts the ingest on `GET /v1/crashes/last`. No widget pumping, no `pumpAndSettle`.
 - **Golden impact:** none.
 - **Dev-gallery fixture:** n/a (no UI). Add a row on
   [`DiagnosticsPage`](../../../lib/app/diagnostics/diagnostics_page.dart) showing
-  reporter-backend status (`noop` vs configured DSN host) read-only.
+  reporter-backend status (`noop` vs configured backend host) read-only.
 
 ## i18n
 
@@ -92,12 +101,8 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 
 ## Audit
 
-- [ ] **No-backend honored as a port** — **warn**: port + Noop default + optional real impls +
-  server route all verified (`lib/infrastructure/error_reporting/crash_reporter.dart:19`,
-  `noop_crash_reporter.dart`, `sentry_crash_reporter.dart`, `firebase_crashlytics_crash_reporter.dart`
-  (lazily inert — no `Firebase.initializeApp` anywhere in `lib/`); `POST /v1/crashes` at
-  `tools/hono_server/src/index.ts:65` with TS contract tests). Missing: the Dart-side
-  live-ingest integration test claimed in Tests (no test drives a report at the live server).
+- [x] **No-backend honored as a port** — **pass** (2026-10-05): the 2026-10-04 audit's
+  evidence plus the wired `HttpCrashReporter` and `test/e2e/crash_ingest_e2e_test.dart`.
 - [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: no product screen;
   port + value object under `lib/infrastructure/error_reporting/` per C2's infra-area rule;
   no buckets.
@@ -144,7 +149,8 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   every SDK call in `try/on Object` and drop the report on failure.
 - **Do not introduce `crash_reporter_controller.dart`** unless something needs to react to
   reporter state. The reporter is threaded as a parameter to `_installErrorHandlers` (bootstrap
-  path) and read via `crashReporterProvider` only by the `DiagnosticsPage` (widget path).
+  path); `crashReporterProvider` has no widget readers yet (the `DiagnosticsPage` reads the
+  sibling `crashReporterBackendProvider` for its status row).
 - **Sequencing:** ship in the P0 foundation bundle alongside
   [`secure-store`](secure-store.md) and the lifecycle observer — no UI, no golden impact, and
   it is the natural place to stand up [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)

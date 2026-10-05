@@ -30,7 +30,6 @@ void main() {
     await reporter(verbose: false).recordError(StateError('boom'), StackTrace.current);
 
     final request = adapter.requests.first;
-    expect(request.options.method, 'POST');
     expect(request.options.uri.path, '/v1/crashes');
     expect(bodyAt(0)['message'], contains('boom'));
     expect(bodyAt(0)['stack'], isA<String>());

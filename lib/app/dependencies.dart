@@ -48,6 +48,7 @@ import 'package:starter/infrastructure/devtools/stub_inspector_host.dart';
 import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/firebase_crashlytics_crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/http_crash_reporter.dart';
 import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/haptics/device_haptic_service.dart';
 import 'package:starter/infrastructure/haptics/noop_haptic_service.dart';
@@ -99,6 +100,9 @@ final class AppDependencies {
     PlatformCapabilities platformCapabilities = const PlatformCapabilities.nonTelevision(),
     Set<String> dismissedAnnouncementIds = const <String>{},
     ConnectivityService connectivityService = const StaticConnectivityService(),
+    PermissionService? permissionService,
+    MediaPicker? mediaPicker,
+    DeepLinkService? appLinkHandler,
   }) {
     final effectiveSettingsStore = settingsStore ?? InMemorySettingsStore();
     final versionGateStore = InMemoryVersionGateStore();
@@ -159,11 +163,11 @@ final class AppDependencies {
         buildInfo: const AppBuildInfo(version: '1.0.0', buildNumber: '1'),
         connectivityService: connectivityService,
         hapticService: NoopHapticService(),
-        permissionService: const NoopPermissionService(),
-        mediaPicker: const NoopMediaPicker(),
+        permissionService: permissionService ?? const NoopPermissionService(),
+        mediaPicker: mediaPicker ?? const NoopMediaPicker(),
         shareService: const NoopShareService(),
         appUpdateService: const NoopAppUpdateService(),
-        appLinkHandler: const _NoOpDeepLinkService(),
+        appLinkHandler: appLinkHandler ?? const _NoOpDeepLinkService(),
       ),
       appStartupResult: const AppStartupResult(
         buildInfo: AppBuildInfo(version: '0.0.0', buildNumber: '0'),
@@ -213,11 +217,13 @@ final class AppDependencies {
     required String iosAppleId,
     required AllowedDeepLinkHosts allowedDeepLinkHosts,
     Uri? backendBaseUrl,
+    bool verboseLoggingEnabled = false,
     Future<AppBuildInfo>? buildInfo,
     SecureStore? secureStore,
     PlatformCapabilitiesResolver capabilitiesResolver = const PlatformCapabilitiesResolver(),
     InspectorHost inspectorHost = const StubInspectorHost(),
     ConnectivityService? connectivityService,
+    DeepLinkService? appLinkHandler,
   }) async {
     final capabilitiesFuture = _guarded(capabilitiesResolver.resolve());
     final settingsStore = SharedPreferencesSettingsStore();
@@ -338,15 +344,36 @@ final class AppDependencies {
     final AuthRepository authRepository;
     final OtpRepository otpRepository;
     final ProfileRepository profileRepository;
+    final CrashReporter crashReporter;
+    final CrashReporterBackend crashReporterBackend;
     if (backendBaseUrl != null) {
       final dio = buildAppDio(backendBaseUrl, inspectorHost: inspectorHost, logger: logger);
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
       profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl, dio: dio);
+      crashReporter = CompositeCrashReporter(<CrashReporter>[
+        const NoopCrashReporter(),
+        HttpCrashReporter(
+          baseUrl: backendBaseUrl,
+          platform: capabilities.platform,
+          appVersion: '${effectiveBuildInfo.version}+${effectiveBuildInfo.buildNumber}',
+          verbose: verboseLoggingEnabled,
+          dio: dio,
+        ),
+        FirebaseCrashlyticsCrashReporter(verbose: verboseLoggingEnabled),
+      ]);
+      crashReporterBackend = RemoteCrashReporterBackend(
+        host: backendBaseUrl.host.isEmpty ? backendBaseUrl.toString() : backendBaseUrl.host,
+      );
     } else {
       authRepository = InMemoryAuthRepository();
       otpRepository = const InMemoryOtpRepository();
       profileRepository = const NoopProfileRepository();
+      crashReporter = CompositeCrashReporter(<CrashReporter>[
+        const NoopCrashReporter(),
+        FirebaseCrashlyticsCrashReporter(verbose: verboseLoggingEnabled),
+      ]);
+      crashReporterBackend = const NoopCrashReporterBackend();
     }
     return AppDependencies(
       logger: logger,
@@ -369,11 +396,8 @@ final class AppDependencies {
         profileRepository: profileRepository,
       ),
       telemetry: TelemetryDependencies(
-        crashReporter: CompositeCrashReporter(<CrashReporter>[
-          const NoopCrashReporter(),
-          FirebaseCrashlyticsCrashReporter(verbose: false),
-        ]),
-        crashReporterBackend: const NoopCrashReporterBackend(),
+        crashReporter: crashReporter,
+        crashReporterBackend: crashReporterBackend,
         analyticsClient: CompositeAnalyticsClient(<AnalyticsClient>[
           NoopAnalyticsClient(logger: logger),
           FirebaseAnalyticsClient(),
@@ -412,9 +436,11 @@ final class AppDependencies {
           iosAppleId: iosAppleId,
           logger: logger,
         ),
-        appLinkHandler: AppLinksDeepLinkService(
-          handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
-        ),
+        appLinkHandler:
+            appLinkHandler ??
+            AppLinksDeepLinkService(
+              handler: RouteAppLinkHandler(allowedHosts: allowedDeepLinkHosts),
+            ),
       ),
       appStartupResult: AppStartupResult(
         buildInfo: resolvedBuildInfo ?? const AppBuildInfo(version: '0.0.0', buildNumber: '0'),

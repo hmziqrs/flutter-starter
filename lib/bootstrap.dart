@@ -99,6 +99,7 @@ Future<App> createApplication(
   SecureStore? secureStore,
   InspectorHost inspectorHost = const StubInspectorHost(),
   ConnectivityService? connectivityService,
+  DeepLinkService? appLinkHandler,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -114,9 +115,11 @@ Future<App> createApplication(
     iosAppleId: config.iosAppleId,
     allowedDeepLinkHosts: config.allowedDeepLinkHosts,
     backendBaseUrl: config.backendBaseUrl,
+    verboseLoggingEnabled: config.verboseLoggingEnabled,
     secureStore: secureStore,
     inspectorHost: inspectorHost,
     connectivityService: connectivityService,
+    appLinkHandler: appLinkHandler,
   );
   var localeApplied = true;
   if (dependencies.settings.initialSettings.localeOverride case final locale?) {

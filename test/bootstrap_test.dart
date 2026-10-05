@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +79,37 @@ void main() {
         reporter.reports.map((r) => r.context['source']),
         <String?>['flutter_framework', 'platform'],
       );
+    });
+
+    /// `AppLogger` is a `final class` owning a private Talker, so the recording
+    /// double captures its console sink in a print-intercepting zone.
+    Future<List<String>> captureLoggerSink(Future<void> Function() body) async {
+      final lines = <String>[];
+      await runZonedGuarded(
+        body,
+        (error, stackTrace) {},
+        zoneSpecification: ZoneSpecification(print: (self, parent, zone, line) => lines.add(line)),
+      );
+      return lines;
+    }
+
+    test('the logger.error sink fires alongside the reporter for every error source', () async {
+      final reporter = RecordingCrashReporter(verbose: false);
+      final lines = await captureLoggerSink(() async {
+        installErrorHandlers(AppLogger(verbose: true), reporter);
+
+        FlutterError.onError?.call(
+          FlutterErrorDetails(exception: Exception('flutter boom'), stack: StackTrace.current),
+        );
+        PlatformDispatcher.instance.onError?.call(
+          StateError('platform boom'),
+          StackTrace.current,
+        );
+      });
+
+      expect(reporter.reports, hasLength(2));
+      expect(lines, anyElement(contains('Flutter framework error')));
+      expect(lines, anyElement(contains('Uncaught platform error')));
     });
   });
 }
