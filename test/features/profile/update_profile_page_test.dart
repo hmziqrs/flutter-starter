@@ -38,6 +38,33 @@ void main() {
     expect(feedbackCount, 1);
   });
 
+  testWidgets('granted permission and a fixture picker deliver the picked media', (tester) async {
+    const picked = PickedMedia(
+      path: '/fixtures/avatar.png',
+      mimeType: 'image/png',
+      fromCamera: false,
+    );
+    PickedMedia? received;
+    await _pumpProfile(
+      tester,
+      permissions: const _GrantedPermissionService(),
+      picker: const _FixtureMediaPicker(picked),
+      page: UpdateProfilePage(
+        initialDraft: const ProfileDraft.defaults(),
+        onSave: _noopSave,
+        onAvatarPicked: (media) => received = media,
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('profile-avatar-feedback')));
+    await tester.pumpAndSettle();
+    expect(find.text('Photo library access'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(received, picked);
+  });
+
   testWidgets('paints an opaque page surface and respects device insets', (tester) async {
     const safePadding = EdgeInsets.only(top: 59, bottom: 34);
     await _pumpProfile(
@@ -260,6 +287,8 @@ Future<void> _pumpProfile(
   Size size = const Size(390, 900),
   bool settle = true,
   EdgeInsets safePadding = EdgeInsets.zero,
+  PermissionService permissions = const NoopPermissionService(),
+  MediaPicker picker = const NoopMediaPicker(),
   AppPresentationPolicy presentationPolicy = const AppPresentationPolicy(
     viewingEnvironment: AppViewingEnvironment.nearField,
     interactionPolicy: AppInteractionPolicy.touch,
@@ -282,8 +311,8 @@ Future<void> _pumpProfile(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        permissionServiceProvider.overrideWithValue(const NoopPermissionService()),
-        mediaPickerProvider.overrideWithValue(const NoopMediaPicker()),
+        permissionServiceProvider.overrideWithValue(permissions),
+        mediaPickerProvider.overrideWithValue(picker),
       ],
       child: TranslationProvider(
         child: MaterialApp(
@@ -368,3 +397,26 @@ bool _focusIsWithin(WidgetTester tester, String key) {
 Future<void> _noopSave(ProfileDraft _) async {}
 
 void _noopAvatar(PickedMedia? _) {}
+
+final class _GrantedPermissionService implements PermissionService {
+  const _GrantedPermissionService();
+
+  @override
+  Future<PermissionStatus> checkStatus(AppPermission permission) async => const PermissionGranted();
+
+  @override
+  Future<PermissionStatus> requestStatus(AppPermission permission) async =>
+      const PermissionGranted();
+
+  @override
+  Future<void> openSystemSettings() async {}
+}
+
+final class _FixtureMediaPicker implements MediaPicker {
+  const _FixtureMediaPicker(this.media);
+
+  final PickedMedia? media;
+
+  @override
+  Future<PickedMedia?> pickImage({bool fromCamera = false}) async => media;
+}

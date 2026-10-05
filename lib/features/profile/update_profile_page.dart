@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,12 +30,14 @@ class UpdateProfilePage extends StatefulWidget {
     required this.onSave,
     required this.onAvatarPicked,
     this.presentationState = const ProfilePresentationState.defaults(),
+    this.pickedAvatar,
     super.key,
   });
 
   final ProfileDraft initialDraft;
   final ProfilePresentationState presentationState;
   final ProfileSaveCallback onSave;
+  final PickedMedia? pickedAvatar;
 
   final AvatarPickedCallback onAvatarPicked;
 
@@ -232,6 +235,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
           bioFocusNode: _bioFocusNode,
           saveFocusNode: _saveFocusNode,
           phase: _phase,
+          pickedAvatar: widget.pickedAvatar,
           onAvatarPicked: widget.onAvatarPicked,
           onDisplayNameSaved: (value) => _savedDisplayName = value ?? '',
           onUsernameSaved: (value) => _savedUsername = value ?? '',
@@ -282,7 +286,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
                                   width: previewWidth,
                                   child: ValueListenableBuilder<ProfileDraft>(
                                     valueListenable: _previewDraft,
-                                    builder: (context, draft, _) => _ProfilePreview(draft: draft),
+                                    builder: (context, draft, _) =>
+                                        _ProfilePreview(draft: draft, media: widget.pickedAvatar),
                                   ),
                                 ),
                               ],
@@ -448,6 +453,7 @@ class _ProfileForm extends StatelessWidget {
     required this.bioFocusNode,
     required this.saveFocusNode,
     required this.phase,
+    required this.pickedAvatar,
     required this.onAvatarPicked,
     required this.onDisplayNameSaved,
     required this.onUsernameSaved,
@@ -468,6 +474,7 @@ class _ProfileForm extends StatelessWidget {
   final FocusNode bioFocusNode;
   final FocusNode saveFocusNode;
   final ProfilePresentationPhase phase;
+  final PickedMedia? pickedAvatar;
   final AvatarPickedCallback onAvatarPicked;
   final ValueChanged<String?> onDisplayNameSaved;
   final ValueChanged<String?> onUsernameSaved;
@@ -490,7 +497,11 @@ class _ProfileForm extends StatelessWidget {
           SizedBox(height: spacing.sm),
           Text(profile.body, style: context.theme.typography.body.lg),
           SizedBox(height: spacing.xl2),
-          _AvatarEditor(onAvatarPicked: onAvatarPicked, enabled: _enabled),
+          _AvatarEditor(
+            onAvatarPicked: onAvatarPicked,
+            media: pickedAvatar,
+            enabled: _enabled,
+          ),
           SizedBox(height: spacing.xl2),
           AppTvEditableField(
             activationKey: const ValueKey('profile-display-name-activation'),
@@ -622,9 +633,14 @@ class _ProfileForm extends StatelessWidget {
 }
 
 class _AvatarEditor extends StatefulWidget {
-  const _AvatarEditor({required this.onAvatarPicked, required this.enabled});
+  const _AvatarEditor({
+    required this.onAvatarPicked,
+    required this.media,
+    required this.enabled,
+  });
 
   final AvatarPickedCallback onAvatarPicked;
+  final PickedMedia? media;
   final bool enabled;
 
   @override
@@ -674,7 +690,10 @@ class _AvatarEditorState extends State<_AvatarEditor> {
         spacing: context.spacing.lg,
         runSpacing: context.spacing.lg,
         children: [
-          _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
+          if (widget.media case final media?)
+            _AvatarMedia(size: 72, iconSize: 32, media: media)
+          else
+            _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
           FButton(
             key: const ValueKey('profile-avatar-feedback'),
             variant: .outline,
@@ -689,10 +708,43 @@ class _AvatarEditorState extends State<_AvatarEditor> {
   }
 }
 
+class _AvatarMedia extends StatelessWidget {
+  const _AvatarMedia({required this.size, required this.iconSize, required this.media});
+
+  final double size;
+  final double iconSize;
+  final PickedMedia media;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('profile-avatar-image'),
+      width: size,
+      height: size,
+      child: ClipOval(
+        child: Semantics(
+          image: true,
+          label: media.path,
+          child: Image.file(
+            File(media.path),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _AvatarPlaceholder(
+              size: size,
+              iconSize: iconSize,
+              label: media.path,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfilePreview extends StatelessWidget {
-  const _ProfilePreview({required this.draft});
+  const _ProfilePreview({required this.draft, required this.media});
 
   final ProfileDraft draft;
+  final PickedMedia? media;
 
   @override
   Widget build(BuildContext context) {
@@ -703,7 +755,10 @@ class _ProfilePreview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
+          if (media case final picked?)
+            _AvatarMedia(size: 80, iconSize: 36, media: picked)
+          else
+            _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
           SizedBox(height: spacing.lg),
           Text(
             draft.displayName,

@@ -9,6 +9,7 @@ import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/media/media_picker.dart';
 
 List<RouteBase> buildProfileRoutes() => [
   GoRoute(
@@ -27,6 +28,7 @@ class UpdateProfileRoutePage extends StatefulWidget {
 
 class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
   late final Future<ProfileDraft> _initialDraftLoad;
+  PickedMedia? _pickedAvatar;
 
   @override
   void initState() {
@@ -45,6 +47,7 @@ class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
         final draft = snapshot.hasData ? snapshot.data! : const ProfileDraft.defaults();
         return UpdateProfilePage(
           initialDraft: draft,
+          pickedAvatar: _pickedAvatar,
           onSave: (draft) async {
             final container = ProviderScope.containerOf(context, listen: false);
             final session = container.read(sessionControllerProvider);
@@ -75,7 +78,9 @@ class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
                 title: context.t.profile.update.changeAvatar,
                 body: context.t.profile.update.avatarUnavailable,
               );
+              return;
             }
+            setState(() => _pickedAvatar = media);
           },
         );
       },
