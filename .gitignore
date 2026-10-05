@@ -56,3 +56,7 @@ macos/Runner/Configs/LocalSigning.xcconfig
 android/.kotlin/
 
 .commandcode
+
+# Local agent-chain working dirs (z-proflow evidence, workflow drafts)
+.zflow/
+.zcode/
