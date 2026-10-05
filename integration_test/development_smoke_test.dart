@@ -202,6 +202,28 @@ void main() {
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     _log('registration/OTP route coverage complete; back on home');
 
+    if (!hasBackend) {
+      _log('navigating: home -> login; driving repeated failures to assert lockout gating');
+      await _go(tester, AppRoutes.loginPath);
+      await tester.enterText(
+        find.byKey(const ValueKey('auth-login-email')),
+        'locked.out@example.com',
+      );
+      await tester.enterText(find.byKey(const ValueKey('auth-login-password')), 'Password1');
+      for (var attempt = 1; attempt <= 3; attempt += 1) {
+        _log('submitting failed login ($attempt/3) through the login route');
+        await tapVisible(tester, const ValueKey('auth-login-submit'));
+        await pumpAppFrames(tester);
+      }
+      expect(find.byKey(const ValueKey('auth-login-locked')), findsOneWidget);
+      expect(
+        tester.widget<FButton>(find.byKey(const ValueKey('auth-login-submit'))).onPress,
+        isNull,
+        reason: 'submit must stay disabled while lockedSeconds > 0',
+      );
+      _log('login locked after 3 failures; submit disabled while the countdown runs');
+    }
+
     _log('navigating: home -> edit profile');
     await _go(tester, AppRoutes.updateProfilePath);
     final bio = find.byKey(const ValueKey('profile-bio'));

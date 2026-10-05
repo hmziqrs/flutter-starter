@@ -2,11 +2,14 @@
 
 > **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** in-progress · **Depends on:** none (composes the update-block predicate into the existing top-level redirect helper `appRedirect` — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
 >
-> Implementation audit (2026-10-04): port + `InMemory` none default + remote-config adapter +
-> redirect composition + i18n + widget tests verified. Remaining gap: the router-level
-> integration test claimed in Tests below — no test overrides `versionCheckProvider` to
-> assert the `hard` redirect or the `soft` dialog through the app router (the live-server e2e
-> asserts only the store's `none` degradation).
+> Implementation audit (2026-10-04, updated 2026-10-05): port + `InMemory` none default +
+> remote-config adapter + redirect composition + i18n + widget tests verified. Router-level
+> coverage now exists (`test/app/routing/route_guards_test.dart` overrides
+> `versionCheckProvider`: `hard` redirect from every route + no-pop trap + `soft` no-redirect
+> and snooze suppression). Remaining gap: the `soft` dialog cannot actually be presented from
+> the redirect — `showFDialog` is invoked with the go_router redirect context, which sits above
+> the navigator, so `Navigator.of` throws (see Audit item 1); the live-server e2e still asserts
+> only the store's `none` degradation.
 
 ## Summary
 
@@ -41,7 +44,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 - **Unit/widget:** `pub_semver` compare correctness (older/equal/newer, pre-release semantics); `UpdateRequirement` mapping from a policy payload; `ForceUpdatePage` is non-dismissible (`PopScope(canPop: false)`, Escape does not pop); the soft dialog reuses [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) + `FDialog` mirroring [`_showInformationDialog`](../../lib/app/routing/app_router.dart); exhaustive `switch` over `UpdateRequirement`.
 - **Integration:** Reuse `createApplication` with the `InMemory` default (`none`) — boots to home. A second run overrides the real impl at the test-server URL and asserts the `hard` redirect and the `soft` dialog. `pumpAppFrames`, never `pumpAndSettle`.
-- **Golden impact:** **yes** — `ForceUpdatePage` is full-screen; re-baseline on the pinned macOS runner and add `PreviewFrame` cases (`hard` page + `soft` dialog).
+- **Golden impact:** **deferred** — `ForceUpdatePage` is full-screen, but no canonical matrix case or baseline exists today; adding the full-screen matrix case is deferred to the pinned macOS 26 CI re-baseline (never run `--update-goldens` locally, per `test/goldens/README.md`). The `PreviewFrame` dev-gallery cases (`hard` page + `soft` dialog) already exist.
 - **Dev-gallery fixture:** `PreviewFrame` cases for `hard` and `soft`, gated behind `developmentToolsEnabled` (backed by `InMemoryVersionGateStore` fixtures).
 
 ## i18n
@@ -56,9 +59,15 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
   default checked once in `AppDependencies.production` (`lib/app/dependencies.dart:267-271`),
   optional `RemoteConfigVersionGateStore` (constructed only in tests/e2e; live check at
   `test/e2e/hono_server_e2e_test.dart:81-88`), shared `/v1/remote-config` contract
-  (`tools/hono_server/src/index.ts:209-221`). Missing: no router-level test overrides
-  `versionCheckProvider` to assert the hard redirect / soft dialog claimed in Tests (the gate
-  itself, `lib/app/routing/route_guards.dart:30-39`, is untested at that level).
+  (`tools/hono_server/src/index.ts:209-221`). Router-level gate coverage added
+  (`test/app/routing/route_guards_test.dart`): `hard` redirects every route to
+  `forceUpdatePath` and is a no-pop trap; `soft` never redirects and a persisted snooze
+  suppresses the prompt. Newly found defect keeping this open: the `soft` dialog is invoked
+  with the go_router redirect context (`lib/app/routing/route_guards.dart:157`), which sits
+  above the navigator — `Navigator.of` throws `Navigator operation requested with a context
+  that does not include a Navigator`, so the dialog cannot appear in production either (the
+  async error is swallowed). Presenting it needs a context under the root navigator
+  (e.g. a `navigatorKey` on the router), owned by `lib/app/routing`.
 - [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state +
   pages + dialog + routes module under `lib/features/force_update/`; only the shared
   remote-config client lives in infrastructure.

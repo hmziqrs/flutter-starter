@@ -6,12 +6,35 @@ import 'package:starter/features/auth/verification_lockout_policy.dart';
 
 part 'auth_attempt_tracker.freezed.dart';
 
+/// Client-side attempt throttling for the auth surfaces (login, OTP, passcode).
+///
+/// This is UX polish and defense-in-depth **only** — never a security control.
+/// Client-side throttling is trivially bypassed (clear the store, swap the
+/// device, replay the request through another client), so authoritative
+/// enforcement always lives server-side; a forked backend must apply its own
+/// rate limiting and both sides must agree on the cooldown schedule so the UI
+/// does not under-count what the server enforces.
+abstract interface class AttemptTracker {
+  /// Records a failed attempt for [identifier] and returns the resulting state,
+  /// including any lockout the exponential schedule imposes.
+  AttemptState recordFailure(String identifier);
+
+  /// Clears any tracked state for [identifier] after a success.
+  void recordSuccess(String identifier);
+
+  /// Returns the tracked state for [identifier], or `null` when unknown.
+  AttemptState? read(String identifier);
+}
+
+/// Exponential cooldown schedule, in seconds, indexed by attempt count.
 const List<int> attemptCooldownSeconds = [0, 0, 30, 60, 300, 900];
 
+/// Attempts allowed before the schedule starts locking the identifier out.
 const int freeAttemptsBeforeLockout = 2;
 
 int get _maxCooldownSeconds => attemptCooldownSeconds.last;
 
+/// Typed snapshot of one identifier's throttling state.
 @Freezed(copyWith: false)
 class AttemptState with _$AttemptState, VerificationLockoutPolicy {
   const AttemptState({
@@ -57,14 +80,11 @@ class AttemptState with _$AttemptState, VerificationLockoutPolicy {
   }
 }
 
-abstract interface class AttemptTracker {
-  AttemptState recordFailure(String identifier);
-
-  void recordSuccess(String identifier);
-
-  AttemptState? read(String identifier);
-}
-
+/// Default [AttemptTracker]: in-memory, per-identifier, resets on relaunch.
+///
+/// Identifiers are FNV-1a hashed ([hashIdentifier]) so raw email/phone PII
+/// never sits in the map keys. Like every client-side tracker, it complements
+/// — never replaces — server-side enforcement.
 final class InMemoryAttemptTracker implements AttemptTracker {
   InMemoryAttemptTracker({DateTime Function()? now}) : _now = now ?? DateTime.now;
 

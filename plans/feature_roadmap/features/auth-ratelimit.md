@@ -27,7 +27,7 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
 ## Tests
 
 - **Unit/widget:** `auth_attempt_tracker_test.dart` — asserts the exponential schedule (`n` failures → expected `lockedSeconds`), that `recordSuccess` clears state, that an unknown identifier returns `null`, and that `lockedUntil` is honored (within `FakeAsync`). Widget test renders the login button disabled with `attemptsRemaining` + a live countdown in the localized harness.
-- **Integration:** reuse `createApplication`; `pumpAppFrames`, **never** `pumpAndSettle`. Assert the submit button stays disabled while `lockedSeconds > 0`.
+- **Integration:** reuse `createApplication`; `pumpAppFrames`, **never** `pumpAndSettle`. Assert the submit button stays disabled while `lockedSeconds > 0` — covered in `integration_test/development_smoke_test.dart` (three failed submits through the login route lock the identifier; the submit `onPress` is `null` while the countdown runs).
 - **Golden impact:** none — countdown text is timing-sensitive; do **not** add a canonical matrix case (would force per-second re-baselines for no signal). A static `locked` snapshot may be added to the dev-gallery only if pinned to a fixed second.
 - **Dev-gallery fixture:** optional static `locked` variant of the login + OTP case in `production_gallery_cases.dart`, gated behind `developmentToolsEnabled`.
 
@@ -38,12 +38,12 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
 
 ## Audit
 
-- [ ] No-backend honored as a port — **warn**: the tracker itself is local + honest, but this
-  doc's Backend & test surface requires the "client-side throttling is UX / defense-in-depth
-  only — authoritative enforcement is server-side" limitation to be documented in the tracker's
-  doc comment, and `lib/features/auth/auth_attempt_tracker.dart` ships with no doc comments
-  (grep across `lib/` finds no such note on the settings/diagnostics page either). Add the
-  dartdoc, then flip to done — everything else below is verified.
+- [x] No-backend honored as a port — **pass** (2026-10-05): the mandated limitation now ships in
+  the tracker's dartdoc — `AttemptTracker` documents that client-side throttling is UX /
+  defense-in-depth only, never a security control, trivially bypassed, with authoritative
+  enforcement server-side and a cooldown schedule the two sides must share
+  (`lib/features/auth/auth_attempt_tracker.dart:6-24`); the cooldown table and the
+  PII-hashed `InMemoryAttemptTracker` are documented alongside it.
 - [x] Feature-first ownership; no `core/` / `utils/` — **pass**: tracker +
   `AttemptState` + const table in `lib/features/auth/auth_attempt_tracker.dart`; shared
   `VerificationLockoutPolicy` mixin in `verification_lockout_policy.dart`; no buckets.
@@ -78,8 +78,9 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
   rejects; the submit button stays disabled while `lockedSeconds > 0`
   (login_page_test.dart:192, otp_page_test.dart:156) and `auth_attempt_tracker_test.dart`
   mirrors the const schedule exactly, clears on success, and returns `null` for unknown
-  identifiers. The outstanding honesty gap is the missing not-a-security-control dartdoc
-  tracked in item 1.
+  identifiers. The not-a-security-control dartdoc gap tracked in item 1 is closed, and the
+  submit-disabled claim is asserted at `createApplication` level too
+  (`integration_test/development_smoke_test.dart`).
 
 ## Risks / notes
 
