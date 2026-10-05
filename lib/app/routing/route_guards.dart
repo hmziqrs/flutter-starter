@@ -146,9 +146,15 @@ void _maybeShowSoftUpdateDialog(
   }
   final store = container.read(settingsStoreProvider);
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    // The redirect's context sits under the ProviderScope, so its liveness
+    // tracks the scope's: once it is defunct the container is disposed (or
+    // about to be), and the reads below throw on a disposed container.
+    if (!context.mounted) {
+      return;
+    }
     unawaited(
       store.readString(SoftUpdateSnooze.key).then((stored) {
-        if (SoftUpdateSnooze.isSnoozed(stored)) {
+        if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
           return;
         }
         if (container.read(softUpdatePromptShownProvider)) {

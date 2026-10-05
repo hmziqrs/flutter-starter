@@ -18,6 +18,8 @@ import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/connectivity/static_connectivity_service.dart';
 
+import '../support/pump_app_frames.dart';
+
 const _allowedHosts = AllowedDeepLinkHosts({'link.starter.dev'});
 
 final _config = AppConfig(
@@ -61,22 +63,22 @@ void main() {
           initialLocation: AppRoutes.homePath,
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
       controller.add(Uri.parse('https://link.starter.dev${AppRoutes.pricingPath}'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
 
       controller.add(
         Uri.parse('https://link.starter.dev${AppRoutes.otpLocation(OtpPurpose.registration)}'),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('auth-otp-page')), findsOneWidget);
 
       // A foreign host is rejected by the allowlist, so the router stays put.
       controller.add(Uri.parse('https://evil.example.com${AppRoutes.loginPath}'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('auth-otp-page')), findsOneWidget);
       expect(find.byKey(const ValueKey('auth-login-page')), findsNothing);
     });

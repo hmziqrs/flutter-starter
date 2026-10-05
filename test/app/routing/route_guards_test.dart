@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,7 @@ import 'package:starter/features/force_update/soft_update_dialog.dart';
 import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_state.dart';
+import 'package:starter/features/settings/settings_store.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 import '../support/pump_app_frames.dart';
@@ -176,6 +179,29 @@ void main() {
       reason: 'the snooze persisted by Later must suppress the prompt on the next launch',
     );
   });
+
+  testWidgets('a snooze read resolving after teardown returns silently', (tester) async {
+    final gatedStore = _GatedSettingsStore(InMemorySettingsStore());
+    await _pumpGateApp(
+      tester,
+      softRequirement,
+      settingsStore: gatedStore,
+      initialLocation: AppRoutes.homePath,
+    );
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+
+    // Tear the app down while the post-frame snooze read is still in flight:
+    // the ProviderScope and its container are disposed under the redirect
+    // context.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await pumpAppFrames(tester);
+
+    // Completing the read now must not touch the disposed container — the
+    // continuation returns silently instead of reading providers post-disposal.
+    gatedStore.releasePendingSnoozeReads();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const ValueKey('soft-update-dialog')), findsNothing);
+  });
 }
 
 final _productionConfig = AppConfig(
@@ -189,7 +215,7 @@ final _productionConfig = AppConfig(
 App _gateApp(
   UpdateRequirement requirement, {
   required String initialLocation,
-  InMemorySettingsStore? settingsStore,
+  SettingsStore? settingsStore,
 }) {
   final base = AppDependencies.inMemory(
     settingsStore: settingsStore,
@@ -223,7 +249,7 @@ Future<void> _pumpGateApp(
   WidgetTester tester,
   UpdateRequirement requirement, {
   required String initialLocation,
-  InMemorySettingsStore? settingsStore,
+  SettingsStore? settingsStore,
 }) async {
   await tester.pumpWidget(
     _gateApp(
@@ -233,4 +259,36 @@ Future<void> _pumpGateApp(
     ),
   );
   await pumpAppFrames(tester);
+}
+
+/// A [SettingsStore] that parks reads of the soft-update snooze key on
+/// completers, so a test can resolve them after the widget tree is gone.
+final class _GatedSettingsStore implements SettingsStore {
+  _GatedSettingsStore(this._delegate);
+
+  final SettingsStore _delegate;
+  final List<Completer<String?>> _pendingSnoozeReads = [];
+
+  void releasePendingSnoozeReads() {
+    for (final read in _pendingSnoozeReads) {
+      read.complete(null);
+    }
+    _pendingSnoozeReads.clear();
+  }
+
+  @override
+  Future<String?> readString(String key) {
+    if (key == SoftUpdateSnooze.key) {
+      final completer = Completer<String?>();
+      _pendingSnoozeReads.add(completer);
+      return completer.future;
+    }
+    return _delegate.readString(key);
+  }
+
+  @override
+  Future<void> remove(String key) => _delegate.remove(key);
+
+  @override
+  Future<void> writeString(String key, String value) => _delegate.writeString(key, value);
 }
