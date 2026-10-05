@@ -23,8 +23,10 @@ test:
 	$(FLUTTER) test $(TEST_FILES)
 
 # One test file: make test-file FILE=test/features/settings/settings_page_test.dart
+# Files under integration_test/ need an explicit device (flutter aborts when
+# several are discoverable) plus the mandatory dev config, matching `just smoke`.
 test-file:
-	$(FLUTTER) test $(FILE)
+	$(FLUTTER) test $(FILE) $(if $(filter integration_test/%,$(FILE)),-d macos --dart-define-from-file=config/development.json,)
 
 # Dart<->Hono live-server e2e suite (self-hosts tools/hono_server).
 e2e:
