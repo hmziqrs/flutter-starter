@@ -2,11 +2,9 @@
 
 > **Tier:** P3 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** connectivity
 >
-> Implementation audit (2026-10-04): port + file-backed production store + connectivity-gated
-  read primitive + unit tests + diagnostics verified. Remaining gap: the live-server
-  integration tests claimed in Tests below — no Dart code references `GET /v1/cache/{key}`
-  (the route is covered only by the server's TS contract tests), and no HTTP data-source
-  fetcher exists to drive `cachedFutureProvider` against a real socket.
+> Implementation audit (2026-10-04, updated 2026-10-05): port + file-backed production store +
+  connectivity-gated read primitive with conditional-get (etag/`If-None-Match`/304
+  fresh-extend) + `HttpCacheDataSource` + unit tests + diagnostics + live-server e2e verified.
 
 ## Summary
 
@@ -50,9 +48,15 @@ remote data source a feature uses to populate it, exercised against the test ser
     watches the existing `connectivityStatusProvider` from [`connectivity`](connectivity.md),
     never defines its own — kept here with the port until a consumer lands; no designated
     consumer today)
+  - `lib/infrastructure/cache/http_cache_data_source.dart` (the reference HTTP data source:
+    conditional `GET /v1/cache/{key}`, parses `{data, etag, ttlSeconds, epoch}`, and wires a
+    `CachedFutureSpec` via `spec()` so the primitive is drivable against a real socket)
   - `test/infrastructure/cache/in_memory_cache_store_test.dart`
   - `test/infrastructure/cache/file_cache_store_test.dart`
   - `test/infrastructure/cache/cached_future_provider_test.dart`
+  - `test/infrastructure/cache/http_cache_data_source_test.dart`
+  - `test/e2e/cache_e2e_test.dart` (live-server e2e: 200 refresh + etag store, 304
+    short-circuit, offline stale-serve)
   - **shared port touchpoint (flagged):** `lib/infrastructure/connectivity/connectivity_service.dart`
     + `connectivity_plus_service.dart` are owned by [`connectivity`](connectivity.md). If that
     feature has not landed, introduce the port there as part of this work — build **one**
@@ -84,8 +88,8 @@ and "no backend" means no remote data source is wired — features that try to r
 - **Test-server contract** — [`tools/hono_server/`](../contracts.md#c3--minimal-in-repo-test-server)
   implements a generic cacheable data-source route group so the offline-aware read primitive is
   exercised against real network paths:
-  - `GET /v1/cache/{key}` -> `200 {data, etag, ttlSeconds}` or `304` (when `If-None-Match` matches)
-    or `404`
+  - `GET /v1/cache/{key}` -> `200 {data, etag, ttlSeconds, epoch}` or `304` (when `If-None-Match`
+    matches) or `404`
   - `GET /v1/cache/{key}?minEpoch=<ts>` -> `200` only if newer, else `304`
   Integration tests start the server on a random port, prime the cache, toggle
   `ConnectivityService` offline (via a `StreamController` fake), and assert the stale entry is
@@ -120,13 +124,13 @@ and "no backend" means no remote data source is wired — features that try to r
 
 ## Audit
 
-- [ ] **No-backend honored as a port** — **warn**: port + real local default verified:
-  `CacheStore` (`lib/infrastructure/cache/cache_store.dart:4` — per-key `read/write/remove/age`,
-  no `clearAll`), `FileCacheStore` production default (`lib/app/dependencies.dart:315-330`,
-  web/dir-failure → `InMemoryCacheStore` with a logged warning), `GET /v1/cache/:key` with
-  ETag/`minEpoch` 304s (`tools/hono_server/src/index.ts:366-390` + TS contract tests).
-  Missing: the Dart-side live-server integration claimed in Tests — no Dart code references
-  `/v1/cache`, so the etag/304 + offline stale-serve network path is unexercised from Dart.
+- [x] **No-backend honored as a port** — **pass**: port + real local default + live network
+  path verified: `CacheStore` (`lib/infrastructure/cache/cache_store.dart:4` — per-key
+  `read/write/remove/age`, no `clearAll`), `FileCacheStore` production default
+  (`lib/app/dependencies.dart:315-330`), `GET /v1/cache/:key` with ETag/`minEpoch` 304s
+  (`tools/hono_server/src/index.ts`), exercised from Dart by `HttpCacheDataSource` +
+  the conditional-get semantics in `cachedFutureProvider`, covered by the unit tests and
+  `test/e2e/cache_e2e_test.dart` (live server). Resolves the prior warn.
 - [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: the port and the
   offline-aware read primitive live in `lib/infrastructure/cache/` (cross-cutting adapter,
   peer of `SharedPreferencesSettingsStore`); no buckets.
@@ -139,7 +143,7 @@ and "no backend" means no remote data source is wired — features that try to r
 - [x] **Composition root confined** — **pass**: `FileCacheStore` wired only in
   `lib/app/dependencies.dart:315-330`; `cacheStoreProvider` overridden in
   `lib/app/app.dart:147`; `connectivityStatusProvider` is read, never redeclared
-  (`cached_future_provider.dart:85`).
+  (`cached_future_provider.dart:115`).
 - [x] **Motion guarded** — **n/a**: no animations.
 - [x] **i18n synced en/ar/zh-Hans** — **n/a**: no keys of its own; `gen-check` unaffected.
 - [x] **Strict analysis clean** — **pass**: typed `CacheEntry<T>` + `CacheCodec<T>` generics,
@@ -156,12 +160,12 @@ and "no backend" means no remote data source is wired — features that try to r
   diagnostics rows live on the dev-only `DiagnosticsPage`
   (`diagnostics_page.dart:33-35, 169`).
 - [x] **Port-reuse consistency** — **pass**: reads the existing `connectivityStatusProvider`
-  owned by `connectivity` (`cached_future_provider.dart:85`); `ConnectivityPlusService` is
+  owned by `connectivity` (`cached_future_provider.dart:115`); `ConnectivityPlusService` is
   constructed only in `dependencies.dart:405`; never a second sensor.
 - [x] **Config rule respected** — **pass**: web vs file selection is by `kIsWeb`, not
   config; no runtime env switching.
 - [x] **Honest feedback / no faked success** — **pass**: offline + absent throws
-  `CacheUnavailable` (`cached_future_provider.dart:88-92`, the `*Unavailable` pattern)
+  `CacheUnavailable` (`cached_future_provider.dart:118-122`, the `*Unavailable` pattern)
   instead of faking data; stale entries are labeled `CacheStatus.stale` for the consumer;
   covered by `test/infrastructure/cache/cached_future_provider_test.dart`.
 
