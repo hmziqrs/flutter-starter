@@ -24,8 +24,10 @@ cases at a documented 500 ms settled timestamp. Baselines use Flutter's exact
 golden comparator; there is no broad pixel tolerance.
 
 Generate or intentionally review updates only on the `macos-26` CI runner
-(authoritative baseline env) — easiest via the "Regenerate goldens" workflow,
-which uploads the baselines for review before commit:
+(authoritative baseline env) — via the "Regenerate goldens" workflow
+(`.github/workflows/regenerate-goldens.yml`, `workflow_dispatch`), which
+regenerates on the runner, verifies a clean comparison, and opens a PR with
+the baselines for review before commit:
 
 ```sh
 flutter test test/goldens/canonical_matrix_golden_test.dart --update-goldens
