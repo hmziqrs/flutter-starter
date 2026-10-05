@@ -65,12 +65,13 @@ class _PricingPageState extends ConsumerState<PricingPage> {
   List<PlanViewData>? _loadedPlans;
   Object? _plansError;
   Future<List<PlanViewData>>? _plansFuture;
+  bool _userSelectedPlan = false;
+  int _loadEpoch = 0;
 
   @override
   void initState() {
     super.initState();
-    _plansFuture = widget.plansLoader?.call();
-    unawaited(_plansFuture?.then(_onPlansReady, onError: _onPlansFailed));
+    unawaited(_beginRefresh() ?? Future<void>.value());
   }
 
   /// The plans the page renders: the loaded set once the deferred source
@@ -80,36 +81,48 @@ class _PricingPageState extends ConsumerState<PricingPage> {
 
   bool get _showingSkeleton => _plansFuture != null && _loadedPlans == null && _plansError == null;
 
-  void _onPlansReady(List<PlanViewData> plans) {
-    if (!mounted) return;
+  void _onPlansReady(int epoch, List<PlanViewData> plans) {
+    if (epoch != _loadEpoch || !mounted) return;
     setState(() {
       _loadedPlans = plans;
       _plansError = null;
-      if (widget.initialPlanId == null) {
+      // A refresh keeps the user's selection; the preferred plan only takes
+      // over before any selection exists or when the selected plan vanished.
+      final selectionStillValid = plans.any((plan) => plan.id == _selectedPlanId);
+      if (!_userSelectedPlan || !selectionStillValid) {
         _selectedPlanId = preferredPlan(plans).id;
+        _userSelectedPlan = false;
       }
     });
   }
 
-  void _onPlansFailed(Object error) {
-    if (!mounted) return;
-    setState(() => _plansError = error);
+  void _onPlansFailed(int epoch, Object error) {
+    if (epoch != _loadEpoch || !mounted) return;
+    setState(() {
+      // A failed refresh keeps the already-loaded content on screen; the
+      // error view only applies when nothing has loaded yet.
+      if (_loadedPlans == null) {
+        _plansError = error;
+      }
+    });
   }
 
   /// Backend-free by contract (`plans/feature_roadmap/features/pull-refresh.md`):
   /// recompose the local plans, then report the honest `common.notConnected`
-  /// outcome — never faked success.
+  /// outcome — never faked success. The loader failure path is handled by the
+  /// epoch-guarded listener; the await only holds the indicator open, so its
+  /// rethrow is swallowed rather than escaping as an unhandled zone error.
   Future<void> _refreshPlans(BuildContext context) async {
     final loader = widget.plansLoader;
     if (loader != null) {
-      final future = loader();
-      if (!mounted) return;
-      setState(() {
-        _plansFuture = future;
-        _plansError = null;
-      });
-      unawaited(future.then(_onPlansReady, onError: _onPlansFailed));
-      await future;
+      final future = _beginRefresh();
+      if (future != null) {
+        try {
+          await future;
+        } on Object {
+          // Handled by the listener; the honest toast still surfaces below.
+        }
+      }
     }
     if (!context.mounted) return;
     AppToast.show(
@@ -117,6 +130,35 @@ class _PricingPageState extends ConsumerState<PricingPage> {
       severity: ToastSeverity.warning,
       message: context.t.common.notConnected,
     );
+  }
+
+  /// Starts a loader run under a fresh epoch: only the most recently started
+  /// load may mutate the page state, so a refresh that overtakes a pending
+  /// initial load (or vice versa) cannot clobber it. The listeners attach
+  /// before any mounted check so a disposal-window completion is still
+  /// swallowed by the epoch guard instead of escaping as an unhandled error.
+  Future<List<PlanViewData>>? _beginRefresh() {
+    final loader = widget.plansLoader;
+    if (loader == null) return null;
+    final epoch = ++_loadEpoch;
+    final future = loader();
+    unawaited(
+      future.then(
+        (plans) => _onPlansReady(epoch, plans),
+        onError: (Object error) => _onPlansFailed(epoch, error),
+      ),
+    );
+    if (!mounted) return future;
+    if (_plansFuture == null && _plansError == null) {
+      // initState: build has not run yet, so plain assignment is correct.
+      _plansFuture = future;
+    } else {
+      setState(() {
+        _plansFuture = future;
+        _plansError = null;
+      });
+    }
+    return future;
   }
 
   @override
@@ -261,7 +303,10 @@ class _PricingPageState extends ConsumerState<PricingPage> {
           selected: plan.id == _selectedPlanId,
           onSelect: _isAvailable(plan)
               ? () {
-                  setState(() => _selectedPlanId = plan.id);
+                  setState(() {
+                    _selectedPlanId = plan.id;
+                    _userSelectedPlan = true;
+                  });
                   widget.onSelectPlan(plan, _billingPeriod);
                 }
               : null,

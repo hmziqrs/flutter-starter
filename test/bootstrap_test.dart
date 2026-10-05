@@ -143,6 +143,7 @@ void main() {
       // handler reports through it, and installErrorHandlers swaps in each
       // reporter — ending at the production composite after the re-arm.
       final zonedCrashSink = ZonedCrashSink();
+      final fallbackLoggerForZone = AppLogger.bootstrap();
       try {
         await bootstrap(
           AppConfig(
@@ -160,11 +161,11 @@ void main() {
         debugDefaultTargetPlatformOverride = previousPlatform;
       }
 
-      // Mirror the zone handler's body: an uncaught async error inside the
-      // app zone lands here (never at the platform handler), and must reach
-      // the backend through the swapped-in composite. runZonedGuarded's
-      // returned future never completes for an async throw (the zone consumes
-      // the error), so the handler completes a completer instead.
+      // Drive the REAL production zone wiring: bootstrapApplication installs
+      // exactly this handler (reportZonedError) over this sink, so deleting
+      // the report call inside it fails this test. runZonedGuarded's returned
+      // future never completes for an async throw (the zone consumes the
+      // error), so the handler completes a completer instead.
       final handled = Completer<void>();
       unawaited(
         runZonedGuarded<Future<void>>(
@@ -173,7 +174,7 @@ void main() {
                 throw StateError('zoned production boom');
               },
               (error, stackTrace) {
-                unawaited(zonedCrashSink.report(error, stackTrace));
+                reportZonedError(fallbackLoggerForZone, zonedCrashSink, error, stackTrace);
                 handled.complete();
               },
             ) ??

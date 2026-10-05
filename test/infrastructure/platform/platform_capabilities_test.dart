@@ -143,6 +143,21 @@ void main() {
     expect(first.isTelevision, isTrue);
     expect(nearField.isTelevision, isFalse);
   });
+
+  test('isApplePlatform matches spellings case-insensitively and includes tvOS', () {
+    // The resolver emits TargetPlatform names plus its own spellings ('tvOS'),
+    // so every Apple spelling must classify as an Apple platform.
+    for (final platform in const <String>['iOS', 'ios', 'IOS', 'macOS', 'macos', 'tvOS']) {
+      expect(
+        PlatformCapabilities.nonTelevision(platform: platform).isApplePlatform,
+        isTrue,
+        reason: "'$platform' must classify as an Apple platform",
+      );
+    }
+    for (final platform in const <String>['android', 'windows', 'linux', 'web']) {
+      expect(PlatformCapabilities.nonTelevision(platform: platform).isApplePlatform, isFalse);
+    }
+  });
 }
 
 final class _FakeTvOsBindings extends TvOSNativeBindings {

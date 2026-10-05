@@ -29,7 +29,6 @@ typedef ApplicationRunner = void Function(Widget application);
 /// the boot pair is replaced by the production composite, so errors caught by
 /// [bootstrapApplication]'s zone guard reach the same composite as framework
 /// and platform errors instead of dying in a log-only handler.
-@visibleForTesting
 final class ZonedCrashSink {
   CrashReporter reporter = const NoopCrashReporter();
 
@@ -74,19 +73,31 @@ Future<void> bootstrapApplication({
         );
       }
     },
-    (error, stackTrace) {
-      fallbackLogger.error(
-        'Unhandled zoned application error',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      unawaited(zonedCrashSink.report(error, stackTrace));
-    },
+    (error, stackTrace) => reportZonedError(
+      fallbackLogger,
+      zonedCrashSink,
+      error,
+      stackTrace,
+    ),
   );
 
   if (guardedMain != null) {
     await guardedMain;
   }
+}
+
+/// The production zone-guard handler: logs the uncaught zoned error and
+/// reports it through the sink the error handlers keep armed with the current
+/// reporter. Extracted so tests drive this exact wiring, not a copy of it.
+@visibleForTesting
+void reportZonedError(
+  AppLogger logger,
+  ZonedCrashSink sink,
+  Object error,
+  StackTrace stackTrace,
+) {
+  logger.error('Unhandled zoned application error', error: error, stackTrace: stackTrace);
+  unawaited(sink.report(error, stackTrace));
 }
 
 Future<void> bootstrap(

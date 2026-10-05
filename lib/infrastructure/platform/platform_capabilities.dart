@@ -34,8 +34,16 @@ final class PlatformCapabilities {
   final bool supportsFileSystem;
   final AppTvPlatform tvPlatform;
 
-  bool get isApplePlatform =>
-      platform == TargetPlatform.iOS.name || platform == TargetPlatform.macOS.name;
+  bool get isApplePlatform {
+    // The resolver emits TargetPlatform names plus its own spellings ('tvOS',
+    // 'web'), so match case-insensitively and include tvOS — an Apple platform.
+    switch (platform.toLowerCase()) {
+      case 'ios' || 'macos' || 'tvos':
+        return true;
+      default:
+        return false;
+    }
+  }
 
   bool get isTelevision => tvPlatform != AppTvPlatform.none;
 

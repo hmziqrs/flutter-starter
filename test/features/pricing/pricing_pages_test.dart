@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/features/pricing/paywall_page.dart';
 import 'package:starter/features/pricing/plan_view_data.dart';
 import 'package:starter/features/pricing/pricing_page.dart';
+import 'package:starter/features/pricing/widgets/plan_card.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
@@ -213,12 +214,104 @@ void main() {
     expect(find.byType(RefreshProgressIndicator), findsOneWidget);
 
     reload.complete(plans);
-    await tester.pumpAndSettle();
+    for (var frame = 0; frame < 8; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     // Honest backend-free completion: indicator dismissed + notConnected toast.
     expect(find.byType(RefreshProgressIndicator), findsNothing);
     expect(find.text('This action is not connected yet.'), findsOneWidget);
     expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
+  });
+
+  testWidgets('a refresh keeps the user-selected plan instead of snapping to preferred', (
+    tester,
+  ) async {
+    final plans = PricingFixtures.standard(AppLocale.en.buildSync());
+    _setViewport(tester, const Size(390, 900));
+
+    await tester.pumpWidget(
+      _FeatureTestApp(
+        child: PricingPage(
+          plans: plans,
+          plansLoader: () => Future.value(plans),
+          onSelectPlan: (_, _) {},
+          onOpenTerms: () {},
+          onOpenPrivacy: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // preferredPlan selects something other than team by default; pick team
+    // like the retained-billing test does.
+    Finder teamCard() => find.ancestor(
+      of: find.byKey(const ValueKey('select-plan-team')),
+      matching: find.byType(PlanCard),
+    );
+
+    await tester.ensureVisible(find.byKey(const ValueKey('select-plan-team')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('select-plan-team')).hitTestable());
+    await tester.pump();
+    expect(tester.widget<PlanCard>(teamCard()).selected, isTrue);
+
+    await tester.fling(
+      find.byKey(const ValueKey('pricing-page')),
+      const Offset(0, 350),
+      1000,
+    );
+    for (var frame = 0; frame < 12; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // The refreshed (identical) plans keep the user's selection.
+    expect(
+      tester.widget<PlanCard>(teamCard()).selected,
+      isTrue,
+      reason: 'refresh must not reset a user-made plan selection',
+    );
+  });
+
+  testWidgets('a failing refresh keeps the loaded cards and still surfaces the toast', (
+    tester,
+  ) async {
+    final plans = PricingFixtures.standard(AppLocale.en.buildSync());
+    var loads = 0;
+    _setViewport(tester, const Size(390, 900));
+
+    await tester.pumpWidget(
+      _FeatureTestApp(
+        child: PricingPage(
+          plans: plans,
+          plansLoader: () {
+            loads += 1;
+            return loads == 1 ? Future.value(plans) : Future.error(StateError('no plans'));
+          },
+          onSelectPlan: (_, _) {},
+          onOpenTerms: () {},
+          onOpenPrivacy: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
+
+    await tester.fling(
+      find.byKey(const ValueKey('pricing-page')),
+      const Offset(0, 350),
+      1000,
+    );
+    for (var frame = 0; frame < 12; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // Graceful degradation: the cards stay, no error view, the honest toast
+    // surfaces, and nothing escapes as an unhandled async error.
+    expect(find.byKey(const ValueKey('select-plan-basic')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pricing-plans-error')), findsNothing);
+    expect(find.text('This action is not connected yet.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('paywall keeps Skip visible and forwards honest feedback actions', (tester) async {
