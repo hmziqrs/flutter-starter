@@ -1,14 +1,16 @@
 # Product analytics
 
-> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** secure-store
+> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** done · **Depends on:** secure-store
 >
 > Implementation audit (2026-10-05): port + Noop default + optional real impls + router-observer
 > seam + SecureStore opt-in + i18n verified. `HttpAnalyticsClient` batches onto `POST /v1/events`
 > (backendBaseUrl-gated) and the production composite routes every real backend through
-> `OptInGatedAnalyticsClient` (default off). Closed gap: the live-server e2e now exists —
+> `OptInGatedAnalyticsClient` (default off). Closed gap: the live-server e2e exists —
 > `test/e2e/analytics_events_e2e_test.dart` drives `screen_view` through the gate + HTTP client
-> against the live JS Hono server. Still open: unit coverage for `PosthogAnalyticsClient` and
-> the opt-in surface (controller persist/rollback + settings-tile widget test).
+> against the live JS Hono server. Closed gap: unit coverage for `PosthogAnalyticsClient`
+> (method-channel mock; pre-opt-in silence, ordered emission, never-rethrow) and the opt-in
+> surface (`analytics_opt_in_controller_test.dart` persist/remove/rollback + a bounded-pump
+> settings-page toggle case) now exist.
 
 ## Summary
 

@@ -8,10 +8,12 @@ import 'package:starter/app/config/app_config.dart';
 import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
+import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
 void main() {
@@ -135,6 +137,39 @@ void main() {
 
     expect(await store.readString('appearance.spacing'), AppSpacingVariant.relaxed.name);
     expect(await store.readString('appearance.radius'), AppRadiusVariant.sharp.name);
+  });
+
+  testWidgets('privacy-about analytics opt-in toggle persists the SecureStore key', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(390, 844));
+    await LocaleSettings.setLocale(AppLocale.en);
+    final secureStore = InMemorySecureStore();
+    await tester.pumpWidget(
+      _app(
+        initialLocation: '/settings?section=privacy-about',
+        dependencies: AppDependencies.inMemory(secureStore: secureStore),
+      ),
+    );
+    for (var frame = 0; frame < 8; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final toggle = find.byKey(const ValueKey('settings-toggle-analytics'));
+    await tester.ensureVisible(toggle);
+    for (var frame = 0; frame < 8; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.widget<FSwitch>(toggle).value, isFalse);
+    expect(secureStore.snapshot.containsKey(analyticsOptInKey), isFalse);
+
+    await tester.tap(toggle.hitTestable());
+    for (var frame = 0; frame < 8; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.widget<FSwitch>(toggle).value, isTrue);
+    expect(secureStore.snapshot[analyticsOptInKey], 'true');
   });
 
   testWidgets('wide settings navigation keeps equal gaps at medium and expanded widths', (
