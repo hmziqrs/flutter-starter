@@ -1,7 +1,14 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/app.dart';
 import 'package:starter/app/app_lifecycle_controller.dart';
+import 'package:starter/app/config/app_config.dart';
+import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
+
+import 'support/pump_app_frames.dart';
 
 void main() {
   group('AppLifecyclePhase', () {
@@ -111,6 +118,68 @@ void main() {
         container.read(appLifecyclePhaseProvider).kind,
         AppLifecycleKind.inactive,
       );
+    });
+  });
+
+  group('_AppView binding wiring', () {
+    final developmentConfig = AppConfig(
+      environment: AppEnvironment.development,
+      enableVerboseLogging: true,
+      enableDevTools: true,
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
+
+    testWidgets('mount registers the observer; binding transitions reach the provider', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        App(config: developmentConfig, dependencies: AppDependencies.inMemory()),
+      );
+      await pumpAppFrames(tester);
+
+      final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+      final observedKinds = <AppLifecycleKind>[];
+      container.listen(appLifecyclePhaseProvider, (_, next) {
+        observedKinds.add(next.kind);
+      });
+
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await pumpAppFrames(tester);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.paused);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await pumpAppFrames(tester);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
+      expect(observedKinds, [AppLifecycleKind.paused, AppLifecycleKind.resumed]);
+    });
+
+    testWidgets('dispose unregisters the observer; no phase is emitted afterwards', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        App(config: developmentConfig, dependencies: AppDependencies.inMemory()),
+      );
+      await pumpAppFrames(tester);
+
+      final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+      final observedKinds = <AppLifecycleKind>[];
+      container.listen(appLifecyclePhaseProvider, (_, next) {
+        observedKinds.add(next.kind);
+      });
+
+      // Tear the app down the way the runner would, disposing _AppView.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await pumpAppFrames(tester);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.detached);
+      await pumpAppFrames(tester);
+
+      // The observer was removed on dispose: no transition, no framework error.
+      expect(observedKinds, isEmpty);
+      expect(tester.takeException(), isNull);
     });
   });
 }

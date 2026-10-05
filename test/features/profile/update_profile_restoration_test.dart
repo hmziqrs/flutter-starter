@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/app/app.dart';
 import 'package:starter/features/profile/profile_view_data.dart';
 import 'package:starter/features/profile/update_profile_page.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -106,7 +107,7 @@ class _RestorationTestApp extends StatelessWidget {
             final theme = generated.lightTheme;
             return MaterialApp(
               debugShowCheckedModeBanner: false,
-              restorationScopeId: 'app',
+              restorationScopeId: appRestorationScopeId,
               home: home,
               locale: localeData.flutterLocale,
               supportedLocales: AppLocaleUtils.supportedLocales,

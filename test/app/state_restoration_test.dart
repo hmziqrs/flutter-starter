@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter/app/app.dart';
+import 'package:starter/app/config/app_config.dart';
+import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/dependencies.dart';
+import 'package:starter/app/dependencies/dependency_aggregates.dart';
 import 'package:starter/app/last_route.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
+import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/settings_store.dart';
+
+import 'support/pump_app_frames.dart';
 
 void main() {
   group('lastRouteKey', () {
@@ -127,6 +137,100 @@ void main() {
       final observer = LastRouteObserver(store: store);
 
       expect(() => observer.didPush(_route(AppRoutes.login), null), returnsNormally);
+    });
+  });
+
+  group('restorationScopeId', () {
+    final developmentConfig = AppConfig(
+      environment: AppEnvironment.development,
+      enableVerboseLogging: true,
+      enableDevTools: true,
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
+
+    test('the shared scope id stays the stable documented literal', () {
+      expect(appRestorationScopeId, 'app');
+    });
+
+    testWidgets('the root MaterialApp restores under the shared scope id', (tester) async {
+      await tester.pumpWidget(
+        App(config: developmentConfig, dependencies: AppDependencies.inMemory()),
+      );
+      await pumpAppFrames(tester);
+
+      expect(
+        tester.widget<MaterialApp>(find.byType(MaterialApp)).restorationScopeId,
+        appRestorationScopeId,
+      );
+    });
+  });
+
+  group('saved last route vs. gate precedence', () {
+    final developmentConfig = AppConfig(
+      environment: AppEnvironment.development,
+      enableVerboseLogging: true,
+      enableDevTools: true,
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
+
+    testWidgets('the onboarding gate wins over a saved last-route location', (tester) async {
+      await tester.pumpWidget(
+        App(
+          config: developmentConfig,
+          dependencies: AppDependencies.inMemory(
+            initialSettings: const SettingsState.defaults().copyWith(
+              hasCompletedOnboarding: false,
+            ),
+          ),
+          initialLocation: AppRoutes.pricingPath,
+        ),
+      );
+      await pumpAppFrames(tester);
+
+      expect(find.byKey(const ValueKey('onboarding-pager')), findsOneWidget);
+      expect(find.byKey(const ValueKey('pricing-page')), findsNothing);
+    });
+
+    testWidgets('a hard update requirement wins over a saved last-route location', (
+      tester,
+    ) async {
+      final base = AppDependencies.inMemory();
+      final blocked = AppDependencies(
+        logger: base.logger,
+        settings: base.settings,
+        storage: base.storage,
+        auth: base.auth,
+        telemetry: base.telemetry,
+        remoteConfig: RemoteConfigDependencies(
+          versionGateStore: base.remoteConfig.versionGateStore,
+          versionCheck: const UpdateRequirement.hard(
+            minVersion: '2.0.0',
+            latestVersion: '2.0.0',
+            storeUrl: 'https://example.com/update',
+          ),
+          featureFlagsSource: base.remoteConfig.featureFlagsSource,
+          experimentSource: base.remoteConfig.experimentSource,
+        ),
+        notifications: base.notifications,
+        feedback: base.feedback,
+        platform: base.platform,
+        appStartupResult: base.appStartupResult,
+        initialDismissedAnnouncementIds: base.initialDismissedAnnouncementIds,
+      );
+
+      await tester.pumpWidget(
+        App(
+          config: developmentConfig,
+          dependencies: blocked,
+          initialLocation: AppRoutes.pricingPath,
+        ),
+      );
+      await pumpAppFrames(tester);
+
+      expect(find.byKey(const ValueKey('force-update-title')), findsOneWidget);
+      expect(find.byKey(const ValueKey('pricing-page')), findsNothing);
     });
   });
 }

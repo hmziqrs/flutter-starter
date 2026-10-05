@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/app/app.dart';
 import 'package:starter/features/onboarding/onboarding_page.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
@@ -75,7 +76,7 @@ class _RestorationTestApp extends StatelessWidget {
     return TranslationProvider(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        restorationScopeId: 'app',
+        restorationScopeId: appRestorationScopeId,
         home: home,
         locale: AppLocale.en.flutterLocale,
         supportedLocales: AppLocaleUtils.supportedLocales,

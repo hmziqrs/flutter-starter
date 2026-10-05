@@ -66,6 +66,14 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/motion/app_page_transitions.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
+/// Restoration scope id of the root [MaterialApp.router].
+///
+/// Must stay constant and stable across releases — changing it invalidates
+/// every user's restorable state on upgrade. Test harnesses that pump pages
+/// inside their own `MaterialApp` must reference this constant (never a fresh
+/// literal) so production and test restoration buckets cannot drift apart.
+const String appRestorationScopeId = 'app';
+
 class App extends StatelessWidget {
   const App({
     required this.config,
@@ -332,7 +340,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.t.app.name,
-      restorationScopeId: 'app',
+      restorationScopeId: appRestorationScopeId,
       routerConfig: _router,
       locale: localeData.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
