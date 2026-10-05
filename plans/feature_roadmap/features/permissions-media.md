@@ -85,15 +85,20 @@ the noop impls ARE the fakes.
 Implementation audit (2026-10-04) against the 13-item checklist in
 [contracts.md](../contracts.md):
 
-- [x] No-backend honored as a port — **warn**: both ports exist (`PermissionService` +
+- [x] No-backend honored as a port — **pass**: both ports exist (`PermissionService` +
   `MediaPicker`, `lib/infrastructure/{permissions,media}/`); noop hermetic defaults surface
   denied/null honestly (`noop_permission_service_test.dart:9-24`,
   `noop_media_picker_test.dart:9-19`); rationale always precedes the OS prompt
-  (`update_profile_page.dart:633-662`). The warn is the untested happy path: no test drives
-  granted→pick→`onAvatarPicked(PickedMedia)` (only the dismiss path is covered,
-  `update_profile_page_test.dart:20-38`), the claimed `createApplication` integration test with a
-  fixture-returning fake picker does not exist, and `profile_routes.dart:62-70` silently ignores a
-  successfully picked image.
+  (`update_profile_page.dart:661-677`). The granted happy path is covered at both levels: the
+  widget test drives granted→pick→`onAvatarPicked(PickedMedia)` and asserts the rendered avatar
+  announces the localized label and decodes at display size
+  (`update_profile_page_test.dart:42-89`); the integration test runs the same flow end-to-end
+  through `App` + in-memory dependencies with a fixture picker
+  (`deeplink_permissions_test.dart:92-127`); the route stores the picked media and re-renders it
+  rather than dropping it (`profile_routes.dart:83`). Display-only scope: the picked avatar is
+  shown in the editor (`update_profile_page.dart:694`) and the expanded preview
+  (`update_profile_page.dart:766`) and is deliberately not persisted into `ProfileDraft` (which
+  carries no avatar field) — the honest limitation the "consume `PickedMedia?`" letter above pins.
 - [x] Feature-first ownership — **pass**: ports + device/noop adapters under
   `lib/infrastructure/{permissions,media}/`; rationale sheet + avatar flow owned by the profile
   feature (`profile/widgets/permission_rationale_sheet.dart`, `update_profile_page.dart`); no

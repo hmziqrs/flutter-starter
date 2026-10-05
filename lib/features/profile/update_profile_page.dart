@@ -691,7 +691,7 @@ class _AvatarEditorState extends State<_AvatarEditor> {
         runSpacing: context.spacing.lg,
         children: [
           if (widget.media case final media?)
-            _AvatarMedia(size: 72, iconSize: 32, media: media)
+            _AvatarMedia(size: 72, iconSize: 32, media: media, label: translations.avatar)
           else
             _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
           FButton(
@@ -709,14 +709,22 @@ class _AvatarEditorState extends State<_AvatarEditor> {
 }
 
 class _AvatarMedia extends StatelessWidget {
-  const _AvatarMedia({required this.size, required this.iconSize, required this.media});
+  const _AvatarMedia({
+    required this.size,
+    required this.iconSize,
+    required this.media,
+    required this.label,
+  });
 
   final double size;
   final double iconSize;
   final PickedMedia media;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
+    // Decode at display size instead of the picker's full-resolution output.
+    final cacheExtent = (size * MediaQuery.devicePixelRatioOf(context)).round();
     return SizedBox(
       key: const ValueKey('profile-avatar-image'),
       width: size,
@@ -724,15 +732,14 @@ class _AvatarMedia extends StatelessWidget {
       child: ClipOval(
         child: Semantics(
           image: true,
-          label: media.path,
+          label: label,
           child: Image.file(
             File(media.path),
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _AvatarPlaceholder(
-              size: size,
-              iconSize: iconSize,
-              label: media.path,
-            ),
+            cacheWidth: cacheExtent,
+            cacheHeight: cacheExtent,
+            errorBuilder: (_, _, _) =>
+                _AvatarPlaceholder(size: size, iconSize: iconSize, label: label),
           ),
         ),
       ),
@@ -756,7 +763,7 @@ class _ProfilePreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (media case final picked?)
-            _AvatarMedia(size: 80, iconSize: 36, media: picked)
+            _AvatarMedia(size: 80, iconSize: 36, media: picked, label: translations.avatar)
           else
             _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
           SizedBox(height: spacing.lg),

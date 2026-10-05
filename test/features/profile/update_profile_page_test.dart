@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,8 +40,8 @@ void main() {
   });
 
   testWidgets('granted permission and a fixture picker deliver the picked media', (tester) async {
-    const picked = PickedMedia(
-      path: '/fixtures/avatar.png',
+    final picked = PickedMedia(
+      path: _writeAvatarFixture().path,
       mimeType: 'image/png',
       fromCamera: false,
     );
@@ -48,12 +49,8 @@ void main() {
     await _pumpProfile(
       tester,
       permissions: const _GrantedPermissionService(),
-      picker: const _FixtureMediaPicker(picked),
-      page: UpdateProfilePage(
-        initialDraft: const ProfileDraft.defaults(),
-        onSave: _noopSave,
-        onAvatarPicked: (media) => received = media,
-      ),
+      picker: _FixtureMediaPicker(picked),
+      page: _AvatarRouteSimulator(onDelivered: (media) => received = media),
     );
 
     await tester.tap(find.byKey(const ValueKey('profile-avatar-feedback')));
@@ -63,6 +60,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(received, picked);
+
+    // The simulator stores the delivered media in state and re-supplies it as
+    // `pickedAvatar`, exactly like `UpdateProfileRoutePage` (profile_routes.dart).
+    // The rendered avatar must announce the localized avatar label — never the
+    // filesystem path — and decode at display size (72 logical px at the test's
+    // devicePixelRatio of 1), not the picker's full-resolution output.
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pump();
+
+      // Image.file only wraps its provider in a ResizeImage when cacheWidth/cacheHeight
+      // are passed, so this pins the display-sized decode.
+      final provider = tester.widget<Image>(find.byType(Image).first).image;
+      expect(provider, isA<ResizeImage>());
+      final resized = provider as ResizeImage;
+      expect(resized.width, 72);
+      expect(resized.height, 72);
+
+      final avatar = find.semantics.byLabel('Profile image placeholder');
+      expect(avatar, findsOne);
+      final data = avatar.evaluate().single.getSemanticsData();
+      expect(data.flagsCollection.isImage, isTrue);
+      expect(find.semantics.byLabel(RegExp(r'avatar\.png')), findsNothing);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('paints an opaque page surface and respects device insets', (tester) async {
@@ -283,7 +306,7 @@ void main() {
 
 Future<void> _pumpProfile(
   WidgetTester tester, {
-  required UpdateProfilePage page,
+  required Widget page,
   Size size = const Size(390, 900),
   bool settle = true,
   EdgeInsets safePadding = EdgeInsets.zero,
@@ -316,7 +339,7 @@ Future<void> _pumpProfile(
       ],
       child: TranslationProvider(
         child: MaterialApp(
-          key: ValueKey(page.presentationState.phase),
+          key: ValueKey(page is UpdateProfilePage ? page.presentationState.phase : page),
           initialRoute: '/profile',
           routes: {
             '/': (_) => const SizedBox(key: ValueKey('profile-test-home')),
@@ -394,9 +417,115 @@ bool _focusIsWithin(WidgetTester tester, String key) {
   return found;
 }
 
+/// Mirrors `UpdateProfileRoutePage` (profile_routes.dart): keeps the picked media in
+/// state and re-supplies it to the page as `pickedAvatar`.
+class _AvatarRouteSimulator extends StatefulWidget {
+  const _AvatarRouteSimulator({required this.onDelivered});
+
+  final ValueChanged<PickedMedia?> onDelivered;
+
+  @override
+  State<_AvatarRouteSimulator> createState() => _AvatarRouteSimulatorState();
+}
+
+class _AvatarRouteSimulatorState extends State<_AvatarRouteSimulator> {
+  PickedMedia? _pickedAvatar;
+
+  @override
+  Widget build(BuildContext context) {
+    return UpdateProfilePage(
+      initialDraft: const ProfileDraft.defaults(),
+      pickedAvatar: _pickedAvatar,
+      onSave: _noopSave,
+      onAvatarPicked: (media) {
+        setState(() => _pickedAvatar = media);
+        widget.onDelivered(media);
+      },
+    );
+  }
+}
+
 Future<void> _noopSave(ProfileDraft _) async {}
 
 void _noopAvatar(PickedMedia? _) {}
+
+/// Writes a decodable 1×1 transparent PNG so the picked avatar exercises the real
+/// decode path instead of the errorBuilder fallback.
+File _writeAvatarFixture() {
+  final directory = Directory.systemTemp.createTempSync('profile_avatar_test');
+  addTearDown(() => directory.deleteSync(recursive: true));
+  return File('${directory.path}/avatar.png')..writeAsBytesSync(_avatarPngBytes);
+}
+
+const _avatarPngBytes = <int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+];
 
 final class _GrantedPermissionService implements PermissionService {
   const _GrantedPermissionService();
