@@ -74,7 +74,7 @@ On-device fingerprint / Face ID / device-credential authentication used to gate 
 - [x] Golden re-baseline + dev-gallery fixture — **pass**: no canonical matrix case (per this
   doc); `biometric_gallery_cases.dart` ships locked/unavailable `PreviewFrame`s pinned via
   `_PinnedBiometricUnlockController` + Noop authenticator, registered in `gallery_registry.dart`;
-  repo-wide re-baseline pending the pinned macOS 26 run (tracked repo-wide).
+  repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: the lock gate chains through the one `appRedirect`
   (route_guards.dart:64-66 reads `biometricUnlockControllerProvider` gated on
   `biometricUnlockEnabled`) — third reader of the C5 helper after onboarding + session; no

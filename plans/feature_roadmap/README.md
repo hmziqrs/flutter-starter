@@ -45,7 +45,7 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | Biometric unlock | P1 | security | none | done | [biometric](features/biometric.md) |
 | Session / token management | P1 | security | server | done | [session](features/session.md) |
 | Log PII redaction | P1 | security | none | done | [log-redaction](features/log-redaction.md) |
-| Product analytics | P1 | infra | server | in-progress | [analytics](features/analytics.md) |
+| Product analytics | P1 | infra | server | done | [analytics](features/analytics.md) |
 | Feature flags / remote-config | P1 | infra | server | done | [feature-flags](features/feature-flags.md) |
 | In-app announcements | P1 | engagement | none | done | [announcements](features/announcements.md) |
 | Animated in-app splash | P2 | startup | none | done | [in-app-splash](features/in-app-splash.md) |

@@ -101,7 +101,7 @@ throw `SecureStoreException` on unsupported platforms (do not silently fall thro
   (.github/workflows/release.yml); Android via `just build apk`.
 - [x] **Goldens re-baselined + dev-gallery fixture** — n/a: no visual change; the
   DiagnosticsPage backend row replaces the gallery fixture per this doc. Repo-wide golden
-  re-baseline still pending the pinned macOS 26 run (tracked repo-wide).
+  re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide).
 - [x] **Port-reuse consistency** — pass: single `SecureStore` consumed by session
   (`session.refresh_token`), passcode (`security.passcode.*` keys), and the analytics opt-in
   (dependencies.dart:228); no parallel secrets port exists under `lib/`.

@@ -54,8 +54,7 @@ Extends the existing regex-based [`LogRedactor`](../../../lib/infrastructure/log
 - [x] Generated code untouched — **pass**: no codegen involved.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
 - [x] Golden re-baseline + dev-gallery fixture — **pass**: indirect impact documented above;
-  fixture n/a per this doc (not a UI feature); repo-wide re-baseline pending the pinned
-  macOS 26 run (tracked repo-wide).
+  fixture n/a per this doc (not a UI feature); repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: no new port; every log line flows through
   `AppLogger._format` → `redactText` + `redactContext`, and `error.toString()` is redacted
   too (app_logger.dart:41, 58, 70-76) — message text, structured context, and thrown errors

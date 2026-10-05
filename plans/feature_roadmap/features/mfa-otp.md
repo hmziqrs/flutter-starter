@@ -90,7 +90,7 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 - [x] Goldens + dev-gallery fixture — **pass**: `mfa_otp_gallery_cases.dart` pins deterministic
   countdown(42s) / expired / locked(30s) variants gated behind `developmentToolsEnabled`; the
   canonical matrix still lists only `auth.otp.registration.invalid` — the `mfa` matrix variant
-  rides the repo-wide re-baseline that is pending the pinned macOS 26 run (tracked repo-wide,
+  rides the repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide,
   see test/goldens/README.md).
 - [x] Port-reuse consistency — **pass**: rate-limit handoff via the shared
   `attemptTrackerProvider` (otp_controller.dart:53) — the controller does not own retry

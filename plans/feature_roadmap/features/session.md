@@ -133,7 +133,7 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
   entitlements are already covered by [`secure-store`](secure-store.md)).
 - [x] **Golden re-baseline + dev-gallery fixture** — pass: no visual change; the
   `session_gallery_cases.dart` loggedIn/loggedOut shell fixtures exist and are registered;
-  repo-wide re-baseline pending the pinned macOS 26 run (tracked repo-wide).
+  repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide).
 - [x] **Port-reuse consistency** — pass: refresh token persisted via the single `SecureStore`
   (`SessionRepository.refreshTokenKey`, no `clearAll`); the auth-required predicate lives inside
   the one `appRedirect` (route_guards.dart:54-59) reading live session state via

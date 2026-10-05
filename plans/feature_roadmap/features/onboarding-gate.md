@@ -46,7 +46,7 @@ Backend-free; [`SettingsStore`](../../lib/features/settings/settings_store.dart)
 - [x] Strict-analysis clean — **pass**: typed `bool hasCompletedOnboarding` in `SettingsState` with `copyWith`/`==`/`hashCode` (`settings_state.dart:41,87,112,128`); no `dynamic`.
 - [x] Generated code untouched — **pass**: source-level change only; `settings_state.freezed.dart` regenerated via `just gen`.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass**: behavior-only change (fixture n/a); the boot-state golden impact is documented in Tests — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: behavior-only change (fixture n/a); the boot-state golden impact is documented in Tests — repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide, not per-feature).
 - [x] Port-reuse consistency — **pass**: no new port; reuses `SettingsStore`; the gate reuses the one `appRedirect` chain, ordered after force-update (`route_guards.dart:34-52`) as required.
 - [x] Config rule respected — **pass**: no env gating.
 - [x] Honest feedback, no faked success — **pass**: completion persists before navigation in all three home callbacks (`_completeOnboardingAndGoHome`, `lib/features/onboarding/onboarding_routes.dart:49-53`); persistence failure surfaces via rollback (tested).

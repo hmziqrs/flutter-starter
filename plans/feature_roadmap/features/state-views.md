@@ -68,7 +68,7 @@ faking success. The no-backend boundary is honored at the call site, not inside 
 - [x] Strict-analysis clean — **pass**: typed `StateViewAction` record typedef (`state_view_card.dart:6`), typed Strings, no `dynamic`/raw.
 - [x] Generated code untouched — **pass**: no generated files in this family.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass** (warn resolved): `PreviewFrame` cases per state exist and are registered (`lib/features/dev_gallery/cases/state_views_gallery_cases.dart`, `gallery_registry.dart:35`); home-matrix impact documented — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass** (warn resolved): `PreviewFrame` cases per state exist and are registered (`lib/features/dev_gallery/cases/state_views_gallery_cases.dart`, `gallery_registry.dart:35`); home-matrix impact documented — repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide, not per-feature).
 - [x] Port-reuse consistency — **n/a**: no port; reuses the busy-indicators progress primitive as designed (`loading_state_view.dart` composes `BusyIndicator`).
 - [x] Config rule respected — **pass**: gallery behind `developmentToolsEnabled`.
 - [x] Honest feedback, no faked success — **pass**: the action button renders only when an action is supplied — no default empty lambda (`state_view_card.dart:53-60`); no-backend consumers surface `common.notConnected` via the error body (`paged_list_view.dart:61`).

@@ -45,7 +45,7 @@ Backend-free; the default impl is **real and local** — `createApplication` alr
 - [x] Strict-analysis clean — **pass**: typed `AppStartupResult`/`AppStartupError`/`SplashViewData`, exhaustive phase switch (`splash_page.dart:55-62,80-84`); no `dynamic`.
 - [x] Generated code untouched — **pass**: `splash_view_data.freezed.dart` generated via `just gen`, not hand-edited.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `PreviewFrame` cases loading/done/error exist and are registered (`lib/features/dev_gallery/cases/splash_gallery_cases.dart:11-13`, `gallery_registry.dart:38`); new full-screen visual as documented — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `PreviewFrame` cases loading/done/error exist and are registered (`lib/features/dev_gallery/cases/splash_gallery_cases.dart:11-13`, `gallery_registry.dart:38`); new full-screen visual as documented — repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide, not per-feature).
 - [x] Port-reuse consistency — **n/a**: no port; reuses the startup work `createApplication` already performs.
 - [x] Config rule respected — **pass**: no env gating; gallery behind `developmentToolsEnabled`.
 - [x] Honest feedback, no faked success — **pass**: error phase surfaces `splash.error` + the `startupFailure.diagnosticId` (reusing `startup_error_view` styling), never a silent pass (`splash_page.dart:177-216`).

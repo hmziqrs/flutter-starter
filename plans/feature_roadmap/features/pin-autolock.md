@@ -77,7 +77,7 @@ A user-set local numeric/alphanumeric passcode that gates app entry as a fallbac
   lifecycle arrives via the SDK-only `appLifecyclePhaseProvider`.
 - [x] Goldens + dev-gallery fixture — **pass**: no canonical matrix case (per this doc);
   `pin_autolock_gallery_cases.dart` ships `passcode.entry.idle` / `entry.error` /
-  `entry.lockedOut` / `setup.mismatch`; repo-wide re-baseline pending the pinned macOS 26 run
+  `entry.lockedOut` / `setup.mismatch`; repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD)
   (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: salt/hash/attempts persisted via the single
   `SecureStore` (five `security.passcode.*` keys — tamper-resistant per the risk note);

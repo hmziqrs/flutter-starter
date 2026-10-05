@@ -97,7 +97,7 @@ Implementation audit (2026-10-04) against the 13-item checklist in
   (`forui_theme_factory.dart:251-266`), never a wholesale font swap.
 - [x] Goldens re-baselined + dev-gallery fixture — **pass**: one `PreviewFrame` case per preset
   (`a11y_presets_gallery_cases.dart`, registered `gallery_registry.dart:44`); fontScale/font is
-  matrix-visible per this doc — repo-wide re-baseline still pending the pinned macOS 26 CI run
+  matrix-visible per this doc — repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD)
   (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: no new port; reuses `SettingsStore` + theme factory seam.
 - [x] Config rule respected — **pass**: no config surface.

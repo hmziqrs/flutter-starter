@@ -118,8 +118,7 @@ Implementation audit (2026-10-04) against the 13-item checklist in
 - [x] Native entitlements flagged — **n/a**: no native surface.
 - [x] Goldens re-baselined + dev-gallery fixture — **pass**: one `TypedGalleryCase` per severity
   (`dev_gallery/cases/announcements_gallery_cases.dart`, registered `gallery_registry.dart:39`);
-  the banner enters the shell matrix per this doc's golden-impact note — repo-wide re-baseline
-  still pending the pinned macOS 26 CI run (tracked repo-wide).
+  the banner enters the shell matrix per this doc's golden-impact note — repo-wide re-baseline is outstanding (the committed baselines are outdated vs HEAD) (tracked repo-wide).
 - [x] Port-reuse consistency — **pass**: standalone per this doc; dismissal reuses the shared
   `SettingsStore` per-key port under the single JSON key `announcements.dismissedIds`
   (`announcements_controller.dart:10`) with no `clearAll`; no parallel port introduced.

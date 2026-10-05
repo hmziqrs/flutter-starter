@@ -74,7 +74,7 @@ confirmation dialog — never a success toast for an action that did not succeed
 - [x] Strict analysis clean — **pass**: typed `ToastSeverity` / `ConfirmationIntent` enums with exhaustive switches (`app_toast.dart:59-64,74-99`; `app_confirmation_dialog.dart:91-102`); no `dynamic`.
 - [x] Generated code untouched — **pass**: no codegen for this feature; working-tree generated-file changes trace to source edits via `just gen`.
 - [x] Native entitlements flagged — **n/a**: no native surface.
-- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed per-severity + confirm/destroy `PreviewFrame` cases in `toast_dialogs_gallery_cases.dart`, registered in `gallery_registry.dart:51` — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed per-severity + confirm/destroy `PreviewFrame` cases in `toast_dialogs_gallery_cases.dart`, registered in `gallery_registry.dart:51` — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (the committed baselines are outdated vs HEAD; that re-baseline is outstanding).
 - [x] Port-reuse consistency — **pass**: wraps the existing `FToaster`/`FDialog` system (no `ScaffoldMessenger` fork); introduces no port.
 - [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
 - [x] Honest feedback, no faked success — **pass**: severity mapping never upgrades an outcome — `success` is caller-supplied only after a real success; `error`/`warning` carry `common.error` and destructive variants; confirmation returns a real `bool?` popped by explicit button or Escape, never an assumed confirm.
