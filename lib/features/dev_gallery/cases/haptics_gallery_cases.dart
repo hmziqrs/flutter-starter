@@ -29,12 +29,12 @@ class _HapticsPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final translations = context.t;
     return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
+      padding: context.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var index = 0; index < kinds.length; index++) ...[
-            if (index > 0) const SizedBox(height: AppSpacing.sm),
+            if (index > 0) SizedBox(height: context.spacing.sm),
             FButton(
               key: ValueKey('haptics-trigger-${kinds[index].name}'),
               variant: .outline,

@@ -51,6 +51,7 @@ class PermissionRationaleBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     final copy = PermissionRationaleCopy.forPermission(translations, permission);
     return Semantics(
       label: copy.title,
@@ -61,7 +62,7 @@ class PermissionRationaleBody extends StatelessWidget {
             maxWidth: context.presentationTokens.formContentMaxWidth,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            padding: EdgeInsets.all(spacing.xl),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -70,22 +71,22 @@ class PermissionRationaleBody extends StatelessWidget {
                   Row(
                     children: [
                       Icon(copy.icon, size: 28),
-                      const SizedBox(width: AppSpacing.md),
+                      SizedBox(width: spacing.md),
                       Expanded(
                         child: Text(copy.title, style: context.theme.typography.display.lg),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: spacing.md),
                   Text(copy.rationale, style: context.theme.typography.body.md),
                   if (permanentlyDenied) ...[
-                    const SizedBox(height: AppSpacing.md),
+                    SizedBox(height: spacing.md),
                     FAlert(
                       icon: const Icon(FLucideIcons.octagonAlert),
                       title: Text(translations.permission.permanentlyDenied),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: spacing.xl),
                   _actions(translations),
                 ],
               ),

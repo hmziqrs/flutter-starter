@@ -16,6 +16,8 @@ void main() {
       'appearance.accent',
       'appearance.font_scale',
       'appearance.text_preset',
+      'appearance.spacing',
+      'appearance.radius',
       'localization.locale',
       'onboarding.completed',
       'security.biometric_unlock_enabled',
@@ -52,6 +54,8 @@ void main() {
       accent: AppAccent.violet,
       fontScale: 1.35,
       textPreset: AppTextPreset.comfortable,
+      spacingVariant: AppSpacingVariant.standard,
+      radiusVariant: AppRadiusVariant.rounded,
       localeOverride: AppLocale.zhHans,
     );
 

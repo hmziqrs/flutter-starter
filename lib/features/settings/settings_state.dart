@@ -8,6 +8,26 @@ enum AppThemeMode { system, light, dark }
 
 enum AppAccent { neutral, green, blue, amber, rose, violet }
 
+enum AppSpacingVariant {
+  compact(0.85),
+  standard(1),
+  relaxed(1.2);
+
+  const AppSpacingVariant(this.scaleFactor);
+
+  final double scaleFactor;
+}
+
+enum AppRadiusVariant {
+  sharp(0),
+  rounded(1),
+  extraRound(1.5);
+
+  const AppRadiusVariant(this.scaleFactor);
+
+  final double scaleFactor;
+}
+
 @Freezed(copyWith: false)
 class SettingsState with _$SettingsState {
   const SettingsState({
@@ -15,6 +35,8 @@ class SettingsState with _$SettingsState {
     required this.accent,
     required this.fontScale,
     required this.textPreset,
+    required this.spacingVariant,
+    required this.radiusVariant,
     required this.localeOverride,
     this.hasCompletedOnboarding = false,
     this.biometricUnlockEnabled = false,
@@ -29,6 +51,8 @@ class SettingsState with _$SettingsState {
       accent = AppAccent.neutral,
       fontScale = 1,
       textPreset = AppTextPreset.comfortable,
+      spacingVariant = AppSpacingVariant.standard,
+      radiusVariant = AppRadiusVariant.rounded,
       localeOverride = null,
       hasCompletedOnboarding = false,
       biometricUnlockEnabled = false,
@@ -49,6 +73,10 @@ class SettingsState with _$SettingsState {
   final double fontScale;
   @override
   final AppTextPreset textPreset;
+  @override
+  final AppSpacingVariant spacingVariant;
+  @override
+  final AppRadiusVariant radiusVariant;
 
   String? get fontFamily => textPreset.toSettings().fontFamily;
 
@@ -78,6 +106,8 @@ class SettingsState with _$SettingsState {
     AppAccent? accent,
     double? fontScale,
     AppTextPreset? textPreset,
+    AppSpacingVariant? spacingVariant,
+    AppRadiusVariant? radiusVariant,
     AppLocale? localeOverride,
     bool? hasCompletedOnboarding,
     bool? biometricUnlockEnabled,
@@ -92,6 +122,8 @@ class SettingsState with _$SettingsState {
       accent: accent ?? this.accent,
       fontScale: fontScale ?? this.fontScale,
       textPreset: textPreset ?? this.textPreset,
+      spacingVariant: spacingVariant ?? this.spacingVariant,
+      radiusVariant: radiusVariant ?? this.radiusVariant,
       localeOverride: followSystemLocale ? null : (localeOverride ?? this.localeOverride),
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       biometricUnlockEnabled: biometricUnlockEnabled ?? this.biometricUnlockEnabled,

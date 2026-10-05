@@ -21,13 +21,14 @@ class RouteErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     return FScaffold(
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
             child: Padding(
-              padding: AppSpacing.screenPadding,
+              padding: context.screenPadding,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,23 +38,23 @@ class RouteErrorPage extends StatelessWidget {
                     size: 40,
                     color: context.theme.colors.error,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: spacing.lg),
                   Text(
                     translations.routeError.title,
                     style: context.theme.typography.display.xl,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(height: spacing.sm),
                   Text(
                     message ?? translations.routeError.body,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(height: spacing.sm),
                   SelectableText(
                     translations.routeError.path(path: location),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: spacing.xl),
                   FButton(
                     key: const ValueKey('route-error-home'),
                     autofocus: true,
@@ -61,7 +62,7 @@ class RouteErrorPage extends StatelessWidget {
                     child: Text(translations.common.home),
                   ),
                   if (onBack case final onBack? when Navigator.canPop(context)) ...[
-                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(height: spacing.sm),
                     FButton(
                       key: const ValueKey('route-error-back'),
                       variant: .outline,

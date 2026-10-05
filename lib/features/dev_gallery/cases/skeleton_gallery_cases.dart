@@ -42,7 +42,7 @@ class _SkeletonPreview extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           for (var index = 0; index < 3; index++) ...<Widget>[
-            if (index > 0) const SizedBox(height: AppSpacing.sm),
+            if (index > 0) SizedBox(height: context.spacing.sm),
             const SkeletonTile(),
           ],
         ],
@@ -51,14 +51,14 @@ class _SkeletonPreview extends StatelessWidget {
 
     if (!forceStatic) {
       return Center(
-        child: Padding(padding: AppSpacing.screenPadding, child: content),
+        child: Padding(padding: context.screenPadding, child: content),
       );
     }
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(disableAnimations: true),
       child: Center(
-        child: Padding(padding: AppSpacing.screenPadding, child: content),
+        child: Padding(padding: context.screenPadding, child: content),
       ),
     );
   }

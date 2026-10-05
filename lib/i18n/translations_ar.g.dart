@@ -16,22 +16,22 @@ class TranslationsAr extends Translations with BaseTranslations<AppLocale, Trans
 	/// Constructing via the enum [AppLocale.build] is preferred.
 	TranslationsAr({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver, TranslationMetadata<AppLocale, Translations>? meta})
 		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = meta ?? TranslationMetadata(
+		  _meta = meta ?? TranslationMetadata(
 		    locale: AppLocale.ar,
 		    overrides: overrides ?? {},
 		    cardinalResolver: cardinalResolver,
 		    ordinalResolver: ordinalResolver,
 		  ),
 		  super(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver) {
-		super.$meta.setFlatMapFunction($meta.getTranslation); // copy base translations to super.$meta
-		$meta.setFlatMapFunction(_flatMapFunction);
+		_meta.setFlatMapFunction(_flatMapFunction);
 	}
 
 	/// Metadata for the translations of <ar>.
-	@override final TranslationMetadata<AppLocale, Translations> $meta;
+	final TranslationMetadata<AppLocale, Translations> _meta;
+	@override TranslationMetadata<AppLocale, Translations> get $meta => _meta;
 
 	/// Access flat map
-	@override dynamic operator[](String key) => $meta.getTranslation(key) ?? super.$meta.getTranslation(key);
+	@override dynamic operator[](String key) => _meta.getTranslation(key) ?? super[key];
 
 	late final TranslationsAr _root = this; // ignore: unused_field
 
@@ -245,6 +245,14 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get accentRose => 'وردي';
 	@override String get accentViolet => 'بنفسجي';
 	@override String get fontScale => 'حجم النص';
+	@override String get spacing => 'التباعد';
+	@override String get spacingCompact => 'مضغوط';
+	@override String get spacingStandard => 'قياسي';
+	@override String get spacingRelaxed => 'واسع';
+	@override String get cornerRadius => 'انحناء الحواف';
+	@override String get radiusSharp => 'حاد';
+	@override String get radiusRounded => 'دائري';
+	@override String get radiusExtraRound => 'دائري للغاية';
 	@override String get motionPreview => 'معاينة الحركة';
 	@override String get locale => 'لغة التطبيق';
 	@override String get languageSystem => 'استخدام لغة الجهاز';
@@ -1292,6 +1300,14 @@ extension on TranslationsAr {
 			'settings.accentRose' => 'وردي',
 			'settings.accentViolet' => 'بنفسجي',
 			'settings.fontScale' => 'حجم النص',
+			'settings.spacing' => 'التباعد',
+			'settings.spacingCompact' => 'مضغوط',
+			'settings.spacingStandard' => 'قياسي',
+			'settings.spacingRelaxed' => 'واسع',
+			'settings.cornerRadius' => 'انحناء الحواف',
+			'settings.radiusSharp' => 'حاد',
+			'settings.radiusRounded' => 'دائري',
+			'settings.radiusExtraRound' => 'دائري للغاية',
 			'settings.motionPreview' => 'معاينة الحركة',
 			'settings.locale' => 'لغة التطبيق',
 			'settings.languageSystem' => 'استخدام لغة الجهاز',
@@ -1676,6 +1692,8 @@ extension on TranslationsAr {
 			'devGallery.caseDialogDestroy' => 'مربع حذف',
 			'devGallery.screenPasscodeEntry' => 'إدخال رمز المرور',
 			'devGallery.screenPasscodeSetup' => 'إعداد رمز المرور',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.casePasscodeIdle' => 'خامل',
 			'devGallery.casePasscodeError' => 'غير صحيح',
 			'devGallery.casePasscodeLockedOut' => 'مقفل',
@@ -1684,8 +1702,6 @@ extension on TranslationsAr {
 			'devGallery.caseFeedbackDrafting' => 'كتابة',
 			'devGallery.caseFeedbackSubmitting' => 'إرسال',
 			'devGallery.caseFeedbackFailed' => 'فشل',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => 'نجاح',
 			'notifications.enableTitle' => 'تفعيل الإشعارات',
 			'notifications.enableBody' => 'احصل على تحديثات في الوقت المناسب حول حسابك ونشاطك. يمكنك تغيير هذا في أي وقت.',

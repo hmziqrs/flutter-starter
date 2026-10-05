@@ -671,8 +671,8 @@ class _AvatarEditorState extends State<_AvatarEditor> {
     return AppCard(
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.lg,
+        spacing: context.spacing.lg,
+        runSpacing: context.spacing.lg,
         children: [
           _AvatarPlaceholder(size: 72, iconSize: 32, label: translations.avatar),
           FButton(
@@ -697,22 +697,23 @@ class _ProfilePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.profile.update;
+    final spacing = context.spacing;
     return AppCard(
       key: const ValueKey('profile-preview'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _AvatarPlaceholder(size: 80, iconSize: 36, label: translations.avatar),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: spacing.lg),
           Text(
             draft.displayName,
             key: const ValueKey('profile-preview-name'),
             style: context.theme.typography.display.lg,
           ),
-          const SizedBox(height: AppSpacing.xs),
+          SizedBox(height: spacing.xs),
           Text('@${draft.username}', style: context.theme.typography.body.sm),
           if (draft.bio.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: spacing.lg),
             Text(draft.bio, style: context.theme.typography.body.sm),
           ],
         ],

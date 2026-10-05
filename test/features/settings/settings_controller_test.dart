@@ -21,6 +21,8 @@ void main() {
     await controller.setThemeMode(AppThemeMode.dark);
     await controller.setAccent(AppAccent.blue);
     await controller.setFontScale(1.3);
+    await controller.setSpacingVariant(AppSpacingVariant.compact);
+    await controller.setRadiusVariant(AppRadiusVariant.extraRound);
 
     expect(
       container.read(settingsControllerProvider),
@@ -29,6 +31,8 @@ void main() {
         accent: AppAccent.blue,
         fontScale: 1.3,
         textPreset: AppTextPreset.comfortable,
+        spacingVariant: AppSpacingVariant.compact,
+        radiusVariant: AppRadiusVariant.extraRound,
         localeOverride: null,
       ),
     );

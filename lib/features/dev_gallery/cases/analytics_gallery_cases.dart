@@ -48,7 +48,7 @@ class _AnalyticsOptInPreview extends StatelessWidget {
               label: Text(translations.settings.analytics.optInTitle),
               description: Text(translations.settings.analytics.optInBody),
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             Text(
               optedIn
                   ? translations.settings.analytics.statusOn

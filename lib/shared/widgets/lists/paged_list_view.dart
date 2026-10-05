@@ -127,9 +127,9 @@ class _LoadNextFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-      child: Center(child: FProgress()),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: context.spacing.lg),
+      child: const Center(child: FProgress()),
     );
   }
 }

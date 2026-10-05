@@ -656,6 +656,8 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
           themeMode: state.themeMode,
           accent: state.accent,
           fontScale: state.fontScale,
+          spacingVariant: state.spacingVariant,
+          radiusVariant: state.radiusVariant,
         ),
       ),
     );
@@ -729,6 +731,42 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
                     '${(_sliderToFontScale(value) * 100).round()}%',
                   ),
                 ),
+              ],
+            ),
+          ),
+          SizedBox(height: spacing.lg),
+          LabeledSectionCard(
+            title: translations.settings.spacing,
+            child: Wrap(
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
+              children: [
+                for (final variant in AppSpacingVariant.values)
+                  FButton(
+                    key: ValueKey('spacing-${variant.name}'),
+                    variant: settings.spacingVariant == variant ? .primary : .outline,
+                    mainAxisSize: .min,
+                    onPress: () => runSave(() => controller.setSpacingVariant(variant)),
+                    child: Text(_spacingVariantLabel(translations, variant)),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: spacing.lg),
+          LabeledSectionCard(
+            title: translations.settings.cornerRadius,
+            child: Wrap(
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
+              children: [
+                for (final variant in AppRadiusVariant.values)
+                  FButton(
+                    key: ValueKey('radius-${variant.name}'),
+                    variant: settings.radiusVariant == variant ? .primary : .outline,
+                    mainAxisSize: .min,
+                    onPress: () => runSave(() => controller.setRadiusVariant(variant)),
+                    child: Text(_radiusVariantLabel(translations, variant)),
+                  ),
               ],
             ),
           ),
@@ -900,6 +938,22 @@ String _accentLabel(Translations translations, AppAccent accent) {
     AppAccent.amber => translations.settings.accentAmber,
     AppAccent.rose => translations.settings.accentRose,
     AppAccent.violet => translations.settings.accentViolet,
+  };
+}
+
+String _spacingVariantLabel(Translations translations, AppSpacingVariant variant) {
+  return switch (variant) {
+    AppSpacingVariant.compact => translations.settings.spacingCompact,
+    AppSpacingVariant.standard => translations.settings.spacingStandard,
+    AppSpacingVariant.relaxed => translations.settings.spacingRelaxed,
+  };
+}
+
+String _radiusVariantLabel(Translations translations, AppRadiusVariant variant) {
+  return switch (variant) {
+    AppRadiusVariant.sharp => translations.settings.radiusSharp,
+    AppRadiusVariant.rounded => translations.settings.radiusRounded,
+    AppRadiusVariant.extraRound => translations.settings.radiusExtraRound,
   };
 }
 

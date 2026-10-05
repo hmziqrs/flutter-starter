@@ -80,13 +80,14 @@ class StartupErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     return FScaffold(
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
             child: Padding(
-              padding: AppSpacing.screenPadding,
+              padding: context.screenPadding,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,25 +97,25 @@ class StartupErrorView extends StatelessWidget {
                     size: 40,
                     color: context.theme.colors.error,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: spacing.lg),
                   Text(
                     translations.startupFailure.title,
                     style: context.theme.typography.display.xl,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: spacing.md),
                   Text(
                     translations.startupFailure.body,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: spacing.lg),
                   SelectableText(
                     translations.startupFailure.diagnosticId(id: diagnosticId),
                     key: const ValueKey('startup-diagnostic-id'),
                     textAlign: TextAlign.center,
                   ),
                   if (onRetry case final onRetry?) ...[
-                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: spacing.xl),
                     FButton(
                       key: const ValueKey('startup-retry'),
                       onPress: onRetry,

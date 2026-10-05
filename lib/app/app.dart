@@ -293,6 +293,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           themeMode: settings.themeMode,
           accent: settings.accent,
           fontScale: settings.fontScale,
+          spacingVariant: settings.spacingVariant,
+          radiusVariant: settings.radiusVariant,
           fontFamily: settings.fontFamily,
         ),
       ),
@@ -310,6 +312,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       fontScale: themeSettings.fontScale,
       fontFamily: themeSettings.fontFamily,
       interactionPolicy: interactionPolicy,
+      spacingScaleFactor: themeSettings.spacingVariant.scaleFactor,
+      radiusScaleFactor: themeSettings.radiusVariant.scaleFactor,
       presentationPolicy: presentationPolicy,
     );
     final darkTheme = materialThemeMode == ThemeMode.light
@@ -320,6 +324,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
             fontScale: themeSettings.fontScale,
             fontFamily: themeSettings.fontFamily,
             interactionPolicy: interactionPolicy,
+            spacingScaleFactor: themeSettings.spacingVariant.scaleFactor,
+            radiusScaleFactor: themeSettings.radiusVariant.scaleFactor,
             presentationPolicy: presentationPolicy,
           );
 
@@ -344,6 +350,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
           fontFamily: themeSettings.fontFamily,
           interactionPolicy: interactionPolicy,
           responsiveFontScale: context.appUnit.typographyScale,
+          spacingScaleFactor: themeSettings.spacingVariant.scaleFactor,
+          radiusScaleFactor: themeSettings.radiusVariant.scaleFactor,
           presentationPolicy: presentationPolicy,
         );
 
@@ -459,6 +467,8 @@ typedef _ForuiThemeKey = ({
   AppInteractionPolicy interactionPolicy,
   String? fontFamily,
   double responsiveFontScale,
+  double spacingScaleFactor,
+  double radiusScaleFactor,
   AppPresentationPolicy? presentationPolicy,
 });
 
@@ -473,6 +483,8 @@ final class _ForuiThemeMemo {
     required AppInteractionPolicy interactionPolicy,
     String? fontFamily,
     double responsiveFontScale = 1,
+    double spacingScaleFactor = 1,
+    double radiusScaleFactor = 1,
     AppPresentationPolicy? presentationPolicy,
   }) {
     final key = (
@@ -482,6 +494,8 @@ final class _ForuiThemeMemo {
       interactionPolicy: interactionPolicy,
       fontFamily: fontFamily,
       responsiveFontScale: responsiveFontScale,
+      spacingScaleFactor: spacingScaleFactor,
+      radiusScaleFactor: radiusScaleFactor,
       presentationPolicy: presentationPolicy,
     );
     if (_key == key) {
@@ -494,6 +508,8 @@ final class _ForuiThemeMemo {
       fontFamily: fontFamily,
       interactionPolicy: interactionPolicy,
       responsiveFontScale: responsiveFontScale,
+      spacingScaleFactor: spacingScaleFactor,
+      radiusScaleFactor: radiusScaleFactor,
       presentationPolicy: presentationPolicy,
     );
     _key = key;

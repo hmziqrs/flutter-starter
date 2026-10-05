@@ -35,7 +35,7 @@ class SkeletonTile extends StatelessWidget {
         child: Row(
           children: <Widget>[
             SkeletonCircle(size: avatarSize),
-            const SizedBox(width: AppSpacing.md),
+            SizedBox(width: context.spacing.md),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -43,7 +43,7 @@ class SkeletonTile extends StatelessWidget {
                 children: <Widget>[
                   SkeletonLine(widthFraction: titleFraction),
                   if (includeSubtitle) ...<Widget>[
-                    const SizedBox(height: AppSpacing.xs),
+                    SizedBox(height: context.spacing.xs),
                     SkeletonLine(widthFraction: subtitleFraction, height: 10),
                   ],
                 ],
@@ -84,10 +84,10 @@ class SkeletonCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             SkeletonBox(width: iconSize, height: iconSize),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             SkeletonLine(widthFraction: titleFraction),
             for (var index = 0; index < lineCount; index++) ...<Widget>[
-              const SizedBox(height: AppSpacing.xs),
+              SizedBox(height: context.spacing.xs),
               SkeletonLine(
                 height: 10,
                 widthFraction: index == lineCount - 1 ? 0.6 : 1.0,

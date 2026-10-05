@@ -13,7 +13,7 @@ class GalleryPreviewBody extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
         child: Padding(
-          padding: AppSpacing.screenPadding,
+          padding: context.screenPadding,
           child: child,
         ),
       ),

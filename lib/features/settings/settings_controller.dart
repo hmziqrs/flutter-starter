@@ -45,6 +45,14 @@ final class SettingsController extends Notifier<SettingsState>
     return _replace(state.copyWith(textPreset: preset, fontScale: resolved.fontScale));
   }
 
+  Future<void> setSpacingVariant(AppSpacingVariant variant) {
+    return _replace(state.copyWith(spacingVariant: variant));
+  }
+
+  Future<void> setRadiusVariant(AppRadiusVariant variant) {
+    return _replace(state.copyWith(radiusVariant: variant));
+  }
+
   Future<void> setHapticsEnabled({required bool enabled}) {
     return _replace(state.copyWith(hapticsEnabled: enabled));
   }

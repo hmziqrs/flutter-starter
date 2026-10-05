@@ -39,11 +39,11 @@ class SettingsToggleCard extends StatelessWidget {
             onChange: onChange,
           ),
           if (status case final status?) ...[
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             Text(status, style: context.theme.typography.body.sm),
           ],
           if (saveFailed) ...[
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: context.spacing.sm),
             Text(
               translations.common.notConnected,
               key: const ValueKey('settings-toggle-save-error'),

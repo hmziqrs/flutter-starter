@@ -65,13 +65,13 @@ class _PermissionPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
+      padding: context.screenPadding,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
           child: FCard(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: EdgeInsets.all(context.spacing.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
@@ -81,7 +81,7 @@ class _PermissionPreview extends StatelessWidget {
                       icon: const Icon(FLucideIcons.circleAlert),
                       title: Text(context.t.permission.denied),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    SizedBox(height: context.spacing.md),
                   ],
                   PermissionRationaleBody(
                     permission: state.permission,

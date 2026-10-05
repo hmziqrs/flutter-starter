@@ -48,7 +48,7 @@ const _previewItems = <_PreviewItem>[
 Widget _previewCell(BuildContext context, _PreviewItem item) {
   return FCard(
     child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(context.spacing.lg),
       child: Center(child: Text(item.label, style: context.theme.typography.display.lg)),
     ),
   );

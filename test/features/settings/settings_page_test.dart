@@ -10,6 +10,7 @@ import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
+import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
@@ -100,6 +101,40 @@ void main() {
     expect(find.text('أزرق'), findsOneWidget);
     expect(find.text('blue'), findsNothing);
     expect(Directionality.of(tester.element(find.text('أزرق'))), TextDirection.rtl);
+  });
+
+  testWidgets('appearance spacing and radius variants render and persist', (tester) async {
+    _setViewport(tester, const Size(1024, 844));
+    await LocaleSettings.setLocale(AppLocale.en);
+    final store = InMemorySettingsStore();
+    await tester.pumpWidget(
+      _app(
+        initialLocation: '/settings/appearance',
+        dependencies: AppDependencies.inMemory(settingsStore: store),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final variant in AppSpacingVariant.values) {
+      expect(find.byKey(ValueKey('spacing-${variant.name}')), findsOneWidget);
+    }
+    for (final variant in AppRadiusVariant.values) {
+      expect(find.byKey(ValueKey('radius-${variant.name}')), findsOneWidget);
+    }
+
+    final spacingRelaxed = find.byKey(const ValueKey('spacing-relaxed'));
+    await tester.ensureVisible(spacingRelaxed);
+    await tester.pumpAndSettle();
+    await tester.tap(spacingRelaxed.hitTestable());
+    await tester.pumpAndSettle();
+    final radiusSharp = find.byKey(const ValueKey('radius-sharp'));
+    await tester.ensureVisible(radiusSharp);
+    await tester.pumpAndSettle();
+    await tester.tap(radiusSharp.hitTestable());
+    await tester.pumpAndSettle();
+
+    expect(await store.readString('appearance.spacing'), AppSpacingVariant.relaxed.name);
+    expect(await store.readString('appearance.radius'), AppRadiusVariant.sharp.name);
   });
 
   testWidgets('wide settings navigation keeps equal gaps at medium and expanded widths', (

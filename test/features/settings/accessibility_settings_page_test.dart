@@ -108,6 +108,8 @@ Widget _harness({
     themeMode: AppThemeMode.system,
     accent: AppAccent.neutral,
     fontScale: presetSettings.fontScale,
+    spacingVariant: AppSpacingVariant.standard,
+    radiusVariant: AppRadiusVariant.rounded,
     localeOverride: locale,
     textPreset: initialPreset,
   );

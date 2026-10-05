@@ -133,7 +133,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
           else
             _buildSetupSurface(context),
           if (_entryError != null || _setupError != null) ...[
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             FAlert(
               key: ValueKey('passcode-error-${_entryError ?? _setupError}'),
               variant: .destructive,
@@ -147,6 +147,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
 
   Widget _buildEntrySurface(BuildContext context, {required PasscodeState passcodeState}) {
     final translations = context.t.security.passcode;
+    final spacing = context.spacing;
     final now = DateTime.now();
     final lockedSeconds = passcodeState.lockedSecondsAt(now);
     final isLockedOut = passcodeState.isLockedAt(now);
@@ -160,20 +161,20 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
           style: context.theme.typography.display.xl2,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppSpacing.md),
+        SizedBox(height: spacing.md),
         Text(
           translations.enterBody,
           key: const ValueKey('passcode-entry-body'),
           style: context.theme.typography.body.md,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppSpacing.xl),
+        SizedBox(height: spacing.xl),
         _PasscodeDots(
           filled: _entryController.text.length,
           total: widget.passcodeLength,
           pulse: isLockedOut,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: spacing.lg),
         if (isLockedOut)
           _LockedOutNotice(seconds: lockedSeconds)
         else
@@ -193,7 +194,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             onSubmitted: (_) => unawaited(_submitEntry()),
             autofocus: true,
           ),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: spacing.lg),
         _ShakeGuard(
           shaking: _shake,
           child: Column(
@@ -205,7 +206,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
                 child: Text(translations.enterTitle),
               ),
               if (widget.onDisable != null) ...[
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: spacing.md),
                 FButton(
                   key: const ValueKey('passcode-disable'),
                   variant: .ghost,
@@ -222,6 +223,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
 
   Widget _buildSetupSurface(BuildContext context) {
     final translations = context.t.security.passcode;
+    final spacing = context.spacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -230,7 +232,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
           total: widget.passcodeLength,
           pulse: false,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: spacing.lg),
         Form(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -249,7 +251,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
                 },
                 autofocus: true,
               ),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: spacing.md),
               _digitField(
                 context,
                 key: const ValueKey('passcode-setup-confirm'),
@@ -264,7 +266,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: spacing.lg),
         FButton(
           key: const ValueKey('passcode-setup-submit'),
           onPress: _submitting ? null : () => unawaited(_submitSetup()),
@@ -404,7 +406,7 @@ class _PasscodeDots extends StatelessWidget {
             children: [
               for (var i = 0; i < total; i++)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                  padding: EdgeInsets.symmetric(horizontal: context.spacing.xs),
                   child: _Dot(active: i < filled, pulse: pulse && i < filled),
                 ),
             ],
@@ -451,7 +453,7 @@ class _LockedOutNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final translations = context.t.security.passcode;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: EdgeInsets.symmetric(vertical: context.spacing.md),
       child: Text(
         translations.lockedOut(n: seconds, seconds: seconds),
         key: const ValueKey('passcode-locked-out'),

@@ -75,6 +75,7 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final spacing = context.spacing;
             final controls = _GalleryControls(
               cases: widget.cases,
               environment: _environment,
@@ -98,13 +99,13 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
                   Expanded(
                     child: ListView(
                       key: const ValueKey('gallery-controls-scroll'),
-                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      padding: EdgeInsets.all(spacing.lg),
                       children: [
                         Text(
                           translations.devGallery.title,
                           style: context.theme.typography.display.xl2,
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        SizedBox(height: spacing.lg),
                         controls,
                       ],
                     ),
@@ -112,7 +113,7 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
                   SizedBox(
                     height: previewHeight,
                     child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      padding: EdgeInsets.all(spacing.lg),
                       child: preview,
                     ),
                   ),
@@ -127,24 +128,24 @@ class _ScreenGalleryPageState extends State<ScreenGalleryPage> {
                   width: context.appUnit.un(360),
                   child: ListView(
                     key: const ValueKey('gallery-controls-scroll'),
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: EdgeInsets.all(spacing.lg),
                     children: [
                       Text(
                         translations.devGallery.title,
                         style: context.theme.typography.display.xl2,
                       ),
-                      const SizedBox(height: AppSpacing.lg),
+                      SizedBox(height: spacing.lg),
                       controls,
                     ],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.lg),
+                SizedBox(width: spacing.lg),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      top: AppSpacing.lg,
-                      end: AppSpacing.lg,
-                      bottom: AppSpacing.lg,
+                    padding: EdgeInsetsDirectional.only(
+                      top: spacing.lg,
+                      end: spacing.lg,
+                      bottom: spacing.lg,
                     ),
                     child: preview,
                   ),
@@ -196,12 +197,12 @@ class _GalleryPreview extends StatelessWidget {
     final galleryCase = this.galleryCase;
     return FCard(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: EdgeInsets.all(context.spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(context.t.devGallery.preview, style: context.theme.typography.display.lg),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: context.spacing.md),
             Expanded(
               child: PreviewFrame(
                 environment: environment,
@@ -272,7 +273,7 @@ class _GalleryControlsState extends State<_GalleryControls> {
           label: Text(gallery.search),
           control: .managed(onChange: (value) => _query.value = value.text),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: context.spacing.lg),
         ValueListenableBuilder<String>(
           valueListenable: _query,
           builder: (context, query, _) {
@@ -576,17 +577,18 @@ class _ControlGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.spacing;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: EdgeInsets.only(bottom: spacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: context.theme.typography.display.sm),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: spacing.sm),
           if (children.isEmpty)
             Text(emptyLabel ?? context.t.devGallery.caseNotFound)
           else
-            Wrap(spacing: AppSpacing.sm, runSpacing: AppSpacing.sm, children: children),
+            Wrap(spacing: spacing.sm, runSpacing: spacing.sm, children: children),
         ],
       ),
     );

@@ -108,7 +108,7 @@ class _IconLabelCard extends StatelessWidget {
               icon,
               color: iconColorError ? context.theme.colors.error : context.theme.colors.primary,
             ),
-            const SizedBox(width: AppSpacing.md),
+            SizedBox(width: context.spacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

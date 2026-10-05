@@ -76,7 +76,7 @@ class SplashScene extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            padding: EdgeInsets.symmetric(horizontal: context.spacing.xl),
             child: switch (viewData.phase) {
               SplashPhase.loading => _SplashLoading(viewData: viewData),
               SplashPhase.done => _SplashDone(viewData: viewData),
@@ -97,19 +97,20 @@ class _SplashLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _LogoReveal(child: _BrandMark()),
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: spacing.xl),
           Text(
             translations.app.name,
             key: const ValueKey('splash-title'),
             style: context.theme.typography.display.xl2,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: spacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: context.presentationTokens.formContentMaxWidth),
             child: Text(
@@ -119,7 +120,7 @@ class _SplashLoading extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: AppSpacing.xl2),
+          SizedBox(height: spacing.xl2),
           if (reduceMotion)
             Text(
               translations.splash.loading,
@@ -142,24 +143,25 @@ class _SplashDone extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _BrandMark(),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: spacing.lg),
           Icon(
             FLucideIcons.circleCheck,
             size: 32,
             color: context.theme.colors.primary,
           ),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: spacing.md),
           Text(
             translations.app.name,
             style: context.theme.typography.display.xl2,
           ),
           if (viewData.buildLabel case final label?) ...[
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: spacing.sm),
             Text(
               label,
               key: const ValueKey('splash-build-label'),
@@ -192,7 +194,7 @@ class _SplashError extends StatelessWidget {
               size: 40,
               color: context.theme.colors.error,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             Text(
               translations.splash.error,
               key: const ValueKey('splash-error'),
@@ -200,7 +202,7 @@ class _SplashError extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (viewData.errorDiagnosticId case final id?) ...[
-              const SizedBox(height: AppSpacing.lg),
+              SizedBox(height: context.spacing.lg),
               SelectableText(
                 translations.startupFailure.diagnosticId(id: id),
                 key: const ValueKey('splash-diagnostic-id'),

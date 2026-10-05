@@ -62,6 +62,7 @@ class _NotificationsRationalePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     final notifications = translations.notifications;
     final permission = state.permission;
     final isBlocked = permission.showsOpenSettings;
@@ -75,22 +76,22 @@ class _NotificationsRationalePreview extends StatelessWidget {
               isBlocked ? notifications.enableBlockedTitle : notifications.enableTitle,
               style: context.theme.typography.display.lg,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: spacing.sm),
             Text(
               isBlocked ? notifications.enableBlockedBody : notifications.enableBody,
               style: context.theme.typography.body.sm,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: spacing.lg),
             Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: spacing.sm,
+              runSpacing: spacing.sm,
               children: [
                 _StatusChip(label: notifications.deny),
                 _StatusChip(label: notifications.allow),
               ],
             ),
             if (permission == NotificationPermissionStatus.notRequested) ...[
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: spacing.md),
               Text(
                 notifications.disabled,
                 style: context.theme.typography.body.xs,
@@ -111,10 +112,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(horizontal: context.spacing.md, vertical: context.spacing.sm),
       decoration: BoxDecoration(
         border: Border.all(color: context.theme.colors.border),
-        borderRadius: BorderRadius.circular(AppSpacing.sm),
+        borderRadius: BorderRadius.circular(context.spacing.sm),
       ),
       child: Text(label, style: context.theme.typography.body.sm),
     );

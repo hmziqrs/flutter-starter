@@ -47,7 +47,7 @@ class OnboardingSlide extends StatelessWidget {
             ),
             child: FCard(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl2),
+                padding: EdgeInsets.all(spacing.xl2),
                 child: Column(
                   children: [
                     visual,
@@ -69,7 +69,7 @@ class OnboardingSlide extends StatelessWidget {
                 Expanded(
                   child: FCard(
                     child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl2),
+                      padding: EdgeInsets.all(spacing.xl2),
                       child: copy,
                     ),
                   ),
@@ -93,12 +93,12 @@ class _OnboardingVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return FCard(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl2),
+        padding: EdgeInsets.all(context.spacing.xl2),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(_iconFor(data.visual), size: 72, color: context.theme.colors.primary),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: context.spacing.lg),
             Text(
               brandLabel,
               textAlign: TextAlign.center,

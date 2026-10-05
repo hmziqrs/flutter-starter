@@ -53,13 +53,13 @@ class FormScaffold extends StatelessWidget {
       child: FScaffold(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsetsDirectional.all(AppSpacing.xl2),
+            padding: EdgeInsetsDirectional.all(context.spacing.xl2),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   maxWidth: AppSizes.formContentMaxWidth,
                 ),
-                child: _body(),
+                child: _body(context),
               ),
             ),
           ),
@@ -68,20 +68,21 @@ class FormScaffold extends StatelessWidget {
     );
   }
 
-  Widget _body() {
+  Widget _body(BuildContext context) {
+    final spacing = context.spacing;
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (heading != null) ...[
           heading!,
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: spacing.md),
         ],
         if (subheading != null) ...[
           subheading!,
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: spacing.xl),
         ],
         Form(key: formKey, child: fields),
-        const SizedBox(height: AppSpacing.xl),
+        SizedBox(height: spacing.xl),
         FormSubmitButton(
           buttonKey: submitKey,
           label: submitLabel,
@@ -97,7 +98,7 @@ class FormScaffold extends StatelessWidget {
     }
     return FCard(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: EdgeInsets.all(spacing.xl),
         child: content,
       ),
     );

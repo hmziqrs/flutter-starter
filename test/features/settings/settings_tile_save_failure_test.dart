@@ -89,6 +89,8 @@ Widget _harness({bool failWrites = false, InMemorySettingsStore? store}) {
     fontScale: 1,
     localeOverride: AppLocale.en,
     textPreset: AppTextPreset.comfortable,
+    spacingVariant: AppSpacingVariant.standard,
+    radiusVariant: AppRadiusVariant.rounded,
   );
   final theme = ForuiThemeFactory.build(
     brightness: Brightness.light,

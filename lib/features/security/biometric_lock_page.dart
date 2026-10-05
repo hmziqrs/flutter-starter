@@ -74,6 +74,7 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
 
   Widget _buildForm(BuildContext context, {required bool isUnavailable}) {
     final translations = context.t.security.biometric;
+    final spacing = context.spacing;
     return Column(
       key: const ValueKey('biometric-lock-form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,14 +82,14 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
         Center(
           child: _BiometricLockIcon(unavailable: isUnavailable),
         ),
-        const SizedBox(height: AppSpacing.xl),
+        SizedBox(height: spacing.xl),
         Text(
           isUnavailable ? translations.unavailableTitle : translations.lockTitle,
           key: const ValueKey('biometric-lock-title'),
           style: context.theme.typography.display.xl2,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppSpacing.md),
+        SizedBox(height: spacing.md),
         Text(
           isUnavailable ? translations.unavailableBody : translations.lockBody,
           key: const ValueKey('biometric-lock-body'),
@@ -96,14 +97,14 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
           textAlign: TextAlign.center,
         ),
         if (_lastAttemptFailed) ...[
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: spacing.xl),
           FAlert(
             key: const ValueKey('biometric-lock-failure'),
             variant: .destructive,
             title: Text(translations.authFailedTitle),
           ),
         ],
-        const SizedBox(height: AppSpacing.xl),
+        SizedBox(height: spacing.xl),
         if (isUnavailable)
           FButton(
             key: const ValueKey('biometric-lock-fallback'),

@@ -29,7 +29,7 @@ class ForceUpdatePage extends StatelessWidget {
                 maxWidth: AppSizes.formContentMaxWidth,
               ),
               child: Padding(
-                padding: AppSpacing.screenPadding,
+                padding: context.screenPadding,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -41,13 +41,13 @@ class ForceUpdatePage extends StatelessWidget {
                         style: context.theme.typography.display.xl,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: context.spacing.md),
                       Text(
                         state.message ?? translations.forceUpdate.body,
                         key: const ValueKey('force-update-body'),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppSpacing.xl),
+                      SizedBox(height: context.spacing.xl),
                       FButton(
                         key: const ValueKey('force-update-update-now'),
                         onPress: onUpdateNow,

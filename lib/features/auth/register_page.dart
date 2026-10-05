@@ -495,7 +495,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
           cancelKey: const ValueKey('auth-register-discard-stay'),
           actionKey: const ValueKey('auth-register-discard-confirm'),
           autofocusCancel: true,
-          titleBodySpacing: AppSpacing.md,
+          titleBodySpacing: context.spacing.md,
         ) ??
         false;
   }

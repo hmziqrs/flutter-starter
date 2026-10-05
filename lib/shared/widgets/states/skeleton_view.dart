@@ -17,7 +17,11 @@ class SkeletonStyle {
     final colors = context.theme.colors;
     final base = _lerp(colors.background, colors.foreground, 0.10);
     final highlight = _lerp(base, const Color(0xFFFFFFFF), 0.35);
-    return SkeletonStyle(baseColor: base, highlightColor: highlight);
+    return SkeletonStyle(
+      baseColor: base,
+      highlightColor: highlight,
+      borderRadius: context.theme.style.borderRadius.sm,
+    );
   }
 
   final Color baseColor;

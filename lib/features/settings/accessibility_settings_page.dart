@@ -60,7 +60,7 @@ class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPrese
           ),
         ),
         if (saveFailed) ...[
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           Text(
             translations.common.notConnected,
             key: const ValueKey('a11y-preset-save-error'),

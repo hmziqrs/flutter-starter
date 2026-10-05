@@ -297,7 +297,7 @@ class _RecentActivity extends StatelessWidget {
             padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            separator: const SizedBox(height: AppSpacing.sm),
+            separator: SizedBox(height: context.spacing.sm),
           ),
       ],
     );

@@ -131,7 +131,7 @@ class _GallerySearchFieldPreviewState extends State<_GallerySearchFieldPreview> 
             context.t.search.title,
             style: context.theme.typography.display.lg,
           ),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           SearchField(
             controller: _controller,
             hintText: context.t.search.placeholder,
@@ -182,7 +182,7 @@ class _GalleryPagedPreviewState extends ConsumerState<_GalleryPagedPreview> {
       emptyTitle: context.t.search.emptyTitle,
       emptyBody: context.t.search.emptyBody,
       errorTitle: context.t.search.errorTitle,
-      separator: const SizedBox(height: AppSpacing.sm),
+      separator: SizedBox(height: context.spacing.sm),
     );
   }
 }

@@ -119,6 +119,8 @@ Widget _harness({
     fontScale: 1,
     localeOverride: locale,
     textPreset: AppTextPreset.comfortable,
+    spacingVariant: AppSpacingVariant.standard,
+    radiusVariant: AppRadiusVariant.rounded,
   );
   final hostLocale = locale.flutterLocale;
   final theme = ForuiThemeFactory.build(

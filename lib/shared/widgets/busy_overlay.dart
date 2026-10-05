@@ -71,7 +71,7 @@ class _BusyBarrier extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           BusyIndicator(value: value, semanticsLabel: resolvedSemantics),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: context.spacing.md),
           Text(
             resolvedLabel,
             style: context.theme.typography.body.md,

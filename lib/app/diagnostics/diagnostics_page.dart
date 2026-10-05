@@ -49,7 +49,7 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
     return FScaffold(
       child: SafeArea(
         child: ListView(
-          padding: AppSpacing.screenPadding,
+          padding: context.screenPadding,
           children: [
             Center(
               child: ConstrainedBox(
@@ -61,7 +61,7 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
                       translations.diagnostics.title,
                       style: context.theme.typography.display.xl2,
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: context.spacing.xl),
                     FCard(
                       child: Column(
                         children: [
@@ -186,7 +186,7 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: context.spacing.lg),
                     Text(translations.diagnostics.redactedNotice),
                   ],
                 ),

@@ -1,8 +1,10 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
+import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
@@ -88,6 +90,91 @@ void main() {
     expect(
       pointer.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr).vertical,
       closeTo(14 * 0.55 * 2, 0.001),
+    );
+  });
+
+  test('scales spacing tokens by the density factor without shrinking touch floors', () {
+    FThemeData buildTheme(double spacingScaleFactor) => ForuiThemeFactory.build(
+      brightness: Brightness.light,
+      accent: AppAccent.neutral,
+      fontScale: 1,
+      interactionPolicy: AppInteractionPolicy.touch,
+      spacingScaleFactor: spacingScaleFactor,
+    );
+
+    final standardTokens = buildTheme(1).extension<AppPresentationTokens>();
+    expect(standardTokens.spacingScale, 1);
+    expect(standardTokens.cardPadding, 24);
+    expect(standardTokens.cardGap, 16);
+    expect(standardTokens.controlMinHeight, 44);
+
+    final compactTokens = buildTheme(
+      AppSpacingVariant.compact.scaleFactor,
+    ).extension<AppPresentationTokens>();
+    expect(compactTokens.spacingScale, closeTo(0.85, 0.001));
+    expect(compactTokens.cardPadding, closeTo(24 * 0.85, 0.001));
+    expect(compactTokens.cardGap, closeTo(16 * 0.85, 0.001));
+    expect(compactTokens.controlMinHeight, 44);
+    expect(compactTokens.focusTargetMinSize, 44);
+
+    final relaxedTokens = buildTheme(
+      AppSpacingVariant.relaxed.scaleFactor,
+    ).extension<AppPresentationTokens>();
+    expect(relaxedTokens.spacingScale, closeTo(1.2, 0.001));
+    expect(relaxedTokens.cardPadding, closeTo(24 * 1.2, 0.001));
+    expect(relaxedTokens.controlMinHeight, 44);
+  });
+
+  test('scales corner radius tokens by the radius factor', () {
+    FThemeData buildTheme(double radiusScaleFactor) => ForuiThemeFactory.build(
+      brightness: Brightness.light,
+      accent: AppAccent.neutral,
+      fontScale: 1,
+      interactionPolicy: AppInteractionPolicy.touch,
+      radiusScaleFactor: radiusScaleFactor,
+    );
+
+    final rounded = buildTheme(AppRadiusVariant.rounded.scaleFactor).style.borderRadius;
+    expect(rounded.md, BorderRadius.circular(10));
+    expect(rounded.lg, BorderRadius.circular(14));
+    expect(
+      buildTheme(AppRadiusVariant.rounded.scaleFactor).style.focusedOutlineStyle.borderRadius,
+      BorderRadius.circular(10),
+    );
+
+    final sharp = buildTheme(AppRadiusVariant.sharp.scaleFactor).style.borderRadius;
+    expect(sharp.md, BorderRadius.zero);
+    expect(sharp.lg, BorderRadius.zero);
+    expect(
+      buildTheme(AppRadiusVariant.sharp.scaleFactor).style.focusedOutlineStyle.borderRadius,
+      BorderRadius.zero,
+    );
+
+    final extraRound = buildTheme(AppRadiusVariant.extraRound.scaleFactor).style.borderRadius;
+    expect(extraRound.md, BorderRadius.circular(10 * 1.5));
+    expect(extraRound.lg, BorderRadius.circular(14 * 1.5));
+  });
+
+  test('rejects invalid spacing and radius factors', () {
+    expect(
+      () => ForuiThemeFactory.build(
+        brightness: Brightness.light,
+        accent: AppAccent.neutral,
+        fontScale: 1,
+        interactionPolicy: AppInteractionPolicy.touch,
+        spacingScaleFactor: 0,
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => ForuiThemeFactory.build(
+        brightness: Brightness.light,
+        accent: AppAccent.neutral,
+        fontScale: 1,
+        interactionPolicy: AppInteractionPolicy.touch,
+        radiusScaleFactor: -1,
+      ),
+      throwsArgumentError,
     );
   });
 }

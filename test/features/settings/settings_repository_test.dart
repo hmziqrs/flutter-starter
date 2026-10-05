@@ -15,6 +15,8 @@ void main() {
       accent: AppAccent.violet,
       fontScale: 1.35,
       textPreset: AppTextPreset.comfortable,
+      spacingVariant: AppSpacingVariant.compact,
+      radiusVariant: AppRadiusVariant.extraRound,
       localeOverride: AppLocale.zhHans,
     );
 
@@ -31,6 +33,8 @@ void main() {
       accent: AppAccent.green,
       fontScale: 1,
       textPreset: AppTextPreset.comfortable,
+      spacingVariant: AppSpacingVariant.standard,
+      radiusVariant: AppRadiusVariant.rounded,
       localeOverride: AppLocale.ar,
     );
 

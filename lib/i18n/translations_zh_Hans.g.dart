@@ -16,22 +16,22 @@ class TranslationsZhHans extends Translations with BaseTranslations<AppLocale, T
 	/// Constructing via the enum [AppLocale.build] is preferred.
 	TranslationsZhHans({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver, TranslationMetadata<AppLocale, Translations>? meta})
 		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = meta ?? TranslationMetadata(
+		  _meta = meta ?? TranslationMetadata(
 		    locale: AppLocale.zhHans,
 		    overrides: overrides ?? {},
 		    cardinalResolver: cardinalResolver,
 		    ordinalResolver: ordinalResolver,
 		  ),
 		  super(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver) {
-		super.$meta.setFlatMapFunction($meta.getTranslation); // copy base translations to super.$meta
-		$meta.setFlatMapFunction(_flatMapFunction);
+		_meta.setFlatMapFunction(_flatMapFunction);
 	}
 
 	/// Metadata for the translations of <zh-Hans>.
-	@override final TranslationMetadata<AppLocale, Translations> $meta;
+	final TranslationMetadata<AppLocale, Translations> _meta;
+	@override TranslationMetadata<AppLocale, Translations> get $meta => _meta;
 
 	/// Access flat map
-	@override dynamic operator[](String key) => $meta.getTranslation(key) ?? super.$meta.getTranslation(key);
+	@override dynamic operator[](String key) => _meta.getTranslation(key) ?? super[key];
 
 	late final TranslationsZhHans _root = this; // ignore: unused_field
 
@@ -245,6 +245,14 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get accentRose => '玫瑰色';
 	@override String get accentViolet => '紫色';
 	@override String get fontScale => '文字大小';
+	@override String get spacing => '间距';
+	@override String get spacingCompact => '紧凑';
+	@override String get spacingStandard => '标准';
+	@override String get spacingRelaxed => '宽松';
+	@override String get cornerRadius => '圆角';
+	@override String get radiusSharp => '直角';
+	@override String get radiusRounded => '圆角';
+	@override String get radiusExtraRound => '大圆角';
 	@override String get motionPreview => '动画预览';
 	@override String get locale => '应用语言';
 	@override String get languageSystem => '使用设备语言';
@@ -1262,6 +1270,14 @@ extension on TranslationsZhHans {
 			'settings.accentRose' => '玫瑰色',
 			'settings.accentViolet' => '紫色',
 			'settings.fontScale' => '文字大小',
+			'settings.spacing' => '间距',
+			'settings.spacingCompact' => '紧凑',
+			'settings.spacingStandard' => '标准',
+			'settings.spacingRelaxed' => '宽松',
+			'settings.cornerRadius' => '圆角',
+			'settings.radiusSharp' => '直角',
+			'settings.radiusRounded' => '圆角',
+			'settings.radiusExtraRound' => '大圆角',
 			'settings.motionPreview' => '动画预览',
 			'settings.locale' => '应用语言',
 			'settings.languageSystem' => '使用设备语言',
@@ -1646,6 +1662,8 @@ extension on TranslationsZhHans {
 			'devGallery.caseDialogDestroy' => '删除对话框',
 			'devGallery.screenPasscodeEntry' => '密码输入',
 			'devGallery.screenPasscodeSetup' => '密码设置',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.casePasscodeIdle' => '空闲',
 			'devGallery.casePasscodeError' => '错误',
 			'devGallery.casePasscodeLockedOut' => '已锁定',
@@ -1654,8 +1672,6 @@ extension on TranslationsZhHans {
 			'devGallery.caseFeedbackDrafting' => '编写中',
 			'devGallery.caseFeedbackSubmitting' => '提交中',
 			'devGallery.caseFeedbackFailed' => '失败',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => '成功',
 			'notifications.enableTitle' => '开启通知',
 			'notifications.enableBody' => '及时获取账户和活动的更新。你可以随时更改此设置。',

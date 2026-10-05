@@ -20,7 +20,7 @@ class LabeledSectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: context.theme.typography.body.lg),
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: context.spacing.lg),
           child,
         ],
       ),

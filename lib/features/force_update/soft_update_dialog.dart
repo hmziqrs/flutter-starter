@@ -24,7 +24,7 @@ Future<void> showSoftUpdateDialog(
         animation: animation,
         semanticsLabel: translations.softUpdate.title,
         builder: (context, style) => Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: EdgeInsets.all(context.spacing.xl),
           child: SoftUpdateCard(
             state: state,
             titleStyle: style.titleTextStyle,
@@ -63,6 +63,7 @@ class SoftUpdateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -73,17 +74,17 @@ class SoftUpdateCard extends StatelessWidget {
             key: const ValueKey('soft-update-title'),
             style: titleStyle ?? context.theme.typography.display.lg,
           ),
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: spacing.md),
           Text(
             state.message ?? translations.softUpdate.body,
             key: const ValueKey('soft-update-body'),
             style: bodyStyle,
           ),
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: spacing.xl),
           Wrap(
             alignment: WrapAlignment.end,
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: spacing.sm,
+            runSpacing: spacing.sm,
             children: [
               FButton(
                 key: const ValueKey('soft-update-later'),

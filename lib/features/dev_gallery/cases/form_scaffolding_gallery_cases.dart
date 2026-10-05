@@ -50,7 +50,7 @@ class _FormScaffoldPreviewState extends State<_FormScaffoldPreview> {
   Widget build(BuildContext context) {
     final translations = context.t;
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(context.spacing.lg),
       child: FormScaffold(
         formKey: _formKey,
         isValid: widget.state.isValid,

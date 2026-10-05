@@ -42,7 +42,7 @@ class _ConnectivityPreview extends StatelessWidget {
           Positioned.fill(
             child: Container(
               alignment: Alignment.center,
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: EdgeInsets.all(context.spacing.xl),
               child: Text(context.t.devGallery.preview),
             ),
           ),

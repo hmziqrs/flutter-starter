@@ -32,8 +32,8 @@ class ResponsiveListGrid<T> extends ConsumerWidget {
     required this.itemBuilder,
     required this.keyOf,
     this.crossAxisCounts = const ResponsiveGridColumns(),
-    this.mainAxisSpacing = AppSpacing.md,
-    this.crossAxisSpacing = AppSpacing.md,
+    this.mainAxisSpacing,
+    this.crossAxisSpacing,
     this.childAspectRatio = 1.0,
     this.padding,
     this.shrinkWrap = false,
@@ -49,9 +49,9 @@ class ResponsiveListGrid<T> extends ConsumerWidget {
 
   final ResponsiveGridColumns crossAxisCounts;
 
-  final double mainAxisSpacing;
+  final double? mainAxisSpacing;
 
-  final double crossAxisSpacing;
+  final double? crossAxisSpacing;
 
   final double childAspectRatio;
 
@@ -65,20 +65,21 @@ class ResponsiveListGrid<T> extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final layoutClass = ref.watch(appLayoutClassProvider);
     final crossAxisCount = crossAxisCounts.resolve(layoutClass);
+    final spacing = context.spacing;
     final resolvedPadding =
         padding ??
         EdgeInsetsDirectional.fromSTEB(
-          context.spacing.lg,
-          context.spacing.lg,
-          context.spacing.lg,
-          context.spacing.lg,
+          spacing.lg,
+          spacing.lg,
+          spacing.lg,
+          spacing.lg,
         );
     return GridView.builder(
       key: ValueKey('responsive-grid-$crossAxisCount'),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: mainAxisSpacing,
-        crossAxisSpacing: crossAxisSpacing,
+        mainAxisSpacing: mainAxisSpacing ?? spacing.md,
+        crossAxisSpacing: crossAxisSpacing ?? spacing.md,
         childAspectRatio: childAspectRatio,
       ),
       padding: resolvedPadding,

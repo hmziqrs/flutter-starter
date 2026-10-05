@@ -51,6 +51,8 @@ abstract final class ForuiThemeFactory {
     required AppInteractionPolicy interactionPolicy,
     String? fontFamily,
     double responsiveFontScale = 1,
+    double spacingScaleFactor = 1,
+    double radiusScaleFactor = 1,
     AppPresentationPolicy? presentationPolicy,
   }) {
     if (!responsiveFontScale.isFinite || responsiveFontScale <= 0) {
@@ -58,6 +60,20 @@ abstract final class ForuiThemeFactory {
         responsiveFontScale,
         'responsiveFontScale',
         'Responsive font scale must be finite and greater than zero.',
+      );
+    }
+    if (!spacingScaleFactor.isFinite || spacingScaleFactor <= 0) {
+      throw ArgumentError.value(
+        spacingScaleFactor,
+        'spacingScaleFactor',
+        'Spacing scale factor must be finite and greater than zero.',
+      );
+    }
+    if (!radiusScaleFactor.isFinite || radiusScaleFactor < 0) {
+      throw ArgumentError.value(
+        radiusScaleFactor,
+        'radiusScaleFactor',
+        'Radius scale factor must be finite and non-negative.',
       );
     }
 
@@ -81,9 +97,16 @@ abstract final class ForuiThemeFactory {
           viewingEnvironment: AppViewingEnvironment.nearField,
           interactionPolicy: interactionPolicy,
         );
-    final presentationTokens = AppPresentationTokens.resolve(
+    final resolvedTokens = AppPresentationTokens.resolve(
       policy: resolvedPresentationPolicy,
       focusColor: colors.primary,
+    );
+    // Spacing density scales whitespace tokens only; touch-target floors
+    // (controlMinHeight, focusTargetMinSize) must stay at their a11y minimums.
+    final presentationTokens = resolvedTokens.copyWith(
+      spacingScale: resolvedTokens.spacingScale * spacingScaleFactor,
+      cardPadding: resolvedTokens.cardPadding * spacingScaleFactor,
+      cardGap: resolvedTokens.cardGap * spacingScaleFactor,
     );
     final touch = switch (interactionPolicy) {
       AppInteractionPolicy.precisionPointer => false,
@@ -98,10 +121,17 @@ abstract final class ForuiThemeFactory {
       displaySizeScalar: fontScale * responsiveFontScale * presentationTokens.displayTypeScale,
       fontFamily: fontFamily,
     );
-    final style = FStyle.inherit(
+    final inheritedStyle = FStyle.inherit(
       colors: colors,
       typography: typography,
       touch: touch,
+    );
+    final borderRadius = const FBorderRadius().scale(radiusScaleFactor);
+    final style = inheritedStyle.copyWith(
+      borderRadius: borderRadius,
+      focusedOutlineStyle: inheritedStyle.focusedOutlineStyle.copyWith(
+        borderRadius: borderRadius.md,
+      ),
     );
     final buttonStyles = _balancedButtonStyles(
       FButtonStyles.inherit(

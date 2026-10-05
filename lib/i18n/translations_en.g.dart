@@ -20,20 +20,21 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	/// Constructing via the enum [AppLocale.build] is preferred.
 	Translations({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver, TranslationMetadata<AppLocale, Translations>? meta})
 		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = meta ?? TranslationMetadata(
+		  _meta = meta ?? TranslationMetadata(
 		    locale: AppLocale.en,
 		    overrides: overrides ?? {},
 		    cardinalResolver: cardinalResolver,
 		    ordinalResolver: ordinalResolver,
 		  ) {
-		$meta.setFlatMapFunction(_flatMapFunction);
+		_meta.setFlatMapFunction(_flatMapFunction);
 	}
 
 	/// Metadata for the translations of <en>.
-	@override final TranslationMetadata<AppLocale, Translations> $meta;
+	final TranslationMetadata<AppLocale, Translations> _meta;
+	@override TranslationMetadata<AppLocale, Translations> get $meta => _meta;
 
 	/// Access flat map
-	dynamic operator[](String key) => $meta.getTranslation(key);
+	dynamic operator[](String key) => _meta.getTranslation(key);
 
 	late final Translations _root = this; // ignore: unused_field
 
@@ -457,6 +458,30 @@ class Translations$settings$en {
 
 	/// en: 'Text size'
 	String get fontScale => 'Text size';
+
+	/// en: 'Spacing'
+	String get spacing => 'Spacing';
+
+	/// en: 'Compact'
+	String get spacingCompact => 'Compact';
+
+	/// en: 'Standard'
+	String get spacingStandard => 'Standard';
+
+	/// en: 'Relaxed'
+	String get spacingRelaxed => 'Relaxed';
+
+	/// en: 'Corner radius'
+	String get cornerRadius => 'Corner radius';
+
+	/// en: 'Sharp'
+	String get radiusSharp => 'Sharp';
+
+	/// en: 'Rounded'
+	String get radiusRounded => 'Rounded';
+
+	/// en: 'Extra round'
+	String get radiusExtraRound => 'Extra round';
 
 	/// en: 'Motion preview'
 	String get motionPreview => 'Motion preview';
@@ -2381,6 +2406,14 @@ extension on Translations {
 			'settings.accentRose' => 'Rose',
 			'settings.accentViolet' => 'Violet',
 			'settings.fontScale' => 'Text size',
+			'settings.spacing' => 'Spacing',
+			'settings.spacingCompact' => 'Compact',
+			'settings.spacingStandard' => 'Standard',
+			'settings.spacingRelaxed' => 'Relaxed',
+			'settings.cornerRadius' => 'Corner radius',
+			'settings.radiusSharp' => 'Sharp',
+			'settings.radiusRounded' => 'Rounded',
+			'settings.radiusExtraRound' => 'Extra round',
 			'settings.motionPreview' => 'Motion preview',
 			'settings.locale' => 'Application language',
 			'settings.languageSystem' => 'Use device language',
@@ -2765,6 +2798,8 @@ extension on Translations {
 			'devGallery.caseDialogDestroy' => 'Destroy dialog',
 			'devGallery.screenPasscodeEntry' => 'Passcode entry',
 			'devGallery.screenPasscodeSetup' => 'Passcode setup',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.casePasscodeIdle' => 'Idle',
 			'devGallery.casePasscodeError' => 'Incorrect',
 			'devGallery.casePasscodeLockedOut' => 'Locked out',
@@ -2773,8 +2808,6 @@ extension on Translations {
 			'devGallery.caseFeedbackDrafting' => 'Drafting',
 			'devGallery.caseFeedbackSubmitting' => 'Submitting',
 			'devGallery.caseFeedbackFailed' => 'Failed',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.caseFeedbackSuccess' => 'Success',
 			'notifications.enableTitle' => 'Turn on notifications',
 			'notifications.enableBody' => 'Get timely updates about your account and activity. You can change this anytime.',

@@ -117,6 +117,8 @@ void main() {
         accent: AppAccent.violet,
         fontScale: 1.35,
         textPreset: AppTextPreset.comfortable,
+        spacingVariant: AppSpacingVariant.standard,
+        radiusVariant: AppRadiusVariant.rounded,
         localeOverride: null,
       );
       final store = InMemorySettingsStore();

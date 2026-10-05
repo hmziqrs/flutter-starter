@@ -56,7 +56,7 @@ class _SessionPreview extends StatelessWidget {
         : context.t.session.signedOut;
     return Container(
       alignment: Alignment.center,
-      padding: AppSpacing.screenPadding,
+      padding: context.screenPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -64,7 +64,7 @@ class _SessionPreview extends StatelessWidget {
             summary,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: context.spacing.sm),
           Text(
             context.t.devGallery.preview,
             textAlign: TextAlign.center,
