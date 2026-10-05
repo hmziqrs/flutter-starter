@@ -6,6 +6,9 @@
 > threading verified. Remaining gap: the live-server crash-ingest integration test claimed in
 > Tests below (Dart-side assert against `POST /v1/crashes`) does not exist — the route is
 > covered only by the server's TS contract tests. Closed 2026-10-05 (see the audit box).
+> Round 2 (2026-10-05): `bootstrap()` now installs the production composite (HTTP reporter
+> whenever `backendBaseUrl` is set), and the reporter owns a timed transport so a hung
+> backend cannot pin the crash POST.
 
 ## Summary
 
@@ -64,8 +67,10 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   is satisfied trivially because crash ingest has no user-facing success state).
 - **Real impl — `HttpCrashReporter`** — constructed in `AppDependencies.production`
   **only when `AppConfig.backendBaseUrl` is set** (same signal as every other `/v1/*`
-  client); reuses the shared app dio, POSTs the redacted `CrashReport` to `/v1/crashes`,
-  never rethrows, and wires `RemoteCrashReporterBackend(host)` in the same branch so the
+  client); POSTs the redacted `CrashReport` to `/v1/crashes` over its own tightly timed
+  dio (mirroring the cache data source — crash POSTs are fire-and-forget from the error
+  handlers, so an untimed shared client could pin them), never rethrows, and wires
+  `RemoteCrashReporterBackend(host)` in the same branch so the
   diagnostics row shows the backend host. The SDK impls are not gated by any Dart config
   field — no `AppConfig` key carries a DSN; their native credentials are consumer-wired.
 - **Test server contract ([C3](../contracts.md#c3--minimal-in-repo-test-server))**
@@ -82,13 +87,17 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
 
 - **Unit/widget:** `crash_reporter_test.dart` exercises `NoopCrashReporter` (no-op, never
   throws) and `RecordingCrashReporter` capture; `http_crash_reporter_test.dart` covers the
-  wire payload (verbose-gated stack) and never-rethrow via a recording dio adapter;
+  wire payload (verbose-gated stack), never-rethrow via a recording dio adapter, and the
+  self-built transport's timeout path against a hung backend;
   `bootstrap_test.dart` asserts `_installErrorHandlers` calls BOTH `logger.error` (captured
   console sink) AND the reporter for every error source.
 - **Integration:** `test/e2e/crash_ingest_e2e_test.dart` starts `tools/hono_server/` on a
   random port (graceful skip without a JS runtime), drives synthetic framework + platform
-  errors through `installErrorHandlers` with `HttpCrashReporter` over the app dio, and
-  asserts the ingest on `GET /v1/crashes/last`. No widget pumping, no `pumpAndSettle`.
+  errors through `installErrorHandlers` with an `HttpCrashReporter` on its own timed
+  transport, and asserts the ingest on `GET /v1/crashes/last`. No widget pumping, no
+  `pumpAndSettle`. `test/bootstrap_test.dart` additionally proves the full `bootstrap()`
+  production path: with `backendBaseUrl` set, a framework error reaches the backend with
+  no hand-wiring.
 - **Golden impact:** none.
 - **Dev-gallery fixture:** n/a (no UI). Add a row on
   [`DiagnosticsPage`](../../../lib/app/diagnostics/diagnostics_page.dart) showing
@@ -107,8 +116,11 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   port + value object under `lib/infrastructure/error_reporting/` per C2's infra-area rule;
   no buckets.
 - [x] **Shared extraction >=3 consumers** — **n/a**: no widget proposed.
-- [x] **Composition root confined** — **pass**: constructed only in `lib/bootstrap.dart:81-85`
-  and `lib/app/dependencies.dart:371-375`; overridden in `lib/app/app.dart:90-93`;
+- [x] **Composition root confined** — **pass** (2026-10-05, round 2): constructed only in
+  `lib/bootstrap.dart:98-103` (boot-window pair) and `lib/app/dependencies.dart:369-378`
+  / `:393-396` (both production branches); `bootstrap` re-arms the handlers with the
+  production composite at `lib/bootstrap.dart:94`, so a configured backend needs no
+  hand-wiring; overridden in `lib/app/app.dart:99-102`;
   `SentryCrashReporter` is constructed only in tests.
 - [x] **Motion guarded** — **n/a**: no animation.
 - [x] **i18n synced en/ar/zh-Hans** — **pass**: no feature-owned strings; the
@@ -122,18 +134,18 @@ into a remote aggregator so field failures can be triaged. Near-zero friction:
   no `GoogleService-Info.plist`/`google-services.json` committed; DSN requirement stays in
   Risks.
 - [x] **Goldens re-baselined + dev-gallery fixture** — **n/a**: no visual change; the
-  `DiagnosticsPage` status row (`lib/app/diagnostics/diagnostics_page.dart:117-120`) is
+  `DiagnosticsPage` status row (`lib/app/diagnostics/diagnostics_page.dart:120-131`) is
   dev-only.
 - [x] **Port-reuse consistency** — **pass**: hooks the existing error-handler seam
-  (`installErrorHandlers`, `lib/bootstrap.dart:232-257`) alongside `AppLogger.error`; no
+  (`installErrorHandlers`, `lib/bootstrap.dart:244-270`) alongside `AppLogger.error`; no
   parallel error sink; `CompositeCrashReporter` fans out and never rethrows
-  (`composite_crash_reporter.dart:21-27`).
+  (`composite_crash_reporter.dart:25-31`).
 - [x] **Config rule respected** — **pass**: stack forwarding gated on
-  `config.verboseLoggingEnabled` (`bootstrap.dart:83`, `dependencies.dart:374`); no runtime
+  `config.verboseLoggingEnabled` (`bootstrap.dart:101`, `dependencies.dart:375`); no runtime
   env switching.
 - [x] **Honest feedback / no faked success** — **pass**: Noop swallows silently after local
   logging; crash ingest has no success state to fake; both-sink routing covered by
-  `test/bootstrap_test.dart:35-80`.
+  `test/bootstrap_test.dart:117-210`.
 
 ## Risks / notes
 

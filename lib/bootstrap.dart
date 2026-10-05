@@ -78,18 +78,28 @@ Future<void> bootstrap(
   WidgetsFlutterBinding.ensureInitialized();
 
   final appLogger = logger ?? AppLogger(verbose: config.verboseLoggingEnabled);
-  final CrashReporter crashReporter = CompositeCrashReporter(<CrashReporter>[
-    const NoopCrashReporter(),
-    FirebaseCrashlyticsCrashReporter(verbose: config.verboseLoggingEnabled),
-  ]);
-  installErrorHandlers(appLogger, crashReporter);
+  // Boot window: the production composite (which carries the HTTP reporter
+  // when `backendBaseUrl` is set) only exists once `AppDependencies.production`
+  // resolves, so errors raised while it loads route to the always-safe pair.
+  installErrorHandlers(appLogger, _bootCrashReporter(config));
   appLogger.info(
     'Starting application',
     context: <String, Object?>{'environment': config.environment.name},
   );
 
   final app = await createApplication(config, logger: appLogger, inspectorHost: inspectorHost);
+  // Re-arm the handlers with the production composite — with `backendBaseUrl`
+  // set this includes the HTTP reporter, so a wired backend needs no
+  // hand-wiring at the install site.
+  installErrorHandlers(appLogger, app.dependencies.telemetry.crashReporter);
   runApplication(inspectorHost.wrap(app));
+}
+
+CrashReporter _bootCrashReporter(AppConfig config) {
+  return CompositeCrashReporter(<CrashReporter>[
+    const NoopCrashReporter(),
+    FirebaseCrashlyticsCrashReporter(verbose: config.verboseLoggingEnabled),
+  ]);
 }
 
 Future<App> createApplication(

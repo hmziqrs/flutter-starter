@@ -5,13 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/error_reporting/http_crash_reporter.dart';
-import 'package:starter/infrastructure/http/app_dio.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
 import '../infrastructure/hono_server_handle.dart';
 
 /// Live crash-ingest e2e: a synthetic error flows through the real
-/// `installErrorHandlers` seam into an [HttpCrashReporter] over the app dio.
+/// `installErrorHandlers` seam into an [HttpCrashReporter] on its own timed
+/// transport (the same construction `AppDependencies.production` uses).
 void main() {
   final runtime = JsRuntime.resolve();
 
@@ -47,7 +47,6 @@ void main() {
         platform: 'e2e',
         appVersion: '1.0.0+1',
         verbose: true,
-        dio: buildAppDio(baseUri),
       );
       installErrorHandlers(AppLogger(verbose: true), reporter);
       FlutterError.onError?.call(

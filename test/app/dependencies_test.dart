@@ -9,6 +9,10 @@ import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/cache/cache_diagnostics.dart';
+import 'package:starter/infrastructure/error_reporting/composite_crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/http_crash_reporter.dart';
+import 'package:starter/infrastructure/error_reporting/noop_crash_reporter.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 
 void main() {
@@ -86,6 +90,27 @@ void main() {
       backendBaseUrl: Uri.parse('http://127.0.0.1:8123'),
     );
     expect(wired.searchCorpusSource, isNotNull);
+  });
+
+  test('production composes the crash reporter with HTTP only behind a backend base url', () async {
+    final offline = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+    );
+    final offlineComposite = offline.telemetry.crashReporter as CompositeCrashReporter;
+    expect(offlineComposite.reporters.whereType<HttpCrashReporter>(), isEmpty);
+
+    final wired = await AppDependencies.production(
+      AppLogger.bootstrap(),
+      iosAppleId: '',
+      allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+      backendBaseUrl: Uri.parse('http://127.0.0.1:8123'),
+    );
+    final wiredComposite = wired.telemetry.crashReporter as CompositeCrashReporter;
+    expect(wiredComposite.reporters.whereType<HttpCrashReporter>(), hasLength(1));
+    expect(wiredComposite.reporters.first, isA<NoopCrashReporter>());
+    expect(wired.telemetry.crashReporterBackend, isA<RemoteCrashReporterBackend>());
   });
 
   test('known cache keys cover the search corpus cache key', () {

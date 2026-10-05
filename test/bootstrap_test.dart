@@ -1,8 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:starter/app/app.dart';
+import 'package:starter/app/config/app_config.dart';
+import 'package:starter/app/config/app_environment.dart';
+import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
 import 'package:starter/bootstrap.dart';
 import 'package:starter/infrastructure/error_reporting/recording_crash_reporter.dart';
@@ -15,6 +24,93 @@ void main() {
       await bootstrapApplication(runApplication: (application) => rendered = application);
 
       expect(rendered, isA<StartupErrorApp>());
+    });
+  });
+
+  group('bootstrap production error path', () {
+    void Function(FlutterErrorDetails)? previousFlutterOnError;
+    bool Function(Object, StackTrace)? previousPlatformOnError;
+
+    setUp(() {
+      previousFlutterOnError = FlutterError.onError;
+      previousPlatformOnError = PlatformDispatcher.instance.onError;
+    });
+
+    tearDown(() {
+      FlutterError.onError = previousFlutterOnError;
+      PlatformDispatcher.instance.onError = previousPlatformOnError;
+    });
+
+    test('with a backend configured, the installed handlers carry the HTTP reporter', () async {
+      final previousPrefs = SharedPreferencesAsyncPlatform.instance;
+      SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+      addTearDown(() => SharedPreferencesAsyncPlatform.instance = previousPrefs);
+      PackageInfo.setMockInitialValues(
+        appName: 'starter',
+        packageName: 'starter',
+        version: '1.0.0',
+        buildNumber: '1',
+        buildSignature: '',
+      );
+
+      // The stand-in crash backend: records POSTed bodies, answers 204.
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final postedBodies = <String>[];
+      final servedRequests = server.listen((request) async {
+        postedBodies.add(await utf8.decoder.bind(request).join());
+        request.response.statusCode = HttpStatus.noContent;
+        await request.response.close();
+      });
+      addTearDown(() async {
+        await servedRequests.cancel();
+        await server.close(force: true);
+      });
+
+      // The tester self-reports as android, which would probe the android TV
+      // capability channel; pin the desktop platform like the wiring tests.
+      final previousPlatform = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      Widget? rendered;
+      try {
+        await bootstrap(
+          AppConfig(
+            environment: AppEnvironment.development,
+            enableVerboseLogging: false,
+            enableDevTools: false,
+            iosAppleId: '',
+            allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+            backendBaseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+          ),
+          runApplication: (application) => rendered = application,
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = previousPlatform;
+      }
+      expect(rendered, isA<App>());
+
+      // No hand-wiring: the error must travel through the handlers bootstrap
+      // installed from `AppDependencies.production` to the configured backend.
+      FlutterError.onError?.call(
+        FlutterErrorDetails(
+          exception: StateError('bootstrap production boom'),
+          stack: StackTrace.current,
+        ),
+      );
+
+      var arrived = false;
+      final deadline = DateTime.now().add(const Duration(seconds: 5));
+      while (DateTime.now().isBefore(deadline)) {
+        if (postedBodies.any((body) => body.contains('bootstrap production boom'))) {
+          arrived = true;
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
+      expect(
+        arrived,
+        isTrue,
+        reason: 'production-with-backend must install an HTTP-reporting composite',
+      );
     });
   });
 

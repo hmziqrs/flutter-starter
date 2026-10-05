@@ -363,6 +363,9 @@ final class AppDependencies {
       authRepository = HttpAuthClient(baseUrl: backendBaseUrl, dio: dio);
       otpRepository = HttpOtpClient(baseUrl: backendBaseUrl, dio: dio);
       profileRepository = HttpProfileRepository(baseUrl: backendBaseUrl, dio: dio);
+      // Crash POSTs are fire-and-forget from the error handlers, so the
+      // reporter keeps its own tightly timed Dio instead of the shared client
+      // (same shape as the corpus source below).
       crashReporter = CompositeCrashReporter(<CrashReporter>[
         const NoopCrashReporter(),
         HttpCrashReporter(
@@ -370,7 +373,6 @@ final class AppDependencies {
           platform: capabilities.platform,
           appVersion: '${effectiveBuildInfo.version}+${effectiveBuildInfo.buildNumber}',
           verbose: verboseLoggingEnabled,
-          dio: dio,
         ),
         FirebaseCrashlyticsCrashReporter(verbose: verboseLoggingEnabled),
       ]);

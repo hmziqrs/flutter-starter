@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -49,6 +50,26 @@ void main() {
       completes,
     );
     expect(adapter.requests, hasLength(2));
+  });
+
+  test('a self-built transport times out a hung backend and drops the report', () async {
+    // Accepts the request but never answers, so only the reporter's own
+    // receive-timeout can end the POST; an untimed transport would hang here.
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) {});
+
+    final slow = HttpCrashReporter(
+      baseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+      platform: 'macos',
+      appVersion: '1.2.3+42',
+      verbose: false,
+      timeout: const Duration(milliseconds: 25),
+    );
+
+    await slow
+        .recordError(StateError('hung backend'), StackTrace.current)
+        .timeout(const Duration(seconds: 5));
   });
 }
 

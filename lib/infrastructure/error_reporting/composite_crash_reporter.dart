@@ -7,6 +7,10 @@ final class CompositeCrashReporter implements CrashReporter {
 
   final List<CrashReporter> _reporters;
 
+  /// The fanned-out members, for composition assertions at the wiring seams.
+  @visibleForTesting
+  List<CrashReporter> get reporters => _reporters;
+
   @override
   Future<void> recordError(
     Object error,
