@@ -64,6 +64,11 @@ jobs:
           fi
 
       - name: Open a pull request with the regenerated baselines
+        id: pr
+        # The branch push is the essential output; PR creation is refused when
+        # the repo setting "Allow GitHub Actions to create and approve pull
+        # requests" is off, and the summary then links the compare URL instead.
+        continue-on-error: true
         if: steps.changed.outputs.changed == 'true'
         run: |
           git config user.name "golden-bot"
@@ -82,8 +87,11 @@ jobs:
 
       - name: Summary
         run: |
-          if [ "${{ steps.changed.outputs.changed }}" == "true" ]; then
+          if [ "${{ steps.changed.outputs.changed }}" != "true" ]; then
+            echo "Baselines already matched — no changes needed."
+          elif [ "${{ steps.pr.outcome }}" == "success" ]; then
             echo "Baselines regenerated; a PR was opened for review."
           else
-            echo "Baselines already matched — no changes needed."
+            echo "Baselines regenerated and pushed to goldens/regen-${GITHUB_RUN_NUMBER}, but PR creation was refused (repo setting: 'Allow GitHub Actions to create and approve pull requests'). Open it manually:"
+            echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/${GITHUB_REF_NAME}...goldens/regen-${GITHUB_RUN_NUMBER}?expand=1"
           fi
