@@ -53,6 +53,21 @@ void main() {
       );
     });
 
+    test('case-insensitive platform spellings never fall to the noop path', () {
+      expect(
+        shareTargetAvailable(const PlatformCapabilities(platform: 'ios', isWeb: false)),
+        isTrue,
+      );
+      expect(
+        shareTargetAvailable(const PlatformCapabilities(platform: 'IOS', isWeb: false)),
+        isTrue,
+      );
+      expect(
+        shareTargetAvailable(const PlatformCapabilities(platform: 'Android', isWeb: false)),
+        isTrue,
+      );
+    });
+
     test('false on desktop where share_plus support is partial', () {
       for (final platform in const <String>['macos', 'windows', 'linux']) {
         expect(

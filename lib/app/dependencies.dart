@@ -385,7 +385,10 @@ final class AppDependencies {
       analyticsClientBackend = RemoteAnalyticsBackend(
         host: backendBaseUrl.host.isEmpty ? backendBaseUrl.toString() : backendBaseUrl.host,
       );
-      httpAnalyticsClient = HttpAnalyticsClient(baseUrl: backendBaseUrl, dio: dio);
+      // Fire-and-forget event flushes (batch threshold + the periodic ticker)
+      // must not pin on an unresponsive backend, so the client self-builds its
+      // timed transport instead of riding the shared untimed app dio.
+      httpAnalyticsClient = HttpAnalyticsClient(baseUrl: backendBaseUrl);
       // The corpus fetch degrades to stale/fixture data, so it keeps the cache
       // source's own tightly timed Dio instead of the shared client.
       searchCorpusSource = HttpCacheDataSource(baseUrl: backendBaseUrl);

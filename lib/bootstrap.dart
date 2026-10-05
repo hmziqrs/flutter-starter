@@ -25,6 +25,23 @@ import 'package:starter/infrastructure/secure_storage/secure_store.dart';
 
 typedef ApplicationRunner = void Function(Widget application);
 
+/// Zone-visible crash sink: [installErrorHandlers] swaps in each reporter as
+/// the boot pair is replaced by the production composite, so errors caught by
+/// [bootstrapApplication]'s zone guard reach the same composite as framework
+/// and platform errors instead of dying in a log-only handler.
+@visibleForTesting
+final class ZonedCrashSink {
+  CrashReporter reporter = const NoopCrashReporter();
+
+  Future<void> report(Object error, StackTrace stackTrace) {
+    return reporter.recordError(
+      error,
+      stackTrace,
+      context: <String, Object?>{'source': 'zone'},
+    );
+  }
+}
+
 /// Zone-guarded process entrypoint: loads the compile-time config, boots the
 /// app, and renders the startup-failure UI when loading or booting throws.
 ///
@@ -35,6 +52,7 @@ Future<void> bootstrapApplication({
   ApplicationRunner runApplication = runApp,
 }) async {
   final fallbackLogger = AppLogger.bootstrap();
+  final zonedCrashSink = ZonedCrashSink();
   final guardedMain = runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +63,7 @@ Future<void> bootstrapApplication({
           config,
           runApplication: runApplication,
           inspectorHost: inspectorHost?.call(config) ?? const StubInspectorHost(),
+          zonedCrashSink: zonedCrashSink,
         );
       } on Object catch (error, stackTrace) {
         await showStartupFailure(
@@ -61,6 +80,7 @@ Future<void> bootstrapApplication({
         error: error,
         stackTrace: stackTrace,
       );
+      unawaited(zonedCrashSink.report(error, stackTrace));
     },
   );
 
@@ -74,6 +94,7 @@ Future<void> bootstrap(
   AppLogger? logger,
   ApplicationRunner runApplication = runApp,
   InspectorHost inspectorHost = const StubInspectorHost(),
+  ZonedCrashSink? zonedCrashSink,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -81,7 +102,7 @@ Future<void> bootstrap(
   // Boot window: the production composite (which carries the HTTP reporter
   // when `backendBaseUrl` is set) only exists once `AppDependencies.production`
   // resolves, so errors raised while it loads route to the always-safe pair.
-  installErrorHandlers(appLogger, _bootCrashReporter(config));
+  installErrorHandlers(appLogger, _bootCrashReporter(config), zonedCrashSink: zonedCrashSink);
   appLogger.info(
     'Starting application',
     context: <String, Object?>{'environment': config.environment.name},
@@ -91,7 +112,11 @@ Future<void> bootstrap(
   // Re-arm the handlers with the production composite — with `backendBaseUrl`
   // set this includes the HTTP reporter, so a wired backend needs no
   // hand-wiring at the install site.
-  installErrorHandlers(appLogger, app.dependencies.telemetry.crashReporter);
+  installErrorHandlers(
+    appLogger,
+    app.dependencies.telemetry.crashReporter,
+    zonedCrashSink: zonedCrashSink,
+  );
   runApplication(inspectorHost.wrap(app));
 }
 
@@ -242,7 +267,12 @@ Future<void> showStartupFailure({
 }
 
 @visibleForTesting
-void installErrorHandlers(AppLogger logger, CrashReporter reporter) {
+void installErrorHandlers(
+  AppLogger logger,
+  CrashReporter reporter, {
+  ZonedCrashSink? zonedCrashSink,
+}) {
+  zonedCrashSink?.reporter = reporter;
   FlutterError.onError = (details) {
     logger.error(
       'Flutter framework error',

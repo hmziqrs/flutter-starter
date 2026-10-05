@@ -112,6 +112,92 @@ void main() {
         reason: 'production-with-backend must install an HTTP-reporting composite',
       );
     });
+
+    test('zoned application errors reach the re-armed composite through the sink', () async {
+      final previousPrefs = SharedPreferencesAsyncPlatform.instance;
+      SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+      addTearDown(() => SharedPreferencesAsyncPlatform.instance = previousPrefs);
+      PackageInfo.setMockInitialValues(
+        appName: 'starter',
+        packageName: 'starter',
+        version: '1.0.0',
+        buildNumber: '1',
+        buildSignature: '',
+      );
+
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final postedBodies = <String>[];
+      final servedRequests = server.listen((request) async {
+        postedBodies.add(await utf8.decoder.bind(request).join());
+        request.response.statusCode = HttpStatus.noContent;
+        await request.response.close();
+      });
+      addTearDown(() async {
+        await servedRequests.cancel();
+        await server.close(force: true);
+      });
+
+      final previousPlatform = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      // The production shape: bootstrapApplication creates the sink, its zone
+      // handler reports through it, and installErrorHandlers swaps in each
+      // reporter — ending at the production composite after the re-arm.
+      final zonedCrashSink = ZonedCrashSink();
+      try {
+        await bootstrap(
+          AppConfig(
+            environment: AppEnvironment.development,
+            enableVerboseLogging: false,
+            enableDevTools: false,
+            iosAppleId: '',
+            allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
+            backendBaseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+          ),
+          runApplication: (_) {},
+          zonedCrashSink: zonedCrashSink,
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = previousPlatform;
+      }
+
+      // Mirror the zone handler's body: an uncaught async error inside the
+      // app zone lands here (never at the platform handler), and must reach
+      // the backend through the swapped-in composite. runZonedGuarded's
+      // returned future never completes for an async throw (the zone consumes
+      // the error), so the handler completes a completer instead.
+      final handled = Completer<void>();
+      unawaited(
+        runZonedGuarded<Future<void>>(
+              () async {
+                await Future<void>.value();
+                throw StateError('zoned production boom');
+              },
+              (error, stackTrace) {
+                unawaited(zonedCrashSink.report(error, stackTrace));
+                handled.complete();
+              },
+            ) ??
+            Future<void>.value(),
+      );
+      await handled.future.timeout(const Duration(seconds: 5));
+
+      var arrived = false;
+      final deadline = DateTime.now().add(const Duration(seconds: 5));
+      while (DateTime.now().isBefore(deadline)) {
+        if (postedBodies.any(
+          (body) => body.contains('zoned production boom') && body.contains('zone'),
+        )) {
+          arrived = true;
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
+      expect(
+        arrived,
+        isTrue,
+        reason: 'zone-guarded errors must reach the re-armed production composite',
+      );
+    });
   });
 
   group('installErrorHandlers', () {

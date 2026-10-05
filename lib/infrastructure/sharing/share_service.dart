@@ -1,5 +1,4 @@
 import 'package:cross_file/cross_file.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 
@@ -32,6 +31,9 @@ final shareServiceProvider = Provider<ShareService>(
 
 bool shareTargetAvailable(PlatformCapabilities capabilities) {
   if (capabilities.isWeb) return false;
-  return capabilities.platform == TargetPlatform.android.name ||
-      capabilities.platform == TargetPlatform.iOS.name;
+  // PlatformCapabilities.platform carries the TargetPlatform name ('iOS',
+  // 'android'), so match case-insensitively to keep real devices on the share
+  // path regardless of spelling.
+  final platform = capabilities.platform.toLowerCase();
+  return platform == 'android' || platform == 'ios';
 }
