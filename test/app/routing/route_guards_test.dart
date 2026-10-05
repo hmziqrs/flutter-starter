@@ -20,12 +20,9 @@ import '../support/pump_app_frames.dart';
 /// Router-level coverage for the update-blocker gate composed into `appRedirect`
 /// (`lib/app/routing/route_guards.dart`): the `hard` requirement must trap every
 /// route on `/force-update` (no pop, no in-session escape), and the `soft`
-/// requirement must never redirect and must honor a persisted snooze.
-///
-/// Not asserted here: the `soft` dialog actually presenting — `_maybeShowSoftUpdateDialog`
-/// invokes `showFDialog` with the go_router redirect context, which sits above the
-/// navigator, so `Navigator.of` throws and the dialog cannot appear. Tracked in
-/// `plans/feature_roadmap/features/update-blocker.md` (Audit item 1).
+/// requirement must never redirect, must present its dialog post-frame from the
+/// root navigator, and must honor a persisted snooze — including one persisted
+/// by tapping Later on a previous launch.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -123,6 +120,60 @@ void main() {
       find.byKey(const ValueKey('soft-update-dialog')),
       findsNothing,
       reason: 'an unexpired snooze must suppress the soft prompt on a cold start',
+    );
+  });
+
+  testWidgets('soft requirement presents the soft-update dialog post-frame', (tester) async {
+    await _pumpGateApp(tester, softRequirement, initialLocation: AppRoutes.homePath);
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('force-update-title')),
+      findsNothing,
+      reason: 'soft deprecation must never redirect away from the route',
+    );
+    expect(
+      find.byKey(const ValueKey('soft-update-dialog')),
+      findsOneWidget,
+      reason: 'a soft deprecation must present the nudge from the root navigator post-frame',
+    );
+  });
+
+  testWidgets('Later on the soft dialog persists a snooze that survives a relaunch', (
+    tester,
+  ) async {
+    final settingsStore = InMemorySettingsStore();
+    await _pumpGateApp(
+      tester,
+      softRequirement,
+      settingsStore: settingsStore,
+      initialLocation: AppRoutes.homePath,
+    );
+    expect(find.byKey(const ValueKey('soft-update-dialog')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('soft-update-later')));
+    await pumpAppFrames(tester);
+    expect(
+      find.byKey(const ValueKey('soft-update-dialog')),
+      findsNothing,
+      reason: 'Later must dismiss the dialog',
+    );
+
+    // Relaunch: a fresh app instance sharing the previously persisted store.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await pumpAppFrames(tester);
+    await _pumpGateApp(
+      tester,
+      softRequirement,
+      settingsStore: settingsStore,
+      initialLocation: AppRoutes.homePath,
+    );
+
+    expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('soft-update-dialog')),
+      findsNothing,
+      reason: 'the snooze persisted by Later must suppress the prompt on the next launch',
     );
   });
 }

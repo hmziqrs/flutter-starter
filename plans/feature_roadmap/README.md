@@ -49,7 +49,7 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 | Feature flags / remote-config | P1 | infra | server | done | [feature-flags](features/feature-flags.md) |
 | In-app announcements | P1 | engagement | none | done | [announcements](features/announcements.md) |
 | Animated in-app splash | P2 | startup | none | done | [in-app-splash](features/in-app-splash.md) |
-| Update blocker (hard + soft) | P2 | startup | server | in-progress | [update-blocker](features/update-blocker.md) |
+| Update blocker (hard + soft) | P2 | startup | server | done | [update-blocker](features/update-blocker.md) |
 | Skeleton loading | P2 | ux | none | in-progress | [skeleton](features/skeleton.md) |
 | Pull-to-refresh + virtualization | P2 | ux | none | in-progress | [pull-refresh](features/pull-refresh.md) |
 | MFA / OTP completion | P2 | security | server | done | [mfa-otp](features/mfa-otp.md) |

@@ -23,8 +23,14 @@ GoRouter buildAppRouter({
   String initialLocation = AppRoutes.splashPath,
   bool hasCompletedOnboarding = false,
   List<NavigatorObserver> observers = const <NavigatorObserver>[],
+  GlobalKey<NavigatorState>? navigatorKey,
 }) {
+  // The root navigator key lets the redirect present overlays (soft update
+  // dialog) from a context under the root navigator — the redirect context
+  // itself sits above it, so `Navigator.of` would throw there.
+  final rootNavigatorKey = navigatorKey ?? GlobalKey<NavigatorState>(debugLabel: 'root');
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     routes: [
       StatefulShellRoute(
@@ -51,6 +57,7 @@ GoRouter buildAppRouter({
       context,
       state,
       hasCompletedOnboardingSeed: hasCompletedOnboarding,
+      navigatorKey: rootNavigatorKey,
     ),
   );
 }

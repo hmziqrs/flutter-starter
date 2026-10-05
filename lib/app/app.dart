@@ -197,10 +197,18 @@ class _AppView extends ConsumerStatefulWidget {
 }
 
 class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver {
+  /// Key for the root navigator so route guards can present overlays (soft
+  /// update dialog) from a context under it — the redirect context sits above
+  /// the navigator.
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'app-root-navigator',
+  );
+
   late final GoRouter _router = buildAppRouter(
     config: widget.config,
     initialLocation: widget.initialLocation ?? AppRoutes.splashPath,
     hasCompletedOnboarding: ref.read(initialSettingsProvider).hasCompletedOnboarding,
+    navigatorKey: _navigatorKey,
     observers: [
       AnalyticsRouteObserver(client: ref.read(analyticsClientProvider)),
       LastRouteObserver(store: ref.read(settingsStoreProvider)),

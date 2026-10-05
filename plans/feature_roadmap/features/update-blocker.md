@@ -1,15 +1,14 @@
 # Update blocker (hard block + soft deprecation)
 
-> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** in-progress · **Depends on:** none (composes the update-block predicate into the existing top-level redirect helper `appRedirect` — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
+> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** done · **Depends on:** none (composes the update-block predicate into the existing top-level redirect helper `appRedirect` — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
 >
 > Implementation audit (2026-10-04, updated 2026-10-05): port + `InMemory` none default +
 > remote-config adapter + redirect composition + i18n + widget tests verified. Router-level
-> coverage now exists (`test/app/routing/route_guards_test.dart` overrides
-> `versionCheckProvider`: `hard` redirect from every route + no-pop trap + `soft` no-redirect
-> and snooze suppression). Remaining gap: the `soft` dialog cannot actually be presented from
-> the redirect — `showFDialog` is invoked with the go_router redirect context, which sits above
-> the navigator, so `Navigator.of` throws (see Audit item 1); the live-server e2e still asserts
-> only the store's `none` degradation.
+> coverage exists (`test/app/routing/route_guards_test.dart` overrides `versionCheckProvider`:
+> `hard` redirect from every route + no-pop trap + `soft` no-redirect, dialog presented
+> post-frame from the root navigator, snooze suppression, and a Later-persisted snooze
+> surviving relaunch). The live-server e2e still asserts only the store's `none` degradation;
+> dialog presentation is covered at the router level in widget tests.
 
 ## Summary
 
@@ -54,20 +53,21 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [ ] No-backend honored as a port — **warn**: four parts verified — `VersionGateStore` port
+- [x] No-backend honored as a port — **pass**: four parts verified — `VersionGateStore` port
   (`lib/features/force_update/version_gate_store.dart:5`), `InMemoryVersionGateStore` `none`
   default checked once in `AppDependencies.production` (`lib/app/dependencies.dart:267-271`),
   optional `RemoteConfigVersionGateStore` (constructed only in tests/e2e; live check at
   `test/e2e/hono_server_e2e_test.dart:81-88`), shared `/v1/remote-config` contract
-  (`tools/hono_server/src/index.ts:209-221`). Router-level gate coverage added
+  (`tools/hono_server/src/index.ts:209-221`). Router-level gate coverage
   (`test/app/routing/route_guards_test.dart`): `hard` redirects every route to
   `forceUpdatePath` and is a no-pop trap; `soft` never redirects and a persisted snooze
-  suppresses the prompt. Newly found defect keeping this open: the `soft` dialog is invoked
-  with the go_router redirect context (`lib/app/routing/route_guards.dart:157`), which sits
-  above the navigator — `Navigator.of` throws `Navigator operation requested with a context
-  that does not include a Navigator`, so the dialog cannot appear in production either (the
-  async error is swallowed). Presenting it needs a context under the root navigator
-  (e.g. a `navigatorKey` on the router), owned by `lib/app/routing`.
+  suppresses the prompt. The former presentation defect is fixed: the router now owns a root
+  `navigatorKey` (`buildAppRouter` → `GoRouter`, created per-app in `_AppViewState`,
+  `lib/app/app.dart`), and `_maybeShowSoftUpdateDialog` presents the dialog from the root
+  navigator's overlay context — the go_router redirect context sits above the navigator, so
+  `showFDialog`'s `Navigator.of(context, rootNavigator: true)` used to throw with the async
+  error swallowed; the tests cover the dialog appearing post-frame and a Later-persisted
+  snooze surviving a relaunch.
 - [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state +
   pages + dialog + routes module under `lib/features/force_update/`; only the shared
   remote-config client lives in infrastructure.

@@ -24,6 +24,7 @@ String? appRedirect(
   BuildContext context,
   GoRouterState state, {
   bool hasCompletedOnboardingSeed = false,
+  GlobalKey<NavigatorState>? navigatorKey,
 }) {
   final path = state.uri.path;
 
@@ -35,7 +36,7 @@ String? appRedirect(
     return path == AppRoutes.forceUpdatePath ? null : AppRoutes.forceUpdatePath;
   }
   if (requirement is UpdateRequirementSoft) {
-    _maybeShowSoftUpdateDialog(context, requirement);
+    _maybeShowSoftUpdateDialog(context, requirement, navigatorKey: navigatorKey);
   }
 
   final legacySection = _legacySettingsRedirects[path];
@@ -134,28 +135,38 @@ class _SoftUpdatePromptShown extends Notifier<bool> {
   void markShown() => state = true;
 }
 
-void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requirement) {
+void _maybeShowSoftUpdateDialog(
+  BuildContext context,
+  UpdateRequirementSoft requirement, {
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
   final container = ProviderScope.containerOf(context, listen: false);
   if (container.read(softUpdatePromptShownProvider)) {
     return;
   }
   final store = container.read(settingsStoreProvider);
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!context.mounted) {
-      return;
-    }
     unawaited(
       store.readString(SoftUpdateSnooze.key).then((stored) {
-        if (!context.mounted || SoftUpdateSnooze.isSnoozed(stored)) {
+        if (SoftUpdateSnooze.isSnoozed(stored)) {
           return;
         }
         if (container.read(softUpdatePromptShownProvider)) {
           return;
         }
+        // The redirect context sits above the root navigator, so `Navigator.of`
+        // inside the dialog helper would throw (the async error is swallowed in
+        // production). Present from the root navigator's overlay instead — its
+        // context lives under the navigator (and under FTheme + translations),
+        // resolved lazily here so it cannot be stale.
+        final dialogContext = _rootOverlayContext(navigatorKey);
+        if (dialogContext == null || !dialogContext.mounted) {
+          return;
+        }
         container.read(softUpdatePromptShownProvider.notifier).markShown();
         unawaited(
           showSoftUpdateDialog(
-            context,
+            dialogContext,
             state: ForceUpdateState.from(requirement),
             onUpdate: () => unawaited(
               launchStoreUrl(requirement.storeUrl, logger: container.read(appLoggerProvider)),
@@ -166,6 +177,11 @@ void _maybeShowSoftUpdateDialog(BuildContext context, UpdateRequirementSoft requ
       }),
     );
   });
+}
+
+BuildContext? _rootOverlayContext(GlobalKey<NavigatorState>? navigatorKey) {
+  final overlay = navigatorKey?.currentState?.overlay;
+  return overlay?.context;
 }
 
 Future<void> launchStoreUrl(String storeUrl, {AppLogger? logger}) async {
