@@ -1,6 +1,11 @@
 # App lifecycle observer
 
-> **Tier:** P0 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P0 · **Domain:** startup · **Backend:** none · **Status:** in-progress · **Depends on:** none
+
+> Implementation audit 2026-10-04: controller, provider, and `_AppView` observer wiring are
+> implemented and the controller is unit-tested, but the doc's claimed observer-wiring widget test
+> and binding-driven integration test do not exist yet (details in the Audit block) — hence
+> `in-progress`, not `done`.
 
 ## Summary
 
@@ -34,15 +39,20 @@ Backend-free; the default impl **is** the real Flutter SDK binding — there is 
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free Flutter SDK; nothing to fake.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: lives in `lib/app/` (composition root) like `interaction_policy_controller.dart`, not a feature — correct for app-level plumbing.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**: no widget.
-- [x] Motion guarded — **n/a**.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**.
-- [x] Strict-analysis clean — **pass**: typed `AppLifecyclePhase`, exhaustive switch on `AppLifecycleState`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Golden re-baseline noted on pinned macOS runner — **n/a**.
+- [x] No-backend honored as a port — **pass**: backend-free Flutter SDK; `AppLifecycleKind`/`AppLifecyclePhase` wrap the framework type with an exhaustive `_kindFromState` switch (`lib/app/app_lifecycle_controller.dart:49-57`); nothing to fake.
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: lives in `lib/app/app_lifecycle_controller.dart` (app-level composition, peer of `interaction_policy_controller.dart`), not a feature or generic bucket.
+- [x] shared/widgets extraction >=3 consumers — **n/a**: no widget extracted.
+- [x] Composition root confined — **pass**: wiring confined to `_AppViewState` (`WidgetsBindingObserver` mixin, `addObserver`/`removeObserver`, `didChangeAppLifecycleState` → `transitionTo`, `lib/app/app.dart:191,216,275,281-286`); consumers only `ref.watch` (`connectivity`, `session`, `auto_lock`, `feature_flags`, `experiments` controllers + diagnostics).
+- [x] Motion guarded — **n/a**: no animation.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**: no user-facing copy.
+- [x] Strict-analysis clean — **pass**: typed `AppLifecyclePhase` (kind + `transitionedAt`, `==`/`hashCode`), exhaustive switch, no `dynamic` (`lib/app/app_lifecycle_controller.dart`).
+- [x] Generated code untouched — **n/a**: no generated code in this feature.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
+- [x] Goldens re-baselined + dev-gallery fixture — **n/a**: no UI/golden surface; the optional read-only phase display landed on `/dev/diagnostics` (`lib/app/diagnostics/diagnostics_page.dart:88-90`).
+- [x] Port-reuse consistency — **pass**: publish-state-only honored; one `appLifecyclePhaseProvider` read by all resume-dependent features via `lib/shared/state/app_lifecycle_listener.dart` (`listenOnResume`) — no parallel lifecycle sensors.
+- [x] Config rule respected — **pass**: no env gating; SDK observer always on.
+- [x] Honest feedback, no faked success — **n/a**: no backend action.
+- [ ] Tests as claimed — **warn**: `test/app/app_lifecycle_controller_test.dart` covers every `AppLifecycleState` mapping, timestamping, and provider override (116 lines), and the resume edge is consumer-tested (`test/features/connectivity/connectivity_controller_test.dart:76`); but no test drives transitions through the binding/`_AppView` observer (the claimed "drive paused → resumed via the test binding" integration and "`addObserver`/`removeObserver` fire on mount/dispose of `_AppView`" widget assertions do not exist anywhere). Blocking `done`.
 
 ## Risks / notes
 

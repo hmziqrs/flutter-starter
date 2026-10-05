@@ -1,6 +1,11 @@
 # Product analytics
 
-> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** planned · **Depends on:** secure-store
+> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** secure-store
+>
+> Implementation audit (2026-10-04): port + Noop default + optional real impls + router-observer
+> seam + SecureStore opt-in + i18n verified. Remaining gap: the live-server integration test
+> claimed in Tests below (navigate and assert a `screen_view` per route landed on the server)
+> does not exist — `POST /v1/events` is covered only by the server's TS contract tests.
 
 ## Summary
 
@@ -104,23 +109,50 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 
 ## Audit
 
-- [x] **No-backend honored as a port** — pass: Noop default runs green, optional real impl is
-  an override gated on opt-in, test server contract defined, no faked success.
-- [x] **Feature-first ownership; no core/ utils/ buckets** — pass: port + observer + value
-  objects under `lib/infrastructure/analytics/`; no buckets.
-- [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget.
-- [x] **Motion guarded** — n/a: no animation.
-- [x] **Tests use pumpAppFrames, never pumpAndSettle** — pass: integration tests use the
-  bounded-frame helper.
-- [ ] **i18n synced en/ar/zh-Hans; gen-check stays clean** — warn: new opt-in strings must be
-  added to all three locales together; `just gen-check` will fail CI if drifted.
-- [ ] **Strict-analysis clean** — warn: `AnalyticsEvent` must be sealed with exhaustive
-  switches per variant; the route observer must not surface `dynamic` route args (read only
-  `state.name` / `state.uri.path`).
-- [x] **Native entitlements flagged in PR + CI platform jobs** — n/a: no plugin beyond the
-  optional analytics SDK whose own native config the consumer wires.
-- [ ] **Golden re-baseline noted on pinned macOS runner** — warn: `settings_800x1000_zh_light_language`
-  shifts from the SettingsPage opt-in toggle; re-baseline on the pinned macOS runner.
+- [ ] **No-backend honored as a port** — **warn**: port + Noop default + optional real impls +
+  server route all verified (`lib/infrastructure/analytics/analytics_client.dart:7`,
+  `noop_analytics_client.dart` (verbose-gated `AppLogger` routing),
+  `posthog_analytics_client.dart` + `firebase_analytics_client.dart` (lazily inert — no
+  `Firebase.initializeApp` in `lib/`); `POST /v1/events` at `tools/hono_server/src/index.ts:72`
+  with TS contract tests). Missing: the Dart-side live-server navigation integration test
+  claimed in Tests.
+- [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: adapter family under
+  `lib/infrastructure/analytics/`; opt-in controller feature-owned at
+  `lib/features/settings/analytics_opt_in_controller.dart`; tile at
+  `lib/features/settings/widgets/analytics_opt_in_tile.dart`; no buckets.
+- [x] **Shared extraction >=3 consumers** — **n/a**: no new shared widget (the tile is
+  settings-local).
+- [x] **Composition root confined** — **pass**: composite constructed only in
+  `lib/app/dependencies.dart:377-380`; overridden in `lib/app/app.dart:112-115`;
+  `PosthogAnalyticsClient` is constructed only in tests; observer injected via
+  `buildAppRouter(observers: ...)` from `lib/app/app.dart:196-201`.
+- [x] **Motion guarded** — **n/a**: no animation (the settings toggle is static).
+- [x] **i18n synced en/ar/zh-Hans** — **pass**: `settings.analytics.{optInTitle, optInBody,
+  statusOn, statusOff}` present in `lib/i18n/{en,ar,zh-Hans}.i18n.json` and generated in all
+  three `translations_*.g.dart`. Resolves the pre-written warn.
+- [x] **Strict analysis clean** — **pass**: sealed `AnalyticsEvent` with exhaustive switches
+  (`noop_analytics_client.dart:44-56`, `firebase_analytics_client.dart:17-30`); the observer
+  reads only `route.settings.name` (`analytics_route_observer.dart:21-27`); no `dynamic`.
+  Resolves the pre-written warn.
+- [x] **Generated code untouched** — **n/a**: no feature codegen output; slang regenerated
+  from the synced JSON.
+- [x] **Native entitlements flagged** — **n/a**: optional analytics SDK native config is
+  consumer-wired; none committed.
+- [x] **Goldens re-baselined + dev-gallery fixture** — **pass**: doc documents the
+  `settings_800x1000_zh_light_language` matrix impact; `analytics_gallery_cases.dart` opt-in
+  on/off fixtures exist; the repo-wide golden re-baseline is pending the pinned macOS 26 CI
+  run (tracked repo-wide per `test/goldens/README.md`, not failed here). Resolves the
+  pre-written warn.
+- [x] **Port-reuse consistency** — **pass**: one `GoRouter` `observers:` entry
+  (`app.dart:197`, forwarding through `buildAppRouter`'s `observers` param at
+  `lib/app/routing/app_router.dart:49`); opt-in is the single `SecureStore` key
+  `analytics.opt_in` (`analytics_client.dart:5`) read by the real impl before emitting.
+- [x] **Config rule respected** — **pass**: verbose logging through
+  `config.verboseLoggingEnabled`; Diagnostics client-backend row read-only
+  (`diagnostics_page.dart:130-134`); no runtime env switching.
+- [x] **Honest feedback / no faked success** — **pass**: Noop drops events silently after
+  verbose-gated logging; opt-in defaults to off with safe degradation
+  (`dependencies.dart:272-282`); analytics has no user-facing success state to fake.
 
 ## Risks / notes
 

@@ -1,6 +1,6 @@
 # Animated in-app splash
 
-> **Tier:** P2 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** [native-splash](native-splash.md) (ship together), [onboarding-gate](onboarding-gate.md) (handoff target)
+> **Tier:** P2 · **Domain:** startup · **Backend:** none · **Status:** done · **Depends on:** [native-splash](native-splash.md) (ship together), [onboarding-gate](onboarding-gate.md) (handoff target)
 
 ## Summary
 
@@ -36,15 +36,20 @@ Backend-free; the default impl is **real and local** — `createApplication` alr
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; consumes the existing real init.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `lib/features/splash/` owns page + view data.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**: splash is a single routed screen.
-- [x] Motion guarded — **pass**: every tween sources durations/curves from [`AppMotion`](../../lib/shared/motion/app_motion.dart) and guards with `MediaQuery.disableAnimationsOf(context)` **plus** a non-animated fallback that still calls `context.goNamed(...)`.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass** (load-bearing — see risks).
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: typed `AppStartupResult` + `SplashViewData`, exhaustive state switch.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Golden re-baseline noted on pinned macOS runner — **warn**: new full-screen visual; re-baseline required.
+- [x] No-backend honored as a port — **pass**: consumes the real init — `AppStartupResult` built in `AppDependencies.production` (`lib/app/dependencies.dart:419-423`) and forwarded via `dependencies.appStartupResult` (no re-load in the widget); `appStartupResultProvider` throws until overridden at the composition root (`app_startup_result_provider.dart`).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `lib/features/splash/` owns page, view data, fixtures, and the routes module; `SplashPage` takes an `onComplete` callback and never imports `go_router` (`splash_routes.dart` does the `goNamed`).
+- [x] shared/widgets extraction >=3 consumers — **n/a**: single routed screen.
+- [x] Composition root confined — **pass**: provider overridden at the App `ProviderScope` (`lib/app/app.dart:99`); `splashPath` is the router's default `initialLocation` (`app_router.dart:23`) and `_AppView` falls back to it (`app.dart:194`).
+- [x] Motion guarded — **pass**: `_LogoReveal` sources `AppMotion.deliberate`/`standardCurve`/`emphasizedCurve` and guards with `MediaQuery.disableAnimationsOf(context)`, jumping to `_controller.value = 1` when disabled (`splash_page.dart:269-307`); `onComplete` fires when the future resolves (post-frame), never gated on animation (`splash_page.dart:33-50`); reduced motion swaps the spinner for a static label (`splash_page.dart:124-131`).
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**: `splash.{loading,tagline,error}` present in all three of `lib/i18n/{en,ar,zh-Hans}.i18n.json`.
+- [x] Strict-analysis clean — **pass**: typed `AppStartupResult`/`AppStartupError`/`SplashViewData`, exhaustive phase switch (`splash_page.dart:55-62,80-84`); no `dynamic`.
+- [x] Generated code untouched — **pass**: `splash_view_data.freezed.dart` generated via `just gen`, not hand-edited.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `PreviewFrame` cases loading/done/error exist and are registered (`lib/features/dev_gallery/cases/splash_gallery_cases.dart:11-13`, `gallery_registry.dart:38`); new full-screen visual as documented — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Port-reuse consistency — **n/a**: no port; reuses the startup work `createApplication` already performs.
+- [x] Config rule respected — **pass**: no env gating; gallery behind `developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: error phase surfaces `splash.error` + the `startupFailure.diagnosticId` (reusing `startup_error_view` styling), never a silent pass (`splash_page.dart:177-216`).
+- [x] Tests — **pass**: `test/features/splash/splash_page_test.dart` (loading/done/error fixtures, `onComplete` on resolve with bounded 8-frame pumps — explicitly no `pumpAndSettle` — and reduce-motion handoff without waiting on the reveal); the full handoff runs in integration via the default splash `initialLocation` → home greeting (`integration_test/development_smoke_test.dart:84-93`).
 
 ## Risks / notes
 

@@ -1,6 +1,12 @@
 # Offline-first caching layer
 
-> **Tier:** P3 · **Domain:** infra · **Backend:** test-server · **Status:** planned · **Depends on:** connectivity
+> **Tier:** P3 · **Domain:** infra · **Backend:** test-server · **Status:** in-progress · **Depends on:** connectivity
+>
+> Implementation audit (2026-10-04): port + file-backed production store + connectivity-gated
+  read primitive + unit tests + diagnostics verified. Remaining gap: the live-server
+  integration tests claimed in Tests below — no Dart code references `GET /v1/cache/{key}`
+  (the route is covered only by the server's TS contract tests), and no HTTP data-source
+  fetcher exists to drive `cachedFutureProvider` against a real socket.
 
 ## Summary
 
@@ -114,24 +120,50 @@ and "no backend" means no remote data source is wired — features that try to r
 
 ## Audit
 
-- [x] **pass** — No-backend honored: `FileCacheStore` is a real local store; features without a
-  remote source surface `notConnected`, never fake a populated cache.
-- [x] **pass** — Ownership: the **port** and the offline-aware read primitive both live in
-  `lib/infrastructure/cache/` (cross-cutting adapter, peer of
-  `SharedPreferencesSettingsStore`); no `lib/shared/state/` primitive is committed until a
-  consumer lands. No `core/`/`utils/` bucket.
-- [ ] **warn** — Shared extraction: `lib/shared/state/` primitives need ≥1 consumer + reuse
-  intent per checklist #3; no designated consumer today (the primitive is held under
-  `lib/infrastructure/cache/` until one lands).
-- [x] **n/a-pass** — Motion guarded: no animations.
-- [x] **pass** — Tests use `pumpAppFrames`, never `pumpAndSettle`.
-- [x] **n/a-pass** — i18n: no keys of its own; `gen-check` unaffected.
-- [x] **pass** — Strict-analysis clean: typed `CacheEntry<T>` generics, exhaustive `CacheStatus`
-  switch, no `dynamic`; JSON (de)serialization behind typed factories.
-- [ ] **warn** — Native entitlements: `FileCacheStore` writes to the app sandbox via
-  `path_provider` (no entitlement on iOS/Android), but macOS sandboxed builds need the
-  `Application Support` writable-container — verify in the macOS CI build job.
-- [x] **n/a-pass** — Golden re-baseline: no UI; none required.
+- [ ] **No-backend honored as a port** — **warn**: port + real local default verified:
+  `CacheStore` (`lib/infrastructure/cache/cache_store.dart:4` — per-key `read/write/remove/age`,
+  no `clearAll`), `FileCacheStore` production default (`lib/app/dependencies.dart:315-330`,
+  web/dir-failure → `InMemoryCacheStore` with a logged warning), `GET /v1/cache/:key` with
+  ETag/`minEpoch` 304s (`tools/hono_server/src/index.ts:366-390` + TS contract tests).
+  Missing: the Dart-side live-server integration claimed in Tests — no Dart code references
+  `/v1/cache`, so the etag/304 + offline stale-serve network path is unexercised from Dart.
+- [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: the port and the
+  offline-aware read primitive live in `lib/infrastructure/cache/` (cross-cutting adapter,
+  peer of `SharedPreferencesSettingsStore`); no buckets.
+- [x] **Shared extraction >=3 consumers** — **pass**: nothing was extracted to `lib/shared/`;
+  the `cachedFutureProvider` primitive is deliberately held under
+  `lib/infrastructure/cache/` until a consumer lands (only tests consume it today —
+  `test/infrastructure/cache/cached_future_provider_test.dart:32`), exactly as this doc
+  records, so the >=1-consumer bar for shared state helpers is not violated. Resolves the
+  pre-written warn.
+- [x] **Composition root confined** — **pass**: `FileCacheStore` wired only in
+  `lib/app/dependencies.dart:315-330`; `cacheStoreProvider` overridden in
+  `lib/app/app.dart:147`; `connectivityStatusProvider` is read, never redeclared
+  (`cached_future_provider.dart:85`).
+- [x] **Motion guarded** — **n/a**: no animations.
+- [x] **i18n synced en/ar/zh-Hans** — **n/a**: no keys of its own; `gen-check` unaffected.
+- [x] **Strict analysis clean** — **pass**: typed `CacheEntry<T>` + `CacheCodec<T>` generics,
+  exhaustive `CacheStatus` handling, `CacheUnavailable` exception type; no `dynamic` in the
+  area (grep clean).
+- [x] **Generated code untouched** — **n/a**: no codegen output in this feature.
+- [x] **Native entitlements flagged** — **pass**:
+  `FileCacheStore.resolveApplicationSupportDirectory()` uses `path_provider`
+  (`file_cache_store.dart:16-17`); the macOS app-sandbox container's Application Support
+  directory is writable with the committed entitlements
+  (`macos/Runner/DebugProfile.entitlements` enables only app-sandbox + JIT/network), and the
+  macOS build runs in CI (`.github/workflows/release.yml`). Resolves the pre-written warn.
+- [x] **Goldens re-baselined + dev-gallery fixture** — **n/a**: no UI; the optional cache
+  diagnostics rows live on the dev-only `DiagnosticsPage`
+  (`diagnostics_page.dart:33-35, 169`).
+- [x] **Port-reuse consistency** — **pass**: reads the existing `connectivityStatusProvider`
+  owned by `connectivity` (`cached_future_provider.dart:85`); `ConnectivityPlusService` is
+  constructed only in `dependencies.dart:405`; never a second sensor.
+- [x] **Config rule respected** — **pass**: web vs file selection is by `kIsWeb`, not
+  config; no runtime env switching.
+- [x] **Honest feedback / no faked success** — **pass**: offline + absent throws
+  `CacheUnavailable` (`cached_future_provider.dart:88-92`, the `*Unavailable` pattern)
+  instead of faking data; stale entries are labeled `CacheStatus.stale` for the consumer;
+  covered by `test/infrastructure/cache/cached_future_provider_test.dart`.
 
 ## Risks / notes
 

@@ -1,6 +1,6 @@
 # System UI overlay & edge-to-edge
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 Configure transparent/branded status and navigation bars and draw app content behind system chrome
@@ -53,20 +53,19 @@ PlatformCapabilities gating; they do not touch real chrome (hermetic).
   usage).
 
 ## Audit
-- [x] No-backend honored as a port — **n/a**: backend-free config command, not a side-effecting
-  service; correct to skip the port here.
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: lives in
-  `lib/infrastructure/platform/` (peer of `platform_capabilities.dart`), edits to root composition
-  files are explicit and minimal.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**: no new shared widget.
+- [x] No-backend honored as a port — **n/a**: backend-free one-shot config command, not a side-effecting data service; correct to skip the port here (explicit C2 exemption). `SystemChrome` is touched only from `SystemUiController` (`system_ui_controller.dart:15,26`) — no widget calls the platform channel directly.
+- [x] Feature-first ownership — **pass**: `lib/infrastructure/platform/system_ui_controller.dart` (peer of `platform_capabilities.dart`); root composition edits are exactly the two planned seams — `bootstrap.dart:105` (`applyEdgeToEdge` inside `createApplication`) and `app.dart:358` (`applyOverlayStyle` in the theme builder). (Deviation from the Files list: the `(brightness, accent)` mapping lives in `SystemUiController.overlayStyleFor` rather than `ForuiThemeFactory`; `ForuiThemeFactory.overlayStyle` (`forui_theme_factory.dart:283`) also exists but is currently unused by the controller — harmless duplication, same transparent-bar contract.)
+- [x] shared/widgets extraction ≥3 consumers — **n/a**: no new shared widget.
+- [x] Composition root confined — **pass**: `SystemChrome.*` appears nowhere else in `lib/` (grep-verified); invocation is confined to `bootstrap.dart` + `app.dart`'s theme builder, both sanctioned composition seams.
 - [x] Motion guarded — **n/a**: no animation.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**: no keys.
-- [x] Strict-analysis clean — **pass**: exhaustive switch over `AppAccent`/`Brightness`, no `dynamic`.
-- [ ] Native entitlements flagged in PR + CI platform jobs — **warn**: `values-v35/styles.xml` +
-  Android `windowSoftInputMode="adjustResize"` must be covered by the Android release-build CI job.
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn**: macOS matrix unaffected, but call
-  out that mobile-only golden coverage (if added) requires fresh baselines.
+- [x] i18n synced en/ar/zh-Hans — **n/a**: no user-facing keys.
+- [x] Strict analysis clean — **pass**: exhaustive switch over `(Brightness, AppAccent)` using `||` patterns covering all six accents (`system_ui_controller.dart:35-64`); `system_ui_controller_test.dart:48-51` pins the 2×6 cardinality so the switch cannot go non-exhaustive silently; no `dynamic`.
+- [x] Generated code untouched — **pass**: no codegen involved.
+- [x] Native entitlements flagged — **pass** (resolves the prior warn): `values-v35/styles.xml` + `values-night-v35/styles.xml` are committed with rationale comments (`windowDrawsSystemBarBackgrounds`, `*Contrast=false`, `shortEdges` cutout); `android:windowSoftInputMode="adjustResize"` is set on both activities (`AndroidManifest.xml:37,61`); the Android release-build CI job exists (`.github/workflows/release.yml:251`, per-ABI APKs + AAB).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: macOS golden matrix unaffected (system chrome is not captured; no status bar on macOS goldens) and the fixture is correctly n/a (chrome does not render inside `PreviewFrame`); the doc notes any future mobile golden set needs its own baselines. The repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending) and does not interact with this feature.
+- [x] Port-reuse consistency — **n/a**: introduces no port; reads the existing `PlatformCapabilities` seam for gating.
+- [x] Config rule respected — **pass**: no runtime env switching; desktop/web short-circuit via `PlatformCapabilities` (`system_ui_controller.dart:84-89`), not scattered `Platform.is*` checks or config flags; platform gating asserted in `system_ui_controller_test.dart:81-104`.
+- [x] Honest feedback, no faked success — **n/a**: pure config command with no user-visible action to fake; tests assert style construction and gating hermetically without touching real chrome.
 
 ## Risks / notes
 - **Android 15 enforcement is the whole reason this is P2, not P3.** Skipping it ships a broken

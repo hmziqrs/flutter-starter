@@ -1,6 +1,13 @@
 # In-app feedback
 
-> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** planned · **Depends on:** settings, platform-capabilities
+> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** in-progress · **Depends on:** settings, platform-capabilities
+>
+> Implementation audit (2026-10-04): port + honest Noop default + controller/sheet/shake +
+> i18n + widget tests verified. Remaining gaps: the optional real impl named in Backend &
+> test surface (`HttpFeedbackTransport`) does not exist anywhere in the repo, and the
+> live-server integration test claimed in Tests (submit over `POST /v1/feedback`, assert
+> ingest + `success`) does not exist — the route is covered only by the server's TS contract
+> tests.
 
 ## Summary
 
@@ -99,26 +106,60 @@ fakes success.
 
 ## Audit
 
-- [x] **pass** — No-backend honored as a port: `NoopFeedbackTransport` is the prod default,
-  returns `unavailable`, surfaces `notConnected`, never returns `accepted`.
-- [x] **pass** — Feature-first ownership: form trio + transport + controller under
-  `lib/features/feedback/`.
-- [ ] **warn** — Shared extraction threshold: research proposed
-  `lib/shared/widgets/shake_detector.dart`, but shake has a **single** consumer (feedback).
-  Keep it feature-local at `lib/features/feedback/shake_feedback_trigger.dart` until a second
-  caller appears. This doc pins it feature-local.
-- [x] **pass** — Motion guarded: sheet open/close from
-  [`AppMotion`](../../../lib/shared/motion/app_motion.dart), guarded by
-  `MediaQuery.disableAnimationsOf(context)`; the non-animated branch still calls
-  `Navigator.maybePop`/submits.
-- [x] **pass** — Tests use `pumpAppFrames`, never `pumpAndSettle`.
-- [x] **pass** — i18n synced en/ar/zh-Hans; `gen-check` stays clean.
-- [x] **pass** — Strict-analysis clean: typed `FeedbackPresentationState` enum with exhaustive
-  switch; no `dynamic`.
-- [x] **n/a-pass** — Native entitlements: none (no keychain/biometric/push). `sensors_plus`
-  needs no entitlement.
-- [x] **n/a-pass** — Golden re-baseline: none required (modal/transient); add a gallery fixture
-  only if visually distinctive.
+- [ ] **No-backend honored as a port** — **warn**: port + honest Noop default + server route
+  verified: `FeedbackTransport` (`lib/features/feedback/feedback_transport.dart:87`),
+  `NoopFeedbackTransport.submit` returns `FeedbackResult.unavailable`
+  (`noop_feedback_transport.dart:7-8`), constructed in `AppDependencies.production`
+  (`lib/app/dependencies.dart:397`); `POST /v1/feedback` + `/v1/feedback/:id/status` at
+  `tools/hono_server/src/index.ts:327-363` with TS contract tests. Missing: the optional real
+  impl `HttpFeedbackTransport` named in Backend & test surface does not exist (grep clean
+  across the repo — no Dart code posts to `/v1/feedback`), and the live-server integration
+  test claimed in Tests is absent.
+- [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: form trio + transport +
+  controller + sheet + shake trigger all under `lib/features/feedback/`.
+- [x] **Shared extraction >=3 consumers** — **pass**: shake detection stayed feature-local at
+  `lib/features/feedback/shake_feedback_trigger.dart` (with an injectable
+  `ShakeStreamFactory` seam) as this doc pins; the shared `showAppBottomSheet` it uses has 3
+  consumers (feedback sheet, permission rationale sheet, gallery system overlay fixture).
+  Resolves the pre-written warn.
+- [x] **Composition root confined** — **pass**: `NoopFeedbackTransport` constructed only in
+  `lib/app/dependencies.dart:397` (+ the `inMemory` factory); overridden in
+  `lib/app/app.dart:148-153`; the shake listener is mounted in `_AppViewState`
+  (`app.dart:409-421`) gated by the `SettingsStore` opt-in + `!isWeb`; the settings menu
+  entry opens the sheet (`lib/features/settings/settings_page.dart:614-618`).
+- [x] **Motion guarded** — **pass**: the sheet contains no custom animation — open/close is
+  delegated to the shared `showAppBottomSheet` (ForUI `FSheet`) under the app-level
+  `FThemeMotion(duration: AppMotion.standard)` (`app.dart:372-375`); Escape dismissal is
+  immediate via `EscapeDismissibleOverlay`; submit/`Navigator.maybePop` never gate on
+  animation completion. (Corrects the earlier claim of a per-sheet
+  `MediaQuery.disableAnimationsOf` branch.)
+- [x] **i18n synced en/ar/zh-Hans** — **pass**: all eleven `feedback.*` keys (title,
+  messageLabel, messageHint, includeScreenshot, emailOptional, submit, cancel, successTitle,
+  successBody, failedTitle, shakeEnabled) present in all three locale files and generated.
+- [x] **Strict analysis clean** — **pass**: typed `FeedbackResult`/`FeedbackSubmission`/
+  `FeedbackPresentationState`; exhaustive switch over presentation status
+  (`feedback_sheet.dart:243-255`); no `dynamic`.
+- [x] **Generated code untouched** — **pass**: the three `*.freezed.dart` files carry
+  standard generated headers; sources changed, not output.
+- [x] **Native entitlements flagged** — **n/a**: `sensors_plus` needs no entitlement; the
+  trigger is platform-gated off web.
+- [x] **Goldens re-baselined + dev-gallery fixture** — **pass**: the doc documents the
+  minimal/modal golden impact; `TypedGalleryCase` fixtures for
+  drafting/submitting/failed/success exist (`feedback_gallery_cases.dart:10-40`); the
+  repo-wide golden re-baseline is pending the pinned macOS 26 CI run (tracked repo-wide per
+  `test/goldens/README.md`, not failed here).
+- [x] **Port-reuse consistency** — **pass**: own transport, deliberately not folded into
+  analytics event ingest (distinct human-triaged channel per Risks); persistence goes through
+  the existing `SettingsStore` per-key discipline (`feedback_controller.dart:15-26`).
+- [x] **Config rule respected** — **pass**: shake is gated behind the persisted
+  `feedback.shake_enabled` opt-in (default off) + `PlatformCapabilities`, not config flags;
+  no runtime env switching.
+- [x] **Honest feedback / no faked success** — **pass**: Noop surfaces the failed state with
+  the `common.notConnected` alert (`feedback_sheet.dart:249-254`); `accepted` only comes from
+  a real transport; the draft is cleared on accepted and retained on failed/rejected
+  (`feedback_controller.dart:100-137`); asserted by
+  `test/features/feedback/feedback_controller_test.dart:88-133, 202` and
+  `feedback_sheet_test.dart:46`.
 
 ## Risks / notes
 

@@ -1,6 +1,13 @@
 # License / share / in-app updates
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+>
+> Implementation-audit gaps (2026-10-04): the `/dev/diagnostics` share + update dev triggers from
+> the file list never landed (the dev gallery renders static state cards only, no live triggers),
+> and the claimed `createApplication` integration test (share trigger + update check via
+> in-memory fakes) does not exist; `ShareService`/`AppUpdateService` currently have no caller
+> outside tests/gallery — permitted by C1's port + Noop + test-surface gate, but the surfaces this
+> doc planned are missing.
 
 ## Summary
 A bundle of three small platform-polish features that each touch the same native/settings seams:
@@ -82,22 +89,51 @@ Mocktail — the noop impls are the fakes.
   the share sheet is OS-native (mirrors automatically).
 
 ## Audit
-- [x] No-backend honored as a port — **pass**: two ports (`ShareService`, `AppUpdateService`), both
-  backend-free; noop defaults surface `unavailable`/`noUpdate` honestly, never fake success.
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **warn (bundle discipline)**: license
-  correctly in the settings feature; share/updates correctly under `lib/infrastructure/`; but three
-  concerns share one doc — keep each concern's files scoped to its owner and do not let the bundle
-  become a grab-bag.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**.
-- [x] Motion guarded — **n/a**.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switches over `UpdateAvailability`/`ShareResult`.
-- [ ] Native entitlements flagged in PR + CI platform jobs — **warn**: `in_app_update` is
-  Android-only (Play Store); iOS uses `url_launcher` (no entitlement, but needs the App Store Apple
-  ID in compile-time config — not a secret). Flag the Android release-build job.
-- [x] Golden re-baseline noted on pinned macOS runner — **pass**: license page is a new PreviewFrame
-  fixture; no full-matrix change.
+
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **warn**: both ports exist (`ShareService`,
+  `AppUpdateService`) with honest noop defaults (`unavailable`/`noUpdate`, tested
+  `noop_share_service_test.dart`, `noop_app_update_service_test.dart`) and device adapters never
+  constructed outside `AppDependencies` platform selection (`dependencies.dart:451-472`). The
+  gap: the doc's planned trigger surfaces are missing — no `/dev/diagnostics` share/update
+  triggers and no `createApplication` integration test; the gallery renders static result cards
+  only (`license_share_update_gallery_cases.dart`), so neither service is ever invoked by an app
+  surface (C1 permits port + Noop + tests with no caller, but this doc promised more).
+- [x] Feature-first ownership — **pass** (bundle discipline held): license page + route + About
+  tile owned by settings (`license_page.dart`, `settings_routes.dart:41-44,68`); share/updates
+  ports + adapters confined to `lib/infrastructure/{sharing,updates}/`; no grab-bag files.
+- [x] Shared extraction ≥3 consumers — **n/a**: no shared widget.
+- [x] Composition root confined — **pass**: `shareServiceProvider`/`appUpdateServiceProvider`
+  throw unless overridden; overridden only at the `ProviderScope` (`app.dart:143-144`);
+  platform selection (SharePlus on ios/android, `IosAppUpdateService` with `config.iosAppleId`,
+  `AndroidAppUpdateService`, Noops elsewhere/web) only in `dependencies.dart`.
+- [x] Motion guarded — **n/a**: no custom animation.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `settings.about.license`, `share.{success,unavailable,
+  cancelled}`, `update.{checkForUpdates,available,notAvailable,required}` verified present in all
+  three `lib/i18n/*.i18n.json`.
+- [x] Strict analysis clean — **pass**: exhaustive switches over `ShareResult` and
+  `UpdateAvailability` in gallery labels + `AndroidAppUpdateService._mapAvailability`; typed
+  enums with pairwise-distinct tests.
+- [x] Generated code untouched — **n/a**: no generated code in this feature.
+- [x] Native entitlements flagged — **pass**: `in_app_update` is Android-only (Play Store) and is
+  noop-only in CI exactly as the doc's risk note requires; iOS needs no entitlement — the App
+  Store Apple ID ships as compile-time `IOS_APPLE_ID` in `app_config.dart:43` and all three
+  `config/*.json` files (empty default; not a secret).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: license page is a gallery case
+  (`license_share_update_gallery_cases.dart`, registered `gallery_registry.dart:49`) and is
+  tested with a `package_info_plus` fixture (`license_page_test.dart:15-38`); no full-matrix
+  change — repo-wide re-baseline still pending the pinned macOS 26 CI run (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: no parallel update gate — the OS-store path feeds the
+  existing update-blocker gate (`route_guards.dart` `UpdateRequirementHard/Soft`), never a second
+  blocking route; license needs no port (local Flutter registry) per this doc.
+- [x] Config rule respected — **pass**: Apple ID is a compile-time define with no runtime
+  fallback; gallery behind `developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: `IosAppUpdateService.checkForUpdate`
+  honestly reports `noUpdate` (iOS forbids a programmatic check, tested) and `launchUpdate` is a
+  silent no-op when the Apple ID is unset (`ios_app_update_service_test.dart:7-19`);
+  `NoopShareService` reports `unavailable`, never success.
 
 ## Risks / notes
 - **`in_app_update` is untestable in CI** — it requires a real Android device with Play Services and

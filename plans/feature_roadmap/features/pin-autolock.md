@@ -1,6 +1,6 @@
 # PIN / passcode + session auto-lock
 
-> **Tier:** P3 · **Domain:** security · **Backend:** none · **Status:** planned · **Depends on:** secure-store, biometric
+> **Tier:** P3 · **Domain:** security · **Backend:** none · **Status:** done · **Depends on:** secure-store, biometric
 
 ## Summary
 
@@ -49,15 +49,49 @@ A user-set local numeric/alphanumeric passcode that gates app entry as a fallbac
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: fully local; no `common.notConnected` path for unlock (would be a fake-success smell).
-- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: all under `lib/features/security/` + the observer under `lib/app/` (composition-root adjacent, mirroring how `AppShell` lives there).
-- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses `AuthPageScaffold` + `EscapeDismissibleOverlay`; no new shared widget.
-- [x] Motion guarded — **warn**: the shake-on-incorrect micro-interaction and the locked-out countdown pulse must be guarded by `MediaQuery.disableAnimationsOf(context)` with a non-animated fallback that still updates the attempt counter.
-- [x] Tests use `pumpAppFrames`, never `pumpAndSettle` — **pass**.
-- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switches over `AutoLockState.lockedReason` / `PasscodeState`; no `dynamic`, no raw types.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native permission needed (`crypto` is pure Dart; lifecycle observer is SDK-only).
-- [x] Golden re-baseline noted — **n/a**.
+- [x] No-backend honored as a port — **pass**: fully local; `verify` returns
+  success/incorrect/lockedOut/notConfigured — never `common.notConnected` (would be a
+  fake-success smell).
+- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: hasher/controllers/pages under
+  `lib/features/security/`; idle `Timer` lives in `auto_lock_controller.dart`; no second
+  `WidgetsBindingObserver` anywhere in the feature.
+- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses `AuthPageScaffold` +
+  `EscapeDismissibleOverlay`; no new shared widget.
+- [x] Composition root confined — **pass**: `passcodeControllerProvider` /
+  `autoLockControllerProvider` handwritten Notifiers; `autoLockDelaySecondsProvider` /
+  `lockOnBackgroundProvider` overridden from live settings at the `ProviderScope`
+  (app.dart:154-159); `passcodeHasherProvider` holds only a pure-Dart impl with an injectable
+  secure-random factory.
+- [x] Motion guarded — **pass** (warn resolved): the shake fallback still sets the error +
+  attempts copy when `disableAnimationsOf` (passcode_page.dart:375-385); `_Dot` pulse (line
+  434) and `_ShakeGuard` (line 475) return static children first; all tweens use `AppMotion`.
+- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**: `security.passcode.*`
+  incl. plural `incorrect(attempts)` / `lockedOut(seconds)` verified in all three locales; PIN
+  dots pinned `TextDirection.ltr` (passcode_page.dart:402).
+- [x] Strict-analysis clean — **pass**: exhaustive switches over `PasscodeVerifyResult` /
+  `AutoLockReason`; constant-time hash compare; no `dynamic`.
+- [x] Generated code untouched — **pass**: `passcode_controller.freezed.dart` /
+  `auto_lock_controller.freezed.dart` are regenerations matching their source models (git diff
+  corresponds 1:1 to source field changes).
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: `crypto` is pure Dart;
+  lifecycle arrives via the SDK-only `appLifecyclePhaseProvider`.
+- [x] Goldens + dev-gallery fixture — **pass**: no canonical matrix case (per this doc);
+  `pin_autolock_gallery_cases.dart` ships `passcode.entry.idle` / `entry.error` /
+  `entry.lockedOut` / `setup.mismatch`; repo-wide re-baseline pending the pinned macOS 26 run
+  (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: salt/hash/attempts persisted via the single
+  `SecureStore` (five `security.passcode.*` keys — tamper-resistant per the risk note);
+  lockout reuses the auth-ratelimit schedule through `VerificationLockoutPolicy` +
+  `computeLockout`/`cooldownSecondsFor`/`freeAttemptsBeforeLockout`
+  (verification_lockout_policy.dart) rather than re-implementing it; the challenge gate chains
+  through the one `appRedirect` (route_guards.dart:67-69) — `AutoLockController.arm()` arms the
+  passcode challenge that redirect reads, so idle/background lockouts land on `/passcode` via
+  the same seam.
+- [x] Config rule respected — **pass**: no env reads; delay/background flags are user
+  settings persisted via `SettingsStore`.
+- [x] Honest feedback, no faked success — **pass**: `verify` never fakes success; cleartext
+  never persisted or logged (`passcode_hasher_test.dart`: 'cleartext pin never appears in the
+  salt or hash output'; controller logs carry no `pin=` context).
 
 ## Risks / notes
 

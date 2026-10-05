@@ -1,6 +1,12 @@
 # State restoration + last-screen persistence
 
-> **Tier:** P3 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** none (pairs with [lifecycle-observer](lifecycle-observer.md))
+> **Tier:** P3 · **Domain:** startup · **Backend:** none · **Status:** in-progress · **Depends on:** none (pairs with [lifecycle-observer](lifecycle-observer.md))
+
+> Implementation audit 2026-10-04: all code paths landed (`restorationScopeId`, per-page
+> `RestorationMixin`, last-route persistence + restore). Remaining gap is test coverage the doc
+> claims but the repo lacks — no end-to-end test that a seeded `nav.last_route` re-opens through
+> `createApplication`, and no explicit `restorationScopeId`-constant assertion (details in the
+> Audit block) — hence `in-progress`, not `done`.
 
 ## Summary
 
@@ -37,15 +43,20 @@ Backend-free; restoration is Flutter framework state. The optional last-route pe
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; reuses `SettingsStore` for last-route only.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: edits are feature-local plus one `app.dart` line.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**.
-- [x] Motion guarded — **n/a**.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**.
-- [x] Strict-analysis clean — **pass**: typed restoration properties, no `dynamic`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Golden re-baseline noted on pinned macOS runner — **warn**: `RestorationMixin` wrapper may require re-baseline.
+- [x] No-backend honored as a port — **pass**: backend-free; reuses `SettingsStore` for the last-route key only (`lib/app/last_route.dart` `writeString` under `nav.last_route`; read in `lib/bootstrap.dart:144-166`); no `clearAll`, no faked success.
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `RestorationMixin` edits are feature-local (auth pages, `onboarding_page.dart:34-46`, `update_profile_page.dart:68-141`); the shared binding lives under `lib/shared/forms/restorable_text_controller.dart` with five page consumers.
+- [x] shared/widgets extraction >=3 consumers — **pass**: `RestorableTextControllerBinding` (shared/forms) consumed by login, register, forgot-password, otp, and update-profile pages (>=3 concrete).
+- [x] Composition root confined — **pass**: `LastRouteObserver` constructed only as a router observer in `_AppViewState` (`lib/app/app.dart:198`); last-route read confined to `createApplication`; `restorationScopeId: 'app'` is one `MaterialApp.router` line (`app.dart:335`).
+- [x] Motion guarded — **n/a**: no animation.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**: no new keys.
+- [x] Strict-analysis clean — **pass**: typed `RestorableString`/`RestorableStringN` drafts; exhaustive `pathForLastRouteName` switch over route names (`last_route.dart:11-44`); no `dynamic`.
+- [x] Generated code untouched — **pass**: no generated files in scope.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: fixture n/a (framework mechanism) as documented; `RestorationMixin` golden impact documented in Tests — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Port-reuse consistency — **pass**: reuses `SettingsStore` (no parallel persistence port); the observer reuses the router `observers:` seam like analytics.
+- [x] Config rule respected — **pass**: dev-only routes excluded from last-route persistence (`pathForLastRouteName` returns null for `developmentScreens`/`diagnostics`), asserted in `test/app/state_restoration_test.dart:53-57`.
+- [x] Honest feedback, no faked success — **pass**: store failures never throw and never block navigation (`runGuarded` around every write, `last_route.dart:76-88`; tested 'never throws and never blocks').
+- [ ] Tests as claimed — **warn**: per-page restoration is covered (`test/features/auth/login_presentation_restoration_test.dart`, `test/features/onboarding/onboarding_restoration_test.dart`, `test/features/profile/update_profile_restoration_test.dart` — each does `restartAndRestore` + builds with restoration disabled) and `test/app/state_restoration_test.dart` covers the observer + exclusions (splash-loop, dev-route, gate-route); **missing**: no end-to-end test seeds `nav.last_route` and asserts `createApplication` re-opens that route (the claimed integration bullet), and no explicit `restorationScopeId`-constant assertion. Blocking `done`.
 
 ## Risks / notes
 

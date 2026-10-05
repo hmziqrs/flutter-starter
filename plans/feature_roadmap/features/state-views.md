@@ -1,6 +1,6 @@
 # Reusable state views
 
-> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 
@@ -59,15 +59,20 @@ faking success. The no-backend boundary is honored at the call site, not inside 
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a** (backend-free; retry callback is feature-supplied and surfaces `notConnected` honestly)
-- [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`; the repo's designated cross-feature bucket, peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (only `home_page._RecentActivity` is concrete today; designated ≥3 consumers under [C1](../contracts.md#c1--scope-is-comprehensive): home activity error/loading, search-results ([search-pagination.md](search-pagination.md)), and cached list ([offline-cache.md](offline-cache.md)) — the latter two land deferred with their features)
-- [x] Motion guarded — **pass** (loading view is static or uses `AppMotion` tokens with a `disableAnimationsOf` fallback; no navigation gating)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`states.*` added to all three locales)
-- [x] Strict-analysis clean — **pass** (typed `StateViewAction` record, no `dynamic`/raw)
-- [x] Native entitlements flagged — **n/a**
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn** (home matrix + new state `PreviewFrame` cases need `--update-goldens`)
+- [x] No-backend honored as a port — **n/a**: backend-free presentational widgets; retry is feature-supplied and the shared list wires it honestly — `PagedListView` defaults the error body to `common.notConnected` with a real retry (`lib/shared/widgets/lists/paged_list_view.dart:58-66`; key verified in all three locales).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: `lib/shared/widgets/states/{empty,error,loading}_state_view.dart` + `state_view_card.dart` — the designated cross-feature bucket, peer of `escape_dismissible_overlay.dart`.
+- [x] shared/widgets extraction >=3 consumers — **pass** (warn resolved): two of the three designated consumers are now concrete — home activity (`lib/features/home/home_page.dart:286`, `EmptyStateView`) and search-results via `PagedListView` rendering all three states (`lib/shared/widgets/lists/paged_list_view.dart:56-69`, backing `lib/features/search/search_page.dart`); [offline-cache](offline-cache.md) remains the designated deferred consumer under [C1](../contracts.md#c1--scope-is-comprehensive) (re-audit when it lands).
+- [x] Composition root confined — **n/a**: pure widgets taking typed Strings; no providers.
+- [x] Motion guarded — **pass**: `LoadingStateView` guards with `MediaQuery.disableAnimationsOf(context)` and falls back to a static title label (`loading_state_view.dart:24-47`); no navigation gating.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**: `states.{emptyTitle,emptyBody,errorTitle,errorBody,loadingTitle}` present in all three of `lib/i18n/{en,ar,zh-Hans}.i18n.json`; action label reuses `common.retry`; the error view test asserts localized `ar` strings under RTL (`test/shared/widgets/states/error_state_view_test.dart:77-98`).
+- [x] Strict-analysis clean — **pass**: typed `StateViewAction` record typedef (`state_view_card.dart:6`), typed Strings, no `dynamic`/raw.
+- [x] Generated code untouched — **pass**: no generated files in this family.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass** (warn resolved): `PreviewFrame` cases per state exist and are registered (`lib/features/dev_gallery/cases/state_views_gallery_cases.dart`, `gallery_registry.dart:35`); home-matrix impact documented — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Port-reuse consistency — **n/a**: no port; reuses the busy-indicators progress primitive as designed (`loading_state_view.dart` composes `BusyIndicator`).
+- [x] Config rule respected — **pass**: gallery behind `developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: the action button renders only when an action is supplied — no default empty lambda (`state_view_card.dart:53-60`); no-backend consumers surface `common.notConnected` via the error body (`paged_list_view.dart:61`).
+- [x] Tests — **pass**: `test/shared/widgets/states/{empty,error,loading}_state_view_test.dart` (render with/without action, retry fires, `ar` RTL case).
 
 ## Risks / notes
 

@@ -1,6 +1,10 @@
 # Feature flags / remote-config
 
-> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** planned · **Depends on:** none
+> **Tier:** P1 · **Domain:** infra · **Backend:** test-server · **Status:** done · **Depends on:** none
+>
+> Implementation audit (2026-10-04): all 13 checklist items pass/n-a against code — typed
+  port + `InMemory` default wired in production, optional remote-config adapter exercised
+  against the live test server from Dart, DiagnosticsPage read-out present.
 
 ## Summary
 
@@ -86,24 +90,44 @@ parallel remote sources ([C4](../contracts.md#c4--port-reuse-do-not-multiply-bac
 
 ## Audit
 
-- [x] **No-backend honored as a port** — pass: in-memory default runs green, optional real
-  impl is an override, test server contract defined, no faked success.
-- [x] **Feature-first ownership; no core/ utils/ buckets** — pass: value object + port + controller
-  + in-memory default under `lib/features/feature_flags/` (port lives with the feature, mirroring the
-  [`SettingsStore`](../../../lib/features/settings/settings_store.dart) exemplar); the **optional real
-  impl** (the shared remote-config backend adapter) under `lib/infrastructure/remote_config/`, shared
-  in spirit with [`update-blocker`](update-blocker.md) + [`ab-experiments`](ab-experiments.md).
-- [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget.
-- [x] **Motion guarded** — n/a: no animation.
-- [x] **Tests use pumpAppFrames, never pumpAndSettle** — pass: integration tests use the
-  bounded-frame helper.
-- [x] **i18n synced en/ar/zh-Hans; gen-check stays clean** — n/a: no strings.
-- [ ] **Strict-analysis clean** — warn: `FeatureFlags` must use typed getters (no `dynamic`
-  map of flags); every new flag is an enum/field with an exhaustive switch so analysis
-  catches missing cases. Avoid `Map<String, Object>` on the public surface.
-- [x] **Native entitlements flagged in PR + CI platform jobs** — n/a: no plugin; the optional
-  Firebase SDK ships its own config the consumer wires.
-- [x] **Golden re-baseline noted on pinned macOS runner** — n/a: no visual change.
+- [x] **No-backend honored as a port** — **pass**: port `FeatureFlagsSource`
+  (`lib/features/feature_flags/feature_flags_source.dart:5`); `InMemoryFeatureFlagsSource`
+  returns `FeatureFlags.defaults()` and is the production default
+  (`lib/app/dependencies.dart:387`); optional real impl
+  `lib/infrastructure/remote_config/remote_config_feature_flags_source.dart` is constructed
+  only in tests/e2e; live-server contract exercised from Dart against `GET /v1/remote-config`
+  (`tools/hono_server/src/index.ts:209-221` with ETag/`?rev=` 304s) in
+  `test/e2e/hono_server_e2e_test.dart:71-79` plus honest null-degradation on an unreachable
+  host (`:184-193`); no faked success.
+- [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: value object + port +
+  controller + in-memory default under `lib/features/feature_flags/`; only the shared
+  remote-config adapter lives under `lib/infrastructure/remote_config/` per C4.
+- [x] **Shared extraction >=3 consumers** — **n/a**: no widget proposed.
+- [x] **Composition root confined** — **pass**: wired only in
+  `lib/app/dependencies.dart:387`, overridden in `lib/app/app.dart:119-121`; the remote
+  adapter is never constructed in production paths.
+- [x] **Motion guarded** — **n/a**: no animation.
+- [x] **i18n synced en/ar/zh-Hans** — **n/a**: no feature-owned strings; the shared
+  `diagnostics.featureFlags` label is part of the synced diagnostics surface.
+- [x] **Strict analysis clean** — **pass**: every flag is a typed field on `FeatureFlags`
+  with exhaustive switches (`feature_flags.dart:50-90, 111-137`); wire payloads parsed in
+  `fromSlice` behind typed checks; no `dynamic`. Resolves the pre-written warn.
+- [x] **Generated code untouched** — **pass**: `feature_flags.freezed.dart` carries the
+  standard generated header; sources changed, not output.
+- [x] **Native entitlements flagged** — **n/a**: no plugin; optional Firebase/GrowthBook
+  config is consumer-wired.
+- [x] **Goldens re-baselined + dev-gallery fixture** — **n/a**: no visual change (the
+  DiagnosticsPage flag read-out at `diagnostics_page.dart:143-150` is dev-only).
+- [x] **Port-reuse consistency** — **pass**: one of three peer typed readers
+  (`FeatureFlagsSource`/`VersionGateStore`/`ExperimentSource`) over the single
+  `RemoteConfigClient` (`lib/infrastructure/remote_config/remote_config_client.dart` exposes
+  `flags`/`versionPolicy`/`experiments` slices); no second remote source.
+- [x] **Config rule respected** — **pass**: refresh is lifecycle-gated
+  (`GuardedRefreshNotifier` + `listenOnResume`, `feature_flags_controller.dart:22-35`); no
+  runtime env switching; dev read-out behind `developmentToolsEnabled` (`/dev/*`).
+- [x] **Honest feedback / no faked success** — **pass**: `FeatureFlags.defaults()` never
+  claims a flag enabled; flags have no user-facing success state; failures degrade to the
+  cached/defaults value without surfacing errors.
 
 ## Risks / notes
 

@@ -1,6 +1,12 @@
 # Runtime permissions + media picker
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+>
+> Implementation-audit gaps (2026-10-04): the granted→pick→`onAvatarPicked(media)` happy path has
+> no test (only the dismiss path is covered, and the claimed `createApplication` integration test
+> with a fixture-returning fake picker does not exist); the `/dev/diagnostics` dev trigger from the
+> file list never landed; and `profile_routes.dart:62-70` ignores a successfully picked image
+> (null shows `avatarUnavailable`, non-null is a silent no-op).
 
 ## Summary
 Request device permissions (camera, photos, notifications, location) with a pre-prompt rationale and
@@ -74,23 +80,61 @@ the noop impls ARE the fakes.
   under `ar`; verify with the RTL PreviewFrame case.
 
 ## Audit
-- [x] No-backend honored as a port — **pass**: two ports; noop hermetic defaults surface
-  denied/unavailable honestly and never fake a grant or picked image.
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: ports under
-  `lib/infrastructure/{permissions,media}/`; profile feature consumes; shared sheet qualifies (below).
-- [ ] shared/widgets extraction only if >=3 consumers — **warn**: `permission_rationale_sheet` is
-  feature-local under `lib/features/profile/widgets/` until ≥3 concrete consumer features land — only
-  profile/avatar is a consumer today; promote to `lib/shared/widgets/` when the third consumer arrives.
-- [x] Motion guarded — **warn**: `FSheet` slide is ForUI-built-in; if any custom entrance is added,
-  guard with `MediaQuery.disableAnimationsOf` + a non-animated fallback that still opens the sheet.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switch over `AppPermission`/`PermissionStatus`.
-- [ ] Native entitlements flagged in PR + CI platform jobs — **warn**: camera/photo/notifications/
-  location need iOS `NSXxxUsageDescription` strings + Android runtime permissions in
-  `AndroidManifest.xml`; flag in PR, cover in platform release-build jobs.
-- [x] Golden re-baseline noted on pinned macOS runner — **pass**: rationale sheet is a new
-  `PreviewFrame` fixture; no full-matrix change.
+
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **warn**: both ports exist (`PermissionService` +
+  `MediaPicker`, `lib/infrastructure/{permissions,media}/`); noop hermetic defaults surface
+  denied/null honestly (`noop_permission_service_test.dart:9-24`,
+  `noop_media_picker_test.dart:9-19`); rationale always precedes the OS prompt
+  (`update_profile_page.dart:633-662`). The warn is the untested happy path: no test drives
+  granted→pick→`onAvatarPicked(PickedMedia)` (only the dismiss path is covered,
+  `update_profile_page_test.dart:20-38`), the claimed `createApplication` integration test with a
+  fixture-returning fake picker does not exist, and `profile_routes.dart:62-70` silently ignores a
+  successfully picked image.
+- [x] Feature-first ownership — **pass**: ports + device/noop adapters under
+  `lib/infrastructure/{permissions,media}/`; rationale sheet + avatar flow owned by the profile
+  feature (`profile/widgets/permission_rationale_sheet.dart`, `update_profile_page.dart`); no
+  `core/`/`utils/`.
+- [x] Shared extraction ≥3 consumers — **pass**: the sheet stayed feature-local under
+  `lib/features/profile/widgets/` exactly as this doc pins (only profile/avatar consumes it
+  today); nothing promoted to `lib/shared/widgets/`.
+- [x] Composition root confined — **pass**: both providers throw unless overridden and are
+  overridden only at the `ProviderScope` (`app.dart:141-142`); platform selection (device on
+  ios/android, Noop elsewhere incl. web) lives only in `AppDependencies.production`
+  (`dependencies.dart:429-449`); plugins imported only by infrastructure adapters.
+- [x] Motion guarded — **pass**: the sheet uses ForUI's built-in `FSheet` via
+  `showAppBottomSheet` wrapped in `EscapeDismissibleOverlay` (`app_bottom_sheet.dart:19`); no
+  custom entrance was added, so no additional guard is needed (the doc's warn was conditional).
+- [x] i18n synced en/ar/zh-Hans — **pass**: `permission.{camera,photos,location}.title/rationale`
+  + `continueRequest`/`openSettings`/`denied`/`permanentlyDenied`/`notNow` verified present in all
+  three `lib/i18n/*.i18n.json`; RTL rendering tested
+  (`permission_rationale_sheet_test.dart:98-118`).
+- [x] Strict analysis clean — **pass**: sealed `PermissionStatus` hierarchy + exhaustive switches
+  over `AppPermission` (`permission_service.dart:52-58`,
+  `noop_permission_service_test.dart:63`); typed `PickedMedia` with value equality
+  (`noop_media_picker_test.dart:29-55`).
+- [x] Generated code untouched — **n/a**: no generated code in this feature.
+- [x] Native entitlements flagged — **pass**: landed — `NSCameraUsageDescription`,
+  `NSPhotoLibraryUsageDescription`, `NSLocationWhenInUseUsageDescription` in
+  `ios/Runner/Info.plist:14-18`; `CAMERA`/`READ_MEDIA_IMAGES`/`ACCESS_COARSE_LOCATION` in
+  `android/app/src/main/AndroidManifest.xml` with rationale-first comments (notifications stay
+  owned by push-notifications, incl. `POST_NOTIFICATIONS`).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: rationale sheet + denied/
+  permanently-denied gallery cases exist (`permissions_gallery_cases.dart`, registered
+  `gallery_registry.dart:48`); no full-matrix change — repo-wide re-baseline still pending the
+  pinned macOS 26 CI run (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: no `notifications` kind declared (OS notification
+  permission stays owned by push-notifications, as this doc requires); `MediaPicker` is the single
+  pick port for future share/feedback flows.
+- [x] Config rule respected — **pass**: no config surface; gallery behind
+  `developmentToolsEnabled`. The planned `/dev/diagnostics` trigger never landed (gap noted in
+  the header) — the dev gallery is the preview surface.
+- [x] Honest feedback, no faked success — **pass**: noop picker returns null → route surfaces
+  `profile.update.avatarUnavailable` (`profile_routes.dart:62-70`); noop permission service never
+  fakes a grant (tested); permanently-denied offers open-settings, not a re-prompt
+  (`permission_rationale_sheet_test.dart:34-52,77-96`).
 
 ## Risks / notes
 - **Permanently-denied is a one-way door.** Once the user picks "Don't ask again", re-prompting is a

@@ -1,6 +1,6 @@
 # In-app announcements
 
-> **Tier:** P1 · **Domain:** engagement · **Backend:** none · **Status:** planned · **Depends on:** settings
+> **Tier:** P1 · **Domain:** engagement · **Backend:** none · **Status:** done · **Depends on:** settings
 
 ## Summary
 
@@ -86,27 +86,50 @@ decisions, not empty interfaces").
 
 ## Audit
 
-- [x] **n/a-pass** — No-backend honored: backend-free; the default (static fixtures) is real and
-  local, not a Noop. No success to fake.
-- [x] **pass** — Feature-first ownership: value object + fixtures + controller live under
-  `lib/features/announcements/`.
-- [ ] **warn** — Shared extraction threshold: research proposed
-  `lib/shared/widgets/announcement_banner.dart`, but there is a **single** mount site (the
-  `app.dart` builder). Keep it feature-local at `lib/features/announcements/announcement_banner.dart`
-  until a second consumer appears (per
-  [baseline report](../../../docs/baseline_architecture_report.md) ≥3-consumer rule). This doc pins it
-  feature-local.
-- [x] **pass** — Motion guarded: enter/exit sourced from
-  [`AppMotion`](../../../lib/shared/motion/app_motion.dart) (`standard`/`standardCurve`) and
-  guarded with `MediaQuery.disableAnimationsOf(context)`; the non-animated branch still renders
-  the banner immediately so the message is never gated on the animation.
-- [x] **pass** — Tests use `pumpAppFrames`, never `pumpAndSettle`.
-- [x] **pass** — i18n synced en/ar/zh-Hans; `gen-check` stays clean.
-- [x] **pass** — Strict-analysis clean: typed `AnnouncementSeverity` enum with exhaustive
-  switch into `FAlertStyle`; no `dynamic`.
-- [x] **n/a-pass** — Native entitlements: none.
-- [ ] **warn** — Golden re-baseline required on the pinned macOS runner; the banner is above
-  every route, so multiple matrix cases shift.
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **n/a**: backend-free; `AnnouncementFixtures` is a real local
+  default (`announcement_fixtures.dart`), and non-dev builds seed an empty list rather than faking
+  content (`app.dart:103-107`). No success to fake.
+- [x] Feature-first ownership — **pass**: view data + fixtures + controller + banner all live under
+  `lib/features/announcements/`; no `core/`/`utils/` buckets.
+- [x] Shared extraction ≥3 consumers — **pass**: the banner stays feature-local at
+  `lib/features/announcements/announcement_banner.dart` exactly as this doc pins; the only shared
+  piece is `lib/shared/widgets/banners/collapsing_banner_slot.dart`, a generic `AnimatedSize`
+  wrapper with 2 concrete banner consumers (connectivity + announcements) documented in
+  `docs/architecture.md` — this feature extracted no shared widget/form.
+- [x] Composition root confined — **pass**: dismissed set read in `AppDependencies.production`
+  (`dependencies.dart:226,266`), providers overridden at the `ProviderScope` (`app.dart:100-108`),
+  banner mounted once above every route in the `MaterialApp.router` builder via `AppBannerHost`
+  (`app.dart:407`, `lib/app/shell/app_banner_host.dart`) — auth/onboarding top-level routes
+  included.
+- [x] Motion guarded — **pass**: enter/exit is `AnimatedSize(AppMotion.standard, standardCurve)`
+  behind `MediaQuery.disableAnimationsOf` with a render-immediately fallback
+  (`collapsing_banner_slot.dart:13-21`); the message never gates on the animation.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `announcements.*` (dismiss, actionLearnMore,
+  dismissFailed, severities, fixtures) verified present in all three `lib/i18n/*.i18n.json`;
+  RTL pinning of the action strip tested (`announcement_banner_test.dart:104-121`).
+- [x] Strict analysis clean — **pass**: exhaustive switch over `AnnouncementSeverity` into the
+  FAlert presentation (`announcement_banner.dart:256-282`) and fixtures
+  (`announcement_fixtures.dart:33-40`); typed Freezed value; no `dynamic`.
+- [x] Generated code untouched — **pass**: `announcement_view_data.freezed.dart` committed
+  alongside its `part` source; regenerated via `just gen`, not hand-edited.
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: one `TypedGalleryCase` per severity
+  (`dev_gallery/cases/announcements_gallery_cases.dart`, registered `gallery_registry.dart:39`);
+  the banner enters the shell matrix per this doc's golden-impact note — repo-wide re-baseline
+  still pending the pinned macOS 26 CI run (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: standalone per this doc; dismissal reuses the shared
+  `SettingsStore` per-key port under the single JSON key `announcements.dismissedIds`
+  (`announcements_controller.dart:10`) with no `clearAll`; no parallel port introduced.
+- [x] Config rule respected — **pass**: fixture visibility keyed off compile-time
+  `config.environment` (`app.dart:103-107`); gallery gated by `developmentToolsEnabled`
+  (`dev_gallery/dev_gallery_routes.dart:8-9`); no runtime env switching.
+- [x] Honest feedback, no faked success — **pass**: dismiss-persist failure rolls back the
+  optimistic state and surfaces `announcements.dismissFailed` via toast
+  (`announcements_controller.dart:91-93`, `announcement_banner.dart:41-49`); rollback covered in
+  `announcements_controller_test.dart:239-268`.
 
 ## Risks / notes
 

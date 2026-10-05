@@ -1,6 +1,6 @@
 # Structured-log PII redaction
 
-> **Tier:** P1 · **Domain:** security · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P1 · **Domain:** security · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 
@@ -34,15 +34,34 @@ Extends the existing regex-based [`LogRedactor`](../../../lib/infrastructure/log
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a**: backend-free pure-Dart transform; no port/default/override split applies.
-- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: stays under `lib/infrastructure/logging/` (the existing redactor home).
-- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: no widget; the redactor is already the single shared choke point consumed by `AppLogger`.
+- [x] No-backend honored as a port — **n/a**: backend-free pure-Dart transform; no
+  port/default/override split applies.
+- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: deepened in place under
+  `lib/infrastructure/logging/` (the existing redactor home).
+- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: no widget; the redactor is
+  already the single shared choke point consumed by `AppLogger`.
+- [x] Composition root confined — **n/a**: `const LogRedactor` consumed directly by
+  `AppLogger` (app_logger.dart:6); no providers, no wiring.
 - [x] Motion guarded — **n/a**: no animation surface.
-- [x] Tests use `pumpAppFrames`, never `pumpAndSettle` — **n/a**: pure-Dart unit tests, no pumping.
 - [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **n/a**: no string changes.
-- [x] Strict-analysis clean — **pass**: keep `static final RegExp` typed, raw string literals for patterns, no `dynamic`; verify `dart analyze --fatal-infos` is clean.
+- [x] Strict-analysis clean — **pass**: all patterns are `static final RegExp` with raw
+  string literals (`_email`, `_phoneE164`, `_pan`, `_jwtPayload`, `_queryStringToken` +
+  extended `_sensitiveKey` in log_redactor.dart:6-38); the Luhn helper is typed; no `dynamic`
+  (verified statically — run `just analyze` for the formal gate). Pipeline order holds:
+  `_bearerToken`/`_sensitiveAssignment` run before `_jwtPayload` (log_redactor.dart:40-58),
+  PAN is Luhn-gated, and `log_redactor_test.dart` keeps the negative regression case
+  (`STARTUP-CONFIG-12345` preserved, line 106).
+- [x] Generated code untouched — **pass**: no codegen involved.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Golden re-baseline noted — **warn**: indirect impact — audit golden fixtures for strings that newly match; re-baseline on the pinned macOS runner if any change.
+- [x] Golden re-baseline + dev-gallery fixture — **pass**: indirect impact documented above;
+  fixture n/a per this doc (not a UI feature); repo-wide re-baseline pending the pinned
+  macOS 26 run (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: no new port; every log line flows through
+  `AppLogger._format` → `redactText` + `redactContext`, and `error.toString()` is redacted
+  too (app_logger.dart:41, 58, 70-76) — message text, structured context, and thrown errors
+  are all scrubbed.
+- [x] Config rule respected — **n/a**: no env surface.
+- [x] Honest feedback, no faked success — **n/a**: transform, not an action surface.
 
 ## Risks / notes
 

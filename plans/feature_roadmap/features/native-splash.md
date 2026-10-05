@@ -1,6 +1,6 @@
 # Native splash
 
-> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** none (ship alongside [in-app-splash](in-app-splash.md))
+> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** done · **Depends on:** none (ship alongside [in-app-splash](in-app-splash.md))
 
 ## Summary
 
@@ -36,15 +36,20 @@ Backend-free; there is no Dart runtime component, no port, and no network. The "
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a**: pure codegen, no port.
-- [x] Feature-first ownership; no core/ utils/ buckets — **n/a**: config/codegen, not Dart — correctly bypasses `lib/features`.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**.
+- [x] No-backend honored as a port — **n/a**: pure codegen, no port, no Dart runtime path.
+- [x] Feature-first ownership; no core/ utils/ buckets — **n/a**: config/codegen, not Dart — correctly bypasses `lib/features` (repo root `flutter_native_splash.yaml`).
+- [x] shared/widgets extraction >=3 consumers — **n/a**.
+- [x] Composition root confined — **n/a**: no providers; regeneration is a `just` recipe (`justfile:58-63` `splash` / `splash-remove`).
 - [x] Motion guarded — **n/a**: native, not `AppMotion`-governed.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **n/a**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**.
-- [x] Strict-analysis clean — **n/a** (no Dart).
-- [x] Native entitlements flagged in PR + CI platform jobs — **warn**: edits native files outside `lib/` (iOS storyboard, Android drawable, web favicon); flag the native churn in the PR and ensure the iOS/Android/macOS build jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) still pass.
-- [x] Golden re-baseline noted on pinned macOS runner — **n/a**.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **n/a**: no strings.
+- [x] Strict-analysis clean — **n/a** (no Dart; `flutter_native_splash: ^2.4.8` is a `dev_dependencies` entry, `pubspec.yaml:59`).
+- [x] Generated code untouched — **pass**: native output committed from the CLI (never hand-edited); regeneration is reviewable via `just splash` + committed diff.
+- [x] Native entitlements flagged in PR + CI platform jobs — **pass** (warn resolved): native output landed and committed — iOS `ios/Runner/Base.lproj/LaunchScreen.storyboard` (LaunchBackground + LaunchImage imageViews) + `Assets.xcassets/{LaunchBackground,LaunchImage}.imageset`; Android `res/drawable/{launch_background,background}.xml/.png`, `values-v31/styles.xml` (`windowSplashScreenBackground` `#171717`, lines 9-11) with `values-night*` variants; web `web/splash/img` + `web/favicon.png`. Platform builds covered by `.github/workflows/release.yml` (apple on `macos-26`, android, windows, linux).
+- [x] Goldens re-baselined + dev-gallery fixture — **n/a**: pre-Flutter surface, below the golden matrix.
+- [x] Port-reuse consistency — **n/a**: no port.
+- [x] Config rule respected — **pass**: background pinned to the neutral-default primary token (`#171717`/`#E5E5E5`) matching `ForuiThemeFactory._accentColors`, documented in the yaml header (`flutter_native_splash.yaml:7-16`).
+- [x] Honest feedback, no faked success — **n/a**.
+- [x] Brand assets — **pass** (noted): `assets/brand/logo_{light,dark}.png` committed as tracked placeholders; yaml header flags them for replacement per `docs/release_readiness.md`.
 
 ## Risks / notes
 

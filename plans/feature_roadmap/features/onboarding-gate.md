@@ -1,6 +1,6 @@
 # First-launch onboarding gate
 
-> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** none (reuses the existing `SettingsStore`)
+> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** done · **Depends on:** none (reuses the existing `SettingsStore`)
 
 ## Summary
 
@@ -37,15 +37,20 @@ Backend-free; [`SettingsStore`](../../lib/features/settings/settings_store.dart)
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; reuses the existing `SettingsStore`.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: edits are feature-local in `lib/features/settings/` plus one router line.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**.
-- [x] Motion guarded — **n/a**.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**: no new keys.
-- [x] Strict-analysis clean — **pass**: typed `bool`, no `dynamic`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [x] Golden re-baseline noted on pinned macOS runner — **warn**: initial-route change may shift boot-state goldens.
+- [x] No-backend honored as a port — **pass**: reuses the existing `SettingsStore` port; `onboardingKey` loads/persists through `SettingsRepository` (`lib/features/settings/settings_repository.dart:69,94`); no faked success — `markOnboardingComplete()` rolls back the optimistic flag when persistence fails (`test/features/settings/settings_onboarding_test.dart:92`).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: edits confined to `lib/features/settings/*` plus the [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused)-owned redirect under `lib/app/routing/`.
+- [x] shared/widgets extraction >=3 consumers — **n/a**: no widget extracted.
+- [x] Composition root confined — **pass**: the predicate composes into the **single** `appRedirect` (`lib/app/routing/route_guards.dart:46-52`) wired as the one `go_router` redirect (`app_router.dart:50-54`); the redirect reads live state via `ProviderScope.containerOf(...).read(settingsControllerProvider)` (`route_guards.dart:97-104`); the cold-start seed flows from `initialSettings` through `_AppViewState` (`lib/app/app.dart:195`).
+- [x] Motion guarded — **n/a**: no animation.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**: no new keys; the `onboarding` namespace pre-existed.
+- [x] Strict-analysis clean — **pass**: typed `bool hasCompletedOnboarding` in `SettingsState` with `copyWith`/`==`/`hashCode` (`settings_state.dart:41,87,112,128`); no `dynamic`.
+- [x] Generated code untouched — **pass**: source-level change only; `settings_state.freezed.dart` regenerated via `just gen`.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: no native config.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: behavior-only change (fixture n/a); the boot-state golden impact is documented in Tests — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Port-reuse consistency — **pass**: no new port; reuses `SettingsStore`; the gate reuses the one `appRedirect` chain, ordered after force-update (`route_guards.dart:34-52`) as required.
+- [x] Config rule respected — **pass**: no env gating.
+- [x] Honest feedback, no faked success — **pass**: completion persists before navigation in all three home callbacks (`_completeOnboardingAndGoHome`, `lib/features/onboarding/onboarding_routes.dart:49-53`); persistence failure surfaces via rollback (tested).
+- [x] Tests — **pass**: `test/features/settings/settings_onboarding_test.dart` (round-trip true/false/missing/legacy values, persist, rollback, `persistedKeys`); `test/app/routing/app_router_onboarding_redirect_test.dart` (fresh install → onboarding, returning user → home, in-session Skip / paywall Skip / paywall Continue reach home without relaunch, `/pricing` + `/settings` deep links redirect, no loop on onboarding/auth, relaunch after completion) — all via the real `App` with `pumpAppFrames`.
 
 ## Risks / notes
 

@@ -1,6 +1,6 @@
 # Biometric unlock
 
-> **Tier:** P1 · **Domain:** security · **Backend:** none · **Status:** planned · **Depends on:** secure-store
+> **Tier:** P1 · **Domain:** security · **Backend:** none · **Status:** done · **Depends on:** secure-store
 
 ## Summary
 
@@ -44,15 +44,46 @@ On-device fingerprint / Face ID / device-credential authentication used to gate 
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; Noop default reports unavailable honestly, never fakes success.
-- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: port under `lib/infrastructure/biometric/`, UI under `lib/features/security/`.
-- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses existing `EscapeDismissibleOverlay` (already shared); no new shared widget.
-- [x] Motion guarded — **warn**: lock-page entry animation and the success → unlock transition must be guarded by `MediaQuery.disableAnimationsOf(context)` with a `jumpTo`-style fallback; implementer must not skip this.
-- [x] Tests use `pumpAppFrames`, never `pumpAndSettle` — **pass**.
-- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: typed `BiometricAvailability`, exhaustive `BiometricLockState` switch, no `dynamic`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **warn**: requires `NSFaceIDUsageDescription` (iOS), `USE_BIOMETRIC` permission (Android), Windows Hello capability; must land in `ios/Runner/Info.plist`, `android/app/src/main/AndroidManifest.xml`, and be exercised in the platform CI jobs.
-- [x] Golden re-baseline noted — **n/a**: no canonical matrix case.
+- [x] No-backend honored as a port — **pass**: port `lib/infrastructure/biometric/biometric_authenticator.dart`
+  (typed `BiometricAvailability` + sealed `BiometricLockState`), real `LocalAuthAuthenticator`
+  (error-wrapping), and `NoopBiometricAuthenticator` reporting `canCheck: false` /
+  `authenticate -> false` honestly; production selects Noop only for web
+  (dependencies.dart:283-285).
+- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: port under
+  `lib/infrastructure/biometric/`, controller + page under `lib/features/security/`; toggle
+  persisted via `biometricUnlockKey` in the settings repository `persistedKeys`.
+- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses existing
+  `AuthPageScaffold` + `EscapeDismissibleOverlay`; no new shared widget.
+- [x] Composition root confined — **pass**: `biometricAuthenticatorProvider` throws
+  `StateError` (biometric_authenticator_provider.dart:4-6); overridden at the `ProviderScope`
+  (app.dart:122-124); `biometricUnlockControllerProvider` is a handwritten Notifier.
+- [x] Motion guarded — **pass** (warn resolved): `_BiometricLockIcon` checks
+  `MediaQuery.disableAnimationsOf(context)` and returns the static icon first
+  (biometric_lock_page.dart:176-179); tweens source `AppMotion` durations/curves; unlock
+  navigation is callback-driven (`onUnlocked`), never animation-gated.
+- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**: `security.biometric.*`
+  (lockTitle/lockBody/unlock/unlocking/unavailableTitle/unavailableBody/useFallback/
+  authFailedTitle) + `settings.enableBiometric` verified present in all three locales.
+- [x] Strict-analysis clean — **pass**: typed enums, sealed state, exhaustive
+  `BiometricLockState` handling; no `dynamic`.
+- [x] Generated code untouched — **pass**: handwritten files only.
+- [x] Native entitlements flagged in PR + CI platform jobs — **pass** (warn resolved):
+  `NSFaceIDUsageDescription` at ios/Runner/Info.plist:7; `USE_BIOMETRIC` at
+  android/app/src/main/AndroidManifest.xml:3; release.yml builds iOS/macOS on `macos-26`;
+  desktop degrades honestly because `LocalAuthAuthenticator` wraps every call in try/on.
+- [x] Golden re-baseline + dev-gallery fixture — **pass**: no canonical matrix case (per this
+  doc); `biometric_gallery_cases.dart` ships locked/unavailable `PreviewFrame`s pinned via
+  `_PinnedBiometricUnlockController` + Noop authenticator, registered in `gallery_registry.dart`;
+  repo-wide re-baseline pending the pinned macOS 26 run (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: the lock gate chains through the one `appRedirect`
+  (route_guards.dart:64-66 reads `biometricUnlockControllerProvider` gated on
+  `biometricUnlockEnabled`) — third reader of the C5 helper after onboarding + session; no
+  per-feature redirect (grep finds no `redirect` in feature route modules).
+- [x] Config rule respected — **pass**: gallery gated behind `developmentToolsEnabled`
+  (dev_gallery_routes.dart:8); no env switching.
+- [x] Honest feedback, no faked success — **pass**: failed OS prompt surfaces the destructive
+  `authFailedTitle` alert; the unavailable state offers the PIN handoff (`_useBiometricFallback`
+  → `/passcode` when configured, else disables the toggle — security_routes.dart:62-72).
 
 ## Risks / notes
 

@@ -1,6 +1,6 @@
 # Haptic feedback
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 Tactile feedback on key user actions (toggles, destructive confirms, pull-to-refresh, success/error
@@ -60,21 +60,46 @@ to fake).
 - **RTL note:** n/a.
 
 ## Audit
-- [x] No-backend honored as a port — **pass**: port + real device default; noop is for hermeticity
-  only (backend=none, so the real impl is local — this is the correct shape, not the C2 four-part
-  contract which applies to `server` features).
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: port under
-  `lib/infrastructure/haptics/`; the `SettingsState` edit is expected cross-cutting via the settings
-  feature's own `persistedKeys`.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**: no shared widget.
-- [x] Motion guarded — **pass (load-bearing)**: every call site must auto-suppress when
-  `MediaQuery.disableAnimationsOf(context)` is true — reduce-motion parity. This is the single most
-  important guard for this feature.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switch over `HapticKind`, typed provider.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: `Haptic` needs no entitlement.
-- [x] Golden re-baseline noted on pinned macOS runner — **n/a**.
+
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **pass**: port `HapticService` + `HapticKind` +
+  `HapticServiceException` (`lib/infrastructure/haptics/haptic_service.dart`); production default
+  is the real device adapter (`DeviceHapticService`, constructed in `dependencies.dart:406`);
+  `NoopHapticService` is the hermetic test/golden default (`dependencies.dart:161`); backend-free,
+  so no C2 server contract applies.
+- [x] Feature-first ownership — **pass**: port trio under `lib/infrastructure/haptics/`; the
+  `hapticsEnabled` field lives in the settings feature's own state/repository/controller
+  (`settings_state.dart:93`, `settings_repository.dart:19,33`, `settings_controller.dart:56-58`)
+  and the toggle in `settings/widgets/haptics_tile.dart` — no `core/`/`utils/`.
+- [x] Shared extraction ≥3 consumers — **n/a**: no shared widget; the only trigger surface today
+  is the dev-gallery case (`haptics_gallery_cases.dart:50-58`).
+- [x] Composition root confined — **pass**: `hapticServiceProvider` throws unless overridden and
+  is overridden only at the `ProviderScope` (`app.dart:126`) with adapters constructed only in
+  `dependencies.dart`.
+- [x] Motion guarded — **pass (load-bearing)**: the call site auto-suppresses on
+  `MediaQuery.disableAnimationsOf(context)` **and** the `hapticsEnabled` user opt-out
+  (`haptics_gallery_cases.dart:50-58`); both negative paths asserted in
+  `test/infrastructure/haptics/haptic_call_site_test.dart:86-116`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `settings.haptics.title`/`enable` +
+  `devGallery.caseHaptic*`/`screenHaptics` verified present in all three
+  `lib/i18n/*.i18n.json`.
+- [x] Strict analysis clean — **pass**: exhaustive `HapticKind` switches in `DeviceHapticService`
+  and the gallery labels; the kind→`HapticFeedback` mapping asserted exhaustively in
+  `haptic_service_test.dart` (all 7 kinds against the platform channel).
+- [x] Generated code untouched — **n/a**: no generated code in this feature.
+- [x] Native entitlements flagged — **n/a**: `HapticFeedback` needs no entitlement.
+- [x] Goldens re-baselined + dev-gallery fixture — **n/a/pass**: no visual change (doc: no golden
+  impact); the Haptics trigger case exists behind `developmentToolsEnabled`
+  (`haptics_gallery_cases.dart`, registered `gallery_registry.dart:43`).
+- [x] Port-reuse consistency — **pass**: settings persistence rides the existing per-key
+  `SettingsStore` (`appearance.haptics_enabled`); no second settings surface.
+- [x] Config rule respected — **pass**: no config surface; gallery gated by
+  `developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: fire-and-forget contract, nothing faked; the
+  settings tile surfaces `common.notConnected` and rolls back on persistence failure
+  (`settings_tile_save_failure_test.dart:22-64`).
 
 ## Risks / notes
 - **Reduce-motion coupling is mandatory.** Firing haptics while `disableAnimationsOf` is true is

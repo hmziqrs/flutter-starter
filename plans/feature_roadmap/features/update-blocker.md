@@ -1,6 +1,12 @@
 # Update blocker (hard block + soft deprecation)
 
-> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** planned · **Depends on:** none (composes the update-block predicate into the existing top-level `_redirectSettingsDeepLinks` redirect — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
+> **Tier:** P2 · **Domain:** startup · **Backend:** test-server · **Status:** in-progress · **Depends on:** none (composes the update-block predicate into the existing top-level redirect helper `appRedirect` — [C5](../contracts.md#c5--one-go_router-redirect-pattern-reused))
+>
+> Implementation audit (2026-10-04): port + `InMemory` none default + remote-config adapter +
+> redirect composition + i18n + widget tests verified. Remaining gap: the router-level
+> integration test claimed in Tests below — no test overrides `versionCheckProvider` to
+> assert the `hard` redirect or the `soft` dialog through the app router (the live-server e2e
+> asserts only the store's `none` degradation).
 
 ## Summary
 
@@ -45,15 +51,50 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: port + `InMemory` `none` default + optional real override + `tools/hono_server` shared `/v1/remote-config` contract (versionPolicy slice, [C9](../contracts.md#c9--test-server-route-conventions)).
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state + pages + in-memory default.
-- [x] shared/widgets extraction only if >=3 consumers — **pass**: soft dialog **reuses** the existing [`EscapeDismissibleOverlay`](../../lib/shared/widgets/escape_dismissible_overlay.dart) + the [`_showInformationDialog`](../../lib/app/routing/app_router.dart) `FDialog` pattern rather than extracting anything new.
-- [x] Motion guarded — **n/a**: pages are static.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: sealed `UpdateRequirement`, exhaustive switch, typed payload (no `dynamic`).
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: store URL via `url_launcher`, no entitlement.
-- [x] Golden re-baseline noted on pinned macOS runner — **warn**: new full-screen page; re-baseline required.
+- [ ] No-backend honored as a port — **warn**: four parts verified — `VersionGateStore` port
+  (`lib/features/force_update/version_gate_store.dart:5`), `InMemoryVersionGateStore` `none`
+  default checked once in `AppDependencies.production` (`lib/app/dependencies.dart:267-271`),
+  optional `RemoteConfigVersionGateStore` (constructed only in tests/e2e; live check at
+  `test/e2e/hono_server_e2e_test.dart:81-88`), shared `/v1/remote-config` contract
+  (`tools/hono_server/src/index.ts:209-221`). Missing: no router-level test overrides
+  `versionCheckProvider` to assert the hard redirect / soft dialog claimed in Tests (the gate
+  itself, `lib/app/routing/route_guards.dart:30-39`, is untested at that level).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: feature owns port + state +
+  pages + dialog + routes module under `lib/features/force_update/`; only the shared
+  remote-config client lives in infrastructure.
+- [x] Shared extraction >=3 consumers — **pass**: soft dialog **reuses**
+  `EscapeDismissibleOverlay` + the shared `FDialog` pattern
+  (`lib/features/force_update/soft_update_dialog.dart:17-44`); nothing new extracted.
+- [x] Composition root confined — **pass**: predicate composed first into the single
+  `appRedirect` helper (`lib/app/routing/route_guards.dart:23-71`), never a second redirect;
+  `versionCheckProvider` seeded from dependencies and overridden in `lib/app/app.dart:94-95`;
+  router refreshes on change (`app.dart:221-225`); route module owns only its `GoRoute`
+  (`force_update_routes.dart:13-35`).
+- [x] Motion guarded — **n/a**: pages/dialog are static (hard page is a `PopScope(canPop:
+  false)` trap — `force_update_page.dart:22-23`).
+- [x] i18n synced en/ar/zh-Hans — **pass**: `forceUpdate.{title,body,updateNow}` +
+  `softUpdate.{title,body,update,later}` present in all three locale files and generated.
+- [x] Strict analysis clean — **pass**: sealed `UpdateRequirement`
+  (`update_requirement.dart:5-22`); exhaustive switch verified by test
+  (`update_requirement_test.dart:103`); `pub_semver` is a direct dependency
+  (`pubspec.yaml:43`); no `dynamic`.
+- [x] Generated code untouched — **pass**: `update_requirement.freezed.dart` /
+  `force_update_state.freezed.dart` carry standard generated headers.
+- [x] Native entitlements flagged — **n/a**: store URL via `url_launcher` wrapped in
+  `runGuarded` (`route_guards.dart:171-181`); no entitlement.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: doc documents the full-screen
+  golden impact; `PreviewFrame` fixtures for `hard` + `soft` exist
+  (`lib/features/dev_gallery/cases/force_update_gallery_cases.dart:10-33`); the repo-wide
+  golden re-baseline is pending the pinned macOS 26 CI run (tracked repo-wide per
+  `test/goldens/README.md`, not failed here). Resolves the pre-written warn.
+- [x] Port-reuse consistency — **pass**: `VersionGateStore` is the peer reader of the one
+  `RemoteConfigClient` family; no second remote-config source.
+- [x] Config rule respected — **pass**: the check runs once at boot in dependencies, never
+  in a widget `build`; no runtime env switching.
+- [x] Honest feedback / no faked success — **pass**: `InMemory` default returns a real
+  `none`; the remote impl degrades to `none` on failure without faking a block (tested at
+  `remote_config_version_gate_store_test.dart:144`); soft snooze persisted per-key
+  (`SoftUpdateSnooze`, `soft_update_dialog.dart:110-130`).
 
 ## Risks / notes
 

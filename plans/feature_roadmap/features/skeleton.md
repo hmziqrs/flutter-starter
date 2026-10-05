@@ -1,6 +1,12 @@
 # Skeleton loading placeholders
 
-> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** state-views
+> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** in-progress · **Depends on:** state-views
+
+Implementation note: the widgets, tests, motion guards, and gallery fixtures are done and
+verified; the feature stays `in-progress` solely on checklist item 3 — no production screen
+adopts the skeleton yet (only the dev gallery renders it), and this doc never designated ≥3
+deferred consumers. Adopt on real load states (home/pricing/profile/search) or record the
+designation to close it.
 
 ## Summary
 
@@ -56,15 +62,19 @@ empty/error state-view ([state-views.md](state-views.md)).
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a** (backend-free; driven by the `isLoading` flag)
-- [x] Feature-first ownership — **pass** (`lib/shared/widgets/states/`, peer of state-views)
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (no concrete consumer today; reach the threshold by adopting on home + pricing + profile load states together, else defer)
-- [x] Motion guarded — **pass** (shimmer guarded by `disableAnimationsOf` + a static fallback that still lays out; the hand-rolled FSkeleton path sources its shimmer duration/curve from `AppMotion` tokens — skeletonizer's timing is package-owned and exempt; critical — [checklist #5](../contracts.md#5--motion-guarded) names skeleton shimmer explicitly)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
-- [x] Strict-analysis clean — **pass** (typed style, no `dynamic`)
-- [x] Native entitlements flagged — **n/a**
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn** (new loading matrix case; must freeze shimmer for determinism)
+- [x] No-backend honored as a port — **n/a**: backend-free; the skeleton renders off a feature's `isLoading` flag and never issues a network call (`skeleton_view.dart` has no I/O); no plugin calls.
+- [x] Feature-first ownership — **pass**: `lib/shared/widgets/states/skeleton_view.dart` + `skeleton_tile.dart`, peers of the state-views widgets in the same bucket.
+- [ ] shared/widgets extraction ≥3 consumers — **warn**: the only consumer today is the dev gallery (`skeleton_gallery_cases.dart`); `home_page`, `pricing`, and `profile` load states did not adopt it (grep for `SkeletonView|SkeletonTile|SkeletonLine|SkeletonCircle|SkeletonBox` in `lib/` finds no feature usage), and this doc does not designate ≥3 deferred consumers — the bar (concrete or designated) is unmet.
+- [x] Composition root confined — **pass**: no providers or adapters; pure widgets, nothing to wire in `AppDependencies`/`ProviderScope`.
+- [x] Motion guarded — **pass**: hand-rolled implementation (no `skeletonizer` dependency in `pubspec.yaml`); `_sync` reads `MediaQuery.disableAnimationsOf` (`skeleton_view.dart:94`) and disposes the ticker under reduce-motion so only the static base paint remains; the animated path sources duration/curve from `AppMotion` tokens (`skeleton_view.dart:105,109`); `skeleton_view_test.dart:84,99` asserts the static fallback stays measurable; feature tests never use `pumpAndSettle`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: no skeleton keys (copy-less bones); the default semantics label reuses `states.loadingTitle`, present in all three locales (`en.i18n.json:374`, `ar.i18n.json:399`, `zh-Hans.i18n.json:369`).
+- [x] Strict analysis clean — **pass**: immutable typed `SkeletonStyle` with `==`/`hashCode` (`skeleton_view.dart:8-45`), no `dynamic`; deterministic bone primitives.
+- [x] Generated code untouched — **pass**: no codegen for this feature; working-tree generated-file changes trace to source edits via `just gen`.
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed `PreviewFrame` cases `skeleton.staticList` (frozen/static, golden-safe) + `skeleton.shimmerList` (`skeleton_gallery_cases.dart`, registered in `gallery_registry.dart:36`) — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Port-reuse consistency — **n/a**: introduces no port.
+- [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: the skeleton carries a loading semantics label and transitions to real content or the error/empty state-view; it never renders data-shaped bones as a success claim.
 
 ## Risks / notes
 

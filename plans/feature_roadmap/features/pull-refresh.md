@@ -1,6 +1,13 @@
 # Pull-to-refresh + list virtualization
 
-> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** none (pairs with toast-dialogs)
+> **Tier:** P2 · **Domain:** ux · **Backend:** none · **Status:** in-progress · **Depends on:** none (pairs with toast-dialogs)
+
+Implementation note: all four widgets, the home migration, tests, and gallery fixtures are
+done and verified (including the `PlatformCapabilities.isApplePlatform` addition this doc
+recommended). The feature stays `in-progress` solely on checklist item 3 — `home_page` is the
+only production consumer (`DataListView` at `home_page.dart:292`); `RefreshableListView` and
+`ResponsiveListGrid` are gallery-only, and this doc does not designate ≥3 deferred consumers.
+Adopt on further real lists (pricing/search/settings) or record the designation to close it.
 
 ## Summary
 
@@ -63,15 +70,19 @@ synthesized.
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a** (backend-free; `onRefresh` surfaces `notConnected`, never fakes success)
-- [x] Feature-first ownership — **pass** (`lib/shared/widgets/refresh/` + `lib/shared/widgets/lists/`)
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (`home` is the only concrete consumer today; clear the bar by adopting on pricing/search lists, or document deferred consumers)
-- [x] Motion guarded — **pass** (native indicator spinner; any custom spin sources durations/curves from `AppMotion` + uses `disableAnimationsOf` + a non-animated fallback that completes the refresh `Future`)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
-- [x] Strict-analysis clean — **pass** (generic `DataListView<T>`, typed item builder, no raw types)
-- [x] Native entitlements flagged — **n/a**
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn** (home list/grid matrix changes)
+- [x] No-backend honored as a port — **n/a**: backend-free; `onRefresh` is feature-supplied and a no-backend refresh surfaces `notConnected` (e.g. via `AppToast` in the connectivity/announcements banners), never a faked successful refresh; no plugin calls in the widgets.
+- [x] Feature-first ownership — **pass**: `lib/shared/widgets/refresh/{app_refresh_indicator,refreshable_list_view}.dart` + `lib/shared/widgets/lists/{data_list_view,responsive_list_grid}.dart`; no `core/`/`utils/` buckets.
+- [ ] shared/widgets extraction ≥3 consumers — **warn**: concrete consumers today are `home_page.dart:292` (`DataListView`) plus the dev gallery (`pull_refresh_gallery_cases.dart` imports `RefreshableListView` + `ResponsiveListGrid`); `AppRefreshIndicator` is used only inside the refresh bucket; search landed its own `PagedListView` without adopting `DataListView` — 2 distinct consumers, and this doc does not designate ≥3 deferred consumers, so the bar is unmet.
+- [x] Composition root confined — **pass**: no providers or adapters; pure widgets, nothing to wire in `AppDependencies`/`ProviderScope`.
+- [x] Motion guarded — **pass**: `app_refresh_indicator.dart:47` reads `MediaQuery.disableAnimationsOf` and renders the spinner transparent under reduce-motion while the `onRefresh` `Future` still completes (`app_refresh_indicator_test.dart:45`); `refreshable_list_view.dart:49-50` falls back from Cupertino to the Material indicator under reduce-motion; native indicator animation otherwise; feature tests never use `pumpAndSettle`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: no new keys; reuses `common.loading` / `common.notConnected` (`app_refresh_indicator.dart:48`); RTL exercised in `app_refresh_indicator_test.dart:60`.
+- [x] Strict analysis clean — **pass**: generic `DataListView<T>` / `RefreshableListView<T>` / `ResponsiveListGrid<T>` with typed item builders and `String Function(T)` keyOf, exhaustive `AppLayoutClass` switch (`responsive_list_grid.dart:21-26`); no raw types.
+- [x] Generated code untouched — **pass**: no codegen for this feature; working-tree generated-file changes trace to source edits via `just gen`.
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed `PreviewFrame` cases `pullRefresh.list` / `pullRefresh.grid` (`pull_refresh_gallery_cases.dart`, registered in `gallery_registry.dart:34`); home list/grid matrix change documented above — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Port-reuse consistency — **pass**: no new port; the Cupertino/Material branch reads the shared `PlatformCapabilities` seam (`isApplePlatform`, added at `platform_capabilities.dart:37`) instead of scattering `Platform.is*` checks, exactly as this doc's risk note prescribed.
+- [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: the indicator dismisses when the `onRefresh` `Future` completes (`app_refresh_indicator.dart:32-42`); no data is synthesized and success is never implied without the feature's own result.
 
 ## Risks / notes
 

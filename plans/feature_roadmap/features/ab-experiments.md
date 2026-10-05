@@ -1,6 +1,10 @@
 # A/B experiment hooks
 
-> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** planned · **Depends on:** feature-flags, settings
+> **Tier:** P3 · **Domain:** engagement · **Backend:** test-server · **Status:** done · **Depends on:** feature-flags, settings
+>
+> Implementation audit (2026-10-04): all 13 checklist items pass/n-a against code — typed
+  ports + deterministic local default wired in production, remote override that degrades to
+  the deterministic table, live-server e2e, diagnostics snapshot.
 
 ## Summary
 
@@ -106,20 +110,48 @@ local assignment, not faked remote data.
 
 ## Audit
 
-- [x] **pass** — No-backend honored: `DeterministicExperimentSource` is a real local default
-  (not a Noop); the optional remote source degrades to it offline. No faked remote data.
-- [x] **pass** — Feature-first ownership: value objects + controller + source under
-  `lib/features/experiments/`.
-- [x] **n/a-pass** — Shared extraction: no `lib/shared/widgets/` proposal; this is a pure
-  state/behavior feature.
-- [x] **n/a-pass** — Motion guarded: no animations.
-- [x] **pass** — Tests use `pumpAppFrames`, never `pumpAndSettle`.
-- [x] **n/a-pass** — i18n: no user-facing keys of its own; `gen-check` unaffected.
-- [x] **pass** — Strict-analysis clean: typed `ExperimentKey`/`ExperimentVariant` enums,
-  exhaustive `switch` for variant handling, no `dynamic` in payloads (typed value objects).
-- [x] **n/a-pass** — Native entitlements: none.
-- [ ] **warn** — Golden re-baseline only if a variant changes a visible surface; otherwise n/a.
-  Decide per-experiment.
+- [x] **No-backend honored as a port** — **pass**: `ExperimentSource` port
+  (`lib/features/experiments/experiment_source.dart:37`); `DeterministicExperimentSource` is a
+  real local default (salted FNV-1a bucketing over the stable id persisted under the
+  `experiments.deviceStableId` `SettingsStore` key — `deterministic_experiment_source.dart:18,
+  80-106`) wired in `AppDependencies.production` (`lib/app/dependencies.dart:388`); the
+  optional `RemoteConfigExperimentSource` degrades to the deterministic fallback on missing/
+  malformed/unreachable responses (tested at
+  `test/features/experiments/remote_config_experiment_source_test.dart:106-153`) and is
+  exercised against the live server in `test/e2e/hono_server_e2e_test.dart:90-100`; no faked
+  remote data (`source` enum `local | remote`).
+- [x] **Feature-first ownership; no core/ utils/ buckets** — **pass**: key/variant/source/
+  controller/deterministic/in-memory sources all under `lib/features/experiments/`; only the
+  shared remote-config adapter lives under `lib/infrastructure/remote_config/`.
+- [x] **Shared extraction >=3 consumers** — **n/a**: pure state/behavior feature; no
+  `lib/shared/widgets/` proposal.
+- [x] **Composition root confined** — **pass**: wired only in
+  `lib/app/dependencies.dart:388` (production reads the real `SharedPreferences`-backed
+  settings store; `inMemory` seeds `InMemorySettingsStore`), overridden in
+  `lib/app/app.dart:146`; the remote source is constructed only in tests.
+- [x] **Motion guarded** — **n/a**: no animations.
+- [x] **i18n synced en/ar/zh-Hans** — **n/a**: no user-facing keys of its own;
+  `diagnostics.experiments.{title,source}` are synced in all three locale files.
+- [x] **Strict analysis clean** — **pass**: typed `ExperimentKey`/`ExperimentVariant`/
+  `ExperimentAssignment` value objects with exhaustive switches; payloads typed
+  `Map<String, Object?>`; no `dynamic` in the feature (grep clean).
+- [x] **Generated code untouched** — **pass**: the four `*.freezed.dart` files carry standard
+  generated headers; sources changed, not output.
+- [x] **Native entitlements flagged** — **n/a**: none (pure-Dart default; remote SDKs are
+  opt-in and consumer-wired).
+- [x] **Goldens re-baselined + dev-gallery fixture** — **n/a**: no visible variant shipped —
+  no consumer of `experimentsProvider` outside the feature and the dev-only diagnostics
+  snapshot (`diagnostics_page.dart:153-163`); the doc's decide-per-experiment rule stands.
+  Resolves the pre-written warn.
+- [x] **Port-reuse consistency** — **pass**: `ExperimentSource` is the third peer typed
+  reader over the single `RemoteConfigClient`; no parallel remote source was introduced.
+- [x] **Config rule respected** — **pass**: remote refresh degrades silently to the local
+  table; navigation is never blocked on assignment (`experiments_controller.dart` returns
+  loading until resolved); no runtime env switching.
+- [x] **Honest feedback / no faked success** — **pass**: sticky local assignment is real, not
+  faked remote; failures degrade to the deterministic table without surfacing errors
+  (`deterministic_experiment_source_test.dart:85-100`); the diagnostics snapshot is
+  dev-gated.
 
 ## Risks / notes
 

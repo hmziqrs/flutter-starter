@@ -33,41 +33,41 @@ or `server` (port + Noop default + test server per [C2](contracts.md#c2--backend
 
 | Feature | Tier | Domain | Backend | Status | Doc |
 |---|---|---|---|---|---|
-| App lifecycle observer | P0 | startup | none | planned | [lifecycle-observer](features/lifecycle-observer.md) |
-| SecureStore port | P0 | security | none | planned | [secure-store](features/secure-store.md) |
-| Crash & error reporting | P0 | infra | server | planned | [crash-reporting](features/crash-reporting.md) |
-| Real-time connectivity indicator | P1 | startup | none | planned | [connectivity](features/connectivity.md) |
-| First-launch onboarding gate | P1 | startup | none | planned | [onboarding-gate](features/onboarding-gate.md) |
-| Native splash | P1 | startup | none | planned | [native-splash](features/native-splash.md) |
-| Reusable state views | P1 | ux | none | planned | [state-views](features/state-views.md) |
-| Progress / busy indicators | P1 | ux | none | planned | [busy-indicators](features/busy-indicators.md) |
-| Reusable form scaffolding | P1 | ux | none | planned | [form-scaffolding](features/form-scaffolding.md) |
-| Biometric unlock | P1 | security | none | planned | [biometric](features/biometric.md) |
-| Session / token management | P1 | security | server | planned | [session](features/session.md) |
-| Log PII redaction | P1 | security | none | planned | [log-redaction](features/log-redaction.md) |
-| Product analytics | P1 | infra | server | planned | [analytics](features/analytics.md) |
-| Feature flags / remote-config | P1 | infra | server | planned | [feature-flags](features/feature-flags.md) |
-| In-app announcements | P1 | engagement | none | planned | [announcements](features/announcements.md) |
-| Animated in-app splash | P2 | startup | none | planned | [in-app-splash](features/in-app-splash.md) |
-| Update blocker (hard + soft) | P2 | startup | server | planned | [update-blocker](features/update-blocker.md) |
-| Skeleton loading | P2 | ux | none | planned | [skeleton](features/skeleton.md) |
-| Pull-to-refresh + virtualization | P2 | ux | none | planned | [pull-refresh](features/pull-refresh.md) |
-| MFA / OTP completion | P2 | security | server | planned | [mfa-otp](features/mfa-otp.md) |
-| Auth rate-limit / lockout | P2 | security | none | planned | [auth-ratelimit](features/auth-ratelimit.md) |
-| Push notifications | P2 | engagement | server | planned | [push-notifications](features/push-notifications.md) |
-| System UI / edge-to-edge | P2 | platform | none | planned | [system-ui](features/system-ui.md) |
-| Haptic feedback | P2 | platform | none | planned | [haptics](features/haptics.md) |
-| Accessibility presets | P2 | platform | none | planned | [a11y-presets](features/a11y-presets.md) |
-| Deep linking | P2 | platform | none | planned | [deep-linking](features/deep-linking.md) |
-| Runtime permissions + media picker | P2 | platform | none | planned | [permissions-media](features/permissions-media.md) |
-| License / share / in-app updates | P2 | platform | none | planned | [license-share-update](features/license-share-update.md) |
-| State restoration + last-screen | P3 | startup | none | planned | [state-restoration](features/state-restoration.md) |
-| In-app search + pagination | P3 | ux | none | planned | [search-pagination](features/search-pagination.md) |
-| Toast + confirmation wrappers | P3 | ux | none | planned | [toast-dialogs](features/toast-dialogs.md) |
-| PIN / passcode + auto-lock | P3 | security | none | planned | [pin-autolock](features/pin-autolock.md) |
-| In-app feedback / shake | P3 | engagement | server | planned | [feedback](features/feedback.md) |
-| A/B experiment hooks | P3 | engagement | server | planned | [ab-experiments](features/ab-experiments.md) |
-| Offline-first caching layer | P3 | infra | server | planned | [offline-cache](features/offline-cache.md) |
+| App lifecycle observer | P0 | startup | none | in-progress | [lifecycle-observer](features/lifecycle-observer.md) |
+| SecureStore port | P0 | security | none | done | [secure-store](features/secure-store.md) |
+| Crash & error reporting | P0 | infra | server | in-progress | [crash-reporting](features/crash-reporting.md) |
+| Real-time connectivity indicator | P1 | startup | none | done | [connectivity](features/connectivity.md) |
+| First-launch onboarding gate | P1 | startup | none | done | [onboarding-gate](features/onboarding-gate.md) |
+| Native splash | P1 | startup | none | done | [native-splash](features/native-splash.md) |
+| Reusable state views | P1 | ux | none | done | [state-views](features/state-views.md) |
+| Progress / busy indicators | P1 | ux | none | done | [busy-indicators](features/busy-indicators.md) |
+| Reusable form scaffolding | P1 | ux | none | done | [form-scaffolding](features/form-scaffolding.md) |
+| Biometric unlock | P1 | security | none | done | [biometric](features/biometric.md) |
+| Session / token management | P1 | security | server | done | [session](features/session.md) |
+| Log PII redaction | P1 | security | none | done | [log-redaction](features/log-redaction.md) |
+| Product analytics | P1 | infra | server | in-progress | [analytics](features/analytics.md) |
+| Feature flags / remote-config | P1 | infra | server | done | [feature-flags](features/feature-flags.md) |
+| In-app announcements | P1 | engagement | none | done | [announcements](features/announcements.md) |
+| Animated in-app splash | P2 | startup | none | done | [in-app-splash](features/in-app-splash.md) |
+| Update blocker (hard + soft) | P2 | startup | server | in-progress | [update-blocker](features/update-blocker.md) |
+| Skeleton loading | P2 | ux | none | in-progress | [skeleton](features/skeleton.md) |
+| Pull-to-refresh + virtualization | P2 | ux | none | in-progress | [pull-refresh](features/pull-refresh.md) |
+| MFA / OTP completion | P2 | security | server | done | [mfa-otp](features/mfa-otp.md) |
+| Auth rate-limit / lockout | P2 | security | none | in-progress | [auth-ratelimit](features/auth-ratelimit.md) |
+| Push notifications | P2 | engagement | server | in-progress | [push-notifications](features/push-notifications.md) |
+| System UI / edge-to-edge | P2 | platform | none | done | [system-ui](features/system-ui.md) |
+| Haptic feedback | P2 | platform | none | done | [haptics](features/haptics.md) |
+| Accessibility presets | P2 | platform | none | done | [a11y-presets](features/a11y-presets.md) |
+| Deep linking | P2 | platform | none | in-progress | [deep-linking](features/deep-linking.md) |
+| Runtime permissions + media picker | P2 | platform | none | in-progress | [permissions-media](features/permissions-media.md) |
+| License / share / in-app updates | P2 | platform | none | in-progress | [license-share-update](features/license-share-update.md) |
+| State restoration + last-screen | P3 | startup | none | in-progress | [state-restoration](features/state-restoration.md) |
+| In-app search + pagination | P3 | ux | none | in-progress | [search-pagination](features/search-pagination.md) |
+| Toast + confirmation wrappers | P3 | ux | none | done | [toast-dialogs](features/toast-dialogs.md) |
+| PIN / passcode + auto-lock | P3 | security | none | done | [pin-autolock](features/pin-autolock.md) |
+| In-app feedback / shake | P3 | engagement | server | in-progress | [feedback](features/feedback.md) |
+| A/B experiment hooks | P3 | engagement | server | done | [ab-experiments](features/ab-experiments.md) |
+| Offline-first caching layer | P3 | infra | server | in-progress | [offline-cache](features/offline-cache.md) |
 
 ## Sequencing
 

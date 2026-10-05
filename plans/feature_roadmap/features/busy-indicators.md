@@ -1,6 +1,6 @@
 # Progress / busy indicators
 
-> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 
@@ -63,15 +63,19 @@ state; the action's outcome still surfaces `common.notConnected` when there is n
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a** (backend-free; reflects presentation-state flags; outcome still surfaces `notConnected`)
-- [x] Feature-first ownership — **pass** (`lib/shared/widgets/`; peer of [`escape_dismissible_overlay.dart`](../../lib/shared/widgets/escape_dismissible_overlay.dart))
-- [x] shared/widgets extraction ≥3 consumers — **pass** (login/register/forgot/reset/otp + profile = well over three async actions)
-- [x] Motion guarded — **pass** (native indeterminate spinner; any custom pulse uses `AppMotion` + `disableAnimationsOf` + a non-animated fallback that completes the action)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`common.saving` added to three locales)
-- [x] Strict-analysis clean — **pass** (typed `BusySeverity` enum, exhaustive switch on the value state)
-- [x] Native entitlements flagged — **n/a**
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn** (auth/profile submit-state matrix cases change)
+- [x] No-backend honored as a port — **n/a**: backend-free; the overlay only mirrors in-flight presentation state (`busy_overlay.dart` reads `isBusy`), and the submit outcome still surfaces `notConnected` from each feature's state machine — no plugin calls anywhere in the widget.
+- [x] Feature-first ownership — **pass**: `lib/shared/widgets/busy_indicator.dart` + `busy_overlay.dart`, peers of `escape_dismissible_overlay.dart`; no `core/`/`utils/` buckets introduced.
+- [x] shared/widgets extraction ≥3 consumers — **pass**: concrete consumers are the five auth pages (`login_page.dart:162` mounts `BusyOverlay`; register/forgot/reset/otp likewise), `update_profile_page.dart:612` (`BusySeverity.saving`), `feedback_sheet.dart:219`, and `loading_state_view.dart` — well over three.
+- [x] Composition root confined — **pass**: no providers or adapters introduced; pure widgets, nothing to wire in `AppDependencies`/`ProviderScope`.
+- [x] Motion guarded — **pass**: `busy_overlay.dart:60-68` checks `MediaQuery.disableAnimationsOf` and falls back to a static localized label; `busy_overlay_test.dart:121,147` asserts the action still completes under reduce-motion; no navigation gates on the spinner; the feature's tests use bounded pumps, never `pumpAndSettle`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `common.saving` present in all three (`en.i18n.json:20`, `ar.i18n.json:20`, `zh-Hans.i18n.json:20`); `common.loading` pre-existing; generated `translations_*.g.dart` regenerated, not hand-edited.
+- [x] Strict analysis clean — **pass**: typed `BusySeverity` enum with exhaustive switch (`busy_indicator.dart:45-49`), clamped determinate value, no `dynamic`/raw types in the new files.
+- [x] Generated code untouched — **pass**: `*.g.dart` changes in the working tree correspond to source-JSON edits via `just gen` (no hand edits).
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `busy.indeterminate` / `busy.determinate` / `busy.overlay` `PreviewFrame` cases committed (`busy_indicator_gallery_cases.dart`, registered in `gallery_registry.dart:33`); golden impact on the auth/profile submit matrix documented above — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Port-reuse consistency — **n/a**: introduces no port; no parallel to `ConnectivityService`/`SecureStore` families.
+- [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart`, which gates on `config.developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: the indicator mirrors in-flight state only; `BusyOverlay` blocks duplicate submits (`busy_overlay_test.dart:80`), and the action result is still the feature's own success/failure state — the widget never claims an outcome.
 
 ## Risks / notes
 

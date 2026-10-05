@@ -1,6 +1,13 @@
 # Deep linking
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** in-progress · **Depends on:** none
+>
+> Implementation-audit gap (2026-10-04): resolver/allowlist/cold-start are implemented and
+> exhaustively unit-tested, but the claimed integration coverage is missing at the wiring level —
+> no test pushes a URI through the stream and asserts the router lands on the named destination
+> (`app.dart:254-271` `_listenAppLinkStream`/`_dispatchAppLink` untested), and no bootstrap-level
+> test asserts the cold-start link seeds `initialLocation`
+> (`bootstrap.dart` `_initialLocationFromResolvedLink` untested).
 
 ## Summary
 Intercept inbound native URIs (iOS Universal Links, Android App Links, custom schemes) and route them
@@ -67,21 +74,48 @@ driven by a `StreamController<Uri>` — no Mocktail.
 - **RTL note:** n/a (routing).
 
 ## Audit
-- [x] No-backend honored as a port — **pass**: backend-free; receive-only; the `AppLinks`
-  plugin is reached via the `DeepLinkService` port, never directly from a widget. **Warn:**
-  magic-link *issuance* needs a server — that lives in [mfa-otp](./mfa-otp.md)/[session](./session.md), not here.
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: handler lives under
-  `lib/app/routing/` (composition-root-adjacent, the correct home for routing concerns — not a
-  feature bucket).
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**.
-- [x] Motion guarded — **n/a**.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (mostly reuse).
-- [x] Strict-analysis clean — **pass**: exhaustive switch over resolved routes; typed `ResolvedLink`.
-- [ ] Native entitlements flagged in PR + CI platform jobs — **warn**: iOS associated-domains
-  entitlement + hosted `apple-app-site-association`; Android `autoVerify` + hosted `assetlinks.json`
-  — all must be documented in the PR and verified outside CI (CI cannot host the association files).
-- [x] Golden re-baseline noted on pinned macOS runner — **n/a**.
+
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **warn**: backend-free receive-only; the `AppLinks` plugin
+  is reached only via `AppLinksDeepLinkService`/`AppLinkInbox` (`app_link_handler.dart`) — no
+  other `lib/` file imports `app_links` (grep-verified); no widget calls a plugin. The warn is
+  the missing wiring-level integration coverage this doc claims: no test asserts a streamed URI
+  lands the router on the named destination (`app.dart:254-271` untested) or that the cold-start
+  link seeds `initialLocation` (`bootstrap.dart` `_initialLocationFromResolvedLink` untested;
+  only service-level `getInitialLink` is covered, `app_link_handler_test.dart:219-235,274-285`).
+- [x] Feature-first ownership — **pass**: handler lives under `lib/app/routing/` (composition-root-
+  adjacent, the correct home for routing concerns — not a feature bucket); no `core/`/`utils/`.
+- [x] Shared extraction ≥3 consumers — **n/a**: no widget extracted.
+- [x] Composition root confined — **pass**: `RouteAppLinkHandler(allowedHosts:)` constructed only
+  in `AppDependencies.production` (`dependencies.dart:415-417`, Noop in `inMemory` at :166);
+  `appLinkHandlerProvider` overridden only at the `ProviderScope` (`app.dart:145`); the cold-start
+  link is captured inside `createApplication` **before** `initialLocation` reaches
+  `buildAppRouter` (`bootstrap.dart`).
+- [x] Motion guarded — **n/a**: routing only.
+- [x] i18n synced en/ar/zh-Hans — **pass**: reuse only, as planned (no `deepLink.*` key added and
+  none needed; rejected links resolve to `null`, no toast).
+- [x] Strict analysis clean — **pass**: exhaustive switches over route paths
+  (`app_link_handler.dart` `_staticRouteFor` + `_tryResolveOtp`; `bootstrap.dart`
+  `_initialLocationFromResolvedLink`); typed `ResolvedLink` with value equality.
+- [x] Generated code untouched — **n/a**: no generated code.
+- [x] Native entitlements flagged — **pass**: landed — `com.apple.developer.associated-domains`
+  in `ios/Runner/Runner.entitlements` + `Release.entitlements` (empty by default with consumer
+  instructions in comments) and the `autoVerify` intent-filter in
+  `android/app/src/main/AndroidManifest.xml` (placeholder host documented); hosted
+  `apple-app-site-association`/`assetlinks.json` remain consumer-side by design, mirrored by the
+  compile-time `ALLOWED_DEEP_LINK_HOSTS` define (`app_config.dart:44-46`, present in all
+  `config/*.json`).
+- [x] Goldens re-baselined + dev-gallery fixture — **n/a**: no visual surface (doc: n/a).
+- [x] Port-reuse consistency — **pass**: single inbound-routing primitive; push taps still use
+  `context.pushNamed` directly, not this handler, exactly as this doc records.
+- [x] Config rule respected — **pass**: allowlist is compile-time only
+  (`AllowedDeepLinkHosts.parse(String.fromEnvironment(...))`, no runtime fallback); empty
+  allowlist disables inbound routing (tested `app_link_handler_test.dart:23-27,183-191`).
+- [x] Honest feedback, no faked success — **pass**: foreign hosts/phishing and unknown paths
+  resolve to `null` and are dropped — never navigated (`app_link_handler_test.dart:161-191`); an
+  empty allowlist rejects every URI rather than guessing.
 
 ## Risks / notes
 - **Cold-start race.** The initial link must be captured in `createApplication` **before**

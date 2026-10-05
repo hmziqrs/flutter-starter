@@ -1,6 +1,13 @@
 # In-app search + pagination
 
-> **Tier:** P3 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** pull-refresh
+> **Tier:** P3 · **Domain:** ux · **Backend:** none · **Status:** in-progress · **Depends on:** pull-refresh
+
+Implementation note: the search feature (field, debounce, page, top-level route), the
+`PagedState<T>`/`PagedStateNotifierBase` port shape with an honest Noop fetcher, tests, i18n,
+and gallery fixtures are done and verified. The feature stays `in-progress` solely on
+checklist item 3 — `SearchField` and `PagedListView` each have one production consumer (the
+search page) plus the gallery, and this doc does not designate ≥3 deferred consumers. Reuse
+on further real lists or record the designation to close it.
 
 ## Summary
 
@@ -72,15 +79,19 @@ constructed in `AppDependencies` only when a consumer wires a source;
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass** (`PageFetcher<T>` port; Noop default surfaces `notConnected`, never fakes pages; search matches local data)
-- [x] Feature-first ownership — **pass** (search feature under `lib/features/search/`, including the feature-local `debounced_query_controller.dart`; shared primitives under `lib/shared/{state,widgets/lists/}`)
-- [ ] shared/widgets extraction ≥3 consumers — **warn** (`search_field` / `paged_list` have one concrete consumer today; clear the bar by reusing on home/settings/search, or defer)
-- [x] Motion guarded — **pass** (no custom animation; route transition uses `nativePageTransitionsTheme`; scroll-triggered `loadNext` is not animation-gated)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (`search.*` added to three locales)
-- [x] Strict-analysis clean — **pass** (generic `PagedState<T>`, typed `PageFetcher<T>`, no `dynamic`)
-- [x] Native entitlements flagged — **n/a**
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn** (new search/paged matrix cases)
+- [x] No-backend honored as a port — **pass**: typed `PageFetcher<T>` port (`paged_state.dart:35`); `noopPageFetcher` throws `PagedFetchException.notConnected()` on every call (`paged_state_notifier.dart:51-53`) and `paged_state_notifier_test.dart:152-168` pins that behavior; `PagedListView` renders the error state-view with `common.notConnected` + retry (`paged_list_view.dart:58-67`); search itself matches local typed view-data — never a faked populated page.
+- [x] Feature-first ownership — **pass**: `lib/features/search/{search_page,search_routes,search_view_data,debounced_query_controller}.dart` (feature-local controller per the settings precedent); shared primitives under `lib/shared/state/` + `lib/shared/widgets/{search,lists}/`.
+- [ ] shared/widgets extraction ≥3 consumers — **warn**: `SearchField` and `PagedListView` each have exactly one production consumer (`search_page.dart:14-15`) plus their gallery fixtures; the pure-Dart `PagedStateNotifierBase` meets its lower bar (≥1 consumer — `SearchResultsController` in `search_page.dart:28` — plus documented reuse intent), but the widget bar (≥3 concrete or designated) is unmet by this doc.
+- [x] Composition root confined — **pass**: the only root touches are `AppRoutes.search`/`searchPath` (`app_routes.dart:60-61`) and the top-level `...buildSearchRoutes()` composition (`app_router.dart:43`, outside the `StatefulShellRoute`); `debouncedQueryProvider` is self-contained with no production override; `search_page.dart` imports no `go_router` (navigation arrives as the `onBack` callback, translated in `search_routes.dart`).
+- [x] Motion guarded — **pass**: no custom animation; the route uses the shared native page-transitions theme and `loadNext` is scroll-triggered (`paged_list_view.dart:110-122`), not animation-gated; feature tests never use `pumpAndSettle`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `search.title/placeholder/emptyTitle/emptyBody/errorTitle` present in all three locales (verified in `lib/i18n/{en,ar,zh-Hans}.i18n.json`); RTL back-chevron flips explicitly (`search_page.dart:200-204`).
+- [x] Strict analysis clean — **pass**: generic `PagedState<T>`/`PagedResult<T>` (Freezed, committed generated output), typed `PageFetcher<T>` typedef, sealed status enum; no `dynamic`.
+- [x] Generated code untouched — **pass**: `paged_state.freezed.dart` + `search_view_data.freezed.dart` are committed builder output; working-tree generated-file changes trace to source edits via `just gen`.
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: committed `PreviewFrame` cases `searchPagination.field`, `searchPagination.paged`, and `searchPagination.pagedNoBackend` (Noop fetcher → `notConnected`) in `search_pagination_gallery_cases.dart`, registered in `gallery_registry.dart:50` — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Port-reuse consistency — **pass**: no parallel to existing port families; pagination has exactly one seam (`PageFetcher<T>`), and the search matcher stays feature-owned rather than inventing a shared search port.
+- [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: the Noop fetcher surfaces `notConnected` (tested), `PagedListView` offers retry rather than showing stale items as fresh, and empty results render `search.emptyTitle` instead of fabricated matches.
 
 ## Risks / notes
 

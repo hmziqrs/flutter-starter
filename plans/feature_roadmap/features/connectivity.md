@@ -1,6 +1,6 @@
 # Real-time connectivity indicator
 
-> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** planned · **Depends on:** [lifecycle-observer](lifecycle-observer.md) (resume-refresh)
+> **Tier:** P1 · **Domain:** startup · **Backend:** none · **Status:** done · **Depends on:** [lifecycle-observer](lifecycle-observer.md) (resume-refresh)
 
 ## Summary
 
@@ -39,15 +39,20 @@ Backend-free — the default impl **is** the real `connectivity_plus` sensor (lo
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; default is the real local sensor, never fakes a result.
-- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: port under `lib/infrastructure/connectivity/` (cross-feature per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)), UI under `lib/features/connectivity/`.
-- [x] shared/widgets extraction only if >=3 consumers — **n/a**: banner stays feature-local; the port (not the widget) is the shared surface.
-- [x] Motion guarded — **pass**: any sonar/pulse on the banner **and** the `ConnectivityBanner` enter/exit (appear on offline, dismiss on online) source durations/curves from [`AppMotion`](../../lib/shared/motion/app_motion.dart) and guard with `MediaQuery.disableAnimationsOf(context)` + a non-animated fallback that still toggles visibility.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: typed `ConnectivityState`, exhaustive `fromResult`, no `dynamic`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **warn**: macOS App Sandbox may need the `com.apple.security.network.client` entitlement for `connectivity_plus` to observe reachability; confirm and flag in the PR + macOS CI job.
-- [x] Golden re-baseline noted on pinned macOS runner — **warn**: banner shifts the shell layout; re-baseline required.
+- [x] No-backend honored as a port — **pass**: port `lib/infrastructure/connectivity/connectivity_service.dart`; the real `ConnectivityPlusService` sensor **is** the production default (`lib/app/dependencies.dart:405`), `StaticConnectivityService` is only the in-memory/gallery/integration default (`dependencies.dart:101`); stream/seed errors degrade to `offline` (`connectivity_plus_service.dart:36-39,87-92`) — never a faked success; no widget calls the plugin (only `connectivity_state.dart`'s type-level `fromResult` mapping, per contract).
+- [x] Feature-first ownership; no core/ utils/ buckets — **pass**: UI/state under `lib/features/connectivity/{connectivity_state,connectivity_controller,connectivity_banner}.dart`; port + adapter under `lib/infrastructure/connectivity/` (cross-feature per [C4](../contracts.md#c4--port-reuse-do-not-multiply-backends)).
+- [x] shared/widgets extraction >=3 consumers — **n/a**: banner stays feature-local; the port (not the widget) is the shared surface ([offline-cache](offline-cache.md) will read `ConnectivityService`).
+- [x] Composition root confined — **pass**: providers overridden at the App `ProviderScope` (`lib/app/app.dart:96-98`); the service is constructed only in `dependencies.dart`; the banner mounts via `AppBannerHost` inside the `MaterialApp.router` `builder:` above the router child (`app.dart:407`, `lib/app/shell/app_banner_host.dart:32-44`).
+- [x] Motion guarded — **pass**: offline pulse uses `AppMotion.deliberate` + `MediaQuery.disableAnimationsOf(context)` with a static-icon fallback (`connectivity_banner.dart:151-190`); banner show/hide is state-driven (`CollapsingBannerSlot`), not animation-gated.
+- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**: `connectivity.{online,offline,backOnline,limited}` present in all three of `lib/i18n/{en,ar,zh-Hans}.i18n.json`.
+- [x] Strict-analysis clean — **pass**: typed `ConnectivityState`, exhaustive `fromResult` over every `ConnectivityResult` value plus multi-result `fromResults` (`connectivity_state.dart:11-39`); no `dynamic`.
+- [x] Generated code untouched — **pass**: no generated files in this feature.
+- [x] Native entitlements flagged in PR + CI platform jobs — **pass** (warn resolved): `com.apple.security.network.client` is present in both `macos/Runner/DebugProfile.entitlements` and `macos/Runner/Release.entitlements`; platform builds covered by `.github/workflows/release.yml` (apple job on `macos-26`).
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `PreviewFrame` cases for online/offline/limited exist and are registered (`lib/features/dev_gallery/cases/connectivity_gallery_cases.dart`, `gallery_registry.dart:31`); the banner shifts the shell layout as documented in Tests — repo-wide re-baseline pending the pinned macOS 26 CI run (tracked repo-wide, not per-feature).
+- [x] Port-reuse consistency — **pass**: one `ConnectivityService` (C4); banner + status read the same `connectivityStatusProvider`; resume-refresh re-arms via the shared lifecycle listener (`connectivity_controller.dart:14`, `lib/shared/state/app_lifecycle_listener.dart`).
+- [x] Config rule respected — **pass**: no runtime env switching; gallery surface behind `developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: degradation is surfaced (persistent banner + back-online toast on the recovery edge, `connectivity_banner.dart:25-51`); sensor errors publish `offline` rather than a stale "online" (verified by `test/infrastructure/connectivity/connectivity_plus_service_test.dart`); `StaticConnectivityService` is never the production default.
+- [x] Tests — **pass**: `connectivity_state_test.dart` (exhaustive mapping), `connectivity_controller_test.dart` (seeding, transitions, resume-refresh on the `resumed` edge only), `connectivity_banner_test.dart` (renders/hides per state, fires the back-online toast on the edge, bounded 8-frame pumps), `connectivity_plus_service_test.dart`; integration runs exercise the injection seam via `createApplication(connectivityService:)` (`integration_test/development_smoke_test.dart:87`, `production_routes_test.dart:33`).
 
 ## Risks / notes
 

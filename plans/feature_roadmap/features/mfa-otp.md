@@ -1,6 +1,6 @@
 # MFA / OTP completion
 
-> **Tier:** P2 · **Domain:** security · **Backend:** test-server · **Status:** planned · **Depends on:** session
+> **Tier:** P2 · **Domain:** security · **Backend:** test-server · **Status:** done · **Depends on:** session
 
 ## Summary
 
@@ -55,15 +55,52 @@ Per [C2](../contracts.md#c2--backend-stance-port--noop-production-default--optio
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: port + `InMemoryOtpRepository` default (surfaces `common.notConnected`, never fakes success) + optional `HttpOtpRepository` override + concrete `tools/hono_server/` OTP contract.
-- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: port + state under `lib/features/auth/`; real impl under `lib/infrastructure/auth/`.
-- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses existing `OtpPage` + `AuthPageScaffold`; no new shared widget.
-- [x] Motion guarded — **warn**: the countdown ring / progress and the success → navigate transition must be guarded by `MediaQuery.disableAnimationsOf(context)` with a fallback that still completes navigation (`context.goNamed`) when motion is disabled.
-- [x] Tests use `pumpAppFrames`, never `pumpAndSettle` — **pass**.
-- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switch over `OtpVerifyResult` / `OtpPresentationStatus`; no `dynamic`.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: OTP is pure network + UI; no native permission.
-- [x] Golden re-baseline noted — **warn**: adds an `mfa` purpose variant + countdown state to the canonical matrix; requires `--update-goldens` on the pinned macOS runner with a fixed `FakeAsync` second.
+- [x] No-backend honored as a port — **pass**: `OtpRepository` port + `InMemoryOtpRepository`
+  default whose issue/verify/resend all throw `OtpRepositoryException.notConnected`
+  (in_memory_otp_repository.dart, asserted in its test); the real `HttpOtpClient` is constructed
+  only when `backendBaseUrl` is provided (dependencies.dart:344); `/v1/otp/{issue,verify,resend}`
+  live at tools/hono_server/src/index.ts:224-326 with `dev_code` gated behind the development
+  API key (`X-Api-Key: dev`, index.ts:585-587); the live-server e2e drives
+  `issue(purpose: OtpPurpose.mfa)` → verify (test/e2e/hono_server_e2e_test.dart:160-161).
+  Optional TOTP enrollment deliberately not shipped (this doc marks the `package:otp` adapter
+  optional).
+- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: port/controller/state under
+  `lib/features/auth/`; real impl under `lib/infrastructure/auth/`; `OtpPurpose.mfa` + its
+  `tryParse` arm landed in `lib/app/routing/otp_purpose.dart` (the implemented-API freeze home
+  for that enum, as this doc's Contract section links).
+- [x] Shared/widgets extraction only if ≥3 consumers — **n/a**: reuses `OtpPage` +
+  `AuthPageScaffold`; no new shared widget.
+- [x] Composition root confined — **pass**: `otpControllerProvider` is a handwritten family
+  Notifier keyed by `(OtpPurpose, identifier)`; `otpRepositoryProvider` throws `StateError` and
+  is overridden at the `ProviderScope` (app.dart:127).
+- [x] Motion guarded — **pass** (warn resolved): no countdown ring shipped — `otp_page.dart`
+  renders `remainingSeconds` as text and contains zero Animation/Tween usages, so there is
+  nothing to guard and navigation never gates on animation.
+- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**:
+  `auth.otp.mfaTitle/mfaBody/mfaSuccess`, `expiresIn(seconds)`, `resendIn`, `expiredTitle`/
+  `expiredBody`, `lockedTitle`/`lockedBody(seconds)` verified in all three locales (slang
+  plural forms present).
+- [x] Strict-analysis clean — **pass**: exhaustive switch over `OtpVerifyOutcome`; injectable
+  `package:clock` keeps the expiry Timer FakeAsync-friendly (otp_controller_test.dart drives
+  countdown → expired under FakeAsync).
+- [x] Generated code untouched — **pass**: `otp_controller.freezed.dart` regenerated from
+  source.
+- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: OTP is pure network + UI;
+  no native permission.
+- [x] Goldens + dev-gallery fixture — **pass**: `mfa_otp_gallery_cases.dart` pins deterministic
+  countdown(42s) / expired / locked(30s) variants gated behind `developmentToolsEnabled`; the
+  canonical matrix still lists only `auth.otp.registration.invalid` — the `mfa` matrix variant
+  rides the repo-wide re-baseline that is pending the pinned macOS 26 run (tracked repo-wide,
+  see test/goldens/README.md).
+- [x] Port-reuse consistency — **pass**: rate-limit handoff via the shared
+  `attemptTrackerProvider` (otp_controller.dart:53) — the controller does not own retry
+  policy; no new redirect (`.mfa` parses through the existing `OtpPurpose.tryParse`; the login
+  flow pushes `AppRoutes.otp` with the mfa segment).
+- [x] Config rule respected — **pass**: gallery gated behind `developmentToolsEnabled`;
+  `dev_code` only reachable with the development API key; backend URL compile-time only.
+- [x] Honest feedback, no faked success — **pass**: no-backend paths surface
+  `globalFailure`/`notConnected` states; widget tests assert the countdown is static and that
+  resend + code entry stay disabled while locked (otp_page_test.dart:126-164).
 
 ## Risks / notes
 

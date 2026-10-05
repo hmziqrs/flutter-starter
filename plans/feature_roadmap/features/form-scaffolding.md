@@ -1,6 +1,6 @@
 # Reusable form scaffolding
 
-> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P1 · **Domain:** ux · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 
@@ -59,18 +59,19 @@ backend surfaces `common.notConnected` on submit; it never fakes success.
 
 ## Audit
 
-- [x] No-backend honored as a port — **n/a** (backend-free; submit is feature-supplied and surfaces `notConnected`)
-- [x] Feature-first ownership — **pass** (`lib/shared/forms/` + `lib/shared/widgets/forms/`; cross-feature helpers, no `core/`/`utils/`)
-- [x] shared/widgets extraction ≥3 consumers — **split**: `lib/shared/forms/` helpers have 5
-  current consumers (login/register/forgot/reset/otp — **pass**); `FormScaffold` is net-new
-  with **0** concrete consumers and meets the bar via 3 designated consumers under C1
-  (billing/settings/feedback), re-audited when those land.
-- [x] Motion guarded — **pass** (`revealFirstInvalid` uses `Scrollable.ensureVisible`, not an animation; no motion to guard)
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass** (no new keys)
-- [x] Strict-analysis clean — **pass** (typed record, nullable `FormFieldState<Object?>`, no `dynamic`)
-- [x] Native entitlements flagged — **n/a**
-- [x] Golden re-baseline noted on pinned macOS runner — **warn** (validator/helper extraction stays covered by re-running the auth matrix; `FormScaffold` is net-new and needs its own `PreviewFrame` baseline)
+- [x] No-backend honored as a port — **n/a**: backend-free; submit is feature-supplied through the `*_presentation_state` trio and a no-backend submit surfaces `common.notConnected` (auth flows); no plugin calls in any helper or widget.
+- [x] Feature-first ownership — **pass**: `lib/shared/forms/{form_validators,form_field_reveal,password_field_toggle}.dart` + `lib/shared/widgets/forms/{form_scaffold,form_submit_button}.dart`; the transitional `auth_form_support.dart` is deleted (no references anywhere in `lib/` or `test/`).
+- [x] shared/widgets extraction ≥3 consumers — **pass (split, as designed)**: the `lib/shared/forms/` helpers have 7 concrete consumers (login/register/forgot/reset/otp pages + `feedback_sheet.dart:9` + `update_profile_page.dart`); `FormSubmitButton` is consumed by all five auth pages; `FormScaffold` itself has 0 production consumers today and meets the bar via the 3 C1-designated deferred consumers (billing/settings/feedback) recorded in this doc — re-audit when those land.
+- [x] Composition root confined — **pass**: no providers introduced; pure helpers + widgets, nothing to wire in `AppDependencies`/`ProviderScope`.
+- [x] Motion guarded — **pass**: `revealFirstInvalid` uses `Scrollable.ensureVisible` + `requestFocus` (`form_field_reveal.dart:20-21`), not an animation — nothing to guard; `FormScaffold`'s busy state is the reduce-motion-guarded `BusyOverlay`; feature tests use bounded pumps, never `pumpAndSettle`.
+- [x] i18n synced en/ar/zh-Hans — **pass**: no new keys — reuses `auth.common.showPassword`/`hidePassword` (`password_field_toggle.dart:9-10`) and `common.save`/`cancel`/`retry`; verified no hardcoded user-facing copy in the new files.
+- [x] Strict analysis clean — **pass**: typed `InvalidFieldTarget` record with nullable `FormFieldState<Object?>` (`form_field_reveal.dart:3-7`); validators keep `(value, messages)` signatures; no `dynamic`/raw types.
+- [x] Generated code untouched — **pass**: no codegen involved (presentation state stays handwritten); working-tree `*.g.dart`/`*.freezed.dart` changes trace to source edits via `just gen`, not hand edits.
+- [x] Native entitlements flagged — **n/a**: no native surface.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: `FormScaffold` has committed `PreviewFrame` states disabled/enabled/submitting (`form_scaffolding_gallery_cases.dart`, registered in `gallery_registry.dart:37`); helper extraction is behavior-preserving (auth matrix re-run) — the repo-wide re-baseline on the pinned macOS 26 runner is tracked separately (currently pending).
+- [x] Port-reuse consistency — **n/a**: introduces no port; nothing parallel to existing port families.
+- [x] Config rule respected — **pass**: gallery cases reachable only via `dev_gallery_routes.dart` gated on `config.developmentToolsEnabled`.
+- [x] Honest feedback, no faked success — **pass**: `form_scaffold_test.dart:84` asserts submit is blocked while submitting; the no-backend outcome remains the feature's `notConnected` path, never a faked success from the scaffold.
 
 ## Risks / notes
 

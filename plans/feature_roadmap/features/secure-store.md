@@ -1,6 +1,6 @@
 # SecureStore port
 
-> **Tier:** P0 · **Domain:** security · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P0 · **Domain:** security · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 
@@ -72,22 +72,43 @@ throw `SecureStoreException` on unsupported platforms (do not silently fall thro
 
 ## Audit
 
-- [x] **No-backend honored as a port** — pass: backend-free; prod impl is the real local store,
-  no Noop needed, in-memory fake is test-only.
+- [x] **No-backend honored as a port** — pass: port at `lib/infrastructure/secure_storage/secure_store.dart`
+  (per-key `read`/`write`/`delete`, `SecureStoreException`, no `clearAll`); prod impl
+  `flutter_secure_storage_store.dart` wraps every op via `guardStorageOpAsync`; the
+  `InMemorySecureStore` fake is constructed only in `AppDependencies.inMemory` — never in
+  `.production` (dependencies.dart:227 uses `FlutterSecureStorageStore()`).
 - [x] **Feature-first ownership; no core/ utils/ buckets** — pass: port under
   `lib/infrastructure/secure_storage/`, fake under `lib/features/security/`, no buckets.
-- [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget.
-- [x] **Motion guarded** — n/a: no animation.
-- [x] **Tests use pumpAppFrames, never pumpAndSettle** — n/a: unit tests only; downstream
-  integration tests reuse the support helper.
-- [x] **i18n synced en/ar/zh-Hans; gen-check stays clean** — n/a: no strings.
-- [x] **Strict-analysis clean** — pass: typed exceptions, no `dynamic`, port mirrors
-  `SettingsStore`.
-- [ ] **Native entitlements flagged in PR + CI platform jobs** — warn: macOS/iOS Keychain
-  sharing entitlement + Android Gradle `encryptedSharedPreferences` scratch-space config live
-  outside `lib/`; PR must call them out and the platform build jobs in
-  [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) must cover them.
-- [x] **Golden re-baseline noted on pinned macOS runner** — n/a: no visual change.
+- [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget; the port itself is
+  the C4 secrets seam.
+- [x] **Composition root confined** — pass: `secureStoreProvider`
+  (secure_store_provider.dart) throws `StateError`; overridden once at the `ProviderScope`
+  (app.dart:89) from `AppDependencies.storage`.
+- [x] **Motion guarded** — n/a: no animation; downstream integration tests use
+  `pumpAppFrames` (integration_test/development_smoke_test.dart).
+- [x] **i18n synced en/ar/zh-Hans; gen-check stays clean** — n/a: no strings; the
+  DiagnosticsPage row renders `resolveSecureStoreBackend().name` (diagnostics_page.dart:115)
+  from the `SecureStoreBackend` enum, not localized copy.
+- [x] **Strict-analysis clean** — pass: typed `SecureStoreException` extends
+  `OperationException`; no `dynamic`/raw types in the audited files.
+- [x] **Generated code untouched** — pass: no codegen in this area.
+- [x] **Native entitlements flagged in PR + CI platform jobs** — pass (warn resolved):
+  `keychain-access-groups` landed in both `macos/Runner/DebugProfile.entitlements:13` and
+  `Release.entitlements:9`. The original Android `encryptedSharedPreferences` warn is obsolete:
+  `flutter_secure_storage` is pinned at ^11.2.0, which **removed** that parameter (v10+ uses the
+  keystore-backed custom cipher by default — see the plugin CHANGELOG), so no Gradle
+  scratch-space config is needed. CI builds macOS/iOS on `macos-26`
+  (.github/workflows/release.yml); Android via `just build apk`.
+- [x] **Goldens re-baselined + dev-gallery fixture** — n/a: no visual change; the
+  DiagnosticsPage backend row replaces the gallery fixture per this doc. Repo-wide golden
+  re-baseline still pending the pinned macOS 26 run (tracked repo-wide).
+- [x] **Port-reuse consistency** — pass: single `SecureStore` consumed by session
+  (`session.refresh_token`), passcode (`security.passcode.*` keys), and the analytics opt-in
+  (dependencies.dart:228); no parallel secrets port exists under `lib/`.
+- [x] **Config rule respected** — pass: no runtime env reads; the diagnostics row is read-only.
+- [x] **Honest feedback, no faked success** — pass: every op returns the stored value (or
+  `null`) or throws `SecureStoreException`; the fail-toggle fake is test-only
+  (in_memory_secure_store_test.dart verifies the toggles throw).
 
 ## Risks / notes
 

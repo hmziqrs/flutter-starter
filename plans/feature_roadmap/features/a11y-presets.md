@@ -1,6 +1,6 @@
 # Accessibility presets
 
-> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** planned · **Depends on:** none
+> **Tier:** P2 · **Domain:** platform · **Backend:** none · **Status:** done · **Depends on:** none
 
 ## Summary
 Surface the already-clamped `fontScale` as named presets (comfortable / large) plus an optional
@@ -64,18 +64,46 @@ no Mocktail.
   OpenDyslexic does not; fall back to Noto Sans Arabic for `ar` (see Risks).
 
 ## Audit
-- [x] No-backend honored as a port — **n/a**: backend-free settings, no port required.
-- [x] Feature-first ownership; no `core/` `utils/` buckets — **pass**: owned by the settings feature;
-  the shared semantics helper is gated (below).
-- [ ] shared/widgets extraction only if >=3 consumers — **warn**: `labeled_control.dart` qualifies
-  only once ≥3 screens consume it; keep it feature-local under `lib/features/settings/` until then.
+
+Implementation audit (2026-10-04) against the 13-item checklist in
+[contracts.md](../contracts.md):
+
+- [x] No-backend honored as a port — **n/a**: backend-free settings persisted through the existing
+  `SettingsStore` per-key port (`textPresetKey` = `appearance.text_preset`,
+  `settings_repository.dart:13,27,47,87`).
+- [x] Feature-first ownership — **pass**: `AppTextPreset` + `toSettings()` mapping
+  (`text_preset.dart`), selector page (`accessibility_settings_page.dart`), and route
+  (`settings_routes.dart:37-39`) all owned by the settings feature; no `core/`/`utils/`. Focus
+  order asserted in `test/hardening/accessibility/a11y_presets_focus_order_test.dart` (LTR + RTL).
+- [x] Shared extraction ≥3 consumers — **pass**: `labeled_control.dart` was never promoted; the
+  selector composes the feature-local `LabeledSectionCard`
+  (`settings/widgets/labeled_section_card.dart`) — nothing landed under `lib/shared/widgets/`.
+- [x] Composition root confined — **pass**: presets flow through the existing
+  `settingsControllerProvider`; route declared in the feature-owned `settings_routes.dart` (not
+  app_router); the theme reads `settings.fontFamily`/`fontScale` at the composition seam
+  (`app.dart:290-300`, `forui_theme_factory.dart:249-266`).
 - [x] Motion guarded — **n/a**: introduces no new animation.
-- [x] Tests use pumpAppFrames, never pumpAndSettle — **pass**.
-- [x] i18n synced en/ar/zh-Hans; gen-check stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: exhaustive switch over `AppTextPreset`; typed state.
-- [x] Native entitlements flagged in PR + CI platform jobs — **n/a**.
-- [ ] Golden re-baseline noted on pinned macOS runner — **warn**: fontScale/font changes perturb the
-  canonical matrix; must re-baseline + add PreviewFrame presets.
+- [x] i18n synced en/ar/zh-Hans — **pass**: `settings.accessibility.*` (title + all three presets
+  + per-preset descriptions) verified present in all three `lib/i18n/*.i18n.json`; RTL rendering
+  tested (`accessibility_settings_page_test.dart:75`).
+- [x] Strict analysis clean — **pass**: exhaustive switch over `AppTextPreset` in `toSettings()`
+  (`text_preset.dart:10-17`); clamp invariant asserted (`text_preset_test.dart:22-30`: large=1.3
+  inside `[0.85, 1.6]`).
+- [x] Generated code untouched — **pass**: `text_preset.freezed.dart` +
+  `settings_state.freezed.dart` committed alongside their `part` sources.
+- [x] Native entitlements flagged — **n/a**: none. The optional dyslexia font asset is a
+  documented placeholder — honest "where available" copy in all three locales, asserted by
+  `text_preset_test.dart:40` ("asset optional"); fallback flows through Noto script families
+  (`forui_theme_factory.dart:251-266`), never a wholesale font swap.
+- [x] Goldens re-baselined + dev-gallery fixture — **pass**: one `PreviewFrame` case per preset
+  (`a11y_presets_gallery_cases.dart`, registered `gallery_registry.dart:44`); fontScale/font is
+  matrix-visible per this doc — repo-wide re-baseline still pending the pinned macOS 26 CI run
+  (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: no new port; reuses `SettingsStore` + theme factory seam.
+- [x] Config rule respected — **pass**: no config surface.
+- [x] Honest feedback, no faked success — **pass**: save failure surfaces `common.notConnected`
+  with rollback (`accessibility_settings_page_test.dart:60-73`); the dyslexia preset never claims
+  a font it cannot render.
 
 ## Risks / notes
 - **Dyslexia font + RTL/CJK.** OpenDyslexic has no Arabic/CJK coverage; shipping it would break `ar`

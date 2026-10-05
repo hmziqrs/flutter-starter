@@ -1,6 +1,6 @@
 # Session / token management
 
-> **Tier:** P1 · **Domain:** security · **Backend:** test-server · **Status:** planned · **Depends on:** secure-store, lifecycle-observer
+> **Tier:** P1 · **Domain:** security · **Backend:** test-server · **Status:** done · **Depends on:** secure-store, lifecycle-observer
 
 ## Summary
 
@@ -103,23 +103,49 @@ consumed by [`biometric`](biometric.md) and [`pin-autolock`](pin-autolock.md).
 
 ## Audit
 
-- [x] **No-backend honored as a port** — pass: `AuthRepository` port, `InMemoryAuthRepository`
-  default surfaces `common.notConnected`, optional real impl, test server contract.
-- [x] **Feature-first ownership; no core/ utils/ buckets** — pass: all under
-  `lib/features/session/`, port + value object + presentation trio.
+- [x] **No-backend honored as a port** — pass: `AuthRepository` port + `InMemoryAuthRepository`
+  default whose login/refresh/logout all throw `AuthException.notConnected` when unseeded
+  (in_memory_auth_repository.dart:13-49, asserted in its test); the real `HttpAuthClient` is
+  constructed only when `backendBaseUrl` is provided (dependencies.dart:341-350); the hono
+  routes `POST /v1/auth/{issue,refresh,logout}` (+ register) exist at
+  tools/hono_server/src/index.ts:86-183 with refresh-token rotation; the live-server e2e
+  drives login → refresh (rotates + inherits userId) → logout plus honest degradation
+  (test/e2e/hono_server_e2e_test.dart:131-184).
+- [x] **Feature-first ownership; no core/ utils/ buckets** — pass: value object + controller +
+  repositories + view data under `lib/features/session/`; real impl under
+  `lib/infrastructure/auth/`.
 - [x] **shared/widgets extraction only if >=3 consumers** — n/a: no widget proposed.
-- [x] **Motion guarded** — n/a: no new animation.
-- [x] **Tests use pumpAppFrames, never pumpAndSettle** — pass: integration tests use the
-  bounded-frame helper.
-- [ ] **i18n synced en/ar/zh-Hans; gen-check stays clean** — warn: new keys must be added to
-  all three locales together; `just gen-check` will fail CI if drifted.
-- [ ] **Strict-analysis clean** — warn: `AuthSession` must be a sealed/+copyWith value object
-  with exhaustive state switches; watch for `dynamic` in the token fields (use `String` +
-  redaction via [`LogRedactor`](../../../lib/infrastructure/logging/log_redactor.dart)).
+- [x] **Composition root confined** — pass: `authRepositoryProvider` /
+  `sessionRepositoryProvider` throw `StateError`, `initialSessionProvider` defaults anonymous,
+  all overridden at the `ProviderScope` (app.dart:109-111); hydration runs once from
+  `_AppViewState.initState` (app.dart:218).
+- [x] **Motion guarded** — n/a: no new animation; integration flows use `pumpAppFrames`
+  (integration_test/development_smoke_test.dart), never gating navigation on animation.
+- [x] **i18n synced en/ar/zh-Hans; gen-check stays clean** — pass (warn resolved):
+  `session.expired` / `session.signedOut` / `session.unavailable` verified present in en + ar +
+  zh-Hans.
+- [x] **Strict-analysis clean** — pass (warn resolved): `AuthSession` is a sealed Freezed union;
+  token fields are `String`; every controller log flows through `AppLogger` → `LogRedactor`
+  (token/JWT/`token=` regexes scrub message, context, and `error.toString()`).
+- [x] **Generated code untouched** — pass: `auth_session.freezed.dart` regenerated from the
+  sealed model.
 - [x] **Native entitlements flagged in PR + CI platform jobs** — n/a: no plugin (SecureStore
   entitlements are already covered by [`secure-store`](secure-store.md)).
-- [x] **Golden re-baseline noted on pinned macOS runner** — n/a: no visual change in this
-  feature.
+- [x] **Golden re-baseline + dev-gallery fixture** — pass: no visual change; the
+  `session_gallery_cases.dart` loggedIn/loggedOut shell fixtures exist and are registered;
+  repo-wide re-baseline pending the pinned macOS 26 run (tracked repo-wide).
+- [x] **Port-reuse consistency** — pass: refresh token persisted via the single `SecureStore`
+  (`SessionRepository.refreshTokenKey`, no `clearAll`); the auth-required predicate lives inside
+  the one `appRedirect` (route_guards.dart:54-59) reading live session state via
+  `ProviderScope.containerOf`, with `_router.refresh()` on lifecycle resume (app.dart:283-285) —
+  no per-feature redirect.
+- [x] **Config rule respected** — pass: backend URL comes only from compile-time
+  `AppConfig.backendBaseUrl`; the smoke test honors it via `hasBackend`.
+- [x] **Honest feedback, no faked success** — pass: unseeded repo surfaces `notConnected` on
+  every method; `session_controller_test.dart` proves optimistic update + rollback, that only
+  the refresh token is persisted, and that the access token never touches the store;
+  hydration clears a rejected refresh token instead of faking a session
+  (session_controller.dart:110-125).
 
 ## Risks / notes
 

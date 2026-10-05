@@ -1,6 +1,6 @@
 # Auth rate-limit / lockout
 
-> **Tier:** P2 · **Domain:** security · **Backend:** none · **Status:** planned · **Depends on:** none (consumers: mfa-otp, pin-autolock)
+> **Tier:** P2 · **Domain:** security · **Backend:** none · **Status:** in-progress · **Depends on:** none (consumers: mfa-otp, pin-autolock)
 
 ## Summary
 
@@ -38,15 +38,48 @@ Throttles repeated failed login / OTP / passcode attempts with per-identifier at
 
 ## Audit
 
-- [x] No-backend honored as a port — **pass**: backend-free; honest local gate (not a fake success).
-- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: tracker under `lib/features/auth/`, consumed by auth pages.
-- [x] Shared/widgets extraction only if ≥3 consumers — **pass**: login, OTP, **and** [pin-autolock](pin-autolock.md) = 3 consumers; the tracker is correctly feature-local to `auth/` because its first two consumers live there and PIN reuses it cross-feature via direct import (no `shared/` bucket needed for a pure-Dart class).
-- [x] Motion guarded — **warn**: any countdown pulse / shake-on-locked must be guarded by `MediaQuery.disableAnimationsOf(context)` with a fallback that still disables the submit button.
-- [x] Tests use `pumpAppFrames`, never `pumpAndSettle` — **pass**.
-- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**.
-- [x] Strict-analysis clean — **pass**: typed `AttemptState`, const cooldown table, exhaustive; no `dynamic`.
+- [ ] No-backend honored as a port — **warn**: the tracker itself is local + honest, but this
+  doc's Backend & test surface requires the "client-side throttling is UX / defense-in-depth
+  only — authoritative enforcement is server-side" limitation to be documented in the tracker's
+  doc comment, and `lib/features/auth/auth_attempt_tracker.dart` ships with no doc comments
+  (grep across `lib/` finds no such note on the settings/diagnostics page either). Add the
+  dartdoc, then flip to done — everything else below is verified.
+- [x] Feature-first ownership; no `core/` / `utils/` — **pass**: tracker +
+  `AttemptState` + const table in `lib/features/auth/auth_attempt_tracker.dart`; shared
+  `VerificationLockoutPolicy` mixin in `verification_lockout_policy.dart`; no buckets.
+- [x] Shared/widgets extraction only if ≥3 consumers — **pass**: login
+  (auth_routes.dart:200), OTP (otp_controller.dart:53), and pin-autolock (`PasscodeState`
+  mixes in `VerificationLockoutPolicy` from this feature) = 3 concrete consumers,
+  feature-local to `auth/` exactly as this doc prescribes.
+- [x] Composition root confined — **pass**: `attemptTrackerProvider` throws `StateError`;
+  `InMemoryAttemptTracker` is constructed in both `AppDependencies.inMemory` and
+  `.production` and overridden at the `ProviderScope` (app.dart:125).
+- [x] Motion guarded — **pass** (warn resolved): login/OTP pages ship no countdown pulse or
+  shake-on-locked — lockout UI is text-driven via `LockoutCountdownController`
+  (ValueNotifier + 1s periodic Timer), so `disableAnimationsOf` has nothing to guard.
+- [x] i18n synced en/ar/zh-Hans; `gen-check` stays clean — **pass**:
+  `auth.login.attemptsRemaining(count)` / `lockedTitle` / `lockedBody(seconds)` /
+  `tooManyAttempts` + matching `auth.otp.*` keys verified in all three locales (slang plural
+  forms present).
+- [x] Strict-analysis clean — **pass**: const schedule `[0, 0, 30, 60, 300, 900]` +
+  `freeAttemptsBeforeLockout = 2`; typed `AttemptState` with non-negative asserts; no
+  `dynamic`.
+- [x] Generated code untouched — **pass**: `auth_attempt_tracker.freezed.dart` regenerated
+  from source.
 - [x] Native entitlements flagged in PR + CI platform jobs — **n/a**: pure Dart.
-- [x] Golden re-baseline noted — **n/a**.
+- [x] Goldens + dev-gallery fixture — **n/a** (per this doc): no canonical matrix case
+  (countdown text is timing-sensitive); repo-wide re-baseline pending the pinned macOS 26 run
+  (tracked repo-wide).
+- [x] Port-reuse consistency — **pass**: one tracker consumed by three call sites; identifier
+  keys are FNV-1a hashed (`hashIdentifier`), so raw email/phone PII never sits in the map
+  (identifier-hygiene risk satisfied).
+- [x] Config rule respected — **pass**: no env surface.
+- [x] Honest feedback, no faked success — **pass** at runtime: a lockout either accepts or
+  rejects; the submit button stays disabled while `lockedSeconds > 0`
+  (login_page_test.dart:192, otp_page_test.dart:156) and `auth_attempt_tracker_test.dart`
+  mirrors the const schedule exactly, clears on success, and returns `null` for unknown
+  identifiers. The outstanding honesty gap is the missing not-a-security-control dartdoc
+  tracked in item 1.
 
 ## Risks / notes
 
