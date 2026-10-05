@@ -337,14 +337,16 @@ jobs:
       - name: Prune assets retired from the matrix
         # softprops overwrites same-name assets but never drops ones the matrix
         # no longer builds; anything not refreshed by this run goes stale.
+        # ISO-8601 UTC timestamps compare correctly as strings.
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN_STARTED: ${{ github.run_started_at }}
         run: |
-          IDS="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/latest" \
-            --arg rs "$RUN_STARTED" \
-            --jq '.assets[] | select(.updated_at < $rs) | .id')"
-          for id in $IDS; do
-            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/$id"
-          done
-          echo "Pruned stale assets: ${IDS:-none}"
+          CUT_OFF="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --json createdAt --jq .createdAt)"
+          while IFS=$'\t' read -r id name updated; do
+            if [[ "$updated" < "$CUT_OFF" ]]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$id"
+              echo "Pruned stale asset: $name (updated $updated)"
+            fi
+          done < <(gh api "repos/$GITHUB_REPOSITORY/releases/tags/latest" \
+            --jq '.assets[] | [.id, .name, .updated_at] | @tsv')
