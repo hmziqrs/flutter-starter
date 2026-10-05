@@ -107,9 +107,12 @@ and "no backend" means no remote data source is wired — features that try to r
   wrapping on I/O failure, **no** `clearAll` on the interface. `cached_future_provider` test:
   serves fresh without fetch, serves stale then refreshes when online, surfaces `notConnected`
   when offline **and** absent.
-- **Integration:** reuse `createApplication`; drive the cache against `tools/hono_server` with
-  `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`. Assert offline stale-serve +
-  online refresh + `etag`-based `304` short-circuit.
+- **Integration:** `test/e2e/cache_e2e_test.dart` drives `HttpCacheDataSource` +
+  `buildCachedFutureProvider` against the live `tools/hono_server` from a headless
+  `ProviderContainer` (overriding `cacheStoreProvider` + `connectivityServiceProvider` with
+  fakes, settled by a bounded 8-turn microtask loop — no widgets, no `pumpAndSettle`). Asserts
+  online refresh (etag + server TTL stored) + the `If-None-Match` `304` short-circuit + offline
+  stale-serve with no request leaving the client.
 - **Golden impact:** none directly — the cache is infra. A consuming feature that renders a
   stale banner ("showing saved content") adds its own `PreviewFrame` case; this feature owns no
   visual state.

@@ -14,49 +14,62 @@ import 'integration_test_support.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('createApplication publishes binding-driven paused -> resumed transitions', (
-    tester,
-  ) async {
-    final config = AppConfig.fromEnvironment();
-    expect(config.environment, AppEnvironment.development);
+  testWidgets(
+    'createApplication publishes binding-driven paused -> inactive -> resumed transitions',
+    (
+      tester,
+    ) async {
+      final config = AppConfig.fromEnvironment();
+      expect(config.environment, AppEnvironment.development);
 
-    await resetTestSettings();
-    addTearDown(resetTestSettings);
-    tester.view
-      ..devicePixelRatio = 1
-      ..physicalSize = const Size(390, 844);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    addTearDown(tester.view.resetPhysicalSize);
+      await resetTestSettings();
+      addTearDown(resetTestSettings);
+      tester.view
+        ..devicePixelRatio = 1
+        ..physicalSize = const Size(390, 844);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(
-      await createApplication(
-        config,
-        secureStore: InMemorySecureStore(),
-        connectivityService: const StaticConnectivityService(),
-      ),
-    );
-    await pumpAppFrames(tester);
+      await tester.pumpWidget(
+        await createApplication(
+          config,
+          secureStore: InMemorySecureStore(),
+          connectivityService: const StaticConnectivityService(),
+        ),
+      );
+      await pumpAppFrames(tester);
 
-    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
-    final observedKinds = <AppLifecycleKind>[];
-    container.listen(appLifecyclePhaseProvider, (_, next) {
-      observedKinds.add(next.kind);
-    });
+      final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+      final observedKinds = <AppLifecycleKind>[];
+      container.listen(appLifecyclePhaseProvider, (_, next) {
+        observedKinds.add(next.kind);
+      });
 
-    expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
 
-    // Dispatch and assert in the same event-loop turn: on the live engine the
-    // OS may interleave its own lifecycle messages once frames are pumped, so
-    // the phase is read synchronously right after each binding transition.
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.paused);
+      // Dispatch and assert in the same event-loop turn: on the live engine the
+      // OS may interleave its own lifecycle messages once frames are pumped, so
+      // the phase is read synchronously right after each binding transition.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.paused);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.inactive);
 
-    await pumpAppFrames(tester);
-    expect(observedKinds, containsAllInOrder([AppLifecycleKind.paused, AppLifecycleKind.resumed]));
-    // The resume edge refreshes the router; the shell must survive it intact.
-    expect(find.byType(MaterialApp), findsOneWidget);
-  });
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      expect(container.read(appLifecyclePhaseProvider).kind, AppLifecycleKind.resumed);
+
+      await pumpAppFrames(tester);
+      expect(
+        observedKinds,
+        containsAllInOrder([
+          AppLifecycleKind.paused,
+          AppLifecycleKind.inactive,
+          AppLifecycleKind.resumed,
+        ]),
+      );
+      // The resume edge refreshes the router; the shell must survive it intact.
+      expect(find.byType(MaterialApp), findsOneWidget);
+    },
+  );
 }

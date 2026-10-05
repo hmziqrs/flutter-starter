@@ -86,10 +86,12 @@ fakes success.
   `InMemoryFeedbackTransport` returning `accepted` flips state to `success` and clears the draft.
   Widget test: `FSheet` opens/closes, Escape dismisses without submitting, screenshot toggle
   reachable, motion guard renders the static fallback.
-- **Integration:** reuse `createApplication`; start `tools/hono_server` on a random port and
-  override `feedbackTransportProvider` with `HttpFeedbackTransport` pointed at it. Submit a real
-  payload with `pumpAppFrames` (8 bounded frames), **never** `pumpAndSettle`; assert the server
-  received the POST and the UI reached `success`.
+- **Integration:** `test/e2e/feedback_submit_e2e_test.dart` starts `tools/hono_server/` on a
+  random port (graceful skip without a JS runtime) and drives `HttpFeedbackTransport` directly
+  at the transport level — accepted + status round-trip, the screenshot fixture, and 422/413
+  rejected. No widget pumping, no `pumpAndSettle`; the UI surface (sheet open/close, Escape
+  dismissal, failed alert) is covered by the widget tests with `InMemoryFeedbackTransport`
+  fakes.
 - **Golden impact:** minimal — the sheet is modal and transient; add one `PreviewFrame` case for
   the `drafting` + `failed` states if the sheet is visually distinctive, otherwise none.
 - **Dev-gallery fixture:** `TypedGalleryCase` behind `developmentToolsEnabled` previewing
