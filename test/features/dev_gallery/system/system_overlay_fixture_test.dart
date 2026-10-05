@@ -73,16 +73,19 @@ void main() {
   });
 
   testWidgets('tooltip is manual, semantic, and has no dwell timers', (tester) async {
+    final semantics = tester.ensureSemantics();
     await _pumpOverlay(tester, 'overlays.tooltip');
 
     final tooltip = tester.widget<FTooltip>(find.byType(FTooltip));
     expect(tooltip.hover, isFalse);
     expect(tooltip.longPress, isFalse);
-    expect(tooltip.semanticsLabel, 'This action is not connected yet.');
 
     await tester.tap(find.byKey(const ValueKey('overlay-tooltip-trigger')));
     await tester.pump(const Duration(milliseconds: 150));
     expect(find.byKey(const ValueKey('overlay-tooltip-content')), findsOneWidget);
+    // forui 0.25 exposes the tip's own text as the tooltip's semantics label
+    // (FTooltip.semanticsLabel was removed in the 0.25 release).
+    expect(find.bySemanticsLabel('This action is not connected yet.'), findsOneWidget);
 
     await tester.pump(const Duration(minutes: 1));
     expect(find.byKey(const ValueKey('overlay-tooltip-content')), findsOneWidget);
@@ -90,6 +93,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('overlay-tooltip-trigger')));
     await tester.pump(const Duration(milliseconds: 150));
     expect(find.byKey(const ValueKey('overlay-tooltip-content')), findsNothing);
+
+    semantics.dispose();
   });
 
   testWidgets('keyboard form accounts for the injected bottom inset', (tester) async {

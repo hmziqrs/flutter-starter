@@ -65,6 +65,7 @@ class SystemOverlayFixturePage extends StatelessWidget {
 
   void _showDialog(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     unawaited(
       showFDialog<void>(
         context: context,
@@ -75,7 +76,7 @@ class SystemOverlayFixturePage extends StatelessWidget {
             animation: animation,
             semanticsLabel: translations.devGallery.caseDialog,
             builder: (context, _) => Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: EdgeInsets.all(spacing.xl),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,9 +85,9 @@ class SystemOverlayFixturePage extends StatelessWidget {
                     translations.devGallery.caseDialog,
                     style: context.theme.typography.display.lg,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: spacing.md),
                   Text(translations.common.notConnected),
-                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: spacing.xl),
                   FButton(
                     key: const ValueKey('overlay-dialog-close'),
                     onPress: () => Navigator.of(context).pop(),
@@ -103,6 +104,7 @@ class SystemOverlayFixturePage extends StatelessWidget {
 
   void _showSheet(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     unawaited(
       showAppBottomSheet<void>(
         context: context,
@@ -114,7 +116,7 @@ class SystemOverlayFixturePage extends StatelessWidget {
           container: true,
           child: Padding(
             key: const ValueKey('overlay-sheet-content'),
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            padding: EdgeInsets.all(spacing.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,9 +125,9 @@ class SystemOverlayFixturePage extends StatelessWidget {
                   translations.devGallery.caseSheet,
                   style: context.theme.typography.display.lg,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: spacing.md),
                 Text(translations.common.notConnected),
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: spacing.xl),
                 FButton(
                   key: const ValueKey('overlay-sheet-close'),
                   onPress: () => Navigator.of(context).pop(),
@@ -173,7 +175,7 @@ class _OverlayTrigger extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.formContentMaxWidth),
         child: Padding(
-          padding: AppSpacing.screenPadding,
+          padding: context.screenPadding,
           child: FButton(
             key: triggerKey,
             onPress: onPress,
@@ -199,12 +201,12 @@ class _PopoverFixture extends StatelessWidget {
         control: const FPopoverControl.managed(initial: false),
         popoverBuilder: (context, controller) => Padding(
           key: const ValueKey('overlay-popover-content'),
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: EdgeInsets.all(context.spacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(translations.common.notConnected),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: context.spacing.md),
               FButton(
                 key: const ValueKey('overlay-popover-close'),
                 variant: FButtonVariant.ghost,
@@ -237,7 +239,6 @@ class _TooltipFixture extends StatelessWidget {
         control: const FTooltipControl.managed(initial: false),
         hover: false,
         longPress: false,
-        semanticsLabel: feedback,
         tipBuilder: (context, _) => Text(
           feedback,
           key: const ValueKey('overlay-tooltip-content'),
@@ -268,15 +269,16 @@ class _KeyboardInsetFixtureState extends State<_KeyboardInsetFixture> {
   Widget build(BuildContext context) {
     final translations = context.t;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final spacing = context.spacing;
     return Form(
       key: const ValueKey('overlay-keyboard-form'),
       child: ListView(
         key: const ValueKey('overlay-keyboard-scroll'),
         padding: EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.xl,
-          AppSpacing.xl,
-          AppSpacing.xl + bottomInset,
+          spacing.xl,
+          spacing.xl,
+          spacing.xl,
+          spacing.xl + bottomInset,
         ),
         children: [
           FTextFormField(
@@ -285,14 +287,14 @@ class _KeyboardInsetFixtureState extends State<_KeyboardInsetFixture> {
             textInputAction: TextInputAction.done,
             onSubmit: (_) => _submit(),
           ),
-          const SizedBox(height: AppSpacing.xl),
+          SizedBox(height: spacing.xl),
           FButton(
             key: const ValueKey('overlay-keyboard-submit'),
             onPress: _submit,
             child: Text(translations.common.done),
           ),
           if (_submitted) ...[
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: spacing.md),
             Text(
               translations.common.notConnected,
               key: const ValueKey('overlay-keyboard-feedback'),

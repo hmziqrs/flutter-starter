@@ -32,11 +32,11 @@ class LocalAuthAuthenticator implements BiometricAuthenticator {
   @override
   Future<bool> authenticate({required String localizedReason}) async {
     try {
+      // local_auth 3.x replaced AuthenticationOptions(stickyAuth) with this
+      // flat flag; true keeps the auth flow alive if the app is backgrounded.
       return await _localAuth.authenticate(
         localizedReason: localizedReason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-        ),
+        persistAcrossBackgrounding: true,
       );
     } on Object {
       return false;

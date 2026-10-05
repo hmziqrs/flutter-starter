@@ -161,10 +161,10 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_androidChannel);
       await _localNotifications.show(
-        _foregroundNotificationId,
-        message.title,
-        message.body,
-        NotificationDetails(
+        id: _foregroundNotificationId,
+        title: message.title,
+        body: message.body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             _androidChannel.id,
             _androidChannel.name,
@@ -194,7 +194,10 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
     return switch (status) {
       AuthorizationStatus.authorized => NotificationPermissionStatus.granted,
       AuthorizationStatus.provisional => NotificationPermissionStatus.provisional,
-      AuthorizationStatus.denied => NotificationPermissionStatus.denied,
+      // Permanent denial surfaces as `denied` (the OS will not re-prompt; the
+      // app's only recovery path is system settings, which `denied` exposes).
+      AuthorizationStatus.denied ||
+      AuthorizationStatus.deniedPermanently => NotificationPermissionStatus.denied,
       AuthorizationStatus.notDetermined => NotificationPermissionStatus.notRequested,
     };
   }
