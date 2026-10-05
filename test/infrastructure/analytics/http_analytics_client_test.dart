@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -81,4 +82,52 @@ void main() {
     await client.track(const ScreenView(routeName: 'home'));
     await expectLater(client.flush(), completes);
   });
+
+  test('a flush ticker tick uploads buffered events below batchSize', () async {
+    final ticks = StreamController<void>();
+    addTearDown(ticks.close);
+    final client = HttpAnalyticsClient(
+      baseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+      flushTicker: (_) => ticks.stream,
+    );
+    addTearDown(client.dispose);
+
+    await client.track(const ScreenView(routeName: 'home'));
+    await client.track(const ScreenView(routeName: 'settings'));
+    expect(posted, isEmpty, reason: 'two events stay buffered below batchSize 20');
+
+    ticks.add(null);
+    await _pollUntilPosted(posted);
+
+    expect(posted, hasLength(1), reason: 'the tick flushes one batch');
+    final events = eventsOf(0);
+    expect([for (final event in events) event['name']], <String>['home', 'settings']);
+    for (final event in events) {
+      expect(event['type'], 'screen_view');
+    }
+  });
+
+  test('a flush ticker tick with an empty buffer posts nothing', () async {
+    final ticks = StreamController<void>();
+    addTearDown(ticks.close);
+    final client = HttpAnalyticsClient(
+      baseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+      flushTicker: (_) => ticks.stream,
+    );
+    addTearDown(client.dispose);
+
+    ticks.add(null);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(posted, isEmpty);
+  });
+}
+
+/// Waits until the local test server recorded a POST, bounded by a deadline —
+/// the tick's flush is fire-and-forget, so the POST lands asynchronously.
+Future<void> _pollUntilPosted(List<Object> posted) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 5));
+  while (posted.isEmpty && DateTime.now().isBefore(deadline)) {
+    await Future<void>.delayed(const Duration(milliseconds: 25));
+  }
 }

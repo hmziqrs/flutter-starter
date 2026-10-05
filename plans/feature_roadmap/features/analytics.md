@@ -5,9 +5,13 @@
 > Implementation audit (2026-10-05): port + Noop default + optional real impls + router-observer
 > seam + SecureStore opt-in + i18n verified. `HttpAnalyticsClient` batches onto `POST /v1/events`
 > (backendBaseUrl-gated) and the production composite routes every real backend through
-> `OptInGatedAnalyticsClient` (default off). Closed gap: the live-server e2e exists —
+> `OptInGatedAnalyticsClient` (default off). Buffered events below the batch threshold upload on
+> a bounded 20s flush ticker (injectable in tests; `dispose()` cancels it), so screen views do
+> not wait on a full batch. Closed gap: the live-server e2e exists —
 > `test/e2e/analytics_events_e2e_test.dart` drives `screen_view` through the gate + HTTP client
-> against the live JS Hono server. Closed gap: unit coverage for `PosthogAnalyticsClient`
+> against the live JS Hono server, and a second case pumps the wired `App` so a UI tap plus
+> `goNamed` traverse the router→observer→gated-composite chain onto the live server (bounded
+> frames). Closed gap: unit coverage for `PosthogAnalyticsClient`
 > (method-channel mock; pre-opt-in silence, ordered emission, never-rethrow) and the opt-in
 > surface (`analytics_opt_in_controller_test.dart` persist/remove/rollback + a bounded-pump
 > settings-page toggle case) now exist.
@@ -129,9 +133,9 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
 - [x] **Shared extraction >=3 consumers** — **n/a**: no new shared widget (the tile is
   settings-local).
 - [x] **Composition root confined** — **pass**: composite constructed only in
-  `lib/app/dependencies.dart:377-380`; overridden in `lib/app/app.dart:112-115`;
+  `lib/app/dependencies.dart:425-436`; overridden in `lib/app/app.dart:121-124`;
   `PosthogAnalyticsClient` is constructed only in tests; observer injected via
-  `buildAppRouter(observers: ...)` from `lib/app/app.dart:196-201`.
+  `buildAppRouter(observers: ...)` from `lib/app/app.dart:214-215`.
 - [x] **Motion guarded** — **n/a**: no animation (the settings toggle is static).
 - [x] **i18n synced en/ar/zh-Hans** — **pass**: `settings.analytics.{optInTitle, optInBody,
   statusOn, statusOff}` present in `lib/i18n/{en,ar,zh-Hans}.i18n.json` and generated in all
@@ -151,8 +155,8 @@ automatically by a `GoRouter` observer — **zero per-page edits**.
   locally), tracked repo-wide per `test/goldens/README.md`, not failed here. Resolves the
   pre-written warn.
 - [x] **Port-reuse consistency** — **pass**: one `GoRouter` `observers:` entry
-  (`app.dart:197`, forwarding through `buildAppRouter`'s `observers` param at
-  `lib/app/routing/app_router.dart:49`); opt-in is the single `SecureStore` key
+  (`app.dart:215`, forwarding through `buildAppRouter`'s `observers` param at
+  `lib/app/routing/app_router.dart:55`); opt-in is the single `SecureStore` key
   `analytics.opt_in` (`analytics_client.dart:5`) read by the real impl before emitting.
 - [x] **Config rule respected** — **pass**: verbose logging through
   `config.verboseLoggingEnabled`; Diagnostics client-backend row read-only

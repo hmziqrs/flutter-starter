@@ -107,6 +107,7 @@ final class AppDependencies {
     PermissionService? permissionService,
     MediaPicker? mediaPicker,
     DeepLinkService? appLinkHandler,
+    TelemetryDependencies? telemetry,
   }) {
     final effectiveSettingsStore = settingsStore ?? InMemorySettingsStore();
     final versionGateStore = InMemoryVersionGateStore();
@@ -133,13 +134,15 @@ final class AppDependencies {
         biometricAuthenticator: const NoopBiometricAuthenticator(),
         profileRepository: const NoopProfileRepository(),
       ),
-      telemetry: TelemetryDependencies(
-        crashReporter: const NoopCrashReporter(),
-        crashReporterBackend: const NoopCrashReporterBackend(),
-        analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
-        analyticsClientBackend: const NoopAnalyticsBackend(),
-        initialAnalyticsOptIn: false,
-      ),
+      telemetry:
+          telemetry ??
+          TelemetryDependencies(
+            crashReporter: const NoopCrashReporter(),
+            crashReporterBackend: const NoopCrashReporterBackend(),
+            analyticsClient: NoopAnalyticsClient(logger: AppLogger.bootstrap()),
+            analyticsClientBackend: const NoopAnalyticsBackend(),
+            initialAnalyticsOptIn: false,
+          ),
       remoteConfig: RemoteConfigDependencies(
         versionGateStore: versionGateStore,
         versionCheck: const UpdateRequirementNone(),
