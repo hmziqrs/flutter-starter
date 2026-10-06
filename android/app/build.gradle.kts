@@ -23,10 +23,14 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.starter"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Android 8.0 (API 26) floor: a modern starter baseline covering ~98%
+        // of devices; every dependency accepts far less, so this is a choice,
+        // not a requirement.
+        minSdk = 26
+        // API 36 is the Flutter 3.44 toolchain's validated target and meets
+        // Google Play's current target-API policy; leave 37 for compile only
+        // until the engine ships a 37 target recommendation.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
