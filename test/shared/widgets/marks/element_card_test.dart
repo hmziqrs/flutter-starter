@@ -108,7 +108,7 @@ void main() {
       expect(decorationOf().color, Colors.transparent);
       expect(
         (decorationOf().shape as RoundedSuperellipseBorder).side.color,
-        generated.lightTheme.colors.border,
+        generated.lightTheme.colors.foreground.withValues(alpha: 0.10),
       );
 
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse, pointer: 1);
@@ -120,7 +120,9 @@ void main() {
 
       expect(
         (decorationOf().shape as RoundedSuperellipseBorder).side.color,
-        AppBrandColors.light.oxide.withValues(alpha: 0.5),
+        // hover:ring-primary/50 — the brand tint follows the theme's
+        // primary, whatever accent the theme points it at.
+        generated.lightTheme.colors.primary.withValues(alpha: 0.5),
       );
     });
   });

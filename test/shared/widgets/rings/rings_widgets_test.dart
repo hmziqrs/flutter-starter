@@ -4,9 +4,9 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
-import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/rings/band_arcs.dart';
 import 'package:starter/shared/widgets/rings/brand_rings.dart';
+import 'package:starter/shared/widgets/rings/brand_seed.dart';
 import 'package:starter/shared/widgets/rings/corner_rings.dart';
 import 'package:starter/shared/widgets/rings/horizon_rings.dart';
 import 'package:starter/shared/widgets/rings/ring_divider.dart';
@@ -179,31 +179,33 @@ void main() {
   });
 
   group('ScrollRings', () {
-    HorizonRingsPainter painterOf(WidgetTester tester) => tester
+    ScrollRingsPainter painterOf(WidgetTester tester) => tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))
         .map((customPaint) => customPaint.painter)
-        .whereType<HorizonRingsPainter>()
+        .whereType<ScrollRingsPainter>()
         .single;
 
-    testWidgets('reveals with scroll position', (tester) async {
+    testWidgets('draws the hero picture, revealed by scroll position', (
+      tester,
+    ) async {
       final controller = ScrollController();
       await tester.pumpWidget(
         _harness(
           SizedBox(
-            width: 600,
-            height: 320,
+            width: 520,
+            height: 440,
             child: CustomScrollView(
               controller: controller,
               slivers: <Widget>[
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    width: 600,
-                    height: 320,
+                    width: 520,
+                    height: 440,
                     child: ScrollRings(seed: 'flutter', controller: controller),
                   ),
                 ),
                 const SliverToBoxAdapter(
-                  child: SizedBox(width: 600, height: 800),
+                  child: SizedBox(width: 520, height: 800),
                 ),
               ],
             ),
@@ -212,16 +214,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // At the top nothing has revealed yet.
-      expect(painterOf(tester).revealValue, 0);
-      // Half a viewport of scrolling brings the whole picture in.
-      controller.jumpTo(160);
+      // The picture is the hero recipe for the seed, exactly as BrandRings
+      // draws it.
+      final painter = painterOf(tester);
+      expect(
+        painter.arcs.map(_arcField).toList(),
+        heroRings('flutter').arcs.map(_arcField).toList(),
+      );
+      // At the top nothing has drawn yet.
+      expect(painter.progressValue, 0);
+      // Half a viewport (440) of scrolling draws the whole picture.
+      controller.jumpTo(220);
       await tester.pumpAndSettle();
-      expect(painterOf(tester).revealValue, 1);
-      // And it goes back out on the way up.
+      expect(painter.progressValue, 1);
+      // And it undraws on the way up.
       controller.jumpTo(0);
       await tester.pumpAndSettle();
-      expect(painterOf(tester).revealValue, 0);
+      expect(painter.progressValue, 0);
       controller.dispose();
     });
 
@@ -229,18 +238,18 @@ void main() {
       await tester.pumpWidget(
         _harness(
           const SizedBox(
-            width: 600,
-            height: 320,
+            width: 520,
+            height: 440,
             child: SingleChildScrollView(
               child: Column(
                 children: <Widget>[
-                  SizedBox(width: 600, height: 320),
+                  SizedBox(width: 520, height: 440),
                   SizedBox(
-                    width: 600,
-                    height: 320,
+                    width: 520,
+                    height: 440,
                     child: ScrollRings(seed: 'flutter'),
                   ),
-                  SizedBox(width: 600, height: 800),
+                  SizedBox(width: 520, height: 800),
                 ],
               ),
             ),
@@ -248,30 +257,32 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(painterOf(tester).revealValue, 0);
+      expect(painterOf(tester).progressValue, 0);
       await tester.drag(
         find.byType(SingleChildScrollView),
         const Offset(0, -100),
       );
       await tester.pumpAndSettle();
-      expect(painterOf(tester).revealValue, closeTo(100 / 160, 0.001));
+      expect(painterOf(tester).progressValue, closeTo(100 / 220, 0.001));
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('reduced motion skips the reveal entirely', (tester) async {
+    testWidgets('reduced motion skips the draw and shows the full picture', (
+      tester,
+    ) async {
       final controller = ScrollController();
       await tester.pumpWidget(
         _harness(
           SizedBox(
-            width: 600,
-            height: 320,
+            width: 520,
+            height: 440,
             child: CustomScrollView(
               controller: controller,
               slivers: <Widget>[
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    width: 600,
-                    height: 320,
+                    width: 520,
+                    height: 440,
                     child: ScrollRings(seed: 'flutter', controller: controller),
                   ),
                 ),
@@ -282,15 +293,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(painterOf(tester).revealValue, 1, reason: 'the still picture');
+      expect(painterOf(tester).progressValue, 1, reason: 'the full picture');
       controller.dispose();
     });
   });
 
   group('small pieces', () {
-    testWidgets('RingDivider draws the hairline and the end ring', (
-      tester,
-    ) async {
+    testWidgets('RingDivider draws the hairline and the end ring', (tester) async {
       await tester.pumpWidget(
         _harness(
           const SizedBox(width: 200, child: RingDivider(filled: true)),
@@ -298,8 +307,16 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      final marker = tester.widget<AppRingMarker>(find.byType(AppRingMarker));
-      expect(marker.filled, isTrue);
+      // The kit's 40x40 cluster picture at 28px.
+      final paint = tester.widget<CustomPaint>(find.byType(CustomPaint));
+      expect(paint.size, const Size(28, 28));
+      // The seeded recipe: three rings, one of them the accent, drawn the
+      // same from the same name.
+      final arcs = ringDividerArcs('divider');
+      expect(arcs, hasLength(3));
+      expect(arcs.map((arc) => arc.accent), containsOnce(isTrue));
+      expect(_arcFields(arcs), _arcFields(ringDividerArcs('divider')));
+      expect(_arcFields(ringDividerArcs('part-two')), isNot(_arcFields(arcs)));
     });
 
     testWidgets('RingLoader sweeps when allowed and stills under reduced motion', (
@@ -317,14 +334,41 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('RingMeter draws the value arc', (tester) async {
-      await tester.pumpWidget(_harness(const RingMeter(value: 0.4)));
+    testWidgets('RingMeter stacks the shares as rings with a legend', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(
+          const SizedBox(
+            width: 480,
+            child: RingMeter(
+              label: 'Usage this month',
+              items: <RingMeterItem>[
+                RingMeterItem(label: 'Storage', value: 0.72),
+                RingMeterItem(label: 'Build minutes', value: 0.4),
+                RingMeterItem(label: 'Bandwidth', value: 0.18),
+                RingMeterItem(label: 'Emails', value: 0.9),
+                RingMeterItem(label: 'Extra', value: 0.5),
+              ],
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(tester.getSize(find.byType(CustomPaint)), const Size(36, 36));
-      final painter =
-          tester.widget<CustomPaint>(find.byType(CustomPaint)).painter! as RingMeterPainter;
-      expect(painter.share, 0.4);
+      // The kit draws at most four rings; the legend names the shown ones.
+      final painter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((painter) => painter.painter)
+          .whereType<RingMeterPainter>()
+          .single;
+      expect(painter.values, const <double>[0.72, 0.4, 0.18, 0.9]);
+      expect(find.text('Usage this month'), findsOneWidget);
+      expect(find.text('Storage'), findsOneWidget);
+      expect(find.text('72%'), findsOneWidget);
+      expect(find.text('40%'), findsOneWidget);
+      expect(find.text('18%'), findsOneWidget);
+      expect(find.text('Extra'), findsNothing, reason: 'the kit shows four');
     });
 
     testWidgets('StatusRing fills only when active', (tester) async {
@@ -338,17 +382,36 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
-      final markers = tester.widgetList<AppRingMarker>(find.byType(AppRingMarker)).toList();
-      expect(markers.first.filled, isFalse);
-      expect(markers.last.filled, isTrue);
-      expect(markers.last.color, generated.lightTheme.colors.primary);
+      await tester.pump();
+      final painters = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((painter) => painter.painter)
+          .whereType<StatusRingPainter>()
+          .toList();
+      expect(painters, hasLength(2));
+      // Off: the ring-art hairline, no dot, no motion.
+      expect(painters.first.active, isFalse);
+      expect(painters.first.lineColor, generated.lightTheme.brand.line);
+      // On: the accent color and the turning group.
+      expect(painters.last.active, isTrue);
+      expect(painters.last.color, generated.lightTheme.colors.primary);
+      expect(tester.binding.transientCallbackCount, greaterThan(0));
+      expect(tester.takeException(), isNull);
     });
   });
 }
 
 BrandRingsState _brandRingsState(WidgetTester tester) =>
     tester.state<BrandRingsState>(find.byType(BrandRings));
+
+/// The recipe fields of one drawn ring, for comparing seeded draws (RingArc
+/// has no equality).
+(double, double, double, double, bool) _arcField(RingArc arc) =>
+    (arc.radius, arc.drawn, arc.gap, arc.rotateDegrees, arc.accent);
+
+/// The recipe fields of a drawn ring picture, in draw order.
+List<(double, double, double, double, bool)> _arcFields(List<RingArc> arcs) =>
+    arcs.map(_arcField).toList();
 
 Widget _harness(Widget child, {bool disableAnimations = false}) {
   return MaterialApp(

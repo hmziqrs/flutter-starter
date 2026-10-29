@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsAction;
+import 'dart:ui' show SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(
       _harness(
         child: const GlassDock(
-          actions: <GlassDockAction>[
+          actions: <GlassDockEntry>[
             GlassDockAction(
               icon: FLucideIcons.search,
               semanticLabel: 'Search',
@@ -35,8 +35,9 @@ void main() {
       theme.style.borderRadius.pill,
     );
 
-    // The dock carries the deeper shadow on top of the two recipe lines.
-    expect(_dockShadows(tester), hasLength(3));
+    // The dock is a plain glass pill like the web kit's: exactly the two
+    // recipe shadows, no extra floating depth.
+    expect(_dockShadows(tester), hasLength(2));
   });
 
   testWidgets('icon controls carry their caller-provided labels', (
@@ -46,7 +47,7 @@ void main() {
     await tester.pumpWidget(
       _harness(
         child: const GlassDock(
-          actions: <GlassDockAction>[
+          actions: <GlassDockEntry>[
             GlassDockAction(
               icon: FLucideIcons.search,
               semanticLabel: 'Search the library',
@@ -67,7 +68,7 @@ void main() {
     await tester.pumpWidget(
       _harness(
         child: GlassDock(
-          actions: <GlassDockAction>[
+          actions: <GlassDockEntry>[
             GlassDockAction(
               icon: FLucideIcons.play,
               semanticLabel: 'Play',
@@ -90,7 +91,7 @@ void main() {
     await tester.pumpWidget(
       _harness(
         child: GlassDock(
-          actions: <GlassDockAction>[
+          actions: <GlassDockEntry>[
             GlassDockAction(
               icon: FLucideIcons.play,
               semanticLabel: 'Play',
@@ -123,11 +124,8 @@ void main() {
     await tester.pumpWidget(
       _harness(
         child: const GlassDock(
-          actions: <GlassDockAction>[
-            GlassDockAction(
-              icon: FLucideIcons.pause,
-              semanticLabel: 'Pause',
-            ),
+          actions: <GlassDockEntry>[
+            GlassDockAction(icon: FLucideIcons.pause, semanticLabel: 'Pause'),
           ],
         ),
       ),
@@ -143,6 +141,133 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('a pressed control reads the aria-pressed wash and flag', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _harness(
+        child: const GlassDock(
+          actions: <GlassDockEntry>[
+            GlassDockAction(
+              icon: FLucideIcons.listTree,
+              semanticLabel: 'Contents',
+              pressed: true,
+              onPressed: _noop,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // The pressed pill: foreground at 10% (the web kit's
+    // aria-pressed:bg-foreground/10).
+    final pill = tester.widget<DecoratedBox>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is DecoratedBox &&
+            widget.decoration is BoxDecoration &&
+            (widget.decoration as BoxDecoration).shape == BoxShape.circle,
+      ),
+    );
+    expect(
+      (pill.decoration as BoxDecoration).color,
+      theme.colors.foreground.withValues(alpha: 0.1),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Contents')).flagsCollection.isSelected,
+      Tristate.isTrue,
+    );
+    handle.dispose();
+  });
+
+  testWidgets('a labeled control renders its label in a full pill', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _harness(
+        child: const GlassDock(
+          actions: <GlassDockEntry>[
+            GlassDockAction(
+              icon: FLucideIcons.listTree,
+              label: 'Contents',
+              semanticLabel: 'Contents',
+              pressed: true,
+              onPressed: _noop,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // The visible label rides beside the icon (the web kit's
+    // `hidden sm:inline` label), inside a pill pinned at the web button's
+    // h-9, washed with the aria-pressed foreground at 10%.
+    expect(find.text('Contents'), findsOneWidget);
+    final pill = tester.widget<DecoratedBox>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is DecoratedBox &&
+            widget.decoration is BoxDecoration &&
+            (widget.decoration as BoxDecoration).shape == BoxShape.rectangle &&
+            (widget.decoration as BoxDecoration).borderRadius == BorderRadius.circular(999),
+      ),
+    );
+    expect(
+      (pill.decoration as BoxDecoration).color,
+      theme.colors.foreground.withValues(alpha: 0.1),
+    );
+    expect(tester.getSize(find.byWidget(pill)).height, 36);
+    handle.dispose();
+  });
+
+  testWidgets('separators, lead and a trailing action join the row', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _harness(
+        child: GlassDock(
+          lead: const Text('3 selected'),
+          actions: const <GlassDockEntry>[
+            GlassDockAction(
+              icon: FLucideIcons.archive,
+              semanticLabel: 'Archive',
+              onPressed: _noop,
+            ),
+            GlassDockSeparator(),
+            GlassDockAction(
+              icon: FLucideIcons.trash2,
+              semanticLabel: 'Delete',
+              onPressed: _noop,
+            ),
+          ],
+          action: FButton(onPress: () {}, child: const Text('Done')),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('3 selected'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
+    // Two hairlines flank the groups: one after the lead, one inside the
+    // entries, and one before the action — three separators total.
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is ColoredBox &&
+            widget.color == theme.colors.border &&
+            widget.child is SizedBox &&
+            (widget.child! as SizedBox).width == 1,
+      ),
+      findsNWidgets(3),
+    );
+    handle.dispose();
+  });
+
   testWidgets('fallback drops the blur and fills with the card color', (
     tester,
   ) async {
@@ -150,7 +275,7 @@ void main() {
       _harness(
         child: const GlassDock(
           fallback: true,
-          actions: <GlassDockAction>[
+          actions: <GlassDockEntry>[
             GlassDockAction(
               icon: FLucideIcons.search,
               semanticLabel: 'Search',
@@ -169,10 +294,7 @@ void main() {
       ),
     );
     expect((painter.painter! as GlassEdgePainter).style.blurSigma, isNull);
-    expect(
-      (painter.painter! as GlassEdgePainter).style.wash,
-      theme.colors.card,
-    );
+    expect((painter.painter! as GlassEdgePainter).style.wash, theme.colors.card);
   });
 
   for (final variant in GlassVariant.values) {
@@ -181,7 +303,7 @@ void main() {
         _harness(
           child: GlassDock(
             variant: variant,
-            actions: const <GlassDockAction>[
+            actions: const <GlassDockEntry>[
               GlassDockAction(
                 icon: FLucideIcons.search,
                 semanticLabel: 'Search',

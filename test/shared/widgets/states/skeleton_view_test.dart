@@ -10,7 +10,7 @@ void main() {
   tearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
   group('SkeletonStyle', () {
-    testWidgets('of(context) derives base/highlight colors from the theme', (tester) async {
+    testWidgets('of(context) derives the bone color from the muted token', (tester) async {
       SkeletonStyle? captured;
       await tester.pumpWidget(
         _harness(
@@ -24,24 +24,17 @@ void main() {
       );
       await _pumpFrames(tester);
 
+      // The stock skeleton's `bg-muted rounded-md` (ui/skeleton/skeleton.svelte).
       final colors = generated.lightTheme.colors;
-      final expectedBase = Color.lerp(colors.background, colors.foreground, 0.10)!;
-      // Light mode's shimmer band leans toward the brighter pole of the
-      // theme (the background); dark leans toward the foreground.
-      final expectedHighlight = Color.lerp(expectedBase, colors.background, 0.35)!;
-      expect(captured!.baseColor, expectedBase);
-      expect(captured!.highlightColor, expectedHighlight);
-      expect(
-        _luminance(captured!.highlightColor),
-        greaterThan(_luminance(captured!.baseColor)),
-      );
+      expect(captured!.baseColor, colors.muted);
+      expect(captured!.borderRadius, generated.lightTheme.style.borderRadius.sm);
     });
 
     testWidgets('has value equality', (tester) async {
       await tester.pumpWidget(_harness(child: const SizedBox.shrink()));
       await _pumpFrames(tester);
-      const a = SkeletonStyle(baseColor: Color(0xFF111111), highlightColor: Color(0xFF222222));
-      const b = SkeletonStyle(baseColor: Color(0xFF111111), highlightColor: Color(0xFF222222));
+      const a = SkeletonStyle(baseColor: Color(0xFF111111));
+      const b = SkeletonStyle(baseColor: Color(0xFF111111));
       expect(a, b);
       expect(a.hashCode, b.hashCode);
     });
@@ -73,7 +66,7 @@ void main() {
       expect(box.height, 12);
     });
 
-    testWidgets('animated path drives a repeating shimmer ticker', (tester) async {
+    testWidgets('animated path drives a repeating pulse ticker', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: const SkeletonView(child: SkeletonBox(width: 100, height: 12)),
@@ -189,8 +182,6 @@ void main() {
     });
   });
 }
-
-double _luminance(Color c) => c.computeLuminance();
 
 Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {

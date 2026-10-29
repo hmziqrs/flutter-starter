@@ -39,17 +39,22 @@ void main() {
         expect(connectors, hasLength(2));
         expect(connectors[0].color, brand.oxide);
 
-        // Step 1 is current: hollow primary ring, primary number.
+        // Step 1 is current: the brand keeps one pending look — hollow ring
+        // on the border color, muted number.
         final current = rings[1].decoration! as ShapeDecoration;
         expect(current.color!.a, 0, reason: 'hollow means no fill');
-        expect((current.shape as CircleBorder).side.color, brand.oxide);
-        expect(_textColor(tester, '2'), brand.oxide);
+        expect((current.shape as CircleBorder).side.color, theme.colors.border);
+        expect(_textColor(tester, '2'), theme.colors.mutedForeground);
 
-        // Step 2 is upcoming: muted ring on the border color.
+        // Step 2 is upcoming: the same pending look.
         final upcoming = rings[2].decoration! as ShapeDecoration;
         expect((upcoming.shape as CircleBorder).side.color, theme.colors.border);
         expect(_textColor(tester, '3'), theme.colors.mutedForeground);
         expect(connectors[1].color, theme.colors.border);
+
+        // Titles stay in the foreground, done or not.
+        expect(_textColor(tester, 'Install the CLI'), theme.colors.foreground);
+        expect(_textColor(tester, 'Create your first project'), theme.colors.foreground);
       });
     }
 

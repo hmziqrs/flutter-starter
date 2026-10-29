@@ -10,7 +10,7 @@ void main() {
   tearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
   group('ErrorStateView', () {
-    testWidgets('renders the title and body inside an FCard without an action', (tester) async {
+    testWidgets('renders the unboxed column without an action', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: const ErrorStateView(title: 'Could not load this', body: 'Something went wrong.'),
@@ -18,13 +18,15 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      // APP-BLOCKS DataState: "No box" — the state is a centered column,
+      // not a card.
+      expect(find.byType(FCard), findsNothing);
       expect(find.text('Could not load this'), findsOneWidget);
       expect(find.text('Something went wrong.'), findsOneWidget);
       expect(find.byType(FButton), findsNothing);
     });
 
-    testWidgets('renders the retry affordance and fires the feature-supplied callback', (
+    testWidgets('renders the retry affordance as the primary button and fires it', (
       tester,
     ) async {
       var retries = 0;
@@ -41,6 +43,8 @@ void main() {
 
       final button = find.byKey(const ValueKey('error-state-view-action'));
       expect(button, findsOneWidget);
+      // APP-BLOCKS ErrorState: the retry is the default (solid) variant.
+      expect(tester.widget<FButton>(button).variant, FButtonVariant.primary);
       expect(find.text('Retry'), findsOneWidget);
 
       await tester.tap(button);
@@ -57,6 +61,21 @@ void main() {
       await _pumpFrames(tester);
 
       expect(tester.widget<Icon>(find.byType(Icon)).icon, FLucideIcons.circleAlert);
+    });
+
+    testWidgets('colors the icon destructive on the outline tile, the failed kind', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const ErrorStateView(title: 'Could not load this', body: 'Something went wrong.'),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      // error-state.svelte's failed kind: text-destructive on a tone-less tile.
+      expect(
+        tester.widget<Icon>(find.byType(Icon)).color,
+        generated.lightTheme.colors.destructive,
+      );
     });
 
     testWidgets('honors an explicit override icon', (tester) async {
@@ -89,7 +108,7 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      expect(find.byType(FCard), findsNothing);
       expect(
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).states.errorTitle),
         findsOneWidget,

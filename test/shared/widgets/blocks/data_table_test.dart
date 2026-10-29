@@ -12,10 +12,11 @@ void main() {
       final light = generated.lightTheme;
       await tester.pumpWidget(_harness(child: _boxed));
 
-      // The accent heading reads in the primary; the others stay muted.
+      // The accent heading reads in the primary; the other headings stay in
+      // the text color (data-table.svelte: font-medium text-foreground).
       expect(_textColor(tester, 'Recommended'), light.colors.primary);
-      expect(_textColor(tester, 'Plan'), light.colors.mutedForeground);
-      expect(_textColor(tester, 'Price'), light.colors.mutedForeground);
+      expect(_textColor(tester, 'Plan'), light.colors.foreground);
+      expect(_textColor(tester, 'Price'), light.colors.foreground);
 
       // The accent column's cells carry the ~7% primary wash.
       final washes = tester

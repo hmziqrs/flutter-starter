@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/fx/oklab.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 import 'package:starter/shared/widgets/glass/glass_panel.dart';
 import 'package:starter/shared/widgets/glass/glass_style.dart';
@@ -28,7 +29,8 @@ void main() {
     ),
     GlassVariant.tint: (
       sigma: 11,
-      wash: Color.lerp(background, primary, 0.16)!.withValues(alpha: 0.66),
+      // glass.css mixes the tint wash in oklab.
+      wash: oklabMix(background, primary, 0.16).withValues(alpha: 0.66),
       edge: primary.withValues(alpha: 0.3),
       shine: primary.withValues(alpha: 0.45),
     ),

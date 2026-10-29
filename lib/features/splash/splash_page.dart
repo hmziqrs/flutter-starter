@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show SelectableText;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/app/startup/startup_error_view.dart';
@@ -13,6 +14,7 @@ import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/brand/app_wordmark.dart';
+import 'package:starter/shared/widgets/rings/ring_loader.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({
@@ -140,7 +142,10 @@ class _SplashLoading extends StatelessWidget {
               ),
             )
           else
-            _Spinner(semanticsLabel: translations.splash.loading),
+            // The brand's own loader: an orange arc sweeping a hairline
+            // track, in the rings' language. A still quarter arc under
+            // reduced motion.
+            RingLoader(semanticsLabel: translations.splash.loading),
         ],
       ),
     );
@@ -221,6 +226,17 @@ class _SplashError extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            // BRAND.md s11: errors say what went wrong and how to fix it —
+            // the same fix-it line the app-level StartupErrorView renders.
+            SizedBox(height: spacing.md),
+            Text(
+              translations.startupFailure.body,
+              key: const ValueKey('splash-error-body'),
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+              textAlign: TextAlign.center,
+            ),
             if (viewData.errorDiagnosticId case final id?) ...[
               SizedBox(height: spacing.lg),
               SelectableText(
@@ -235,25 +251,6 @@ class _SplashError extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Spinner extends StatelessWidget {
-  const _Spinner({required this.semanticsLabel});
-
-  final String semanticsLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 24,
-      height: 24,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        semanticsLabel: semanticsLabel,
-        valueColor: AlwaysStoppedAnimation<Color>(context.theme.colors.primary),
       ),
     );
   }

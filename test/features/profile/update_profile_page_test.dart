@@ -18,6 +18,37 @@ import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
 void main() {
+  testWidgets('anonymous sessions render the sign-in state, not the edit form', (tester) async {
+    var signInCount = 0;
+    var continueCount = 0;
+    await _pumpProfile(
+      tester,
+      page: UpdateProfilePage(
+        initialDraft: const ProfileDraft.defaults(),
+        onSave: _noopSave,
+        onAvatarPicked: _noopAvatar,
+        isAnonymous: true,
+        onSignIn: () => signInCount += 1,
+        onContinueAsGuest: () => continueCount += 1,
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('profile-anonymous')), findsOneWidget);
+    expect(find.text('Sign in to edit your profile'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Continue without an account'), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-save')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-display-name')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('profile-anonymous-sign-in')));
+    await tester.pumpAndSettle();
+    expect(signInCount, 1);
+
+    await tester.tap(find.byKey(const ValueKey('profile-anonymous-continue')));
+    await tester.pumpAndSettle();
+    expect(continueCount, 1);
+  });
+
   testWidgets('avatar action runs the permission rationale flow deterministically', (tester) async {
     var feedbackCount = 0;
     await _pumpProfile(

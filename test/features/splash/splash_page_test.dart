@@ -138,6 +138,8 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.text(en.splash.error), findsOneWidget);
+    // BRAND.md s11: the error also says how to fix it.
+    expect(find.text(en.startupFailure.body), findsOneWidget);
     expect(
       find.text(en.startupFailure.diagnosticId(id: 'STARTUP-UNKNOWN')),
       findsOneWidget,

@@ -74,6 +74,30 @@ void main() {
       expect(find.byIcon(FLucideIcons.check), findsNothing);
       expect(find.byIcon(FLucideIcons.copy), findsOneWidget);
     });
+
+    testWidgets('says Copied while copied, even without a copied label', (tester) async {
+      // The svelte button always shows "Copied" while the check is up
+      // (copy-button.svelte: `{copied ? "Copied" : label}`), whatever the
+      // rest label says.
+      await tester.pumpWidget(
+        _harness(
+          child: const AppCopyButton(
+            text: 'x',
+            label: 'Copy the command',
+            style: AppCopyButtonStyle.outline,
+          ),
+        ),
+      );
+      expect(find.text('Copy the command'), findsOneWidget);
+
+      await tester.tap(find.byType(AppCopyButton));
+      await tester.pump();
+      expect(find.text('Copied'), findsOneWidget);
+      expect(find.text('Copy the command'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 2, milliseconds: 100));
+      expect(find.text('Copy the command'), findsOneWidget);
+    });
   });
 }
 

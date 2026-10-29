@@ -72,8 +72,8 @@ class _SegmentedState extends State<_Segmented> {
   Widget build(BuildContext context) {
     return AppSegmented<String>(
       options: const <AppSegmentOption<String>>[
-        (value: 'daily', label: 'Daily'),
-        (value: 'weekly', label: 'Weekly'),
+        (value: 'daily', label: 'Daily', key: null),
+        (value: 'weekly', label: 'Weekly', key: null),
       ],
       value: value,
       onChanged: (next) {

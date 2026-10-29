@@ -19,7 +19,8 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      // APP-BLOCKS DataState: "No box" — the state is a centered column.
+      expect(find.byType(FCard), findsNothing);
       expect(find.byType(BusyIndicator), findsOneWidget);
       expect(find.byType(FCircularProgress), findsOneWidget);
       expect(find.text('Loading…'), findsOneWidget);
@@ -95,7 +96,7 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      expect(find.byType(FCard), findsNothing);
       expect(
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).states.loadingTitle),
         findsOneWidget,

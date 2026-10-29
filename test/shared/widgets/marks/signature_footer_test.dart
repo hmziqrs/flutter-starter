@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 import 'package:starter/shared/widgets/marks/signature_footer.dart';
 
@@ -26,7 +25,7 @@ void main() {
       expect(signature.width, closeTo(600, 1.5));
     });
 
-    testWidgets('signs in wordmark weight with a tight line and the orange square', (
+    testWidgets('signs in wordmark weight with a tight line and the trailing square', (
       tester,
     ) async {
       await tester.pumpWidget(_harness(width: 600));
@@ -40,7 +39,9 @@ void main() {
         find.ancestor(of: _square, matching: find.byType(SizedBox)).first,
       );
       expect(box.width, closeTo(name.fontSize! * 0.36, 0.001));
-      expect(tester.widget<ColoredBox>(_square).color, AppBrandColors.light.markSquare);
+      // The signature is a giant wordmark, so the square takes the wordmark's
+      // `bg-primary` (wordmark.svelte:44), not the Mark tile's mark-square.
+      expect(tester.widget<ColoredBox>(_square).color, generated.lightTheme.colors.primary);
     });
 
     testWidgets('sits the square inline on the alphabetic baseline', (tester) async {

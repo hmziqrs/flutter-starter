@@ -356,9 +356,12 @@ class _PlanGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final spacing = context.spacing;
-        final tokens = context.presentationTokens;
         final gap = spacing.lg;
-        final minimumCardExtent = tokens.focusTargetMinSize * 5;
+        // A plan card holds a 40px price, a benefits list and a CTA — far
+        // more than a focus-target row. The floor keeps the grid from
+        // computing three card-squeezing columns inside the reading measure
+        // (which collapsed CTAs to ~150px and overflowed their labels).
+        const minimumCardExtent = 240.0;
         final fittingColumns = math.max(
           1,
           ((constraints.maxWidth + gap) / (minimumCardExtent + gap)).floor(),

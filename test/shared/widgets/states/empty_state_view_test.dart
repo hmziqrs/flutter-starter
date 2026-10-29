@@ -10,7 +10,7 @@ void main() {
   tearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
   group('EmptyStateView', () {
-    testWidgets('renders the title and body inside an FCard without an action', (tester) async {
+    testWidgets('renders the unboxed column without an action', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: const EmptyStateView(title: 'Nothing here yet', body: 'Content will appear here.'),
@@ -18,20 +18,45 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      // APP-BLOCKS DataState: "No box" — the state is a centered column,
+      // not a card.
+      expect(find.byType(FCard), findsNothing);
       expect(find.text('Nothing here yet'), findsOneWidget);
       expect(find.text('Content will appear here.'), findsOneWidget);
       expect(find.byType(FButton), findsNothing);
     });
 
-    testWidgets('renders the action affordance and fires its callback', (tester) async {
+    testWidgets('centers the column in the bounded content area', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const SizedBox(
+            width: 400,
+            height: 400,
+            child: EmptyStateView(title: 'Nothing here yet', body: 'Content will appear.'),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      // empty-state.svelte's `flex-1 items-center justify-center`: the whole
+      // column (tile, copy, padding) rides the middle of the content area
+      // (y 100..500 in the 400x400 box), not the top of a card.
+      final paddedColumn = find.byWidgetPredicate(
+        (widget) => widget is Padding && widget.padding == const EdgeInsets.symmetric(vertical: 64),
+      );
+      expect(tester.getCenter(paddedColumn).dy, closeTo(300, 1));
+    });
+
+    testWidgets('renders the first-use action as the primary button and fires it', (
+      tester,
+    ) async {
       var taps = 0;
       await tester.pumpWidget(
         _harness(
           child: EmptyStateView(
             title: 'Nothing here yet',
             body: 'Content will appear here.',
-            action: (label: 'Retry', onTap: () => taps += 1),
+            action: (label: 'Invite people', onTap: () => taps += 1),
           ),
         ),
       );
@@ -39,7 +64,10 @@ void main() {
 
       final button = find.byKey(const ValueKey('empty-state-view-action'));
       expect(button, findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      // APP-BLOCKS EmptyState: "for a first run, the one action that starts
+      // things" — the states table's Primary, not an outline button.
+      expect(tester.widget<FButton>(button).variant, FButtonVariant.primary);
+      expect(find.text('Invite people'), findsOneWidget);
 
       await tester.tap(button);
       await _pumpFrames(tester);
@@ -55,6 +83,19 @@ void main() {
       await _pumpFrames(tester);
 
       expect(tester.widget<Icon>(find.byType(Icon)).icon, FLucideIcons.inbox);
+    });
+
+    testWidgets('keeps the brand default primary icon on the outline tile', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const EmptyStateView(title: 'Nothing here yet', body: 'Content will appear here.'),
+        ),
+      );
+      await _pumpFrames(tester);
+
+      // empty-state.svelte renders a tone-less IconTile: the icon stays in
+      // primary, never muted.
+      expect(tester.widget<Icon>(find.byType(Icon)).color, generated.lightTheme.colors.primary);
     });
 
     testWidgets('honors an explicit override icon', (tester) async {
@@ -107,7 +148,7 @@ void main() {
       );
       await _pumpFrames(tester);
 
-      expect(find.byType(FCard), findsOneWidget);
+      expect(find.byType(FCard), findsNothing);
       expect(
         find.text(LocaleSettings.instance.getTranslations(AppLocale.ar).states.emptyTitle),
         findsOneWidget,

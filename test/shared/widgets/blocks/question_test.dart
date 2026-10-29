@@ -76,29 +76,58 @@ void main() {
     });
   });
 
-  group('AppQuestions', () {
-    testWidgets('separates rows with single 1px lines, never doubled', (tester) async {
-      await tester.pumpWidget(
-        _harness(
-          child: const AppQuestions(
-            questions: <AppQuestion>[_question, _question],
-          ),
-        ),
-      );
-      final light = generated.lightTheme;
+  group('AppQuestions', _questionsTests);
+}
 
-      final lines = tester
-          .widgetList<Container>(
-            find.byWidgetPredicate(
-              (widget) =>
-                  widget is Container &&
-                  widget.constraints?.maxHeight == 1 &&
-                  widget.color == light.colors.border,
-            ),
-          )
-          .toList();
-      expect(lines, hasLength(1), reason: 'Two rows share exactly one divider.');
-    });
+void _questionsTests() {
+  testWidgets('draws the opening line and one line under every row, never doubled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(
+        child: const AppQuestions(questions: <AppQuestion>[_question, _question]),
+      ),
+    );
+    final light = generated.lightTheme;
+
+    final lines = tester
+        .widgetList<Container>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Container &&
+                widget.constraints?.maxHeight == 1 &&
+                widget.color == light.colors.border,
+          ),
+        )
+        .toList();
+    // questions.svelte's border-t plus each row's border-b: three lines.
+    expect(lines, hasLength(3), reason: 'One line above, one under each row.');
+  });
+
+  testWidgets('renders the orange number instead of the ring', (tester) async {
+    await tester.pumpWidget(
+      _harness(
+        child: const AppQuestion(question: 'What does it cost?', answer: 'Nothing.', number: 1),
+      ),
+    );
+    final light = generated.lightTheme;
+
+    expect(find.byType(AppRingMarker), findsNothing);
+    final number = tester.widget<Text>(find.text('01'));
+    expect(number.style!.color, light.colors.primary);
+  });
+
+  testWidgets('shows the topic as a grey tag at the row end', (tester) async {
+    await tester.pumpWidget(
+      _harness(
+        child: const AppQuestion(question: 'How?', answer: 'Restart.', topic: 'Setup'),
+      ),
+    );
+    final light = generated.lightTheme;
+
+    final tag = tester.widget<Text>(find.text('Setup'));
+    expect(tag.style!.color, light.colors.secondaryForeground);
+    expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
   });
 }
 

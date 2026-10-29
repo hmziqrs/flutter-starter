@@ -61,6 +61,26 @@ void main() {
       );
     });
 
+    testWidgets('uses the brand alert metrics: 16/12 padding and a 10px icon gap', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const AppNotice(title: 'Heads up', body: 'Details follow.'),
+        ),
+      );
+      await tester.pump();
+
+      final container = tester.widget<Container>(
+        find.descendant(of: find.byType(AppNotice), matching: find.byType(Container)).first,
+      );
+      expect(container.padding, const EdgeInsets.symmetric(horizontal: 16, vertical: 12));
+      final gaps = tester.widgetList<SizedBox>(
+        find.descendant(of: find.byType(AppNotice), matching: find.byType(SizedBox)),
+      );
+      expect(gaps.map((box) => box.width), contains(10));
+    });
+
     testWidgets('omits the body line when none is given', (tester) async {
       await tester.pumpWidget(_harness(child: const AppNotice(title: 'Heads up')));
       await tester.pump();

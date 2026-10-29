@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 import 'package:starter/shared/widgets/blocks/terminal_window.dart';
 
@@ -54,6 +55,49 @@ void main() {
       expect(_plainText(tester), contains('# resolving packages'));
       expect(_plainText(tester), contains('\u25b8 running \u203a build'));
       expect(_plainText(tester), contains('\u2713 done in 2.1s'));
+    });
+
+    testWidgets('a step answers in green behind a muted \u203a', (tester) async {
+      final brand = generated.darkTheme.brand;
+      await tester.pumpWidget(
+        _harness(
+          child: const AppTerminalWindow(
+            title: 'install',
+            lines: <AppTerminalLine>[AppTerminalLine.step('Building', answer: '3 crates')],
+          ),
+        ),
+      );
+
+      TextSpan spanFor(String text) {
+        for (final richText in tester.widgetList<RichText>(find.byType(RichText))) {
+          final spans = <TextSpan>[richText.text as TextSpan];
+          while (spans.isNotEmpty) {
+            final span = spans.removeLast();
+            if (span.text == text) {
+              return span;
+            }
+            spans.addAll(span.children?.whereType<TextSpan>() ?? const <TextSpan>[]);
+          }
+        }
+        fail('no span for $text');
+      }
+
+      expect(_plainText(tester), contains('\u25b8 Building \u203a 3 crates'));
+      expect(spanFor('\u203a ').style!.color, generated.darkTheme.colors.mutedForeground);
+      expect(spanFor('3 crates').style!.color, brand.success);
+    });
+
+    testWidgets('a key and its value split around the colon', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const AppTerminalWindow(
+            title: 'install',
+            lines: <AppTerminalLine>[AppTerminalLine.keyValue('Binary', 'target/debug/app')],
+          ),
+        ),
+      );
+
+      expect(_plainText(tester), contains('Binary: target/debug/app'));
     });
   });
 }

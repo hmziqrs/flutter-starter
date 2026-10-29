@@ -13,6 +13,16 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
+/// The plan card's material tag is a live shader surface: its clock repeats
+/// forever, so waiting for silence (pumpAndSettle) never returns. Pump a few
+/// fixed frames instead — enough for taps, scrolls and the shader's first
+/// painted frames.
+Future<void> _settle(WidgetTester tester, [int frames = 6]) async {
+  for (var i = 0; i < frames; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -37,22 +47,22 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.tap(find.byKey(const ValueKey('billing-annual')));
     await tester.ensureVisible(find.byKey(const ValueKey('select-plan-pro')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await tester.tap(find.byKey(const ValueKey('select-plan-pro')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(selectedPlan?.id, PlanIds.pro);
     expect(selectedBilling, BillingPeriod.annual);
 
     await tester.ensureVisible(find.byKey(const ValueKey('pricing-terms')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await tester.tap(find.byKey(const ValueKey('pricing-terms')));
     await tester.tap(find.byKey(const ValueKey('pricing-privacy')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect((terms, privacy), (1, 1));
   });
 
@@ -104,16 +114,16 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.tap(find.byKey(const ValueKey('billing-annual')));
     tester.view.physicalSize = const Size(1200, 844);
     harnessKey.currentState!.setLayout(AppLayoutClass.expanded);
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await tester.ensureVisible(find.byKey(const ValueKey('select-plan-team')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     await tester.tap(find.byKey(const ValueKey('select-plan-team')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.byKey(const ValueKey('pricing-layout-expanded')), findsOneWidget);
     expect(selectedBilling, BillingPeriod.annual);
@@ -337,11 +347,11 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.byKey(const ValueKey('paywall-skip')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('paywall-skip')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     for (final key in const [
       ValueKey('paywall-continue'),
@@ -350,13 +360,13 @@ void main() {
       ValueKey('paywall-privacy'),
     ]) {
       await tester.ensureVisible(find.byKey(key));
-      await tester.pumpAndSettle();
+      await _settle(tester);
       await tester.tap(find.byKey(key));
-      await tester.pumpAndSettle();
+      await _settle(tester);
     }
 
     await tester.tap(find.byKey(const ValueKey('paywall-skip')));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(skips, 2);
     expect(restores, 1);
@@ -384,7 +394,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(tester.widget<FButton>(find.byKey(const ValueKey('paywall-continue'))).onPress, isNull);
     expect(tester.widget<FButton>(find.byKey(const ValueKey('paywall-skip'))).onPress, isNotNull);

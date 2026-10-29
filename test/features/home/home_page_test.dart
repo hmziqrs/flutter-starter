@@ -13,6 +13,9 @@ import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
+import 'package:starter/shared/widgets/brand/app_status_tag.dart';
 
 void main() {
   test('HomeViewData exposes immutable default and empty activity variants', () {
@@ -53,6 +56,160 @@ void main() {
     }
 
     expect(calls, ['profile', 'pricing', 'settings', 'login']);
+  });
+
+  testWidgets('renders the page intro: 24 w500 title with one muted summary line', (tester) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    final intro = find.byKey(const ValueKey('home-greeting'));
+    expect(intro, findsOneWidget);
+    expect(find.text('Welcome, Alex'), findsOneWidget);
+    expect(
+      find.text('Your starter is set up and ready for the next real feature.'),
+      findsOneWidget,
+    );
+    final title = tester.widget<Text>(find.text('Welcome, Alex'));
+    final summary = tester.widget<Text>(
+      find.text('Your starter is set up and ready for the next real feature.'),
+    );
+    expect(title.style?.fontWeight, FontWeight.w500);
+    expect(summary.style?.color, isNot(title.style?.color));
+  });
+
+  testWidgets('quick actions are outline cards with brand icon tiles and no fill', (tester) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    expect(find.byType(FTappable), findsNWidgets(4));
+    for (final action in const ['profile', 'pricing', 'settings', 'login']) {
+      final card = find.byKey(ValueKey('home-open-$action'));
+      expect(
+        find.descendant(of: card, matching: find.byType(AppIconTile)),
+        findsOneWidget,
+      );
+      // Brand surfaces in the page are outlines (BRAND.md s8/s9): a line, no
+      // grey or colored fill at rest — the card and its tile both.
+      final decorations = tester
+          .widgetList<DecoratedBox>(find.descendant(of: card, matching: find.byType(DecoratedBox)))
+          .map((box) => box.decoration)
+          .whereType<ShapeDecoration>()
+          .toList();
+      expect(decorations, isNotEmpty);
+      for (final decoration in decorations) {
+        expect(decoration.color, anyOf(isNull, Colors.transparent));
+      }
+      // The icon tile's own surface is the kit's 36px outline tile: circular
+      // 8px corners (brand CSS arcs), fg/10 line at rest.
+      final tileDecoration = decorations.where((d) {
+        final shape = d.shape;
+        return shape is RoundedRectangleBorder && shape.borderRadius == BorderRadius.circular(8);
+      }).toList();
+      expect(tileDecoration, isNotEmpty);
+    }
+  });
+
+  testWidgets('quick action cards carry a muted one-liner under each label', (tester) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    const actions = <(String, String, String)>[
+      ('home-open-profile', 'Update profile', 'Change your display name and avatar.'),
+      ('home-open-pricing', 'View pricing', 'Compare the static plans side by side.'),
+      ('home-open-settings', 'Open settings', 'Tune appearance, language, and account.'),
+      ('home-open-login', 'Try the login flow', 'Walk through the example sign-in.'),
+    ];
+    for (final (actionKey, label, hint) in actions) {
+      final card = find.byKey(ValueKey(actionKey));
+      final labelText = tester.widget<Text>(
+        find.descendant(of: card, matching: find.text(label)),
+      );
+      final hintText = tester.widget<Text>(
+        find.descendant(of: card, matching: find.text(hint)),
+      );
+      // APP-BLOCKS: labels run 14 w500, their one-liner 14 muted — quieter
+      // than the label, and clamped so long locale text cannot grow the card.
+      expect(labelText.style?.fontWeight, FontWeight.w500);
+      expect(hintText.style?.color, isNot(labelText.style?.color));
+      expect(hintText.maxLines, 2);
+    }
+  });
+
+  testWidgets('status renders soft role pills, live marker only on the ready state', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+
+    expect(find.byType(AppStatusTag), findsNWidgets(3));
+    final readyTag = tester.widget<AppStatusTag>(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-status-ready')),
+        matching: find.byType(AppStatusTag),
+      ),
+    );
+    expect(readyTag.role, AppStatusRole.success);
+    expect(readyTag.showMarker, isTrue);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-status-ready')),
+        matching: find.byType(AppRingMarker),
+      ),
+      findsOneWidget,
+    );
+    final adaptiveTag = tester.widget<AppStatusTag>(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-status-adaptive')),
+        matching: find.byType(AppStatusTag),
+      ),
+    );
+    expect(adaptiveTag.role, AppStatusRole.info);
+    expect(adaptiveTag.showMarker, isFalse);
+    // No display cards remain in the status section: the pill plus one muted
+    // line is the whole item.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-status-ready')),
+        matching: find.byType(FCard),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('uses canonical one, two, and three column layouts', (tester) async {
@@ -224,6 +381,47 @@ void main() {
     expect(
       find.byKey(const ValueKey('home-activity-foundation-ready')),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('recent activity reads as ring-marker bullets, filled only when done', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      size: const Size(390, 900),
+      settle: false,
+      page: HomePage(
+        viewData: HomeViewData.defaults(),
+        onOpenProfile: _noop,
+        onOpenPricing: _noop,
+        onOpenSettings: _noop,
+        onOpenLogin: _noop,
+      ),
+    );
+    await tester.pump();
+
+    final readyMarker = tester.widget<AppRingMarker>(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-activity-foundation-ready')),
+        matching: find.byType(AppRingMarker),
+      ),
+    );
+    expect(readyMarker.filled, isTrue);
+    final adaptiveMarker = tester.widget<AppRingMarker>(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-activity-adaptive-connected')),
+        matching: find.byType(AppRingMarker),
+      ),
+    );
+    expect(adaptiveMarker.filled, isFalse);
+    // A quiet list, not tiles: no card chrome on the rows.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-activity-foundation-ready')),
+        matching: find.byType(FTile),
+      ),
+      findsNothing,
     );
   });
 

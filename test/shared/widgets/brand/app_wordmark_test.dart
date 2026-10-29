@@ -24,12 +24,16 @@ void main() {
       expect(style.color, generated.lightTheme.colors.foreground);
     });
 
-    testWidgets('ends in a trailing orange square sized from the font', (tester) async {
+    testWidgets('ends in a trailing square on the theme primary, sized from the font', (
+      tester,
+    ) async {
       await tester.pumpWidget(_harness(child: const AppWordmark(name: 'freeoxide')));
       await tester.pump();
 
-      final square = _squareBox(tester);
-      expect((square.decoration as BoxDecoration).color, AppBrandColors.light.markSquare);
+      final square = _squareBox(tester, generated.lightTheme.colors.primary);
+      // wordmark.svelte's `bg-primary`: the square follows the theme's
+      // primary (the accent), not the Mark tile's always-bright mark-square.
+      expect((square.decoration as BoxDecoration).color, generated.lightTheme.colors.primary);
       final squareSize = tester.getSize(find.byWidget(square));
       expect(squareSize.width, closeTo(18 * 0.36, 0.001));
       expect(squareSize.height, closeTo(18 * 0.36, 0.001));
@@ -52,7 +56,7 @@ void main() {
           (widget) =>
               widget is DecoratedBox &&
               widget.decoration is BoxDecoration &&
-              (widget.decoration as BoxDecoration).color == AppBrandColors.light.markSquare,
+              (widget.decoration as BoxDecoration).color == generated.lightTheme.colors.primary,
         ),
         findsNothing,
       );
@@ -78,7 +82,7 @@ void main() {
       );
       await tester.pump();
 
-      final square = _squareBox(tester);
+      final square = _squareBox(tester, generated.lightTheme.colors.primary);
       final squareSize = tester.getSize(find.byWidget(square));
       expect(squareSize.width, closeTo(33 * 0.36, 0.001));
       expect(squareSize.height, closeTo(33 * 0.36, 0.001));
@@ -102,7 +106,11 @@ void main() {
       )..layout();
       final baseline = painter.computeDistanceToActualBaseline(TextBaseline.alphabetic);
       final textTop = tester.getTopLeft(name).dy;
-      final squareBottom = tester.getRect(find.byWidget(_squareBox(tester))).bottom;
+      final squareBottom = tester
+          .getRect(
+            find.byWidget(_squareBox(tester, generated.lightTheme.colors.primary)),
+          )
+          .bottom;
       expect(squareBottom - textTop, closeTo(baseline, 0.5));
     });
 
@@ -133,7 +141,9 @@ void main() {
       )..layout();
       final baseline = painter.computeDistanceToActualBaseline(TextBaseline.alphabetic);
 
-      final squareRect = tester.getRect(find.byWidget(_squareBox(tester)));
+      final squareRect = tester.getRect(
+        find.byWidget(_squareBox(tester, AppBrandColors.light.oxide)),
+      );
       final textTop = tester.getTopLeft(name).dy;
       expect(
         squareRect.bottom - textTop,
@@ -149,13 +159,16 @@ void main() {
   });
 }
 
-DecoratedBox _squareBox(WidgetTester tester) => tester.widget<DecoratedBox>(
+/// The wordmark square's DecoratedBox, found by the color the ambient theme
+/// gives the primary (the harness theme's primary, or the accent under the
+/// factory theme).
+DecoratedBox _squareBox(WidgetTester tester, Color primary) => tester.widget<DecoratedBox>(
   find
       .byWidgetPredicate(
         (widget) =>
             widget is DecoratedBox &&
             widget.decoration is BoxDecoration &&
-            (widget.decoration as BoxDecoration).color == AppBrandColors.light.markSquare,
+            (widget.decoration as BoxDecoration).color == primary,
       )
       .first,
 );

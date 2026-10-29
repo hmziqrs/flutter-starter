@@ -10,38 +10,47 @@ import 'package:starter/shared/async/run_guarded.dart';
 
 const String lastRouteKey = 'nav.last_route';
 
+/// The single write-and-read allowlist: route names the observer may persist,
+/// mapped to their cold-start restore paths.
+///
+/// Flow and gate routes — auth (`/auth/*`), onboarding, biometric lock,
+/// passcode, force update, splash, dev-only screens — are deliberately
+/// excluded: visiting one is transient, and persisting it would strand every
+/// later cold start on a screen the user must complete or dismiss. The last
+/// valid shell/content route stays the restore point instead.
+const Map<String, String> _restorablePathsByRouteName = {
+  AppRoutes.home: AppRoutes.homePath,
+  AppRoutes.pricing: AppRoutes.pricingPath,
+  AppRoutes.settings: AppRoutes.settingsPath,
+  AppRoutes.accessibilitySettings: AppRoutes.accessibilitySettingsPath,
+  AppRoutes.aboutLicense: AppRoutes.aboutLicensePath,
+  AppRoutes.updateProfile: AppRoutes.updateProfilePath,
+};
+
+/// Maps a route name to the cold-start restore path, or null when the route
+/// must never become the restore point.
 String? pathForLastRouteName(String? name) {
   if (name == null) {
     return null;
   }
-  switch (name) {
-    case AppRoutes.home:
-      return AppRoutes.homePath;
-    case AppRoutes.pricing:
-      return AppRoutes.pricingPath;
-    case AppRoutes.settings:
-      return AppRoutes.settingsPath;
-    case AppRoutes.accessibilitySettings:
-      return AppRoutes.accessibilitySettingsPath;
-    case AppRoutes.aboutLicense:
-      return AppRoutes.aboutLicensePath;
-    case AppRoutes.login:
-      return AppRoutes.loginPath;
-    case AppRoutes.register:
-      return AppRoutes.registerPath;
-    case AppRoutes.forgotPassword:
-      return AppRoutes.forgotPasswordPath;
-    case AppRoutes.resetPassword:
-      return AppRoutes.resetPasswordPath;
-    case AppRoutes.updateProfile:
-      return AppRoutes.updateProfilePath;
-    case AppRoutes.onboarding:
-      return AppRoutes.onboardingPath;
-    case AppRoutes.onboardingPaywall:
-      return AppRoutes.onboardingPaywallPath;
-    default:
-      return null;
+  return _restorablePathsByRouteName[name];
+}
+
+/// Sanitizes a stored `nav.last_route` value read back at cold start
+/// (lib/bootstrap.dart), or null when there is nothing restorable so the
+/// caller keeps its own no-saved-route behavior.
+///
+/// Builds before the write-side allowlist persisted flow and gate routes
+/// verbatim; a device that still holds one of those values must not
+/// cold-start into a screen with no back affordance. Any path the write side
+/// would not persist today — every legacy `/auth/*`, `/onboarding`, lock,
+/// passcode, force-update and splash value, and anything unrecognized —
+/// falls back to [fallback].
+String? sanitizeStoredLastRoute(String? stored, {String fallback = AppRoutes.homePath}) {
+  if (stored == null || stored.isEmpty) {
+    return null;
   }
+  return _restorablePathsByRouteName.containsValue(stored) ? stored : fallback;
 }
 
 final class LastRouteObserver extends NavigatorObserver {

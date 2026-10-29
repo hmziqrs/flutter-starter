@@ -78,6 +78,8 @@ void main() {
       final marker = tester.widget<AppRingMarker>(find.byType(AppRingMarker));
       expect(marker.filled, isFalse);
       expect(marker.size, 7);
+      // The tag's own marker recipe is a 1.5px ring (size-1.75 border-[1.5px]).
+      expect(marker.borderWidth, 1.5);
       expect(marker.color, AppBrandColors.light.success);
     });
 

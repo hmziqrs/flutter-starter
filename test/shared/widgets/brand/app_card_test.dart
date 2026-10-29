@@ -23,7 +23,9 @@ void main() {
       expect(fill == null || fill == Colors.transparent, isTrue);
       expect(decoration.shadows, isNull);
       final shape = decoration.shape as RoundedSuperellipseBorder;
-      expect(shape.side.color, generated.lightTheme.colors.border);
+      // The outline is the foreground at 10% (outline-card.svelte
+      // ring-foreground/10), not the theme's border token.
+      expect(shape.side.color, generated.lightTheme.colors.foreground.withValues(alpha: 0.10));
       expect(shape.side.width, generated.lightTheme.style.borderWidth);
     });
 

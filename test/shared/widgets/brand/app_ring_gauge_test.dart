@@ -25,18 +25,21 @@ void main() {
       expect(sweep, 360);
     });
 
-    test('count draws n segments joined by 5-unit gaps', () {
+    test('count draws n segments joined by 5-unit gaps, one wrapping past the top', () {
       final arcs = ringGaugeArcs(count: 4);
       expect(arcs, hasLength(4));
 
+      // The brand dash recipe: each segment is a 5-unit gap shorter than its
+      // nth of the circle, and the closing gap wraps to the starting point.
       const gapDegrees = 5 / 30 * 180 / math.pi;
-      for (var index = 0; index < arcs.length - 1; index += 1) {
-        final gap = arcs[index + 1].$1 - (arcs[index].$1 + arcs[index].$2);
-        expect(gap, closeTo(gapDegrees, 0.001));
+      final segmentSweep = 360 / arcs.length - gapDegrees;
+      for (var index = 0; index < arcs.length; index += 1) {
+        expect(arcs[index].$2, closeTo(segmentSweep, 0.001));
+        final expectedStart = -90.0 + index * (segmentSweep + gapDegrees);
+        expect(arcs[index].$1, closeTo(expectedStart, 0.001));
       }
       final totalSweep = arcs.map((arc) => arc.$2).reduce((a, b) => a + b);
-      expect(totalSweep + gapDegrees * (arcs.length - 1), closeTo(360, 0.001));
-      expect(arcs.first.$1, -90);
+      expect(totalSweep + gapDegrees * arcs.length, closeTo(360, 0.001));
     });
 
     test('count wins when both share and count are given', () {
@@ -87,7 +90,7 @@ void main() {
       );
     });
 
-    testWidgets('sizes the value as the big-stat token, not a heading size', (
+    testWidgets('sizes the value on the gauge recipe, not the StatCard big stat', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -97,15 +100,57 @@ void main() {
       );
       await tester.pump();
 
-      // App type scale: big stat = 24 w500 tight, which the theme factory
-      // resolves onto display.xl (display.xl2 is the 30px heading token).
+      // BRAND.md s7 / ring-stats.svelte:24: text-[1.75rem] leading-[1.05]
+      // font-medium tracking-[-0.03em] — 28px at the default display scale,
+      // sized as 28/24 of the display.xl token so it rides the display scale.
+      // The 24/-0.02 big stat belongs to StatCard, not the ring gauge.
       final valueStyle = tester.widget<Text>(find.text('74%')).style!;
-      expect(valueStyle.fontSize, generated.lightTheme.typography.display.xl.fontSize);
+      final base = generated.lightTheme.typography.display.xl.fontSize!;
+      expect(valueStyle.fontSize, closeTo(base * 28 / 24, 0.001));
       expect(valueStyle.fontWeight, FontWeight.w500);
-      expect(
-        valueStyle.letterSpacing,
-        closeTo(-0.02 * generated.lightTheme.typography.display.xl.fontSize!, 0.001),
+      expect(valueStyle.letterSpacing, closeTo(-0.03 * base * 28 / 24, 0.001));
+      expect(valueStyle.height, 1.05);
+    });
+
+    testWidgets('gaps the value, label, and ring like the brand block', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const AppRingGauge(share: 0.4, value: '74%', label: 'Events used'),
+        ),
       );
+      await tester.pump();
+
+      // ring-stats.svelte: flex-col gap-1 between value and label, and the
+      // gauge story's gap-4 between ring and text by default.
+      final valueBottom = tester.getBottomLeft(find.text('74%')).dy;
+      final labelTop = tester.getTopLeft(find.text('Events used')).dy;
+      expect(labelTop - valueBottom, 4);
+
+      final ring = find.descendant(
+        of: find.byType(AppRingGauge),
+        matching: find.byType(CustomPaint),
+      );
+      expect(tester.getTopLeft(find.text('74%')).dx - tester.getTopRight(ring.first).dx, 16);
+    });
+
+    testWidgets('ring-stats sits tighter: 18 between ring and text', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          child: const AppRingGauge(
+            share: 0.4,
+            value: '74%',
+            label: 'Events used',
+            spacing: 18,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final ring = find.descendant(
+        of: find.byType(AppRingGauge),
+        matching: find.byType(CustomPaint),
+      );
+      expect(tester.getTopLeft(find.text('74%')).dx - tester.getTopRight(ring.first).dx, 18);
     });
   });
 }

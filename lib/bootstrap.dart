@@ -210,8 +210,12 @@ Future<App> createApplication(
     }
     if (coldStartInitialLocation != null) {
       effectiveInitialLocation = coldStartInitialLocation;
-    } else if (savedRoute != null && savedRoute.isNotEmpty) {
-      effectiveInitialLocation = savedRoute;
+    } else {
+      // Legacy builds persisted flow routes (e.g. /auth/login) verbatim;
+      // sanitizeStoredLastRoute keeps those devices from cold-starting into a
+      // screen with no back affordance and returns null when there is nothing
+      // restorable, preserving the splash-routed default below.
+      effectiveInitialLocation = sanitizeStoredLastRoute(savedRoute);
     }
   }
 

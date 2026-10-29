@@ -66,7 +66,7 @@ void main() {
     expect(theme.typography.body.md.fontSize, closeTo(16 * 1.2 * 1.1, 0.001));
   });
 
-  test('balances button padding against label size and interaction target', () {
+  test('applies brand button metrics while keeping the interaction floor', () {
     final touch = ForuiThemeFactory.build(
       brightness: Brightness.light,
       accent: AppAccent.neutral,
@@ -80,17 +80,24 @@ void main() {
       interactionPolicy: AppInteractionPolicy.precisionPointer,
     );
 
+    // Brand kit button.svelte md: h-9 px-2.5 gap-1.5 — the vertical padding
+    // centers the tallest glyph (the pinned 16px svg, not the 14px height:1
+    // label) inside the 36px brand height.
+    const brandMdPadding = EdgeInsets.symmetric(horizontal: 10, vertical: 10);
+
     expect(touch.buttonStyles.primary.md.contentStyle.constraints.minHeight, 44);
     expect(
-      touch.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr).vertical,
-      closeTo(14 * 0.55 * 2, 0.001),
+      touch.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr),
+      brandMdPadding,
     );
     expect(touch.buttonStyles.primary.md.contentStyle.textStyle.base.fontSize, 14);
+    expect(touch.buttonStyles.primary.md.contentStyle.spacing, 6);
     expect(pointer.buttonStyles.primary.md.contentStyle.constraints.minHeight, 36);
     expect(
-      pointer.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr).vertical,
-      closeTo(14 * 0.55 * 2, 0.001),
+      pointer.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr),
+      brandMdPadding,
     );
+    expect(pointer.buttonStyles.primary.md.contentStyle.spacing, 6);
   });
 
   test('scales spacing tokens by the density factor without shrinking touch floors', () {

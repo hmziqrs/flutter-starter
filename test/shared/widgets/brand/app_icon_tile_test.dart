@@ -21,13 +21,15 @@ void main() {
 
       final decoration = _tileDecoration(tester);
       expect(decoration.color, Colors.transparent);
-      final shape = decoration.shape as RoundedSuperellipseBorder;
+      final shape = decoration.shape as RoundedRectangleBorder;
       expect(shape.side.color, colors.border);
       expect(shape.side.width, generated.lightTheme.style.borderWidth);
       expect(shape.borderRadius, BorderRadius.circular(8));
     });
 
-    testWidgets('honors a tone override when the color means something', (tester) async {
+    testWidgets('a tone fills the tile softly in its own color and drops the border', (
+      tester,
+    ) async {
       const tone = Color(0xFFCD1622);
       await tester.pumpWidget(
         _harness(
@@ -40,6 +42,26 @@ void main() {
       await tester.pump();
 
       expect(tester.widget<Icon>(find.byType(Icon)).color, tone);
+      final decoration = _tileDecoration(tester);
+      // The softTone recipe: 10% fill in light, no outline.
+      expect(decoration.color, tone.withValues(alpha: 0.10));
+      expect((decoration.shape as RoundedRectangleBorder).side, BorderSide.none);
+    });
+
+    testWidgets('iconColor keeps the outline tile and colors only the icon', (tester) async {
+      const tint = Color(0xFFCD1622);
+      await tester.pumpWidget(
+        _harness(
+          child: const AppIconTile(icon: FLucideIcons.octagonAlert, iconColor: tint),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.widget<Icon>(find.byType(Icon)).color, tint);
+      final colors = generated.lightTheme.colors;
+      final decoration = _tileDecoration(tester);
+      expect(decoration.color, Colors.transparent);
+      expect((decoration.shape as RoundedRectangleBorder).side.color, colors.border);
     });
 
     testWidgets('scales the icon with the tile size', (tester) async {

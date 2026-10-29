@@ -110,6 +110,31 @@ void main() {
         AppTrendGood.neither,
       );
     });
+
+    test('screen readers hear the direction spelled out', () {
+      // APP-BLOCKS.md MetricTrend: "Up 12% vs last 30 days", not a sign to
+      // decode.
+      expect(
+        const AppMetricTrend(change: 0.12, comparison: 'vs last 30 days').semanticsText,
+        'Up 12% vs last 30 days',
+      );
+      expect(
+        const AppMetricTrend(change: -0.03, comparison: 'bounce rate').semanticsText,
+        'Down 3% bounce rate',
+      );
+      expect(
+        const AppMetricTrend(
+          change: 0,
+          noChangeLabel: 'No change',
+          comparison: 'uptime',
+        ).semanticsText,
+        'No change uptime',
+      );
+      expect(
+        const AppMetricTrend(change: -2.8, format: AppTrendFormat.points).semanticsText,
+        'Down 2.8 points',
+      );
+    });
   });
 }
 
