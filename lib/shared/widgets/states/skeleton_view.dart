@@ -16,7 +16,13 @@ class SkeletonStyle {
   factory SkeletonStyle.of(BuildContext context) {
     final colors = context.theme.colors;
     final base = _lerp(colors.background, colors.foreground, 0.10);
-    final highlight = _lerp(base, const Color(0xFFFFFFFF), 0.35);
+    // The brighter pole of the theme, so the shimmer band stays quiet and
+    // token-derived in both modes instead of hardcoding a color literal.
+    final brightest = switch (colors.brightness) {
+      Brightness.dark => colors.foreground,
+      Brightness.light => colors.background,
+    };
+    final highlight = _lerp(base, brightest, 0.35);
     return SkeletonStyle(
       baseColor: base,
       highlightColor: highlight,

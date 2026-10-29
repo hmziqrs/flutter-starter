@@ -26,7 +26,9 @@ void main() {
 
       final colors = generated.lightTheme.colors;
       final expectedBase = Color.lerp(colors.background, colors.foreground, 0.10)!;
-      final expectedHighlight = Color.lerp(expectedBase, const Color(0xFFFFFFFF), 0.35)!;
+      // Light mode's shimmer band leans toward the brighter pole of the
+      // theme (the background); dark leans toward the foreground.
+      final expectedHighlight = Color.lerp(expectedBase, colors.background, 0.35)!;
       expect(captured!.baseColor, expectedBase);
       expect(captured!.highlightColor, expectedHighlight);
       expect(

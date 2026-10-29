@@ -27,6 +27,7 @@ class ErrorStateView extends StatelessWidget {
       title: title,
       body: body,
       action: action,
+      tone: StateViewTone.destructive,
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 import 'package:starter/shared/widgets/states/skeleton_view.dart';
 
 class SkeletonTile extends StatelessWidget {
@@ -28,29 +28,27 @@ class SkeletonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
+    return AppCard(
       key: const ValueKey('skeleton-tile'),
-      child: Padding(
-        padding: padding,
-        child: Row(
-          children: <Widget>[
-            SkeletonCircle(size: avatarSize),
-            SizedBox(width: context.spacing.md),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SkeletonLine(widthFraction: titleFraction),
-                  if (includeSubtitle) ...<Widget>[
-                    SizedBox(height: context.spacing.xs),
-                    SkeletonLine(widthFraction: subtitleFraction, height: 10),
-                  ],
+      padding: padding,
+      child: Row(
+        children: <Widget>[
+          SkeletonCircle(size: avatarSize),
+          SizedBox(width: context.spacing.md),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SkeletonLine(widthFraction: titleFraction),
+                if (includeSubtitle) ...<Widget>[
+                  SizedBox(height: context.spacing.xs),
+                  SkeletonLine(widthFraction: subtitleFraction, height: 10),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -75,26 +73,24 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
+    return AppCard(
       key: const ValueKey('skeleton-card'),
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            SkeletonBox(width: iconSize, height: iconSize),
-            SizedBox(height: context.spacing.md),
-            SkeletonLine(widthFraction: titleFraction),
-            for (var index = 0; index < lineCount; index++) ...<Widget>[
-              SizedBox(height: context.spacing.xs),
-              SkeletonLine(
-                height: 10,
-                widthFraction: index == lineCount - 1 ? 0.6 : 1.0,
-              ),
-            ],
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          SkeletonBox(width: iconSize, height: iconSize),
+          SizedBox(height: context.spacing.md),
+          SkeletonLine(widthFraction: titleFraction),
+          for (var index = 0; index < lineCount; index++) ...<Widget>[
+            SizedBox(height: context.spacing.xs),
+            SkeletonLine(
+              height: 10,
+              widthFraction: index == lineCount - 1 ? 0.6 : 1.0,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

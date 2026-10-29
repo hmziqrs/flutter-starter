@@ -36,6 +36,11 @@ class SearchField extends StatelessWidget {
       textInputAction: TextInputAction.search,
       autocorrect: false,
       enableSuggestions: false,
+      // Brand text field: a line, no fill — the theme border and its
+      // primary focus border stay, only the card-colored fill is cleared.
+      style: .delta(
+        color: .delta([.base(null), .variants(null)]),
+      ),
       prefixBuilder: (context, style, variants) =>
           Icon(FLucideIcons.search, semanticLabel: hintText),
       clearable: (value) => value.text.isNotEmpty,
