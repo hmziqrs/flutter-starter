@@ -11,13 +11,23 @@ import 'package:starter/features/settings/text_preset.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
+
+/// Whether the option row's ring marker is filled (picked), per BRAND.md s7.
+bool _markerFilled(WidgetTester tester, String key) {
+  return tester
+      .widget<AppRingMarker>(
+        find.descendant(of: find.byKey(ValueKey(key)), matching: find.byType(AppRingMarker)),
+      )
+      .filled;
+}
 
 void main() {
   setUp(() async {
     await LocaleSettings.setLocale(AppLocale.en);
   });
 
-  testWidgets('renders every preset tile with the current selection highlighted', (tester) async {
+  testWidgets('renders every preset row with the current selection marked', (tester) async {
     await tester.pumpWidget(
       _harness(initialPreset: AppTextPreset.comfortable),
     );
@@ -27,14 +37,8 @@ void main() {
     expect(find.byKey(const ValueKey('a11y-preset-large')), findsOneWidget);
     expect(find.byKey(const ValueKey('a11y-preset-dyslexia')), findsOneWidget);
 
-    final comfortableTile = tester.widget<FTile>(
-      find.byKey(const ValueKey('a11y-preset-comfortable')),
-    );
-    expect(comfortableTile.selected, isTrue);
-    final largeTile = tester.widget<FTile>(
-      find.byKey(const ValueKey('a11y-preset-large')),
-    );
-    expect(largeTile.selected, isFalse);
+    expect(_markerFilled(tester, 'a11y-preset-comfortable'), isTrue);
+    expect(_markerFilled(tester, 'a11y-preset-large'), isFalse);
   });
 
   testWidgets('selecting the large preset updates the controller state live', (tester) async {
@@ -51,13 +55,10 @@ void main() {
     expect(state.textPreset, AppTextPreset.large);
     expect(state.fontScale, AppTextPreset.large.toSettings().fontScale);
 
-    final largeTile = tester.widget<FTile>(
-      find.byKey(const ValueKey('a11y-preset-large')),
-    );
-    expect(largeTile.selected, isTrue);
+    expect(_markerFilled(tester, 'a11y-preset-large'), isTrue);
   });
 
-  testWidgets('surfaces common.notConnected when persistence fails (never fakes success)', (
+  testWidgets('surfaces the save failure when persistence fails (never fakes success)', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -69,7 +70,7 @@ void main() {
     await _settle(tester);
 
     expect(find.byKey(const ValueKey('a11y-preset-save-error')), findsOneWidget);
-    expect(find.textContaining('not connected'), findsOneWidget);
+    expect(find.textContaining("We couldn't save your change"), findsOneWidget);
   });
 
   testWidgets('titles are localized for Arabic (RTL)', (tester) async {
@@ -79,7 +80,9 @@ void main() {
     );
     await _settle(tester);
 
-    expect(find.text('إمكانية الوصول'), findsWidgets);
+    // Exactly one "Accessibility" — the page title. The section card carries
+    // no duplicate title of its own (SettingsSectionCard's contract).
+    expect(find.text('إمكانية الوصول'), findsOneWidget);
     expect(find.text('مريح'), findsOneWidget);
     expect(
       Directionality.of(

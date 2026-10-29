@@ -122,6 +122,11 @@ void main() {
         initialLocation: AppRoutes.settingsPath,
         size: const Size(1024, 844),
       );
+      // The sidebar starts collapsed to the icon rail; the test expands it
+      // through the shell's own toggle before asserting the wide layout.
+      expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
 
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
@@ -272,6 +277,11 @@ void main() {
         initialLocation: AppRoutes.homePath,
         size: const Size(1024, 844),
       );
+      // The sidebar starts collapsed to the icon rail; the test expands it
+      // through the shell's own toggle before asserting the wide layout.
+      expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
@@ -325,6 +335,60 @@ void main() {
       await tester.tap(sidebarItem(FLucideIcons.house));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'medium sidebar renders as a labeled icon rail without clipped labels',
+    (tester) async {
+      await _pumpApp(
+        tester,
+        initialLocation: AppRoutes.homePath,
+        size: const Size(800, 844),
+      );
+      expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+
+      // The 88px rail cannot fit "Pricing"/"Settings" (they clipped into
+      // "Pric…"/"Set…"), so the medium shell renders icon-only: every item
+      // keeps its icon, drops its text, and centers the icon in the rail.
+      const railItems = <(Key, IconData)>[
+        (ValueKey('expanded-navigation-home'), FLucideIcons.house),
+        (ValueKey('expanded-navigation-pricing'), FLucideIcons.badgeDollarSign),
+        (ValueKey('expanded-navigation-settings'), FLucideIcons.settings),
+      ];
+      for (final (itemKey, icon) in railItems) {
+        final item = find.byKey(itemKey);
+        final itemIcon = find.descendant(of: item, matching: find.byIcon(icon));
+        expect(itemIcon, findsOneWidget);
+        expect(find.descendant(of: item, matching: find.byType(Text)), findsNothing);
+        expect(
+          tester.getRect(itemIcon).center.dx,
+          closeTo(tester.getRect(item).center.dx, 0.1),
+        );
+      }
+
+      // Icon-only controls keep their names (BRAND.md s6): each item carries
+      // its label inside the tappable's semantics node, and the hover tooltip
+      // wraps the matching item without polluting the shared tree.
+      final semantics = tester.ensureSemantics();
+      const labeledItems = <(Key, String)>[
+        (ValueKey('expanded-navigation-home'), 'Home'),
+        (ValueKey('expanded-navigation-pricing'), 'Pricing'),
+        (ValueKey('expanded-navigation-settings'), 'Settings'),
+      ];
+      for (final (itemKey, label) in labeledItems) {
+        expect(find.bySemanticsLabel(label), findsOneWidget);
+        expect(
+          find.ancestor(of: find.byKey(itemKey), matching: find.byTooltip(label)),
+          findsOneWidget,
+        );
+      }
+      semantics.dispose();
+
+      // The icon rail still navigates branches.
+      await tester.tap(find.byKey(const ValueKey('expanded-navigation-pricing')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
     },
   );
 
@@ -397,6 +461,11 @@ void main() {
         initialLocation: AppRoutes.appearanceSettingsPath,
         size: const Size(1024, 844),
       );
+      // The sidebar starts collapsed to the icon rail; the test expands it
+      // through the shell's own toggle before asserting the wide layout.
+      expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
 
       final initialUri = GoRouterState.of(

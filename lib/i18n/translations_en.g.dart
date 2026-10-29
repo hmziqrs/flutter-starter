@@ -195,6 +195,12 @@ class Translations$navigation$en {
 
 	/// en: 'Settings'
 	String get settings => 'Settings';
+
+	/// en: 'Brand gallery'
+	String get gallery => 'Brand gallery';
+
+	/// en: 'Toggle sidebar'
+	String get toggleSidebar => 'Toggle sidebar';
 }
 
 // Path: onboarding
@@ -357,14 +363,26 @@ class Translations$home$en {
 	/// en: 'Update profile'
 	String get editProfile => 'Update profile';
 
+	/// en: 'Change your display name and avatar.'
+	String get editProfileHint => 'Change your display name and avatar.';
+
 	/// en: 'Open settings'
 	String get openSettings => 'Open settings';
+
+	/// en: 'Tune appearance, language, and account.'
+	String get openSettingsHint => 'Tune appearance, language, and account.';
 
 	/// en: 'View pricing'
 	String get openPricing => 'View pricing';
 
+	/// en: 'Compare the static plans side by side.'
+	String get openPricingHint => 'Compare the static plans side by side.';
+
 	/// en: 'Try the login flow'
 	String get openLogin => 'Try the login flow';
+
+	/// en: 'Walk through the example sign-in.'
+	String get openLoginHint => 'Walk through the example sign-in.';
 
 	/// en: 'Foundation status'
 	String get statusTitle => 'Foundation status';
@@ -422,6 +440,12 @@ class Translations$settings$en {
 
 	/// en: 'Privacy and About'
 	String get privacyAbout => 'Privacy and About';
+
+	/// en: 'Set up a passcode to use this.'
+	String get requiresPasscode => 'Set up a passcode to use this.';
+
+	/// en: 'About'
+	String get aboutTitle => 'About';
 
 	/// en: 'Theme mode'
 	String get themeMode => 'Theme mode';
@@ -504,6 +528,9 @@ class Translations$settings$en {
 	/// en: 'Settings saved'
 	String get saved => 'Settings saved';
 
+	/// en: 'We couldn't save your change. Try again.'
+	String get saveFailure => 'We couldn\'t save your change. Try again.';
+
 	/// en: 'Review the static profile and authentication flows.'
 	String get accountBody => 'Review the static profile and authentication flows.';
 
@@ -512,6 +539,9 @@ class Translations$settings$en {
 
 	/// en: 'Open login'
 	String get openLogin => 'Open login';
+
+	/// en: 'Sign out'
+	String get signOut => 'Sign out';
 
 	/// en: 'Compare plans without starting a purchase.'
 	String get subscriptionBody => 'Compare plans without starting a purchase.';
@@ -1996,6 +2026,15 @@ class Translations$profile$update$en {
 	/// en: 'Edit non-sensitive account details. Drafts are kept only while this page is open.'
 	String get body => 'Edit non-sensitive account details. Drafts are kept only while this page is open.';
 
+	/// en: 'Sign in to edit your profile'
+	String get anonymousTitle => 'Sign in to edit your profile';
+
+	/// en: 'Your display name, username, avatar, and bio live with your account. Signing in unlocks editing them.'
+	String get anonymousBody => 'Your display name, username, avatar, and bio live with your account. Signing in unlocks editing them.';
+
+	/// en: 'Continue without an account'
+	String get continueAsGuest => 'Continue without an account';
+
 	/// en: 'Profile image placeholder'
 	String get avatar => 'Profile image placeholder';
 
@@ -2325,6 +2364,8 @@ extension on Translations {
 			'navigation.home' => 'Home',
 			'navigation.pricing' => 'Pricing',
 			'navigation.settings' => 'Settings',
+			'navigation.gallery' => 'Brand gallery',
+			'navigation.toggleSidebar' => 'Toggle sidebar',
 			'onboarding.brand' => 'A thoughtful starting point',
 			'onboarding.progress' => ({required Object current, required Object total}) => 'Step ${current} of ${total}',
 			'onboarding.firstTitle' => 'Build from a durable foundation',
@@ -2384,9 +2425,13 @@ extension on Translations {
 			'home.summary' => 'Your starter is set up and ready for the next real feature.',
 			'home.quickActions' => 'Quick actions',
 			'home.editProfile' => 'Update profile',
+			'home.editProfileHint' => 'Change your display name and avatar.',
 			'home.openSettings' => 'Open settings',
+			'home.openSettingsHint' => 'Tune appearance, language, and account.',
 			'home.openPricing' => 'View pricing',
+			'home.openPricingHint' => 'Compare the static plans side by side.',
 			'home.openLogin' => 'Try the login flow',
+			'home.openLoginHint' => 'Walk through the example sign-in.',
 			'home.statusTitle' => 'Foundation status',
 			'home.statusReadyTitle' => 'Ready to extend',
 			'home.statusReadyBody' => 'Configuration, routing, localization, and adaptive layout are connected.',
@@ -2403,6 +2448,8 @@ extension on Translations {
 			'settings.account' => 'Account',
 			'settings.subscription' => 'Subscription',
 			'settings.privacyAbout' => 'Privacy and About',
+			'settings.requiresPasscode' => 'Set up a passcode to use this.',
+			'settings.aboutTitle' => 'About',
 			'settings.themeMode' => 'Theme mode',
 			'settings.system' => 'System',
 			'settings.light' => 'Light',
@@ -2430,9 +2477,11 @@ extension on Translations {
 			'settings.languageArabic' => 'Arabic',
 			'settings.languageChinese' => 'Simplified Chinese',
 			'settings.saved' => 'Settings saved',
+			'settings.saveFailure' => 'We couldn\'t save your change. Try again.',
 			'settings.accountBody' => 'Review the static profile and authentication flows.',
 			'settings.openProfile' => 'Update profile',
 			'settings.openLogin' => 'Open login',
+			'settings.signOut' => 'Sign out',
 			'settings.subscriptionBody' => 'Compare plans without starting a purchase.',
 			'settings.openPricing' => 'View pricing',
 			'settings.privacyBody' => 'This starter stores only appearance and language preferences during the static phase.',
@@ -2529,6 +2578,9 @@ extension on Translations {
 			'auth.resetPassword.success' => 'Password update preview complete. Return to login.',
 			'profile.update.title' => 'Update profile',
 			'profile.update.body' => 'Edit non-sensitive account details. Drafts are kept only while this page is open.',
+			'profile.update.anonymousTitle' => 'Sign in to edit your profile',
+			'profile.update.anonymousBody' => 'Your display name, username, avatar, and bio live with your account. Signing in unlocks editing them.',
+			'profile.update.continueAsGuest' => 'Continue without an account',
 			'profile.update.avatar' => 'Profile image placeholder',
 			'profile.update.changeAvatar' => 'Change profile image',
 			'profile.update.avatarUnavailable' => 'Image selection is not connected and no permission was requested.',
@@ -2794,6 +2846,8 @@ extension on Translations {
 			'devGallery.casePermissionDenied' => 'Denied',
 			'devGallery.casePermissionPermanentlyDenied' => 'Permanently denied',
 			'devGallery.screenLicense' => 'Licenses',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.screenShare' => 'Share sheet',
 			'devGallery.screenAppUpdate' => 'In-app update',
 			'devGallery.screenSearchPagination' => 'Search & pagination',
@@ -2807,8 +2861,6 @@ extension on Translations {
 			'devGallery.caseToastError' => 'Error toast',
 			'devGallery.caseDialogConfirm' => 'Confirm dialog',
 			'devGallery.caseDialogDestroy' => 'Destroy dialog',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.screenPasscodeEntry' => 'Passcode entry',
 			'devGallery.screenPasscodeSetup' => 'Passcode setup',
 			'devGallery.casePasscodeIdle' => 'Idle',

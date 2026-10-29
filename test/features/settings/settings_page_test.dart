@@ -11,10 +11,12 @@ import 'package:starter/app/routing/app_link_handler.dart';
 import 'package:starter/features/security/in_memory_secure_store.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/features/settings/in_memory_settings_store.dart';
+import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/analytics/analytics_client.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
+import 'package:starter/shared/widgets/blocks/segmented.dart';
 
 void main() {
   testWidgets('compact overview exposes every settings section and account flow', (tester) async {
@@ -41,10 +43,37 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-open-account')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('settings-open-profile')), findsOneWidget);
+    // Authenticated: the quiet destructive sign-out row is offered inline.
+    expect(find.byKey(const ValueKey('settings-sign-out')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('settings-open-profile')));
     await tester.pumpAndSettle();
     expect(find.text('Update profile'), findsOneWidget);
+  });
+
+  testWidgets('anonymous account section offers sign-in as a row, never a forced redirect', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(390, 844));
+    await LocaleSettings.setLocale(AppLocale.en);
+    await tester.pumpWidget(_app(initialLocation: '/settings?section=account'));
+    await tester.pumpAndSettle();
+
+    // Anonymous: profile editing still opens and sign-in is a quiet row; there
+    // is no sign-out to offer and the page never forces authentication.
+    expect(find.byKey(const ValueKey('settings-open-profile')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-open-login')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-sign-out')), findsNothing);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('You are signed out.'), findsOneWidget);
+
+    final router = GoRouter.of(tester.element(find.byKey(const ValueKey('settings-open-login'))));
+    await tester.tap(find.byKey(const ValueKey('settings-open-login')));
+    await tester.pumpAndSettle();
+    // The login flow opens over settings and stays dismissable — sign-in is
+    // offered, never forced over the anonymous session.
+    expect(find.byKey(const ValueKey('auth-login-form')), findsOneWidget);
+    expect(router.canPop(), isTrue, reason: 'sign-in is pushed, not forced over settings');
   });
 
   testWidgets('subscription and privacy actions provide honest destinations', (tester) async {
@@ -99,7 +128,12 @@ void main() {
     await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
     await tester.pumpAndSettle();
 
+    // The sidebar starts collapsed to the icon rail; the toggle expands it.
+    expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
+
     expect(find.text('واسع'), findsOneWidget);
     expect(find.text('relaxed'), findsNothing);
     expect(Directionality.of(tester.element(find.text('واسع'))), TextDirection.rtl);
@@ -172,44 +206,64 @@ void main() {
     expect(secureStore.snapshot[analyticsOptInKey], 'true');
   });
 
-  testWidgets('wide settings navigation keeps equal gaps at medium and expanded widths', (
+  testWidgets('settings sections use horizontal tabs at medium and a section column at expanded', (
     tester,
   ) async {
     _setViewport(tester, const Size(640, 844));
     await LocaleSettings.setLocale(AppLocale.en);
 
-    for (final width in [640.0, 1024.0]) {
-      tester.view.physicalSize = Size(width, 844);
-      await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
-      await tester.pumpAndSettle();
+    const sectionKeys = [
+      ValueKey('settings-wide-appearance'),
+      ValueKey('settings-wide-language'),
+      ValueKey('settings-wide-accessibility'),
+      ValueKey('settings-wide-account'),
+      ValueKey('settings-wide-subscription'),
+      ValueKey('settings-wide-privacy-about'),
+    ];
 
-      final itemRects = [
-        tester.getRect(find.byKey(const ValueKey('settings-wide-appearance'))),
-        tester.getRect(find.byKey(const ValueKey('settings-wide-language'))),
-        tester.getRect(find.byKey(const ValueKey('settings-wide-accessibility'))),
-        tester.getRect(find.byKey(const ValueKey('settings-wide-account'))),
-        tester.getRect(find.byKey(const ValueKey('settings-wide-subscription'))),
-        tester.getRect(find.byKey(const ValueKey('settings-wide-privacy-about'))),
-      ];
-      final gaps = [
-        for (var index = 1; index < itemRects.length; index++)
-          itemRects[index].top - itemRects[index - 1].bottom,
-      ];
-
-      expect(gaps.first, greaterThan(0));
-      for (final gap in gaps.skip(1)) {
-        expect(gap, closeTo(gaps.first, 0.01));
-      }
-
-      expect(
-        tester
-            .widget<FSidebarItem>(
-              find.byKey(const ValueKey('settings-wide-appearance')),
-            )
-            .selected,
-        isTrue,
-      );
+    // Medium: the sections are a horizontal segmented tab row above the
+    // content — laid out left-to-right with the appearance section picked.
+    await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
+    await tester.pumpAndSettle();
+    final segmented = find.byKey(const ValueKey('settings-wide-navigation'));
+    expect(segmented, findsOneWidget);
+    for (final key in sectionKeys) {
+      expect(find.byKey(key), findsOneWidget);
     }
+    final tabRects = sectionKeys.map((key) => tester.getRect(find.byKey(key))).toList();
+    for (var index = 1; index < tabRects.length; index++) {
+      expect(tabRects[index].left, greaterThan(tabRects[index - 1].left));
+    }
+    expect(
+      tester.widget<AppSegmented<String>>(segmented).value,
+      SettingsSection.appearance.name,
+    );
+
+    // Expanded: the section column remains, with equal vertical gaps and the
+    // active section selected.
+    tester.view.physicalSize = const Size(1024, 844);
+    await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
+    await tester.pumpAndSettle();
+
+    final itemRects = sectionKeys.map((key) => tester.getRect(find.byKey(key))).toList();
+    final gaps = [
+      for (var index = 1; index < itemRects.length; index++)
+        itemRects[index].top - itemRects[index - 1].bottom,
+    ];
+
+    expect(gaps.first, greaterThan(0));
+    for (final gap in gaps.skip(1)) {
+      expect(gap, closeTo(gaps.first, 0.01));
+    }
+
+    expect(
+      tester
+          .widget<FSidebarItem>(
+            find.byKey(const ValueKey('settings-wide-appearance')),
+          )
+          .selected,
+      isTrue,
+    );
   });
 
   testWidgets('TV directional focus bridges settings navigation and content', (

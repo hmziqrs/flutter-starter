@@ -18,7 +18,7 @@ class FeedbackShakeTile extends ConsumerWidget {
       valueSelector: (enabled) => enabled,
       onSave: (value) => controller.setEnabled(value: value),
       keyName: 'feedback-shake',
-      label: Text(context.t.feedback.shakeEnabled),
+      label: context.t.feedback.shakeEnabled,
     );
   }
 }

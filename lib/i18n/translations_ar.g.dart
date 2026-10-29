@@ -133,6 +133,8 @@ class _Translations$navigation$ar extends Translations$navigation$en {
 	@override String get home => 'الرئيسية';
 	@override String get pricing => 'الأسعار';
 	@override String get settings => 'الإعدادات';
+	@override String get gallery => 'معرض الهوية';
+	@override String get toggleSidebar => 'إظهار/إخفاء الشريط الجانبي';
 }
 
 // Path: onboarding
@@ -205,9 +207,13 @@ class _Translations$home$ar extends Translations$home$en {
 	@override String get summary => 'القالب مضبوط وجاهز لإضافة الميزة الحقيقية التالية.';
 	@override String get quickActions => 'إجراءات سريعة';
 	@override String get editProfile => 'تحديث الملف الشخصي';
+	@override String get editProfileHint => 'غيّر الاسم المعروض وصورة الملف الشخصي.';
 	@override String get openSettings => 'فتح الإعدادات';
+	@override String get openSettingsHint => 'اضبط المظهر واللغة والحساب.';
 	@override String get openPricing => 'عرض الأسعار';
+	@override String get openPricingHint => 'قارن الخطط الثابتة جنبًا إلى جنب.';
 	@override String get openLogin => 'تجربة تسجيل الدخول';
+	@override String get openLoginHint => 'استعرض مثال تسجيل الدخول خطوة بخطوة.';
 	@override String get statusTitle => 'حالة الأساس';
 	@override String get statusReadyTitle => 'جاهز للتوسعة';
 	@override String get statusReadyBody => 'تم ربط الإعدادات والتوجيه والترجمة والتخطيط المتكيف.';
@@ -233,6 +239,8 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get account => 'الحساب';
 	@override String get subscription => 'الاشتراك';
 	@override String get privacyAbout => 'الخصوصية وحول التطبيق';
+	@override String get requiresPasscode => 'تعيين رمز مرور لاستخدام هذا.';
+	@override String get aboutTitle => 'حول التطبيق';
 	@override String get themeMode => 'نمط السمة';
 	@override String get system => 'النظام';
 	@override String get light => 'فاتح';
@@ -260,9 +268,11 @@ class _Translations$settings$ar extends Translations$settings$en {
 	@override String get languageArabic => 'العربية';
 	@override String get languageChinese => 'الصينية المبسطة';
 	@override String get saved => 'تم حفظ الإعدادات';
+	@override String get saveFailure => 'تعذّر حفظ التغيير. حاول مرة أخرى.';
 	@override String get accountBody => 'راجع تدفقات الملف الشخصي والمصادقة الثابتة.';
 	@override String get openProfile => 'تحديث الملف الشخصي';
 	@override String get openLogin => 'فتح تسجيل الدخول';
+	@override String get signOut => 'تسجيل الخروج';
 	@override String get subscriptionBody => 'قارن الخطط من دون بدء عملية شراء.';
 	@override String get openPricing => 'عرض الأسعار';
 	@override String get privacyBody => 'يخزن هذا القالب تفضيلات المظهر واللغة فقط خلال المرحلة الثابتة.';
@@ -990,6 +1000,9 @@ class _Translations$profile$update$ar extends Translations$profile$update$en {
 	// Translations
 	@override String get title => 'تحديث الملف الشخصي';
 	@override String get body => 'حرر تفاصيل الحساب غير الحساسة. تبقى المسودات فقط أثناء بقاء هذه الصفحة مفتوحة.';
+	@override String get anonymousTitle => 'سجّل الدخول لتعديل ملفك الشخصي';
+	@override String get anonymousBody => 'الاسم المعروض واسم المستخدم وصورة الملف الشخصي والنبذة مرتبطة بحسابك. يتيح لك تسجيل الدخول تعديلها.';
+	@override String get continueAsGuest => 'المتابعة بدون حساب';
 	@override String get avatar => 'عنصر نائب لصورة الملف الشخصي';
 	@override String get changeAvatar => 'تغيير صورة الملف الشخصي';
 	@override String get avatarUnavailable => 'اختيار الصور غير متصل ولم يتم طلب أي إذن.';
@@ -1213,6 +1226,8 @@ extension on TranslationsAr {
 			'navigation.home' => 'الرئيسية',
 			'navigation.pricing' => 'الأسعار',
 			'navigation.settings' => 'الإعدادات',
+			'navigation.gallery' => 'معرض الهوية',
+			'navigation.toggleSidebar' => 'إظهار/إخفاء الشريط الجانبي',
 			'onboarding.brand' => 'نقطة بداية مدروسة',
 			'onboarding.progress' => ({required Object current, required Object total}) => 'الخطوة ${current} من ${total}',
 			'onboarding.firstTitle' => 'ابدأ من أساس متين',
@@ -1272,9 +1287,13 @@ extension on TranslationsAr {
 			'home.summary' => 'القالب مضبوط وجاهز لإضافة الميزة الحقيقية التالية.',
 			'home.quickActions' => 'إجراءات سريعة',
 			'home.editProfile' => 'تحديث الملف الشخصي',
+			'home.editProfileHint' => 'غيّر الاسم المعروض وصورة الملف الشخصي.',
 			'home.openSettings' => 'فتح الإعدادات',
+			'home.openSettingsHint' => 'اضبط المظهر واللغة والحساب.',
 			'home.openPricing' => 'عرض الأسعار',
+			'home.openPricingHint' => 'قارن الخطط الثابتة جنبًا إلى جنب.',
 			'home.openLogin' => 'تجربة تسجيل الدخول',
+			'home.openLoginHint' => 'استعرض مثال تسجيل الدخول خطوة بخطوة.',
 			'home.statusTitle' => 'حالة الأساس',
 			'home.statusReadyTitle' => 'جاهز للتوسعة',
 			'home.statusReadyBody' => 'تم ربط الإعدادات والتوجيه والترجمة والتخطيط المتكيف.',
@@ -1291,6 +1310,8 @@ extension on TranslationsAr {
 			'settings.account' => 'الحساب',
 			'settings.subscription' => 'الاشتراك',
 			'settings.privacyAbout' => 'الخصوصية وحول التطبيق',
+			'settings.requiresPasscode' => 'تعيين رمز مرور لاستخدام هذا.',
+			'settings.aboutTitle' => 'حول التطبيق',
 			'settings.themeMode' => 'نمط السمة',
 			'settings.system' => 'النظام',
 			'settings.light' => 'فاتح',
@@ -1318,9 +1339,11 @@ extension on TranslationsAr {
 			'settings.languageArabic' => 'العربية',
 			'settings.languageChinese' => 'الصينية المبسطة',
 			'settings.saved' => 'تم حفظ الإعدادات',
+			'settings.saveFailure' => 'تعذّر حفظ التغيير. حاول مرة أخرى.',
 			'settings.accountBody' => 'راجع تدفقات الملف الشخصي والمصادقة الثابتة.',
 			'settings.openProfile' => 'تحديث الملف الشخصي',
 			'settings.openLogin' => 'فتح تسجيل الدخول',
+			'settings.signOut' => 'تسجيل الخروج',
 			'settings.subscriptionBody' => 'قارن الخطط من دون بدء عملية شراء.',
 			'settings.openPricing' => 'عرض الأسعار',
 			'settings.privacyBody' => 'يخزن هذا القالب تفضيلات المظهر واللغة فقط خلال المرحلة الثابتة.',
@@ -1417,6 +1440,9 @@ extension on TranslationsAr {
 			'auth.resetPassword.success' => 'اكتملت معاينة تحديث كلمة المرور. عُد إلى تسجيل الدخول.',
 			'profile.update.title' => 'تحديث الملف الشخصي',
 			'profile.update.body' => 'حرر تفاصيل الحساب غير الحساسة. تبقى المسودات فقط أثناء بقاء هذه الصفحة مفتوحة.',
+			'profile.update.anonymousTitle' => 'سجّل الدخول لتعديل ملفك الشخصي',
+			'profile.update.anonymousBody' => 'الاسم المعروض واسم المستخدم وصورة الملف الشخصي والنبذة مرتبطة بحسابك. يتيح لك تسجيل الدخول تعديلها.',
+			'profile.update.continueAsGuest' => 'المتابعة بدون حساب',
 			'profile.update.avatar' => 'عنصر نائب لصورة الملف الشخصي',
 			'profile.update.changeAvatar' => 'تغيير صورة الملف الشخصي',
 			'profile.update.avatarUnavailable' => 'اختيار الصور غير متصل ولم يتم طلب أي إذن.',
@@ -1682,6 +1708,8 @@ extension on TranslationsAr {
 			'devGallery.casePermissionDenied' => 'مرفوض',
 			'devGallery.casePermissionPermanentlyDenied' => 'محظور نهائيًا',
 			'devGallery.screenLicense' => 'التراخيص',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.screenShare' => 'ورقة المشاركة',
 			'devGallery.screenAppUpdate' => 'التحديث داخل التطبيق',
 			'devGallery.screenSearchPagination' => 'بحث وترقيم صفحات',
@@ -1695,8 +1723,6 @@ extension on TranslationsAr {
 			'devGallery.caseToastError' => 'إشعار خطأ',
 			'devGallery.caseDialogConfirm' => 'مربع تأكيد',
 			'devGallery.caseDialogDestroy' => 'مربع حذف',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.screenPasscodeEntry' => 'إدخال رمز المرور',
 			'devGallery.screenPasscodeSetup' => 'إعداد رمز المرور',
 			'devGallery.casePasscodeIdle' => 'خامل',

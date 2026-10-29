@@ -25,15 +25,21 @@ void main() {
   group('pathForLastRouteName', () {
     test('resolves known route names to their path constant', () {
       expect(pathForLastRouteName(AppRoutes.home), AppRoutes.homePath);
-      expect(pathForLastRouteName(AppRoutes.login), AppRoutes.loginPath);
-      expect(pathForLastRouteName(AppRoutes.register), AppRoutes.registerPath);
-      expect(pathForLastRouteName(AppRoutes.forgotPassword), AppRoutes.forgotPasswordPath);
-      expect(pathForLastRouteName(AppRoutes.resetPassword), AppRoutes.resetPasswordPath);
       expect(pathForLastRouteName(AppRoutes.updateProfile), AppRoutes.updateProfilePath);
       expect(pathForLastRouteName(AppRoutes.settings), AppRoutes.settingsPath);
       expect(pathForLastRouteName(AppRoutes.pricing), AppRoutes.pricingPath);
-      expect(pathForLastRouteName(AppRoutes.onboarding), AppRoutes.onboardingPath);
-      expect(pathForLastRouteName(AppRoutes.onboardingPaywall), AppRoutes.onboardingPaywallPath);
+    });
+
+    test('never persists auth flow routes (would strand cold start on /auth/login)', () {
+      expect(pathForLastRouteName(AppRoutes.login), isNull);
+      expect(pathForLastRouteName(AppRoutes.register), isNull);
+      expect(pathForLastRouteName(AppRoutes.forgotPassword), isNull);
+      expect(pathForLastRouteName(AppRoutes.resetPassword), isNull);
+    });
+
+    test('never persists onboarding flow routes', () {
+      expect(pathForLastRouteName(AppRoutes.onboarding), isNull);
+      expect(pathForLastRouteName(AppRoutes.onboardingPaywall), isNull);
     });
 
     test('never persists the cold-start splash (would loop relaunch into splash)', () {
@@ -55,6 +61,8 @@ void main() {
     test('never persists gate routes the C5 redirect re-evaluates anyway', () {
       expect(pathForLastRouteName(AppRoutes.forceUpdate), isNull);
       expect(pathForLastRouteName(AppRoutes.biometricLock), isNull);
+      expect(pathForLastRouteName(AppRoutes.passcodeEntry), isNull);
+      expect(pathForLastRouteName(AppRoutes.passcodeSetup), isNull);
     });
 
     test(
@@ -76,40 +84,67 @@ void main() {
     test('writes the resolved path to the store on didPush', () async {
       final store = InMemorySettingsStore();
 
-      LastRouteObserver(store: store).didPush(_route(AppRoutes.login), null);
+      LastRouteObserver(store: store).didPush(_route(AppRoutes.home), null);
 
-      expect(store.snapshot[lastRouteKey], AppRoutes.loginPath);
+      expect(store.snapshot[lastRouteKey], AppRoutes.homePath);
     });
 
     test('updates the stored path as the user navigates', () async {
       final store = InMemorySettingsStore();
 
       LastRouteObserver(store: store)
-        ..didPush(_route(AppRoutes.login), null)
-        ..didPush(_route(AppRoutes.forgotPassword), _route(AppRoutes.login));
+        ..didPush(_route(AppRoutes.home), null)
+        ..didPush(_route(AppRoutes.settings), _route(AppRoutes.home));
 
-      expect(store.snapshot[lastRouteKey], AppRoutes.forgotPasswordPath);
+      expect(store.snapshot[lastRouteKey], AppRoutes.settingsPath);
     });
 
     test('persists the previous (returned-to) route on didPop', () async {
       final store = InMemorySettingsStore();
 
       LastRouteObserver(store: store)
-        ..didPush(_route(AppRoutes.login), null)
-        ..didPush(_route(AppRoutes.register), _route(AppRoutes.login))
-        ..didPop(_route(AppRoutes.register), _route(AppRoutes.login));
+        ..didPush(_route(AppRoutes.settings), null)
+        ..didPush(_route(AppRoutes.aboutLicense), _route(AppRoutes.settings))
+        ..didPop(_route(AppRoutes.aboutLicense), _route(AppRoutes.settings));
 
-      expect(store.snapshot[lastRouteKey], AppRoutes.loginPath);
+      expect(store.snapshot[lastRouteKey], AppRoutes.settingsPath);
     });
+
+    test('never persists auth visits — the restore point stays the last valid route', () async {
+      final store = InMemorySettingsStore();
+
+      // One visit to the login flow must not strand a later cold start on it.
+      LastRouteObserver(store: store)
+        ..didPush(_route(AppRoutes.home), null)
+        ..didPush(_route(AppRoutes.login), _route(AppRoutes.home))
+        ..didPush(_route(AppRoutes.register), _route(AppRoutes.login))
+        ..didPush(_route(AppRoutes.forgotPassword), _route(AppRoutes.register));
+
+      expect(store.snapshot[lastRouteKey], AppRoutes.homePath);
+    });
+
+    test(
+      'never persists onboarding visits — the restore point stays the last valid route',
+      () async {
+        final store = InMemorySettingsStore();
+
+        LastRouteObserver(store: store)
+          ..didPush(_route(AppRoutes.pricing), null)
+          ..didPush(_route(AppRoutes.onboarding), _route(AppRoutes.pricing))
+          ..didPush(_route(AppRoutes.onboardingPaywall), _route(AppRoutes.onboarding));
+
+        expect(store.snapshot[lastRouteKey], AppRoutes.pricingPath);
+      },
+    );
 
     test('ignores excluded routes (splash) so relaunch never loops', () async {
       final store = InMemorySettingsStore();
 
       LastRouteObserver(store: store)
-        ..didPush(_route(AppRoutes.login), null)
-        ..didPush(_route(AppRoutes.splash), _route(AppRoutes.login));
+        ..didPush(_route(AppRoutes.home), null)
+        ..didPush(_route(AppRoutes.splash), _route(AppRoutes.home));
 
-      expect(store.snapshot[lastRouteKey], AppRoutes.loginPath);
+      expect(store.snapshot[lastRouteKey], AppRoutes.homePath);
     });
 
     test('ignores routes with no settings name', () async {

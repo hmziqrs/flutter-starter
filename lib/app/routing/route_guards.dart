@@ -10,8 +10,6 @@ import 'package:starter/features/force_update/update_requirement.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
 import 'package:starter/features/security/biometric_unlock_controller.dart';
 import 'package:starter/features/security/passcode_controller.dart';
-import 'package:starter/features/session/auth_session.dart';
-import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_section.dart';
 import 'package:starter/features/settings/settings_store.dart';
@@ -52,13 +50,9 @@ String? appRedirect(
     return AppRoutes.onboardingPath;
   }
 
-  if (_isAuthRequiredDestination(path) && hasCompleted) {
-    final session = _readLiveSession(context) ?? const AuthAnonymous();
-    if (session is! AuthAuthenticated) {
-      return AppRoutes.loginPath;
-    }
-  }
-
+  // This is a no-hard-login boilerplate: no route requires an authenticated
+  // session. Routes that read account data (profile edit) degrade to an
+  // in-page sign-in prompt for anonymous sessions instead of redirecting.
   if (!_isShellTabDestination(path)) {
     return null;
   }
@@ -93,21 +87,10 @@ bool _isOnboardingOrAuthRoute(String path) =>
     path.startsWith('${AppRoutes.onboardingPath}/') ||
     path.startsWith('/auth/');
 
-bool _isAuthRequiredDestination(String path) => path == AppRoutes.updateProfilePath;
-
 bool? _readLiveHasCompletedOnboarding(BuildContext context) {
   try {
     final container = ProviderScope.containerOf(context, listen: false);
     return container.read(settingsControllerProvider).hasCompletedOnboarding;
-  } on Object {
-    return null;
-  }
-}
-
-AuthSession? _readLiveSession(BuildContext context) {
-  try {
-    final container = ProviderScope.containerOf(context, listen: false);
-    return container.read(sessionControllerProvider);
   } on Object {
     return null;
   }

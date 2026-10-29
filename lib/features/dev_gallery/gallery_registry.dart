@@ -30,7 +30,16 @@ import 'package:starter/features/dev_gallery/gallery_case.dart';
 import 'package:starter/features/dev_gallery/system/system_gallery_cases.dart';
 
 List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
+  // Brand component groups lead the registry so the gallery opens on the
+  // brand system (materials, glass, rings, marks, blocks) instead of burying
+  // it under the app-screen fixtures.
   final cases = <GalleryCase>[
+    ...buildBrandSystemGalleryCases(),
+    ...buildBrandMaterialGalleryCases(),
+    ...buildBrandGlassGalleryCases(),
+    ...buildBrandRingsGalleryCases(),
+    ...buildBrandMarksGalleryCases(),
+    ...buildBrandBlocksGalleryCases(),
     ...buildProductionGalleryCases(),
     ...buildConnectivityGalleryCases(),
     ...buildForceUpdateGalleryCases(),
@@ -55,12 +64,6 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildToastDialogsGalleryCases(),
     ...buildPinAutolockGalleryCases(),
     ...buildFeedbackGalleryCases(),
-    ...buildBrandSystemGalleryCases(),
-    ...buildBrandMaterialGalleryCases(),
-    ...buildBrandGlassGalleryCases(),
-    ...buildBrandRingsGalleryCases(),
-    ...buildBrandMarksGalleryCases(),
-    ...buildBrandBlocksGalleryCases(),
   ];
   final ids = <String>{};
   for (final galleryCase in cases) {

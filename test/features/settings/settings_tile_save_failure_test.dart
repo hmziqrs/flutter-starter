@@ -21,7 +21,7 @@ void main() {
     await LocaleSettings.setLocale(AppLocale.en);
   });
 
-  testWidgets('haptics tile surfaces common.notConnected when persistence fails', (tester) async {
+  testWidgets('haptics tile surfaces the save failure when persistence fails', (tester) async {
     _setViewport(tester);
     await tester.pumpWidget(_harness(failWrites: true));
     await _settle(tester);
@@ -33,7 +33,7 @@ void main() {
     await _settle(tester);
 
     expect(find.byKey(const ValueKey('settings-toggle-save-error')), findsOneWidget);
-    expect(find.textContaining('not connected'), findsWidgets);
+    expect(find.textContaining("We couldn't save your change"), findsWidgets);
   });
 
   testWidgets('a succeeding write leaves no failure text behind', (tester) async {

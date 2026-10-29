@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
-import 'package:starter/features/settings/widgets/settings_toggle_card.dart';
+import 'package:starter/features/settings/widgets/settings_switch_row.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator_provider.dart';
 
@@ -24,15 +24,25 @@ class _BiometricUnlockTileState extends ConsumerState<BiometricUnlockTile>
     );
     final controller = ref.read(settingsControllerProvider.notifier);
     final availability = ref.watch(biometricAvailabilityProvider);
-    final canCheck = availability.maybeWhen(
-      data: (report) => report.canCheck,
+    // Only a settled "no" disables the row; while availability is still
+    // loading the switch stays usable and its own guard holds.
+    final unavailable = availability.maybeWhen(
+      data: (report) => !report.canCheck,
       orElse: () => false,
     );
-    return SettingsToggleCard(
+    return SettingsSwitchRow(
       keyName: 'biometric',
-      label: Text(translations.settings.enableBiometric),
+      label: translations.settings.enableBiometric,
+      // When the device can't, say so and give the way around it
+      // (BRAND.md s9, s11) instead of silently dropping the tap.
+      description: unavailable ? translations.security.biometric.unavailableBody : null,
+      enabled: !unavailable,
       value: enabled,
       onChange: (value) {
+        final canCheck = availability.maybeWhen(
+          data: (report) => report.canCheck,
+          orElse: () => false,
+        );
         if (value && !canCheck) return;
         unawaited(runSave(() => controller.setBiometricUnlockEnabled(enabled: value)));
       },

@@ -23,7 +23,9 @@ void main() {
   const routeAnchors = <({String location, String focusKey})>[
     (
       location: AppRoutes.onboardingPath,
-      focusKey: 'onboarding-skip',
+      // The brand redesign removed the skip autofocus: the cold focus sits on
+      // the primary Continue action (BRAND.md s9, one clear main action).
+      focusKey: 'onboarding-continue',
     ),
     (
       location: AppRoutes.onboardingPaywallPath,

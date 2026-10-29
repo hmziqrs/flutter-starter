@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
-import 'package:starter/features/settings/widgets/settings_toggle_card.dart';
+import 'package:starter/features/settings/widgets/settings_switch_row.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 class LockOnBackgroundTile extends ConsumerStatefulWidget {
@@ -24,12 +24,17 @@ class _LockOnBackgroundTileState extends ConsumerState<LockOnBackgroundTile>
       ),
     );
     final controller = ref.read(settingsControllerProvider.notifier);
-    return SettingsToggleCard(
+    final passcodeEnabled = state.passcodeEnabled;
+    return SettingsSwitchRow(
       keyName: 'lock-on-background',
-      label: Text(translations.settings.lockOnBackground),
+      label: translations.settings.lockOnBackground,
+      // Without a passcode there is nothing to lock with: disable the row and
+      // say how to get there (BRAND.md s9, s11) instead of swallowing taps.
+      description: passcodeEnabled ? null : translations.settings.requiresPasscode,
+      enabled: passcodeEnabled,
       value: state.lockOnBackground,
       onChange: (value) {
-        if (!state.passcodeEnabled) return;
+        if (!passcodeEnabled) return;
         unawaited(runSave(() => controller.setLockOnBackground(enabled: value)));
       },
       saveFailed: saveFailed,

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
-import 'package:starter/features/settings/widgets/settings_toggle_card.dart';
+import 'package:starter/features/settings/widgets/settings_switch_row.dart';
 import 'package:starter/i18n/translations.g.dart';
 
 class PasscodeTile extends ConsumerStatefulWidget {
@@ -23,9 +23,9 @@ class _PasscodeTileState extends ConsumerState<PasscodeTile> with SettingsSaveFa
       settingsControllerProvider.select((state) => state.passcodeEnabled),
     );
     final controller = ref.read(settingsControllerProvider.notifier);
-    return SettingsToggleCard(
+    return SettingsSwitchRow(
       keyName: 'passcode',
-      label: Text(translations.settings.passcode),
+      label: translations.settings.passcode,
       value: enabled,
       onChange: (value) async {
         if (value) {

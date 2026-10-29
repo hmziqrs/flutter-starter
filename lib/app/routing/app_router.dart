@@ -34,7 +34,10 @@ GoRouter buildAppRouter({
     initialLocation: initialLocation,
     routes: [
       StatefulShellRoute(
-        builder: (context, state, shell) => AppShell(navigationShell: shell),
+        builder: (context, state, shell) => AppShell(
+          navigationShell: shell,
+          showDeveloperEntry: config.developmentToolsEnabled,
+        ),
         navigatorContainerBuilder: crossFadingBranchContainer,
         branches: [
           StatefulShellBranch(routes: buildHomeRoutes()),

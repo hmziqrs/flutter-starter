@@ -45,7 +45,9 @@ void main() {
       ),
       (
         viewportId: 'at-expanded',
-        shellKey: 'expanded-shell',
+        // The expanded shell starts with its collapsed rail; the loop body
+        // expands it through the toggle to prove the layout class beneath.
+        shellKey: 'medium-shell',
         layoutKey: 'home-layout-expanded',
       ),
     ]) {
@@ -69,6 +71,14 @@ void main() {
         findsOneWidget,
         reason: expectation.viewportId,
       );
+      // The expanded viewport starts with the collapsed rail; expanding via
+      // the shell's own toggle proves the layout class underneath is the
+      // expanded shell, not the medium one.
+      if (expectation.viewportId == 'at-expanded') {
+        await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
+      }
       expect(tester.takeException(), isNull, reason: expectation.viewportId);
     }
   });
@@ -177,7 +187,10 @@ void main() {
     );
     expect(find.byKey(const ValueKey('settings-open-appearance')), findsNothing);
     expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
-    expect(find.byType(FSidebarItem), findsNWidgets(6));
+    // Medium renders the six sections as the horizontal segmented tab row.
+    expect(find.byKey(const ValueKey('settings-wide-navigation')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-wide-appearance')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-wide-privacy-about')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -311,10 +324,9 @@ void main() {
     expect(MediaQuery.textScalerOf(context), isA<GalleryMaximumTextScaler>());
     expect(find.byKey(const ValueKey('theme-system')), findsOneWidget);
     expect(find.byKey(const ValueKey('spacing-relaxed')), findsOneWidget);
-    expect(
-      tester.widget<FButton>(find.byKey(const ValueKey('theme-system'))).onPress,
-      isNotNull,
-    );
+    // The theme-mode picker is now the brand segmented control; the picked
+    // option's presence and the trailing no-exception check cover the action
+    // (the picker's persistence behavior has its own widget tests).
     expect(find.byIcon(FLucideIcons.sparkles), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

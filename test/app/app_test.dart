@@ -208,6 +208,10 @@ void main() {
     tester.view.physicalSize = const Size(1024, 844);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
+    // The expanded shell starts with its collapsed rail; the toggle expands.
+    expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
     expect(find.text('Appearance'), findsWidgets);
     _expectBlueAccent(container);

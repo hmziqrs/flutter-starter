@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
-import 'package:starter/features/settings/widgets/settings_toggle_card.dart';
+import 'package:starter/features/settings/widgets/settings_switch_row.dart';
 
 typedef SettingsToggleCallback<T> = Future<void> Function(T value);
 
+/// Bridges a watched boolean preference onto a quiet [SettingsSwitchRow],
+/// mapping a failed persistence write onto the row's inline soft error.
 class SettingsToggleTile<T> extends ConsumerStatefulWidget {
   const SettingsToggleTile({
     required this.watch,
@@ -13,7 +15,7 @@ class SettingsToggleTile<T> extends ConsumerStatefulWidget {
     required this.keyName,
     required this.label,
     this.description,
-    this.status,
+    this.statusText,
     super.key,
   });
 
@@ -25,11 +27,11 @@ class SettingsToggleTile<T> extends ConsumerStatefulWidget {
 
   final String keyName;
 
-  final Widget label;
+  final String label;
 
-  final Widget? description;
+  final String? description;
 
-  final String? status;
+  final String? statusText;
 
   @override
   ConsumerState<SettingsToggleTile<T>> createState() => _SettingsToggleTileState<T>();
@@ -40,11 +42,11 @@ class _SettingsToggleTileState<T> extends ConsumerState<SettingsToggleTile<T>>
   @override
   Widget build(BuildContext context) {
     final value = widget.valueSelector(widget.watch(ref));
-    return SettingsToggleCard(
+    return SettingsSwitchRow(
       keyName: widget.keyName,
       label: widget.label,
       description: widget.description,
-      status: widget.status,
+      statusText: widget.statusText,
       value: value,
       onChange: (next) => runSave(() => widget.onSave(next)),
       saveFailed: saveFailed,

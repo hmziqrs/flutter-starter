@@ -133,6 +133,8 @@ class _Translations$navigation$zh_Hans extends Translations$navigation$en {
 	@override String get home => '主页';
 	@override String get pricing => '价格';
 	@override String get settings => '设置';
+	@override String get gallery => '品牌画廊';
+	@override String get toggleSidebar => '收起/展开侧边栏';
 }
 
 // Path: onboarding
@@ -205,9 +207,13 @@ class _Translations$home$zh_Hans extends Translations$home$en {
 	@override String get summary => '模板已配置完成，可以开始添加下一个真实功能。';
 	@override String get quickActions => '快捷操作';
 	@override String get editProfile => '更新个人资料';
+	@override String get editProfileHint => '修改显示名称和头像。';
 	@override String get openSettings => '打开设置';
+	@override String get openSettingsHint => '调整外观、语言和账户。';
 	@override String get openPricing => '查看价格';
+	@override String get openPricingHint => '并排比较各静态方案。';
 	@override String get openLogin => '体验登录流程';
+	@override String get openLoginHint => '完整走一遍示例登录流程。';
 	@override String get statusTitle => '基础状态';
 	@override String get statusReadyTitle => '可继续扩展';
 	@override String get statusReadyBody => '配置、路由、本地化和自适应布局已连接。';
@@ -233,6 +239,8 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get account => '账户';
 	@override String get subscription => '订阅';
 	@override String get privacyAbout => '隐私与关于';
+	@override String get requiresPasscode => '设置密码后才能使用此功能。';
+	@override String get aboutTitle => '关于';
 	@override String get themeMode => '主题模式';
 	@override String get system => '跟随系统';
 	@override String get light => '浅色';
@@ -260,9 +268,11 @@ class _Translations$settings$zh_Hans extends Translations$settings$en {
 	@override String get languageArabic => '阿拉伯语';
 	@override String get languageChinese => '简体中文';
 	@override String get saved => '设置已保存';
+	@override String get saveFailure => '无法保存你的更改，请重试。';
 	@override String get accountBody => '查看静态个人资料和身份验证流程。';
 	@override String get openProfile => '更新个人资料';
 	@override String get openLogin => '打开登录';
+	@override String get signOut => '退出登录';
 	@override String get subscriptionBody => '比较方案，不会启动购买流程。';
 	@override String get openPricing => '查看价格';
 	@override String get privacyBody => '静态阶段仅保存外观和语言偏好。';
@@ -967,6 +977,9 @@ class _Translations$profile$update$zh_Hans extends Translations$profile$update$e
 	// Translations
 	@override String get title => '更新个人资料';
 	@override String get body => '编辑非敏感账户信息。草稿仅在此页面打开时保留。';
+	@override String get anonymousTitle => '登录后即可编辑个人资料';
+	@override String get anonymousBody => '显示名称、用户名、头像和个人简介都与你的账号绑定。登录后即可编辑这些内容。';
+	@override String get continueAsGuest => '以访客身份继续';
 	@override String get avatar => '个人头像占位图';
 	@override String get changeAvatar => '更换个人头像';
 	@override String get avatarUnavailable => '图片选择尚未连接，也没有请求任何权限。';
@@ -1183,6 +1196,8 @@ extension on TranslationsZhHans {
 			'navigation.home' => '主页',
 			'navigation.pricing' => '价格',
 			'navigation.settings' => '设置',
+			'navigation.gallery' => '品牌画廊',
+			'navigation.toggleSidebar' => '收起/展开侧边栏',
 			'onboarding.brand' => '经过思考的起点',
 			'onboarding.progress' => ({required Object current, required Object total}) => '第 ${current} 步，共 ${total} 步',
 			'onboarding.firstTitle' => '从可靠的基础开始',
@@ -1242,9 +1257,13 @@ extension on TranslationsZhHans {
 			'home.summary' => '模板已配置完成，可以开始添加下一个真实功能。',
 			'home.quickActions' => '快捷操作',
 			'home.editProfile' => '更新个人资料',
+			'home.editProfileHint' => '修改显示名称和头像。',
 			'home.openSettings' => '打开设置',
+			'home.openSettingsHint' => '调整外观、语言和账户。',
 			'home.openPricing' => '查看价格',
+			'home.openPricingHint' => '并排比较各静态方案。',
 			'home.openLogin' => '体验登录流程',
+			'home.openLoginHint' => '完整走一遍示例登录流程。',
 			'home.statusTitle' => '基础状态',
 			'home.statusReadyTitle' => '可继续扩展',
 			'home.statusReadyBody' => '配置、路由、本地化和自适应布局已连接。',
@@ -1261,6 +1280,8 @@ extension on TranslationsZhHans {
 			'settings.account' => '账户',
 			'settings.subscription' => '订阅',
 			'settings.privacyAbout' => '隐私与关于',
+			'settings.requiresPasscode' => '设置密码后才能使用此功能。',
+			'settings.aboutTitle' => '关于',
 			'settings.themeMode' => '主题模式',
 			'settings.system' => '跟随系统',
 			'settings.light' => '浅色',
@@ -1288,9 +1309,11 @@ extension on TranslationsZhHans {
 			'settings.languageArabic' => '阿拉伯语',
 			'settings.languageChinese' => '简体中文',
 			'settings.saved' => '设置已保存',
+			'settings.saveFailure' => '无法保存你的更改，请重试。',
 			'settings.accountBody' => '查看静态个人资料和身份验证流程。',
 			'settings.openProfile' => '更新个人资料',
 			'settings.openLogin' => '打开登录',
+			'settings.signOut' => '退出登录',
 			'settings.subscriptionBody' => '比较方案，不会启动购买流程。',
 			'settings.openPricing' => '查看价格',
 			'settings.privacyBody' => '静态阶段仅保存外观和语言偏好。',
@@ -1387,6 +1410,9 @@ extension on TranslationsZhHans {
 			'auth.resetPassword.success' => '密码更新预览已完成，请返回登录。',
 			'profile.update.title' => '更新个人资料',
 			'profile.update.body' => '编辑非敏感账户信息。草稿仅在此页面打开时保留。',
+			'profile.update.anonymousTitle' => '登录后即可编辑个人资料',
+			'profile.update.anonymousBody' => '显示名称、用户名、头像和个人简介都与你的账号绑定。登录后即可编辑这些内容。',
+			'profile.update.continueAsGuest' => '以访客身份继续',
 			'profile.update.avatar' => '个人头像占位图',
 			'profile.update.changeAvatar' => '更换个人头像',
 			'profile.update.avatarUnavailable' => '图片选择尚未连接，也没有请求任何权限。',
@@ -1652,6 +1678,8 @@ extension on TranslationsZhHans {
 			'devGallery.casePermissionDenied' => '已拒绝',
 			'devGallery.casePermissionPermanentlyDenied' => '永久拒绝',
 			'devGallery.screenLicense' => '许可证',
+			_ => null,
+		} ?? switch (path) {
 			'devGallery.screenShare' => '分享面板',
 			'devGallery.screenAppUpdate' => '应用内更新',
 			'devGallery.screenSearchPagination' => '搜索与分页',
@@ -1665,8 +1693,6 @@ extension on TranslationsZhHans {
 			'devGallery.caseToastError' => '错误提示',
 			'devGallery.caseDialogConfirm' => '确认对话框',
 			'devGallery.caseDialogDestroy' => '删除对话框',
-			_ => null,
-		} ?? switch (path) {
 			'devGallery.screenPasscodeEntry' => '密码输入',
 			'devGallery.screenPasscodeSetup' => '密码设置',
 			'devGallery.casePasscodeIdle' => '空闲',

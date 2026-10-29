@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/features/feedback/feedback_sheet.dart';
+import 'package:starter/features/session/auth_session.dart';
+import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/features/settings/accessibility_settings_page.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_section.dart';
@@ -15,10 +17,11 @@ import 'package:starter/features/settings/widgets/biometric_unlock_tile.dart';
 import 'package:starter/features/settings/widgets/feedback_shake_tile.dart';
 import 'package:starter/features/settings/widgets/haptics_tile.dart';
 import 'package:starter/features/settings/widgets/inline_save_error_text.dart';
-import 'package:starter/features/settings/widgets/labeled_section_card.dart';
 import 'package:starter/features/settings/widgets/lock_on_background_tile.dart';
 import 'package:starter/features/settings/widgets/passcode_tile.dart';
+import 'package:starter/features/settings/widgets/settings_row.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
+import 'package:starter/features/settings/widgets/settings_section_card.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
@@ -26,6 +29,7 @@ import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
+import 'package:starter/shared/widgets/blocks/segmented.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
 import 'package:starter/shared/widgets/spaced_column.dart';
 
@@ -114,9 +118,46 @@ class SettingsPage extends ConsumerWidget {
             onOpenPrivacy: onOpenPrivacy,
             onOpenLicense: onOpenLicense,
             loadBuildLabel: loadBuildLabel,
+            // Medium windows render the sections as horizontal tabs — the
+            // section column claimed too much width from the content.
+            horizontalTabs: layoutClass == AppLayoutClass.medium,
           );
 
     return SafeArea(bottom: false, child: content);
+  }
+}
+
+/// The settings page's own frame: the page title at the app scale (24 w500
+/// tight, APP-BLOCKS.md) over the section cards, one gap apart.
+class _SettingsContentFrame extends StatelessWidget {
+  const _SettingsContentFrame({required this.title, required this.sections});
+
+  final String title;
+  final List<Widget> sections;
+
+  @override
+  Widget build(BuildContext context) {
+    // APP-BLOCKS.md app type scale: the page title is 24 w500 tight (display
+    // .xl), not the 30 of display.xl2.
+    final style = context.theme.typography.display.xl;
+    return ReadingContentScrollFrame(
+      child: SpacedColumn(
+        gap: context.spacing.lg,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: style.copyWith(
+              fontWeight: FontWeight.w500,
+              height: 1.25,
+              letterSpacing: -(style.fontSize ?? 24) * 0.02,
+            ),
+          ),
+          SizedBox(height: context.spacing.md),
+          ...sections,
+        ],
+      ),
+    );
   }
 }
 
@@ -140,60 +181,50 @@ class _SettingsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: translations.settings.title,
-      child: SpacedColumn(
-        children: [
-          FTile(
-            key: const ValueKey('settings-open-appearance'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.palette),
-            title: Text(translations.settings.appearance),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenAppearance,
-          ),
-          FTile(
-            key: const ValueKey('settings-open-language'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.languages),
-            title: Text(translations.settings.language),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenLanguage,
-          ),
-          FTile(
-            key: const ValueKey('settings-open-accessibility'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.accessibility),
-            title: Text(translations.settings.accessibility.title),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenAccessibility,
-          ),
-          FTile(
-            key: const ValueKey('settings-open-account'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.userRound),
-            title: Text(translations.settings.account),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenAccount,
-          ),
-          FTile(
-            key: const ValueKey('settings-open-subscription'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.creditCard),
-            title: Text(translations.settings.subscription),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenSubscription,
-          ),
-          FTile(
-            key: const ValueKey('settings-open-privacy-about'),
-            style: _outlineTileStyle(),
-            prefix: const Icon(FLucideIcons.shieldCheck),
-            title: Text(translations.settings.privacyAbout),
-            suffix: const _DirectionalChevron(),
-            onPress: onOpenPrivacyAbout,
-          ),
-        ],
-      ),
+      sections: [
+        SettingsSectionCard(
+          children: [
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-appearance'),
+              label: translations.settings.appearance,
+              leading: FLucideIcons.palette,
+              onPress: onOpenAppearance,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-language'),
+              label: translations.settings.language,
+              leading: FLucideIcons.languages,
+              onPress: onOpenLanguage,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-accessibility'),
+              label: translations.settings.accessibility.title,
+              leading: FLucideIcons.accessibility,
+              onPress: onOpenAccessibility,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-account'),
+              label: translations.settings.account,
+              leading: FLucideIcons.userRound,
+              onPress: onOpenAccount,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-subscription'),
+              label: translations.settings.subscription,
+              leading: FLucideIcons.creditCard,
+              onPress: onOpenSubscription,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-privacy-about'),
+              label: translations.settings.privacyAbout,
+              leading: FLucideIcons.shieldCheck,
+              onPress: onOpenPrivacyAbout,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -215,9 +246,14 @@ class _SettingsWideLayout extends StatelessWidget {
     required this.onOpenPrivacy,
     required this.onOpenLicense,
     required this.loadBuildLabel,
+    this.horizontalTabs = false,
   });
 
   final SettingsSection section;
+
+  /// Renders the six sections as a horizontal segmented tab row above the
+  /// content instead of the left-hand section column (medium windows).
+  final bool horizontalTabs;
   final VoidCallback onOpenAppearance;
   final VoidCallback onOpenLanguage;
   final VoidCallback onOpenAccessibility;
@@ -233,12 +269,123 @@ class _SettingsWideLayout extends StatelessWidget {
   final VoidCallback onOpenLicense;
   final Future<String> Function() loadBuildLabel;
 
+  /// Maps a segmented tab's value back to its section-opening callback. The
+  /// keys go through a runtime map — enum `.name` getters are illegal in the
+  /// const context of switch cases.
+  VoidCallback _sectionByName(String name) {
+    final byName = <String, VoidCallback>{
+      SettingsSection.appearance.name: onOpenAppearance,
+      SettingsSection.language.name: onOpenLanguage,
+      SettingsSection.accessibility.name: onOpenAccessibility,
+      SettingsSection.account.name: onOpenAccount,
+      SettingsSection.subscription.name: onOpenSubscription,
+      SettingsSection.privacyAbout.name: onOpenPrivacyAbout,
+    };
+    return byName[name] ?? onOpenAppearance;
+  }
+
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
     final titleStyle = context.theme.typography.display.xl;
+    if (horizontalTabs) {
+      return _SettingsDirectionalFocusBridge(
+        vertical: true,
+        navigation: FocusTraversalGroup(
+          policy: WidgetOrderTraversalPolicy(),
+          child: FocusScope(
+            debugLabel: 'settings-section-navigation',
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(spacing.xl, spacing.xl, spacing.xl, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    translations.settings.title,
+                    style: titleStyle.copyWith(
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+                    ),
+                  ),
+                  SizedBox(height: spacing.lg),
+                  // Horizontal section tabs keep the whole width for content
+                  // on medium windows; the row scrolls when the locale's
+                  // labels run long.
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: AppSegmented<String>(
+                      key: const ValueKey('settings-wide-navigation'),
+                      value: section.name,
+                      onChanged: (name) => _sectionByName(name)(),
+                      options: [
+                        (
+                          value: SettingsSection.appearance.name,
+                          label: translations.settings.appearance,
+                          key: const ValueKey('settings-wide-appearance'),
+                        ),
+                        (
+                          value: SettingsSection.language.name,
+                          label: translations.settings.language,
+                          key: const ValueKey('settings-wide-language'),
+                        ),
+                        (
+                          value: SettingsSection.accessibility.name,
+                          label: translations.settings.accessibility.title,
+                          key: const ValueKey('settings-wide-accessibility'),
+                        ),
+                        (
+                          value: SettingsSection.account.name,
+                          label: translations.settings.account,
+                          key: const ValueKey('settings-wide-account'),
+                        ),
+                        (
+                          value: SettingsSection.subscription.name,
+                          label: translations.settings.subscription,
+                          key: const ValueKey('settings-wide-subscription'),
+                        ),
+                        (
+                          value: SettingsSection.privacyAbout.name,
+                          label: translations.settings.privacyAbout,
+                          key: const ValueKey('settings-wide-privacy-about'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        content: FocusTraversalGroup(
+          policy: ReadingOrderTraversalPolicy(),
+          child: FocusScope(
+            key: const ValueKey('settings-wide-content'),
+            debugLabel: 'settings-section-content',
+            child: switch (section) {
+              SettingsSection.appearance => const _AppearanceSettingsContent(),
+              SettingsSection.language => const _LanguageSettingsContent(),
+              SettingsSection.accessibility => const _AccessibilitySettingsContent(),
+              SettingsSection.account => _AccountSettingsContent(
+                onOpenProfile: onOpenProfile,
+                onOpenLogin: onOpenLogin,
+              ),
+              SettingsSection.subscription => _SubscriptionSettingsContent(
+                onOpenPricing: onOpenPricing,
+              ),
+              SettingsSection.privacyAbout => _PrivacyAboutSettingsContent(
+                onOpenPasscodeSetup: onOpenPasscodeSetup,
+                onOpenTerms: onOpenTerms,
+                onOpenPrivacy: onOpenPrivacy,
+                onOpenLicense: onOpenLicense,
+                loadBuildLabel: loadBuildLabel,
+              ),
+            },
+          ),
+        ),
+      );
+    }
     return _SettingsDirectionalFocusBridge(
       navigation: FocusTraversalGroup(
         policy: WidgetOrderTraversalPolicy(),
@@ -353,10 +500,16 @@ class _SettingsDirectionalFocusBridge extends StatefulWidget {
   const _SettingsDirectionalFocusBridge({
     required this.navigation,
     required this.content,
+    this.vertical = false,
   });
 
   final Widget navigation;
   final Widget content;
+
+  /// Stacks the navigation region above the content (horizontal-tab layout)
+  /// instead of the side-by-side section-column arrangement; the directional
+  /// focus hand-off follows the same axis.
+  final bool vertical;
 
   @override
   State<_SettingsDirectionalFocusBridge> createState() => _SettingsDirectionalFocusBridgeState();
@@ -387,20 +540,36 @@ class _SettingsDirectionalFocusBridgeState extends State<_SettingsDirectionalFoc
           onInvoke: _handleDirectionalFocus,
         ),
       },
-      child: Row(
-        children: [
-          FocusScope.withExternalFocusNode(
-            focusScopeNode: _navigationScope,
-            child: widget.navigation,
-          ),
-          Expanded(
-            child: FocusScope.withExternalFocusNode(
-              focusScopeNode: _contentScope,
-              child: widget.content,
+      child: widget.vertical
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FocusScope.withExternalFocusNode(
+                  focusScopeNode: _navigationScope,
+                  child: widget.navigation,
+                ),
+                Expanded(
+                  child: FocusScope.withExternalFocusNode(
+                    focusScopeNode: _contentScope,
+                    child: widget.content,
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                FocusScope.withExternalFocusNode(
+                  focusScopeNode: _navigationScope,
+                  child: widget.navigation,
+                ),
+                Expanded(
+                  child: FocusScope.withExternalFocusNode(
+                    focusScopeNode: _contentScope,
+                    child: widget.content,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -411,10 +580,14 @@ class _SettingsDirectionalFocusBridgeState extends State<_SettingsDirectionalFoc
     }
 
     final direction = Directionality.of(context);
-    final towardContent = direction == TextDirection.ltr
+    final towardContent = widget.vertical
+        ? TraversalDirection.down
+        : direction == TextDirection.ltr
         ? TraversalDirection.right
         : TraversalDirection.left;
-    final towardNavigation = direction == TextDirection.ltr
+    final towardNavigation = widget.vertical
+        ? TraversalDirection.up
+        : direction == TextDirection.ltr
         ? TraversalDirection.left
         : TraversalDirection.right;
 
@@ -478,7 +651,10 @@ class _SettingsDirectionalFocusBridgeState extends State<_SettingsDirectionalFoc
   }
 }
 
-class _AccountSettingsContent extends StatelessWidget {
+/// The account section works signed in or anonymous: the profile row always
+/// navigates, and the sign-in state row offers sign in when anonymous (never
+/// forcing it) or a quiet destructive sign out when authenticated.
+class _AccountSettingsContent extends ConsumerWidget {
   const _AccountSettingsContent({
     required this.onOpenProfile,
     required this.onOpenLogin,
@@ -488,37 +664,41 @@ class _AccountSettingsContent extends StatelessWidget {
   final VoidCallback onOpenLogin;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final translations = context.t;
-    return ReadingContentScrollFrame(
+    final session = ref.watch(sessionControllerProvider);
+    return _SettingsContentFrame(
       title: translations.settings.account,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(translations.settings.accountBody),
-          SizedBox(height: context.spacing.lg),
-          SpacedColumn(
-            children: [
-              FTile(
-                key: const ValueKey('settings-open-profile'),
-                style: _outlineTileStyle(),
-                prefix: const Icon(FLucideIcons.userRoundPen),
-                title: Text(translations.settings.openProfile),
-                suffix: const _DirectionalChevron(),
-                onPress: onOpenProfile,
-              ),
-              FTile(
-                key: const ValueKey('settings-open-login'),
-                style: _outlineTileStyle(),
-                prefix: const Icon(FLucideIcons.logIn),
-                title: Text(translations.settings.openLogin),
-                suffix: const _DirectionalChevron(),
+      sections: [
+        SettingsSectionCard(
+          description: translations.settings.accountBody,
+          children: [
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-profile'),
+              label: translations.settings.openProfile,
+              leading: FLucideIcons.userRoundPen,
+              onPress: onOpenProfile,
+            ),
+            switch (session) {
+              AuthAnonymous() => SettingsNavRow(
+                rowKey: const ValueKey('settings-open-login'),
+                label: translations.auth.login.submit,
+                description: translations.session.signedOut,
+                leading: FLucideIcons.logIn,
                 onPress: onOpenLogin,
               ),
-            ],
-          ),
-        ],
-      ),
+              AuthAuthenticated(:final userId) => SettingsNavRow(
+                rowKey: const ValueKey('settings-sign-out'),
+                label: translations.settings.signOut,
+                description: translations.session.signedInPreview(userId: userId),
+                leading: FLucideIcons.logOut,
+                destructive: true,
+                onPress: () => unawaited(ref.read(sessionControllerProvider.notifier).logout()),
+              ),
+            },
+          ],
+        ),
+      ],
     );
   }
 }
@@ -531,23 +711,21 @@ class _SubscriptionSettingsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: translations.settings.subscription,
-      child: LabeledSectionCard(
-        title: translations.settings.openPricing,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      sections: [
+        SettingsSectionCard(
+          description: translations.settings.subscriptionBody,
           children: [
-            Text(translations.settings.subscriptionBody),
-            SizedBox(height: context.spacing.lg),
-            FButton(
-              key: const ValueKey('settings-view-pricing'),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-view-pricing'),
+              label: translations.settings.openPricing,
+              leading: FLucideIcons.creditCard,
               onPress: onOpenPricing,
-              child: Text(translations.settings.openPricing),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }
@@ -577,95 +755,57 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: translations.settings.privacyAbout,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(translations.settings.privacyBody),
-          SizedBox(height: context.spacing.lg),
-          SpacedColumn(
-            children: [
-              FTile(
-                style: _outlineTileStyle(),
-                title: Text(translations.settings.aboutBuild),
-                details: FutureBuilder<String>(
-                  future: _buildLabel,
-                  builder: (context, snapshot) {
-                    return Text(
-                      snapshot.data ??
-                          (snapshot.hasError
-                              ? translations.common.notConnected
-                              : translations.common.loading),
-                    );
-                  },
-                ),
+      sections: [
+        SettingsSectionCard(
+          description: translations.settings.privacyBody,
+          children: [
+            const BiometricUnlockTile(),
+            PasscodeTile(onOpenSetup: widget.onOpenPasscodeSetup),
+            const LockOnBackgroundTile(),
+            const AutoLockDelayTile(),
+            const AnalyticsOptInTile(),
+          ],
+        ),
+        SettingsSectionCard(
+          title: translations.settings.aboutTitle,
+          children: [
+            FutureBuilder<String>(
+              future: _buildLabel,
+              builder: (context, snapshot) => SettingsValueRow(
+                label: translations.settings.aboutBuild,
+                value:
+                    snapshot.data ??
+                    (snapshot.hasError
+                        ? translations.common.notConnected
+                        : translations.common.loading),
               ),
-              const BiometricUnlockTile(),
-              PasscodeTile(onOpenSetup: widget.onOpenPasscodeSetup),
-              const LockOnBackgroundTile(),
-              const AutoLockDelayTile(),
-              const AnalyticsOptInTile(),
-              FTile(
-                key: const ValueKey('settings-open-terms'),
-                style: _outlineTileStyle(),
-                title: Text(translations.settings.terms),
-                suffix: const _DirectionalChevron(),
-                onPress: widget.onOpenTerms,
-              ),
-              FTile(
-                key: const ValueKey('settings-open-privacy'),
-                style: _outlineTileStyle(),
-                title: Text(translations.settings.privacy),
-                suffix: const _DirectionalChevron(),
-                onPress: widget.onOpenPrivacy,
-              ),
-              FTile(
-                key: const ValueKey('settings-open-license'),
-                style: _outlineTileStyle(),
-                title: Text(translations.settings.about.license),
-                suffix: const _DirectionalChevron(),
-                onPress: widget.onOpenLicense,
-              ),
-              const FeedbackShakeTile(),
-              FTile(
-                key: const ValueKey('settings-send-feedback'),
-                style: _outlineTileStyle(),
-                title: Text(translations.feedback.title),
-                suffix: const _DirectionalChevron(),
-                onPress: () => unawaited(showFeedbackSheet(context: context)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Brand outline treatment for tiles sitting in the page (BRAND.md s8, s13):
-/// a transparent fill under the theme's 1px border. Hover stays a color
-/// change only — the theme's muted hover fill is kept.
-FItemStyleDelta _outlineTileStyle() {
-  return FItemStyleDelta.delta(
-    backgroundColor: FVariantsValueDelta.delta([
-      FVariantValueDeltaOperation.base(null),
-    ]),
-    contentDecoration: FVariantsDelta.delta([
-      FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
-    ]),
-  );
-}
-
-class _DirectionalChevron extends StatelessWidget {
-  const _DirectionalChevron();
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Directionality.of(context) == TextDirection.rtl
-          ? FLucideIcons.chevronLeft
-          : FLucideIcons.chevronRight,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-terms'),
+              label: translations.settings.terms,
+              onPress: widget.onOpenTerms,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-privacy'),
+              label: translations.settings.privacy,
+              onPress: widget.onOpenPrivacy,
+            ),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-open-license'),
+              label: translations.settings.about.license,
+              onPress: widget.onOpenLicense,
+            ),
+            const FeedbackShakeTile(),
+            SettingsNavRow(
+              rowKey: const ValueKey('settings-send-feedback'),
+              label: translations.feedback.title,
+              onPress: () => unawaited(showFeedbackSheet(context: context)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -682,7 +822,6 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final spacing = context.spacing;
     final settings = ref.watch(
       settingsControllerProvider.select(
         (state) => (
@@ -695,108 +834,67 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
     );
     final controller = ref.read(settingsControllerProvider.notifier);
 
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: translations.settings.appearance,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          LabeledSectionCard(
-            title: translations.settings.themeMode,
-            child: Wrap(
-              spacing: spacing.sm,
-              runSpacing: spacing.sm,
-              children: [
+      sections: [
+        SettingsSectionCard(
+          children: [
+            _SegmentedSettingRow<AppThemeMode>(
+              label: translations.settings.themeMode,
+              value: settings.themeMode,
+              options: [
                 for (final mode in AppThemeMode.values)
-                  _SettingsOptionButton(
-                    buttonKey: ValueKey('theme-${mode.name}'),
+                  (
+                    value: mode,
                     label: _themeModeLabel(translations, mode),
-                    selected: settings.themeMode == mode,
-                    onPress: () => runSave(() => controller.setThemeMode(mode)),
+                    key: ValueKey('theme-${mode.name}'),
                   ),
               ],
+              onChanged: (mode) => runSave(() => controller.setThemeMode(mode)),
             ),
-          ),
-          SizedBox(height: spacing.lg),
-          LabeledSectionCard(
-            title: translations.settings.fontScale,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('${(settings.fontScale * 100).round()}%'),
-                SizedBox(height: spacing.md),
-                FSlider(
-                  key: const ValueKey('font-scale-slider'),
-                  control: .liftedContinuous(
-                    value: FSliderValue(max: _fontScaleToSlider(settings.fontScale)),
-                    stepPercentage:
-                        SettingsState.fontScaleStep /
-                        (SettingsState.maximumFontScale - SettingsState.minimumFontScale),
-                    onChange: (value) {
-                      unawaited(
-                        runSave(() => controller.setFontScale(_sliderToFontScale(value.max))),
-                      );
-                    },
-                  ),
-                  semanticValueFormatterCallback: (value) {
-                    return '${(_sliderToFontScale(value) * 100).round()}%';
-                  },
-                  tooltipBuilder: (_, value) => Text(
-                    '${(_sliderToFontScale(value) * 100).round()}%',
-                  ),
-                ),
-              ],
+            _FontScaleSettingRow(
+              fontScale: settings.fontScale,
+              onChanged: (scale) => runSave(() => controller.setFontScale(scale)),
             ),
-          ),
-          SizedBox(height: spacing.lg),
-          LabeledSectionCard(
-            title: translations.settings.spacing,
-            child: Wrap(
-              spacing: spacing.sm,
-              runSpacing: spacing.sm,
-              children: [
+            _SegmentedSettingRow<AppSpacingVariant>(
+              label: translations.settings.spacing,
+              value: settings.spacingVariant,
+              options: [
                 for (final variant in AppSpacingVariant.values)
-                  _SettingsOptionButton(
-                    buttonKey: ValueKey('spacing-${variant.name}'),
+                  (
+                    value: variant,
                     label: _spacingVariantLabel(translations, variant),
-                    selected: settings.spacingVariant == variant,
-                    onPress: () => runSave(() => controller.setSpacingVariant(variant)),
+                    key: ValueKey('spacing-${variant.name}'),
                   ),
               ],
+              onChanged: (variant) => runSave(() => controller.setSpacingVariant(variant)),
             ),
-          ),
-          SizedBox(height: spacing.lg),
-          LabeledSectionCard(
-            title: translations.settings.cornerRadius,
-            child: Wrap(
-              spacing: spacing.sm,
-              runSpacing: spacing.sm,
-              children: [
+            _SegmentedSettingRow<AppRadiusVariant>(
+              label: translations.settings.cornerRadius,
+              value: settings.radiusVariant,
+              options: [
                 for (final variant in AppRadiusVariant.values)
-                  _SettingsOptionButton(
-                    buttonKey: ValueKey('radius-${variant.name}'),
+                  (
+                    value: variant,
                     label: _radiusVariantLabel(translations, variant),
-                    selected: settings.radiusVariant == variant,
-                    onPress: () => runSave(() => controller.setRadiusVariant(variant)),
+                    key: ValueKey('radius-${variant.name}'),
                   ),
               ],
+              onChanged: (variant) => runSave(() => controller.setRadiusVariant(variant)),
             ),
-          ),
-          SizedBox(height: spacing.lg),
-          LabeledSectionCard(
-            title: translations.settings.motionPreview,
-            child: const _AppearanceMotionPreview(),
-          ),
-          SizedBox(height: spacing.lg),
-          const HapticsTile(),
-          if (saveFailed) ...[
-            SizedBox(height: spacing.md),
-            InlineSaveErrorText(
-              message: translations.common.notConnected,
-              valueKey: 'settings-save-error',
-            ),
+            const HapticsTile(),
+            if (saveFailed)
+              InlineSaveErrorText(
+                message: translations.settings.saveFailure,
+                valueKey: 'settings-save-error',
+              ),
           ],
-        ],
-      ),
+        ),
+        SettingsSectionCard(
+          title: translations.settings.motionPreview,
+          children: const [_AppearanceMotionPreview()],
+        ),
+      ],
     );
   }
 }
@@ -817,118 +915,42 @@ class _LanguageSettingsContentState extends ConsumerState<_LanguageSettingsConte
       settingsControllerProvider.select((state) => state.localeOverride),
     );
     final controller = ref.read(settingsControllerProvider.notifier);
-    final options = <(String, AppLocale?, String)>[
-      ('locale-system', null, translations.settings.languageSystem),
-      ('locale-en', AppLocale.en, translations.settings.languageEnglish),
-      ('locale-ar', AppLocale.ar, translations.settings.languageArabic),
-      ('locale-zh-Hans', AppLocale.zhHans, translations.settings.languageChinese),
+    final options = <(Key, AppLocale?, String)>[
+      (
+        const ValueKey('locale-system'),
+        null,
+        translations.settings.languageSystem,
+      ),
+      (const ValueKey('locale-en'), AppLocale.en, translations.settings.languageEnglish),
+      (const ValueKey('locale-ar'), AppLocale.ar, translations.settings.languageArabic),
+      (
+        const ValueKey('locale-zh-Hans'),
+        AppLocale.zhHans,
+        translations.settings.languageChinese,
+      ),
     ];
 
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: translations.settings.language,
-      child: SpacedColumn(
-        children: [
-          for (final (key, locale, label) in options)
-            _LocaleTile(
-              key: ValueKey(key),
-              selected: localeOverride == locale,
-              label: label,
-              onPress: () => runSave(() => controller.setLocale(locale)),
-            ),
-          if (saveFailed)
-            Padding(
-              padding: EdgeInsets.all(context.spacing.md),
-              child: InlineSaveErrorText(
-                message: translations.common.notConnected,
+      sections: [
+        SettingsSectionCard(
+          title: translations.settings.locale,
+          children: [
+            for (final (key, locale, label) in options)
+              SettingsOptionRow(
+                rowKey: key,
+                label: label,
+                selected: localeOverride == locale,
+                onPress: () => runSave(() => controller.setLocale(locale)),
+              ),
+            if (saveFailed)
+              InlineSaveErrorText(
+                message: translations.settings.saveFailure,
                 valueKey: 'locale-save-error',
               ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocaleTile extends StatelessWidget {
-  const _LocaleTile({
-    required this.selected,
-    required this.label,
-    required this.onPress,
-    super.key,
-  });
-
-  final bool selected;
-  final String label;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return FTile(
-      style: _outlineTileStyle(),
-      title: Text(label),
-      selected: selected,
-      suffix: Icon(selected ? FLucideIcons.circleCheck : FLucideIcons.circle),
-      onPress: onPress,
-    );
-  }
-}
-
-/// One option in a picker row. Feedback is color only: the picked option sits
-/// on a soft primary fill with a primary border, never a second solid button.
-class _SettingsOptionButton extends StatelessWidget {
-  const _SettingsOptionButton({
-    required this.label,
-    required this.selected,
-    required this.onPress,
-    this.buttonKey,
-  });
-
-  final Key? buttonKey;
-  final String label;
-  final bool selected;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fillAlpha = switch (colors.brightness) {
-      Brightness.dark => 0.2,
-      Brightness.light => 0.1,
-    };
-    return FButton(
-      key: buttonKey,
-      variant: .outline,
-      mainAxisSize: .min,
-      style: selected
-          ? FButtonStyleDelta.delta(
-              decoration: FVariantsDelta.delta([
-                FVariantOperation.base(
-                  DecorationDelta.boxDelta(
-                    color: colors.primary.withValues(alpha: fillAlpha),
-                    border: Border.all(color: colors.primary.withValues(alpha: 0.6)),
-                  ),
-                ),
-              ]),
-            )
-          // Brand outline control (BRAND.md s9): line-only at rest — the
-          // theme's card fill is cleared and the border stays; the muted
-          // hover/selected fill from the outline variant is kept.
-          : FButtonStyleDelta.delta(
-              decoration: FVariantsDelta.delta([
-                FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
-              ]),
-            ),
-      onPress: onPress,
-      child: selected
-          ? Builder(
-              builder: (buttonContext) => Text(
-                label,
-                style: DefaultTextStyle.of(
-                  buttonContext,
-                ).style.copyWith(color: colors.primary),
-              ),
-            )
-          : Text(label),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -938,9 +960,99 @@ class _AccessibilitySettingsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ReadingContentScrollFrame(
+    return _SettingsContentFrame(
       title: context.t.settings.accessibility.title,
-      child: const AccessibilityPresetSelector(),
+      sections: const [AccessibilityPresetSelector()],
+    );
+  }
+}
+
+/// One setting picked from a few options: the brand segmented control
+/// (BRAND.md s8) — a thin outline, the picked option on the soft primary
+/// fill — under a 14 w500 label.
+class _SegmentedSettingRow<T> extends StatelessWidget {
+  const _SegmentedSettingRow({
+    required this.label,
+    required this.options,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<AppSegmentOption<T>> options;
+  final T value;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 12),
+          AppSegmented<T>(options: options, value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+}
+
+class _FontScaleSettingRow extends StatelessWidget {
+  const _FontScaleSettingRow({required this.fontScale, required this.onChanged});
+
+  final double fontScale;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    return Padding(
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  translations.settings.fontScale,
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text(
+                '${(fontScale * 100).round()}%',
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FSlider(
+            key: const ValueKey('font-scale-slider'),
+            control: .liftedContinuous(
+              value: FSliderValue(max: _fontScaleToSlider(fontScale)),
+              stepPercentage:
+                  SettingsState.fontScaleStep /
+                  (SettingsState.maximumFontScale - SettingsState.minimumFontScale),
+              onChange: (value) => onChanged(_sliderToFontScale(value.max)),
+            ),
+            semanticValueFormatterCallback: (value) {
+              return '${(_sliderToFontScale(value) * 100).round()}%';
+            },
+            tooltipBuilder: (_, value) => Text('${(_sliderToFontScale(value) * 100).round()}%'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -966,30 +1078,31 @@ class _AppearanceMotionPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Icon(
-      FLucideIcons.sparkles,
-      color: context.theme.colors.primary,
-      size: 40,
-    );
+    // 24px is the largest an icon gets, and it takes the surrounding text
+    // color — the primary is never decoration (BRAND.md s4, s6).
+    final child = Icon(FLucideIcons.sparkles, size: 24, color: context.theme.colors.foreground);
     if (MediaQuery.disableAnimationsOf(context)) {
-      return Center(child: child);
+      return Padding(
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 20),
+        child: Center(child: child),
+      );
     }
 
-    return PlayAnimationBuilder<Movie>(
-      tween: _motionTween,
-      duration: _motionTween.duration,
-      child: child,
-      builder: (context, movie, child) {
-        return Center(
-          child: Transform.rotate(
-            angle: _motionTurn.from(movie),
-            child: Transform.scale(
-              scale: _motionScale.from(movie),
-              child: child,
+    return Padding(
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 20),
+      child: PlayAnimationBuilder<Movie>(
+        tween: _motionTween,
+        duration: _motionTween.duration,
+        child: child,
+        builder: (context, movie, child) {
+          return Center(
+            child: Transform.rotate(
+              angle: _motionTurn.from(movie),
+              child: Transform.scale(scale: _motionScale.from(movie), child: child),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

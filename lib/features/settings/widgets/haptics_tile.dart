@@ -16,8 +16,8 @@ class HapticsTile extends ConsumerWidget {
       valueSelector: (enabled) => enabled,
       onSave: (value) => controller.setHapticsEnabled(enabled: value),
       keyName: 'haptics',
-      label: Text(translations.settings.haptics.title),
-      description: Text(translations.settings.haptics.enable),
+      label: translations.settings.haptics.title,
+      description: translations.settings.haptics.enable,
     );
   }
 }

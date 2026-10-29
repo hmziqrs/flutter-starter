@@ -1,11 +1,19 @@
-import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_controller.dart';
+import 'package:starter/features/settings/widgets/inline_save_error_text.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
-import 'package:starter/features/settings/widgets/settings_toggle_card.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/widgets/blocks/segmented.dart';
 
+/// The auto-lock delay as what it is — a choice of four delays, picked with
+/// the brand segmented control (BRAND.md s8), not a switch that cycles
+/// through values its checked state doesn't describe.
+///
+/// With no passcode set there is nothing to lock with, so the row is quiet
+/// and inert with a muted hint saying how to get there (BRAND.md s9, s11) —
+/// never a control that silently swallows taps.
 class AutoLockDelayTile extends ConsumerStatefulWidget {
   const AutoLockDelayTile({super.key});
 
@@ -20,24 +28,75 @@ class _AutoLockDelayTileState extends ConsumerState<AutoLockDelayTile>
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final theme = context.theme;
     final state = ref.watch(
       settingsControllerProvider.select(
         (s) => (autoLockDelaySeconds: s.autoLockDelaySeconds, passcodeEnabled: s.passcodeEnabled),
       ),
     );
     final controller = ref.read(settingsControllerProvider.notifier);
-    return SettingsToggleCard(
-      keyName: 'auto-lock-delay',
-      label: Text(translations.settings.autoLockDelay),
-      status: _labelFor(translations, state.autoLockDelaySeconds),
-      value: state.autoLockDelaySeconds > 0,
-      onChange: (_) {
-        if (!state.passcodeEnabled) return;
-        final currentIndex = _options.indexOf(state.autoLockDelaySeconds);
-        final nextIndex = (currentIndex + 1) % _options.length;
-        unawaited(runSave(() => controller.setAutoLockDelaySeconds(_options[nextIndex])));
-      },
-      saveFailed: saveFailed,
+
+    if (!state.passcodeEnabled) {
+      return Padding(
+        key: const ValueKey('settings-auto-lock-inert'),
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              translations.settings.autoLockDelay,
+              style: theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w500,
+                color: theme.colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              translations.settings.requiresPasscode,
+              style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                translations.settings.autoLockDelay,
+                style: theme.typography.body.sm.copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              AppSegmented<int>(
+                options: [
+                  for (final seconds in _options)
+                    (
+                      value: seconds,
+                      label: _labelFor(translations, seconds),
+                      key: ValueKey('auto-lock-$seconds'),
+                    ),
+                ],
+                value: state.autoLockDelaySeconds,
+                onChanged: (seconds) => runSave(() => controller.setAutoLockDelaySeconds(seconds)),
+              ),
+            ],
+          ),
+        ),
+        if (saveFailed)
+          InlineSaveErrorText(
+            message: translations.settings.saveFailure,
+            valueKey: 'auto-lock-save-error',
+          ),
+      ],
     );
   }
 

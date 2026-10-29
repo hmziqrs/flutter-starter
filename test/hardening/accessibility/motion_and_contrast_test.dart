@@ -16,11 +16,16 @@ void main() {
       environment: accessibilityEnvironment(animationsEnabled: false),
     );
 
-    expect(find.text('Step 1 of 3'), findsOneWidget);
+    expect(find.byKey(const ValueKey('onboarding-progress')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('onboarding-continue')));
     await tester.pump();
 
-    expect(find.text('Step 2 of 3'), findsOneWidget);
+    // Progress is announced through the live region's semantics label; the
+    // words are not rendered as visible page text.
+    final progress = tester.firstWidget<Semantics>(
+      find.byKey(const ValueKey('onboarding-progress')),
+    );
+    expect(progress.properties.label, contains('Step 2 of 3'));
     await tester.pump(const Duration(milliseconds: 150));
   });
 

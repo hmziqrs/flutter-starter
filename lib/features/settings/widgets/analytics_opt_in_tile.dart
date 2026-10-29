@@ -17,9 +17,9 @@ class AnalyticsOptInTile extends ConsumerWidget {
       valueSelector: (optedIn) => optedIn,
       onSave: (value) => controller.setOptIn(value: value),
       keyName: 'analytics',
-      label: Text(translations.settings.analytics.optInTitle),
-      description: Text(translations.settings.analytics.optInBody),
-      status: optedIn
+      label: translations.settings.analytics.optInTitle,
+      description: translations.settings.analytics.optInBody,
+      statusText: optedIn
           ? translations.settings.analytics.statusOn
           : translations.settings.analytics.statusOff,
     );
