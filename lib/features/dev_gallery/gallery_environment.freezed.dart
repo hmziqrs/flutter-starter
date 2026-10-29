@@ -14,22 +14,22 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GalleryViewportPreset {
 
- String get id; Size get size; GalleryLabelBuilder get labelBuilder; double get devicePixelRatio;
+ String get id; Size get size; GalleryLabelBuilder get labelBuilder; double get devicePixelRatio; AppInteractionPolicy get interactionPolicy;
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GalleryViewportPreset&&(identical(other.id, id) || other.id == id)&&(identical(other.size, size) || other.size == size)&&(identical(other.labelBuilder, labelBuilder) || other.labelBuilder == labelBuilder)&&(identical(other.devicePixelRatio, devicePixelRatio) || other.devicePixelRatio == devicePixelRatio));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GalleryViewportPreset&&(identical(other.id, id) || other.id == id)&&(identical(other.size, size) || other.size == size)&&(identical(other.labelBuilder, labelBuilder) || other.labelBuilder == labelBuilder)&&(identical(other.devicePixelRatio, devicePixelRatio) || other.devicePixelRatio == devicePixelRatio)&&(identical(other.interactionPolicy, interactionPolicy) || other.interactionPolicy == interactionPolicy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,size,labelBuilder,devicePixelRatio);
+int get hashCode => Object.hash(runtimeType,id,size,labelBuilder,devicePixelRatio,interactionPolicy);
 
 @override
 String toString() {
-  return 'GalleryViewportPreset(id: $id, size: $size, labelBuilder: $labelBuilder, devicePixelRatio: $devicePixelRatio)';
+  return 'GalleryViewportPreset(id: $id, size: $size, labelBuilder: $labelBuilder, devicePixelRatio: $devicePixelRatio, interactionPolicy: $interactionPolicy)';
 }
 
 

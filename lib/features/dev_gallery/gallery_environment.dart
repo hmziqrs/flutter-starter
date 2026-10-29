@@ -20,6 +20,7 @@ class GalleryViewportPreset with _$GalleryViewportPreset {
     required this.size,
     required this.labelBuilder,
     this.devicePixelRatio = 1,
+    this.interactionPolicy = AppInteractionPolicy.precisionPointer,
   });
 
   @override
@@ -31,6 +32,12 @@ class GalleryViewportPreset with _$GalleryViewportPreset {
   @override
   final double devicePixelRatio;
 
+  /// The input model of the surface this viewport stands for: phones preview
+  /// with touch floors, desktop-class surfaces with pointer metrics, TVs with
+  /// the remote — so previewed controls carry the metrics of the real thing.
+  @override
+  final AppInteractionPolicy interactionPolicy;
+
   String label(Translations translations) => labelBuilder(translations);
 }
 
@@ -40,16 +47,19 @@ abstract final class GalleryViewportPresets {
       id: 'compact-phone',
       size: const Size(390, 844),
       labelBuilder: (translations) => translations.devGallery.viewportCompactPhone,
+      interactionPolicy: AppInteractionPolicy.touch,
     ),
     GalleryViewportPreset(
       id: 'short-phone',
       size: const Size(844, 390),
       labelBuilder: (translations) => translations.devGallery.viewportShortPhone,
+      interactionPolicy: AppInteractionPolicy.touch,
     ),
     GalleryViewportPreset(
       id: 'below-medium',
       size: const Size(639, 900),
       labelBuilder: (translations) => translations.devGallery.viewportBelowMedium,
+      interactionPolicy: AppInteractionPolicy.touch,
     ),
     GalleryViewportPreset(
       id: 'at-medium',
@@ -85,17 +95,20 @@ abstract final class GalleryViewportPresets {
       id: 'tv-720p',
       size: const Size(1280, 720),
       labelBuilder: (translations) => translations.devGallery.viewportTv720p,
+      interactionPolicy: AppInteractionPolicy.remote,
     ),
     GalleryViewportPreset(
       id: 'tv-1080p',
       size: const Size(1920, 1080),
       labelBuilder: (translations) => translations.devGallery.viewportTv1080p,
+      interactionPolicy: AppInteractionPolicy.remote,
     ),
     GalleryViewportPreset(
       id: 'tv-4k-equivalent',
       size: const Size(1920, 1080),
       devicePixelRatio: 2,
       labelBuilder: (translations) => translations.devGallery.viewportTv4k,
+      interactionPolicy: AppInteractionPolicy.remote,
     ),
   ];
 
@@ -131,7 +144,7 @@ class GalleryEnvironment with _$GalleryEnvironment {
       locale = AppLocale.en,
       appFontScale = 1,
       systemTextScale = GallerySystemTextScale.normal,
-      interactionPolicy = AppInteractionPolicy.touch,
+      interactionPolicy = GalleryViewportPresets.values.first.interactionPolicy,
       viewingEnvironment = AppViewingEnvironment.nearField,
       tvPlatform = AppTvPlatform.none,
       animationsEnabled = true,
