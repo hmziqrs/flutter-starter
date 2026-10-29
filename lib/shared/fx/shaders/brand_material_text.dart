@@ -22,10 +22,10 @@ class BrandMaterialText extends StatefulWidget {
     this.materialId = 'copper-sweep',
     this.recipe,
     this.fontFamily = 'Onest',
-    this.fontWeight = FontWeight.w600,
+    this.fontWeight = FontWeight.w800,
     this.fontSize = 48,
-    this.letterSpacing = -0.02,
-    this.lineHeight = 1,
+    this.letterSpacing = -0.05,
+    this.lineHeight = 0.96,
     this.textAlign = TextAlign.left,
     this.zoom = 1,
     this.offsetX = 50,
@@ -54,7 +54,7 @@ class BrandMaterialText extends StatefulWidget {
   final FontWeight fontWeight;
   final double fontSize;
 
-  /// Tracking in em (negative tightens, per the wordmark rule).
+  /// Tracking in em (the kit's wordmark default tightens to -0.05).
   final double letterSpacing;
 
   /// Line height multiplier.

@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
-import 'package:starter/shared/widgets/containers/app_card.dart';
 
 class LoadingStateView extends StatelessWidget {
   const LoadingStateView({
@@ -28,7 +27,10 @@ class LoadingStateView extends StatelessWidget {
       content = Text(
         title,
         key: const ValueKey('loading-state-view-title'),
-        style: context.theme.cardStyle.titleTextStyle,
+        style: context.theme.typography.body.lg.copyWith(
+          color: context.theme.colors.foreground,
+          fontWeight: FontWeight.w500,
+        ),
         textAlign: TextAlign.center,
       );
     } else {
@@ -40,26 +42,39 @@ class LoadingStateView extends StatelessWidget {
           Text(
             title,
             key: const ValueKey('loading-state-view-title'),
-            style: context.theme.cardStyle.subtitleTextStyle,
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
       );
     }
 
-    return AppCard(
+    // APP-BLOCKS.md DataState: "No box" — the state centers in the content
+    // area like the brand's empty/error columns, scrolling when unbounded
+    // parents (another scroller) leave no height to center in.
+    return LayoutBuilder(
       key: const ValueKey('loading-state-view'),
-      child: Center(
-        child: SingleChildScrollView(
-          child: MergeSemantics(
-            child: Semantics(
-              label: resolvedSemantics,
-              container: true,
-              child: content,
+      builder: (context, constraints) {
+        // Bounded parents center in the full height; unbounded ones
+        // (another scroller) get no artificial minimum.
+        final minHeight = constraints.hasBoundedHeight ? constraints.maxHeight : 0.0;
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: Center(
+              child: MergeSemantics(
+                child: Semantics(
+                  label: resolvedSemantics,
+                  container: true,
+                  child: content,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

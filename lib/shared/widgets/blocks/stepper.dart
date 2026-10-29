@@ -7,12 +7,15 @@ import 'package:starter/shared/theme/brand_tokens.dart';
 typedef AppStepperStep = ({String label, String? description});
 
 /// The brand stepper (BRAND.md s8): 36dp rings with 1.75px borders joined by
-/// a 1px line, drawn vertically so labels sit beside their step.
+/// a 1px line, drawn vertically so labels sit beside their step (stepper,
+/// step and step-number svelte).
 ///
-/// A done step fills primary and the line below it turns primary. The
-/// current step is a hollow primary ring; upcoming steps are muted. Steps
-/// are numbered only when the order is real. Feedback is color only —
-/// nothing moves on hover, press or focus — and the focus ring is primary.
+/// A done step fills primary and its line turns primary; every step still to
+/// do — the current one included — sits hollow on the border color with a
+/// muted number (step-number.svelte has only the two states, and the
+/// in-progress storybook ref shows the pending ring grey). Steps are
+/// numbered only when the order is real. Feedback is color only — nothing
+/// moves on hover, press or focus — and the focus ring is primary.
 class AppStepper extends StatelessWidget {
   const AppStepper({
     required this.steps,
@@ -38,8 +41,7 @@ class AppStepper extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        for (var index = 0; index < steps.length; index++) ...<Widget>[
-          if (index > 0) const SizedBox(height: 4),
+        for (var index = 0; index < steps.length; index++)
           _StepperRow(
             step: steps[index],
             index: index,
@@ -47,7 +49,6 @@ class AppStepper extends StatelessWidget {
             isLast: index == steps.length - 1,
             onTap: onStepTap == null ? null : () => onStepTap!(index),
           ),
-        ],
       ],
     );
   }
@@ -104,19 +105,10 @@ class _StepperRowState extends State<_StepperRow> {
     final theme = context.theme;
     final brand = theme.brand;
     final done = widget.state == _StepState.done;
-    final ringColor = switch (widget.state) {
-      _StepState.done => brand.oxide,
-      _StepState.current => brand.oxide,
-      _StepState.upcoming => theme.colors.border,
-    };
-    final numberColor = switch (widget.state) {
-      _StepState.done => brand.onOrange,
-      _StepState.current => brand.oxide,
-      _StepState.upcoming => theme.colors.mutedForeground,
-    };
-    final labelColor = widget.state == _StepState.upcoming
-        ? theme.colors.mutedForeground
-        : theme.colors.foreground;
+    // The brand knows two states (step-number.svelte): done fills primary,
+    // everything still to do sits hollow on the border with a muted number.
+    final ringColor = done ? brand.oxide : theme.colors.border;
+    final numberColor = done ? brand.onOrange : theme.colors.mutedForeground;
     final interactive = widget.onTap != null;
 
     return FocusableActionDetector(
@@ -146,77 +138,108 @@ class _StepperRowState extends State<_StepperRow> {
         child: Container(
           decoration: ShapeDecoration(
             // Hover and focus are color changes only: a muted wash, or the
-            // primary focus ring at half strength. Nothing translates.
+            // primary focus ring at half strength (svelte: ring-3 at 50%).
+            // Nothing translates.
             color: _hovering && interactive ? theme.colors.muted : null,
             shape: RoundedSuperellipseBorder(
               side: _focused && interactive
-                  ? BorderSide(color: theme.colors.primary.withValues(alpha: 0.5), width: 2)
+                  ? BorderSide(color: theme.colors.primary.withValues(alpha: 0.5), width: 3)
                   : BorderSide.none,
               borderRadius: theme.style.borderRadius.sm,
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Column(
-                children: <Widget>[
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: ShapeDecoration(
-                      color: done ? brand.oxide : Colors.transparent,
-                      shape: CircleBorder(
-                        side: BorderSide(color: ringColor, width: 1.75),
-                      ),
-                    ),
-                    child: Text(
-                      '${widget.index + 1}',
-                      style: theme.typography.body.xs.copyWith(
-                        color: numberColor,
-                        fontWeight: FontWeight.w500,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                  if (!widget.isLast)
+          // Rows stack with no outer gap: the air between steps lives inside
+          // the row, so the connector line reaches down through it the way
+          // the svelte step's `pb-9` does.
+          padding: const EdgeInsetsDirectional.only(start: 8, end: 8),
+          // The connector line joins the rings across the whole step gap, the
+          // way the svelte step's line runs from under one ring to the next.
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
                     Container(
-                      width: 1,
-                      height: 20,
-                      color: done ? brand.oxide : theme.colors.border,
-                    ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(top: 7),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        widget.step.label,
-                        style: theme.typography.body.sm.copyWith(
-                          color: labelColor,
-                          fontWeight: FontWeight.w500,
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: ShapeDecoration(
+                        color: done ? brand.oxide : Colors.transparent,
+                        shape: CircleBorder(
+                          side: BorderSide(color: ringColor, width: 1.75),
                         ),
                       ),
-                      if (widget.step.description != null) ...<Widget>[
-                        const SizedBox(height: 2),
+                      child: Text(
+                        '${widget.index + 1}',
+                        style: theme.typography.body.sm.copyWith(
+                          color: numberColor,
+                          fontWeight: FontWeight.w500,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    if (!widget.isLast) ...<Widget>[
+                      // The line starts 6dp under the ring and stops 6dp
+                      // short of the next one (step.svelte: top-[2.6rem],
+                      // bottom-1.5).
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: Container(
+                          constraints: const BoxConstraints(minWidth: 1, minHeight: 20),
+                          width: 1,
+                          color: done ? brand.oxide : theme.colors.border,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Padding(
+                    // Content hangs 6dp from the ring's top (pt-1.5) and
+                    // carries the full 36dp step gap below it (pb-9,
+                    // last:pb-0) — the same air the line column ends with.
+                    padding: EdgeInsetsDirectional.only(
+                      top: 6,
+                      bottom: widget.isLast ? 0 : 36,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
                         Text(
-                          widget.step.description!,
-                          style: theme.typography.body.sm.copyWith(
-                            color: theme.colors.mutedForeground,
+                          widget.step.label,
+                          // Step titles read at the story's size
+                          // (stepper.stories: text-[1.0625rem]
+                          // font-medium); every title stays in the
+                          // foreground, done or not.
+                          style: theme.typography.body.md.copyWith(
+                            color: theme.colors.foreground,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (widget.step.description != null) ...<Widget>[
+                          const SizedBox(height: 12),
+                          Text(
+                            widget.step.description!,
+                            // The story's body: text-[0.9rem]
+                            // leading-relaxed, muted.
+                            style: theme.typography.body.sm.copyWith(
+                              color: theme.colors.mutedForeground,
+                              fontSize: 14.4,
+                              height: 1.625,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

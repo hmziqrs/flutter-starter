@@ -1,18 +1,19 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/fx/shaders/brand_material_recipe.dart';
 import 'package:starter/shared/fx/shaders/brand_material_surface.dart';
 
-/// A framed material plinth: the material quad floats inside the thin theme
-/// line with a page-colored mat between them, the way a print sits in a
-/// frame. Optional content rides on the material.
-///
-/// The mat is the page showing through — no fill of its own (BRAND.md s13),
-/// so the frame reads on any surface.
+/// A thin frame cut from a brand material (the kits' `material-frame`): the
+/// material runs as a band of [inset] px around an inner page-colored panel,
+/// and the content sits on the page color — the one plan, project or sample
+/// that leads a row. The band's inner corners tighten by the band width, the
+/// way the kit's `calc(var(--radius) + 4px - width)` does.
 class MaterialFrame extends StatelessWidget {
   const MaterialFrame({
     required this.recipe,
-    this.inset = 8,
+    this.inset = 6,
     this.extent = 120,
     this.child,
     this.padding,
@@ -21,47 +22,54 @@ class MaterialFrame extends StatelessWidget {
 
   final BrandMaterialRecipe recipe;
 
-  /// The mat's thickness between the line and the material.
+  /// The material band's thickness in px (the kit's `width`).
   final double inset;
 
-  /// The material's height inside the frame.
+  /// The frame's height; content taller than it stretches the frame.
   final double extent;
 
-  /// Content drawn over the material, inside [padding].
+  /// Content on the inner page-colored panel.
   final Widget? child;
 
-  /// Padding around [child].
+  /// Padding around [child] inside the panel.
   final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    return Container(
-      foregroundDecoration: ShapeDecoration(
-        color: Colors.transparent,
-        shape: RoundedSuperellipseBorder(
-          side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
-          borderRadius: theme.style.borderRadius.lg,
-        ),
-      ),
-      padding: EdgeInsets.all(inset),
-      child: ClipRRect(
-        borderRadius: theme.style.borderRadius.md.resolve(Directionality.of(context)),
-        child: SizedBox(
-          height: extent,
-          width: double.infinity,
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              BrandMaterialSurface(recipe: recipe),
-              if (child != null)
-                Positioned.fill(
-                  child: padding == null
-                      ? Center(child: child)
-                      : Padding(padding: padding!, child: child),
+    final outerRadius = theme.style.borderRadius.lg.resolve(Directionality.of(context));
+    final innerRadius = BorderRadius.circular(
+      math.max(0, outerRadius.bottomLeft.x - inset),
+    );
+    return ClipRRect(
+      borderRadius: outerRadius,
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            // The material quad; the inner panel covers all but the band.
+            Positioned.fill(child: BrandMaterialSurface(recipe: recipe)),
+            Padding(
+              padding: EdgeInsets.all(inset),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colors.background,
+                  borderRadius: innerRadius,
                 ),
-            ],
-          ),
+                child: SizedBox(
+                  height: extent,
+                  width: double.infinity,
+                  child: child == null
+                      ? null
+                      : Padding(
+                          padding: padding ?? const EdgeInsets.all(24),
+                          child: child,
+                        ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

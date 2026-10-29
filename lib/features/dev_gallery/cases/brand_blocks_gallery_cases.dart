@@ -14,6 +14,7 @@ import 'package:starter/shared/widgets/blocks/big_numbers.dart';
 import 'package:starter/shared/widgets/blocks/bullets.dart';
 import 'package:starter/shared/widgets/blocks/check_list.dart';
 import 'package:starter/shared/widgets/blocks/code_block.dart';
+import 'package:starter/shared/widgets/blocks/code_lines.dart';
 import 'package:starter/shared/widgets/blocks/command_bar.dart';
 import 'package:starter/shared/widgets/blocks/command_box.dart';
 import 'package:starter/shared/widgets/blocks/command_palette.dart';
@@ -21,6 +22,9 @@ import 'package:starter/shared/widgets/blocks/data_table.dart';
 import 'package:starter/shared/widgets/blocks/detail_list.dart';
 import 'package:starter/shared/widgets/blocks/detail_section.dart';
 import 'package:starter/shared/widgets/blocks/endpoint_card.dart';
+import 'package:starter/shared/widgets/blocks/eyebrow.dart';
+import 'package:starter/shared/widgets/blocks/inline_code.dart';
+import 'package:starter/shared/widgets/blocks/line_tabs.dart';
 import 'package:starter/shared/widgets/blocks/metric_trend.dart';
 import 'package:starter/shared/widgets/blocks/page_intro.dart';
 import 'package:starter/shared/widgets/blocks/person_card.dart';
@@ -116,6 +120,8 @@ enum BrandBlocksGalleryKind {
   releases,
   endpoints,
   toc,
+  lineTabs,
+  eyebrow,
 }
 
 /// Builds the "Blocks" gallery cases, one per block family.
@@ -153,6 +159,8 @@ String _blocksCaseLabel(BrandBlocksGalleryKind kind) => switch (kind) {
   BrandBlocksGalleryKind.releases => 'Release card',
   BrandBlocksGalleryKind.endpoints => 'Endpoint card',
   BrandBlocksGalleryKind.toc => 'Table of contents',
+  BrandBlocksGalleryKind.lineTabs => 'Line tabs',
+  BrandBlocksGalleryKind.eyebrow => 'Eyebrow',
 };
 
 String _blocksCaseDescription(BrandBlocksGalleryKind kind) => switch (kind) {
@@ -162,7 +170,7 @@ String _blocksCaseDescription(BrandBlocksGalleryKind kind) => switch (kind) {
   BrandBlocksGalleryKind.questions => 'Details rows: the ring fills when the answer is open.',
   BrandBlocksGalleryKind.code => 'Outline code in mono, and a command that copies itself.',
   BrandBlocksGalleryKind.commands =>
-    'A short fixed sequence in the box; the palette filters a command list.',
+    'A mono command pill with an icon copy; the palette groups a command list.',
   BrandBlocksGalleryKind.terminal => 'Always dark, on a light page too.',
   BrandBlocksGalleryKind.table => 'The column that matters sits on a soft primary wash.',
   BrandBlocksGalleryKind.summary => 'The short version at the top of a page or a legal section.',
@@ -177,7 +185,11 @@ String _blocksCaseDescription(BrandBlocksGalleryKind kind) => switch (kind) {
   BrandBlocksGalleryKind.releases => 'Version in mono, date and channel tag, changes as markers.',
   BrandBlocksGalleryKind.endpoints =>
     'Verb chip in its status color, path in mono; it documents, never calls.',
-  BrandBlocksGalleryKind.toc => 'The active section takes the primary start bar; nothing moves.',
+  BrandBlocksGalleryKind.toc => 'The current section takes the primary ring and text.',
+  BrandBlocksGalleryKind.lineTabs =>
+    'One row over a 1px line; the open tab takes the primary underline, counts included.',
+  BrandBlocksGalleryKind.eyebrow =>
+    'A small primary label over a title: a numbered ring, a rule, or ticks.',
 };
 
 class _BrandMarksPreview extends ConsumerWidget {
@@ -278,6 +290,8 @@ class _BrandBlocksPreview extends ConsumerWidget {
               BrandBlocksGalleryKind.releases => const _ReleasesStory(),
               BrandBlocksGalleryKind.endpoints => const _EndpointsStory(),
               BrandBlocksGalleryKind.toc => const _TocStory(),
+              BrandBlocksGalleryKind.lineTabs => const _LineTabsStory(),
+              BrandBlocksGalleryKind.eyebrow => const _EyebrowStory(),
             },
           ],
         ),
@@ -473,25 +487,40 @@ class _BentoStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Fixed-size tiles in a Wrap, so the grid reflows at any gallery width
-    // and no tile's content overflows its square.
+    // and no tile's content overflows its square. Word tiles read like the
+    // kit's bento (eyebrow, title, body at the tile's start corner); mark
+    // tiles center their mark the way the wordmark story wants it.
     return const Wrap(
       spacing: 12,
       runSpacing: 12,
       children: <Widget>[
         BentoTile(
-          size: 132,
-          child: AppMark(symbol: 'Hq', squareLabel: 'starter mark', size: 36),
+          size: 220,
+          eyebrow: 'freeoxide',
+          title: 'Free Rust tools',
+          body: 'Finished before they ship, and given away.',
         ),
-        BentoTile(size: 132, child: AppIconTile(icon: FLucideIcons.download)),
+        BentoTile(
+          size: 132,
+          child: Center(
+            child: AppMark(symbol: 'Hq', squareLabel: 'starter mark', size: 36),
+          ),
+        ),
+        BentoTile(
+          size: 132,
+          child: Center(child: AppIconTile(icon: FLucideIcons.download)),
+        ),
         BentoTile(
           size: 176,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              AppWordmark(name: 'starter'),
-              SizedBox(height: 8),
-              AppStatusTag(label: 'Shipped', role: AppStatusRole.success),
-            ],
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AppWordmark(name: 'starter'),
+                SizedBox(height: 8),
+                AppStatusTag(label: 'Shipped', role: AppStatusRole.success),
+              ],
+            ),
           ),
         ),
       ],
@@ -749,9 +778,9 @@ class _SegmentedStoryState extends State<_SegmentedStory> {
       children: <Widget>[
         AppSegmented<String>(
           options: const <AppSegmentOption<String>>[
-            (value: 'Monthly', label: 'Monthly'),
-            (value: 'Weekly', label: 'Weekly'),
-            (value: 'Daily', label: 'Daily'),
+            (value: 'Monthly', label: 'Monthly', key: null),
+            (value: 'Weekly', label: 'Weekly', key: null),
+            (value: 'Daily', label: 'Daily', key: null),
           ],
           value: _value,
           onChanged: (value) => setState(() => _value = value),
@@ -789,10 +818,26 @@ class _QuestionsStory extends StatelessWidget {
             ),
           ],
         ),
+        SizedBox(height: context.spacing.xl),
+        // Numbered FAQs (question.svelte's number): orange digits, no ring.
+        const AppQuestions(
+          questions: <AppQuestion>[
+            AppQuestion(question: 'What does it cost?', answer: 'Nothing.', number: 1),
+            AppQuestion(question: 'Where does it run?', answer: 'Anywhere.', number: 2),
+          ],
+        ),
+        SizedBox(height: context.spacing.xl),
+        // A topic names itself in a grey tag at the row's end.
+        const AppQuestions(
+          questions: <AppQuestion>[
+            AppQuestion(question: 'How do I add a provider?', answer: 'Restart.', topic: 'Setup'),
+          ],
+        ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
           'The answer appears without animation, like the details element '
-          'this block mirrors.',
+          'this block mirrors. Numbered questions trade the ring for orange '
+          'digits; a topic rides at the row end in a grey tag.',
         ),
       ],
     );
@@ -820,14 +865,62 @@ void main() {
           copyLabel: 'Copy the sample',
         ),
         SizedBox(height: context.spacing.lg),
+        // A bare command with no bar carries its copy button floating at
+        // the block's top right corner (code-block.svelte's copy && !bar).
+        const AppCodeBlock(source: 'flutter pub add forui', copyLabel: 'Copy the command'),
+        SizedBox(height: context.spacing.lg),
+        const AppCodeBlock(
+          copyLabel: 'Copy the shown file',
+          files: <AppCodeFile>[
+            AppCodeFile(label: 'Terminal', source: 'flutter pub add forui'),
+            AppCodeFile(label: 'pubspec.yaml', source: 'dependencies:\n  forui: ^0.25.0'),
+          ],
+        ),
+        SizedBox(height: context.spacing.lg),
         const AppCommandBar(
           command: 'flutter pub add forui --dev',
           copyLabel: 'Copy the command',
         ),
         SizedBox(height: context.spacing.lg),
+        // The editor variant (code-lines.svelte): a gutter number per row
+        // and the row under the pointer tinted primary at 8%.
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: ShapeDecoration(
+            color: Colors.transparent,
+            shape: RoundedSuperellipseBorder(
+              side: BorderSide(
+                color: context.theme.colors.border,
+                width: context.theme.style.borderWidth,
+              ),
+              borderRadius: context.theme.style.borderRadius.lg,
+            ),
+          ),
+          child: const AppCodeLines(source: source, lineNumbers: true),
+        ),
+        SizedBox(height: context.spacing.lg),
+        // Inline code: machine values in a sentence sit in a mono chip.
+        Text.rich(
+          TextSpan(
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+            children: const <InlineSpan>[
+              TextSpan(text: 'Run '),
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: AppInlineCode('flutter run'),
+              ),
+              TextSpan(text: ' and the app opens with every page working.'),
+            ],
+          ),
+        ),
+        SizedBox(height: context.spacing.lg),
         const _Caption(
           'Code people only read ships without a button; the copy button '
-          'appears only when copying is the point.',
+          'appears only when copying is the point — in the bar, or floating '
+          'when there is no bar. Tabs switch versions of the same file; '
+          'editor lines number their rows and tint the one under the pointer.',
         ),
       ],
     );
@@ -843,19 +936,44 @@ class _TerminalStory extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const AppTerminalWindow(
+        // The replay button rides the title bar's end (terminal.stories'
+        // "With actions").
+        AppTerminalWindow(
           title: 'release.log',
+          actions: <Widget>[
+            FButton.icon(
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.sm,
+              onPress: () {},
+              child: const Icon(FLucideIcons.rotateCcw),
+            ),
+          ],
+          lines: const <AppTerminalLine>[
+            AppTerminalLine.command('just build macos'),
+            AppTerminalLine.note('production config'),
+            AppTerminalLine.step('compiled 128 files', answer: '4 targets'),
+            AppTerminalLine.result('built in 74.3s'),
+            AppTerminalLine.keyValue('Binary', 'build/macos/Release.app'),
+          ],
+        ),
+        SizedBox(height: context.spacing.lg),
+        // Bare lines, no window: the run a page drops between paragraphs
+        // (terminal.stories' "Lines"), in the ambient theme.
+        const AppTerminalLines(
           lines: <AppTerminalLine>[
             AppTerminalLine.command('just build macos'),
             AppTerminalLine.note('production config'),
-            AppTerminalLine.step('compiled 128 files'),
+            AppTerminalLine.step('compiled 128 files', answer: '4 targets'),
             AppTerminalLine.result('built in 74.3s'),
+            AppTerminalLine.keyValue('Binary', 'build/macos/Release.app'),
           ],
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
           'The window re-themes itself dark, so the lines stay readable on '
-          'a light page. The prompt and the step marker draw in oxide.',
+          'a light page. The prompt and the step marker draw in oxide; a '
+          'step answers in green behind a muted ›. Bare lines keep the '
+          'ambient theme — only the window is the dark island.',
         ),
       ],
     );
@@ -879,14 +997,18 @@ class _TableStory extends StatelessWidget {
       children: <Widget>[
         const _SectionTitle(title: 'Boxed, with the accent column'),
         SizedBox(height: context.spacing.sm),
-        const AppDataTable(columns: columns, rows: rows, accentColumn: 1),
+        // The table hugs its columns like the svelte auto-layout, so the
+        // stories center it instead of stretching it across the page.
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AppDataTable(columns: columns, rows: rows, accentColumn: 1),
+        ),
         SizedBox(height: context.spacing.lg),
         const _SectionTitle(title: 'Docs lines'),
         SizedBox(height: context.spacing.sm),
-        const AppDataTable(
-          columns: columns,
-          rows: rows,
-          style: AppDataTableStyle.docs,
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AppDataTable(columns: columns, rows: rows, style: AppDataTableStyle.docs),
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
@@ -1104,7 +1226,8 @@ class _BeforeAfterStory extends StatelessWidget {
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'Two outline columns; only the before label is struck through.',
+          'Two outline columns; the before items strike through and the '
+          'after items carry the filled primary ring.',
         ),
       ],
     );
@@ -1138,17 +1261,30 @@ class _CommandsStory extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        const _SectionTitle(title: 'Bare command'),
+        SizedBox(height: context.spacing.sm),
+        const AppCommandLine(command: 'flutter pub add forui'),
+        SizedBox(height: context.spacing.sm),
+        const AppCommandLine(command: 'flutter build macos --release --obfuscate'),
+        SizedBox(height: context.spacing.sm),
+        const _Caption(
+          'The bare line for prose and lists: the prompt in the primary, '
+          'the program in blue, flags in the primary and quoted values in '
+          'green. The sigil is not part of the copy.',
+        ),
+        SizedBox(height: context.spacing.xl),
         const _SectionTitle(title: 'Command box'),
         SizedBox(height: context.spacing.sm),
         const AppCommandBox(
-          steps: <AppCommandStep>[
-            AppCommandStep(label: 'Pick the environment', icon: FLucideIcons.server),
-            AppCommandStep(label: 'Run just deps', icon: FLucideIcons.download),
-            AppCommandStep(label: 'Run just analyze', icon: FLucideIcons.circleCheck),
-          ],
+          command: 'just gen',
+          copyLabel: 'Copy the command',
+          copiedLabel: 'Copied',
         ),
         SizedBox(height: context.spacing.sm),
-        const _Caption('The compact step list: a tight border, one icon row per step.'),
+        const _Caption(
+          "The bar's smaller pill: one mono command with an icon copy "
+          'button, the kind a step in a list carries.',
+        ),
         SizedBox(height: context.spacing.xl),
         const _SectionTitle(title: 'Command palette'),
         SizedBox(height: context.spacing.sm),
@@ -1178,8 +1314,9 @@ class _CommandsStory extends StatelessWidget {
         ),
         SizedBox(height: context.spacing.sm),
         const _Caption(
-          'Type to filter by label or section; the host owns the sheet this '
-          'panel sits in.',
+          'Type to filter by label or section; results group under their '
+          'section headings and the footer names the first result. The '
+          'host owns the sheet this panel sits in.',
         ),
       ],
     );
@@ -1226,8 +1363,8 @@ class _PeopleStory extends StatelessWidget {
         const AppPersonCard(name: 'Ada Byron'),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'The avatar draws its initials in a hollow ring; a person without '
-          'a role shows as just the name.',
+          'The avatar draws its initials in a hollow ring above the name; '
+          'a person without a role shows as just the name.',
         ),
       ],
     );
@@ -1244,23 +1381,57 @@ class _ReleasesStory extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         const AppReleaseCard(
-          version: '2026.10.2',
-          date: '24 October 2026',
-          channelLabel: 'Staged',
-          channelRole: AppStatusRole.warning,
-          changes: <String>[
-            'Liquid glass lands behind the capture flag.',
-            'Simple Icons set curated down to twelve marks.',
+          version: '0.12.0',
+          date: 'August 26, 2026',
+          product: 'claude-multi',
+          symbol: 'Cm',
+          symbolLabel: 'claude-multi mark',
+          latestLabel: 'Latest',
+          groups: <AppReleaseGroup>[
+            (
+              kind: AppReleaseChangeKind.changed,
+              lines: <String>[
+                'GLM template update: sonnet-tier now maps to glm-5.3-flash.',
+              ],
+            ),
           ],
+          installs: <AppReleaseInstall>[
+            (manager: 'bun', command: 'bun add -g claude-multi'),
+            (manager: 'npm', command: 'npm install -g claude-multi'),
+            (manager: 'deno', command: 'deno install -g claude-multi'),
+          ],
+          notesLabel: 'All release notes',
         ),
         SizedBox(height: context.spacing.lg),
         const AppReleaseCard(
-          version: '2026.10.1',
-          date: '10 October 2026',
-          changes: <String>['Material variants: bar, gauge, sparkline, stage.'],
+          version: '0.11.1',
+          date: 'August 22, 2026',
+          product: 'claude-multi',
+          symbol: 'Cm',
+          symbolLabel: 'claude-multi mark',
+          groups: <AppReleaseGroup>[
+            (
+              kind: AppReleaseChangeKind.fixed,
+              lines: <String>[
+                'Existing instances can now pick up provider template changes.',
+                'Provider detection now accepts endpoints with a trailing slash.',
+                'Doctor spots environment values that differ from the current template.',
+              ],
+            ),
+            (
+              kind: AppReleaseChangeKind.changed,
+              lines: <String>[
+                'Migrations and the instance-details sync use the same environment code.',
+              ],
+            ),
+          ],
+          notesLabel: 'All release notes',
         ),
         SizedBox(height: context.spacing.lg),
-        const _Caption('One card per release; the channel tag is a status tag.'),
+        const _Caption(
+          'The version runs large in mono; each kind of change keeps its one '
+          'color, and the update command follows the package manager.',
+        ),
       ],
     );
   }
@@ -1271,23 +1442,32 @@ class _EndpointsStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Example month: green means delivered on the first try, the two amber
+    // days needed retries, the red day failed.
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         AppEndpointCard(
-          method: AppHttpMethod.get,
-          path: '/v2/builds/{id}',
-          summary: 'Fetch one build with its artifacts.',
+          url: 'https://api.paperplane.app/hooks/hookline',
+          startLabel: 'Sep 14',
+          days: <double>[
+            1, 1, 1, 1, 0.97, 1, 1, 1, 1, 1, 1, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, //
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          ],
+          metrics: <AppEndpointMetric>[
+            (label: 'First try', value: '99.4%'),
+            (label: 'Median time', value: '182 ms'),
+            (label: 'Retried', value: '41'),
+          ],
+          deliveries: <AppEndpointDelivery>[
+            (event: 'invoice.paid', status: 200, at: '12:04:31'),
+            (event: 'customer.updated', status: 200, at: '12:03:58'),
+            (event: 'order.created', status: 503, at: '12:01:12'),
+          ],
+          primaryLabel: 'Send a test event',
+          secondaryLabel: 'Pause',
         ),
-        SizedBox(height: 16),
-        AppEndpointCard(
-          method: AppHttpMethod.post,
-          path: '/v2/builds',
-          summary: 'Queue a build from the current ref.',
-        ),
-        SizedBox(height: 16),
-        AppEndpointCard(method: AppHttpMethod.delete, path: '/v2/builds/{id}'),
       ],
     );
   }
@@ -1318,10 +1498,72 @@ class _TocStoryState extends State<_TocStory> {
           semanticLabel: 'On this page',
         ),
         SizedBox(height: context.spacing.lg),
-        const _Caption('Tap a section; the bar and the weight carry the change.'),
+        const _Caption('Tap a section; the ring and the text color carry the change.'),
       ],
     );
   }
 
   static const _labels = <String>['Overview', 'Install', 'Configure', 'Ship'];
+}
+
+class _LineTabsStory extends StatefulWidget {
+  const _LineTabsStory();
+
+  @override
+  State<_LineTabsStory> createState() => _LineTabsStoryState();
+}
+
+class _LineTabsStoryState extends State<_LineTabsStory> {
+  int _selected = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        AppLineTabs(
+          tabs: const <String>['Overview', 'Members', 'Billing'],
+          counts: const <int?>[12, 3, null],
+          selectedIndex: _selected,
+          onSelected: (index) => setState(() => _selected = index),
+          semanticLabel: 'Sections',
+        ),
+        SizedBox(height: context.spacing.lg),
+        const _Caption(
+          'Tap a tab; the underline and text color carry the change and the '
+          'count chip never moves.',
+        ),
+      ],
+    );
+  }
+}
+
+class _EyebrowStory extends StatelessWidget {
+  const _EyebrowStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const AppEyebrow('Where the work goes', index: 2),
+        SizedBox(height: context.spacing.lg),
+        const AppEyebrow('Where the work goes', variant: AppEyebrowVariant.rule),
+        SizedBox(height: context.spacing.lg),
+        const AppEyebrow(
+          'Where the work goes',
+          variant: AppEyebrowVariant.count,
+          index: 3,
+          total: 5,
+        ),
+        SizedBox(height: context.spacing.lg),
+        const _Caption(
+          'The ring, the rule and the ticks all draw in the primary; the '
+          'rule variant leaves the words muted.',
+        ),
+      ],
+    );
+  }
 }

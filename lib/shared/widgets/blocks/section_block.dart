@@ -5,8 +5,9 @@ import 'package:forui/forui.dart';
 /// 16 w500, an optional one-sentence intro in muted words, then the content
 /// the page passes in.
 ///
-/// Pure layout: no panel, no border of its own. Strings come from the caller
-/// so pages can localize them.
+/// The head stacks with the block's gap-3 (12dp) and the content follows a
+/// full section gap (`gap-10`, 40dp) below. Pure layout: no panel, no border
+/// of its own. Strings come from the caller so pages can localize them.
 class AppSectionBlock extends StatelessWidget {
   const AppSectionBlock({
     required this.title,
@@ -36,15 +37,19 @@ class AppSectionBlock extends StatelessWidget {
           ),
         ),
         if (description != null) ...<Widget>[
-          const SizedBox(height: 4),
+          // The head's gap-3.
+          const SizedBox(height: 12),
           Text(
             description!,
-            style: theme.typography.body.xs.copyWith(
+            // The intro reads muted at the body size (app descriptions are
+            // text-sm).
+            style: theme.typography.body.sm.copyWith(
               color: theme.colors.mutedForeground,
             ),
           ),
         ],
-        const SizedBox(height: 16),
+        // The section's gap-10 before its content.
+        const SizedBox(height: 40),
         child,
       ],
     );

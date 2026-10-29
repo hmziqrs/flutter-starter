@@ -19,35 +19,46 @@ List<RouteBase> buildProfileRoutes() => [
   ),
 ];
 
-class UpdateProfileRoutePage extends StatefulWidget {
+class UpdateProfileRoutePage extends ConsumerStatefulWidget {
   const UpdateProfileRoutePage({super.key});
 
   @override
-  State<UpdateProfileRoutePage> createState() => _UpdateProfileRoutePageState();
+  ConsumerState<UpdateProfileRoutePage> createState() => _UpdateProfileRoutePageState();
 }
 
-class _UpdateProfileRoutePageState extends State<UpdateProfileRoutePage> {
-  late final Future<ProfileDraft> _initialDraftLoad;
+class _UpdateProfileRoutePageState extends ConsumerState<UpdateProfileRoutePage> {
   PickedMedia? _pickedAvatar;
+  String? _loadedToken;
+  Future<ProfileDraft>? _draftLoad;
 
-  @override
-  void initState() {
-    super.initState();
-    final container = ProviderScope.containerOf(context, listen: false);
-    final session = container.read(sessionControllerProvider);
-    final accessToken = session is AuthAuthenticated ? session.accessToken : '';
-    _initialDraftLoad = container.read(profileRepositoryProvider).load(accessToken: accessToken);
+  /// One shared future per access token: watching the session must not re-fire
+  /// the load on unrelated rebuilds, and a rotated token reloads deliberately.
+  Future<ProfileDraft> _draftLoadFor(AuthAuthenticated session) {
+    final existing = _draftLoad;
+    if (existing != null && _loadedToken == session.accessToken) {
+      return existing;
+    }
+    _loadedToken = session.accessToken;
+    return _draftLoad = ref.read(profileRepositoryProvider).load(accessToken: session.accessToken);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watched, not read once: on a cold start restored into /profile/edit the
+    // session hydrates from secure storage post-frame, and the page must flip
+    // from the anonymous sign-in state to the form when it lands.
+    final session = ref.watch(sessionControllerProvider);
+    final authenticated = session is AuthAuthenticated ? session : null;
     return FutureBuilder<ProfileDraft>(
-      future: _initialDraftLoad,
+      future: authenticated == null ? null : _draftLoadFor(authenticated),
       builder: (context, snapshot) {
         final draft = snapshot.hasData ? snapshot.data! : const ProfileDraft.defaults();
         return UpdateProfilePage(
           initialDraft: draft,
           pickedAvatar: _pickedAvatar,
+          isAnonymous: authenticated == null,
+          onSignIn: () => context.pushNamed(AppRoutes.login),
+          onContinueAsGuest: () => context.go(AppRoutes.homePath),
           onSave: (draft) async {
             final container = ProviderScope.containerOf(context, listen: false);
             final session = container.read(sessionControllerProvider);

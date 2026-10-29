@@ -38,7 +38,8 @@ class AppSummaryBox extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              AppRingMarker(color: theme.colors.primary, size: 8),
+              // The full-size marker (size-2.25 = 9dp) in the primary.
+              AppRingMarker(color: theme.colors.primary),
               const SizedBox(width: 8),
               Text(
                 label,
@@ -51,10 +52,15 @@ class AppSummaryBox extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          // One 6dp gap between label and body (mb-1.5); the body runs at
+          // the block's 1.7 leading.
+          const SizedBox(height: 6),
           Text(
             body,
-            style: theme.typography.body.sm.copyWith(color: theme.colors.foreground),
+            style: theme.typography.body.sm.copyWith(
+              color: theme.colors.foreground,
+              height: 1.7,
+            ),
           ),
         ],
       ),

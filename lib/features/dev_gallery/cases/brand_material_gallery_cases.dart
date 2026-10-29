@@ -12,7 +12,6 @@ import 'package:starter/shared/fx/shaders/brand_material_text.dart';
 import 'package:starter/shared/fx/shaders/brand_materials.dart';
 import 'package:starter/shared/fx/shaders/brand_shimmer.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 import 'package:starter/shared/widgets/marks/material_bar.dart';
@@ -466,7 +465,12 @@ class _VariantsStory extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: <Widget>[
             MaterialGauge(recipe: _variantMaterial, value: 0.68),
-            MaterialRings(recipe: _variantMaterial),
+            // The rings picture keeps the hero recipe's 520x440 box, so it
+            // gets a fixed width inside the Wrap.
+            SizedBox(
+              width: 260,
+              child: MaterialRings(recipe: _variantMaterial, seed: 'starter'),
+            ),
             MaterialTag(recipe: _variantMaterial, label: 'Seeded build'),
           ],
         ),
@@ -522,11 +526,14 @@ class _SurfacesStoryState extends State<_SurfacesStory> {
         SizedBox(height: context.spacing.lg),
         MaterialStage(
           recipe: _surfaceMaterial,
-          child: Text(
-            'starter',
-            style: context.theme.typography.display.xl.copyWith(
-              color: context.theme.brand.onOrange,
-              fontWeight: FontWeight.w600,
+          title: 'starter',
+          child: Center(
+            child: Text(
+              'starter',
+              style: context.theme.typography.display.xl.copyWith(
+                color: context.theme.colors.foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -555,11 +562,19 @@ class _SurfacesStoryState extends State<_SurfacesStory> {
           ),
         ),
         SizedBox(height: context.spacing.lg),
-        MaterialFrame(recipe: _variantMaterial),
+        MaterialFrame(
+          recipe: _variantMaterial,
+          child: Text(
+            'Copper sweep, 6px band — the one plan that leads the row.',
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'One material per placement and text only on the stage and the '
-          'selected tab, in the on-orange token.',
+          'The material draws edges only — the tag pill, the tab rule, the '
+          'frame band — and words always sit on the page color.',
         ),
       ],
     );

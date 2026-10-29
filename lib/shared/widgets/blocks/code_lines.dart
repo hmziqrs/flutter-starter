@@ -252,21 +252,68 @@ bool _startsWithPascalCase(String word) {
 /// Renders Dart source with the brand's code colors (BRAND.md s8 "Code
 /// block"): JetBrains Mono at 13, `--code-foreground` text, tokenized by
 /// [tokenizeDartLine].
+///
+/// The default is the code block's plain pre (code-block.svelte). With
+/// [lineNumbers], it renders the editor variant (code-lines.svelte): each
+/// row is a 3rem gutter with a right-aligned muted number and the code
+/// beside it, the row under the pointer tints with the primary at 8%, and
+/// the block keeps 12dp of air above and below (py-3) at the editor's 12.8
+/// size.
 class AppCodeLines extends StatelessWidget {
-  const AppCodeLines({required this.source, this.fontSize = 13, super.key});
+  const AppCodeLines({required this.source, this.fontSize, this.lineNumbers = false, super.key});
 
   /// The code to render; split on newlines, so empty lines are kept.
   final String source;
 
-  final double fontSize;
+  /// The mono size; the plain pre sits at 13 (text-[0.8125rem]) and the
+  /// editor variant at 12.8 (text-[0.8rem]) when null.
+  final double? fontSize;
+
+  /// Whether rows carry the line-number gutter and the hover tint.
+  final bool lineNumbers;
 
   @override
   Widget build(BuildContext context) {
+    if (!lineNumbers) {
+      return _plainText(context);
+    }
+    final lines = source.split('\n');
+    final size = fontSize ?? 12.8;
+    return Padding(
+      // The editor block's own air (code-lines.svelte: py-3); the gutter is
+      // the row's start edge, so there is no horizontal padding.
+      padding: const EdgeInsetsDirectional.symmetric(vertical: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        // IntrinsicWidth bounds the column to its widest line: the horizontal
+        // scroll view hands the column unbounded width, and the rows' stretch
+        // (for the full-width pointer tint) asserts against infinity.
+        child: IntrinsicWidth(
+          child: Column(
+            // Rows stretch to the widest line, so the pointer tint runs the
+            // full width like the svelte block-level rows.
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              for (var lineIndex = 0; lineIndex < lines.length; lineIndex++)
+                _CodeLineRow(
+                  number: lineIndex + 1,
+                  tokens: tokenizeDartLine(lines[lineIndex]),
+                  fontSize: size,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _plainText(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
     final base = TextStyle(
       fontFamily: 'JetBrains Mono',
-      fontSize: fontSize,
+      fontSize: fontSize ?? 13,
       height: 1.7,
       color: colors.foreground,
     );
@@ -289,6 +336,89 @@ class AppCodeLines extends StatelessWidget {
   }
 
   Color _tokenColor(FColors colors, AppBrandColors brand, CodeTokenKind kind) => switch (kind) {
+    CodeTokenKind.keyword => colors.primary,
+    CodeTokenKind.function => brand.info,
+    CodeTokenKind.string => brand.success,
+    CodeTokenKind.number => brand.purple,
+    CodeTokenKind.comment || CodeTokenKind.punctuation => colors.mutedForeground,
+    CodeTokenKind.plain => colors.foreground,
+  };
+}
+
+/// One editor row: the 3rem gutter number, then the highlighted line; the
+/// row under the pointer takes the primary at 8% (code-lines.svelte).
+class _CodeLineRow extends StatefulWidget {
+  const _CodeLineRow({required this.number, required this.tokens, required this.fontSize});
+
+  final int number;
+
+  final List<CodeToken> tokens;
+
+  final double fontSize;
+
+  @override
+  State<_CodeLineRow> createState() => _CodeLineRowState();
+}
+
+class _CodeLineRowState extends State<_CodeLineRow> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final colors = theme.colors;
+    final base = TextStyle(
+      fontFamily: 'JetBrains Mono',
+      fontSize: widget.fontSize,
+      // The editor variant runs on a 1.75 leading (text-[0.8rem]
+      // leading-[1.75] in the svelte); the plain pre keeps 1.7.
+      height: 1.75,
+      color: colors.foreground,
+    );
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Container(
+        // The row tint is a color change only; nothing moves.
+        color: _hovering ? colors.primary.withValues(alpha: 0.08) : null,
+        padding: const EdgeInsetsDirectional.only(end: 20),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              // The 3rem gutter column; the number sits right-aligned with
+              // 18dp of air before the code (pr-4.5).
+              width: 48,
+              padding: const EdgeInsetsDirectional.only(end: 18),
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(
+                '${widget.number}',
+                style: base.copyWith(color: colors.mutedForeground),
+              ),
+            ),
+            Text.rich(
+              TextSpan(
+                children: <InlineSpan>[
+                  for (final token in widget.tokens)
+                    TextSpan(
+                      text: token.text,
+                      style: TextStyle(color: _tokenColor(theme.brand, colors, token.kind)),
+                    ),
+                  // An empty line keeps its height, like the svelte's
+                  // `&nbsp;`.
+                  if (widget.tokens.isEmpty) const TextSpan(text: ' '),
+                ],
+                style: base,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _tokenColor(AppBrandColors brand, FColors colors, CodeTokenKind kind) => switch (kind) {
     CodeTokenKind.keyword => colors.primary,
     CodeTokenKind.function => brand.info,
     CodeTokenKind.string => brand.success,

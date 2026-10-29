@@ -102,6 +102,26 @@ class AppMetricTrend extends StatelessWidget {
     return '$sign$magnitude$unit';
   }
 
+  /// What screen readers hear: the direction spelled out, not a sign to
+  /// decode (APP-BLOCKS.md MetricTrend) — "Up 12% vs last 30 days", "No
+  /// change vs last 30 days".
+  @visibleForTesting
+  String get semanticsText {
+    if (isFlat) {
+      final word = noChangeLabel ?? 'No change';
+      return comparison == null ? word : '$word ${comparison!.trim()}';
+    }
+    final direction = isUp ? 'Up' : 'Down';
+    final magnitude = switch (format) {
+      AppTrendFormat.percent => '${_decimal.format(change.abs() * 100)}%',
+      AppTrendFormat.points => '${_decimal.format(change.abs())} points',
+      AppTrendFormat.number => _whole.format(change.abs()),
+    };
+    return comparison == null
+        ? '$direction $magnitude'
+        : '$direction $magnitude ${comparison!.trim()}';
+  }
+
   static final NumberFormat _decimal = NumberFormat.decimalPattern('en_US')
     ..maximumFractionDigits = 1;
 
@@ -123,7 +143,7 @@ class AppMetricTrend extends StatelessWidget {
       _ => FLucideIcons.minus,
     };
     return Semantics(
-      label: comparison == null ? signedText : '${signedText.trim()} ${comparison!.trim()}',
+      label: semanticsText,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

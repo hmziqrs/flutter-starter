@@ -8,9 +8,11 @@ import 'package:starter/features/onboarding/onboarding_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
+import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 
 class OnboardingPage extends StatefulWidget {
   OnboardingPage({
@@ -79,6 +81,7 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
     final translations = context.t;
     final spacing = context.spacing;
     final slides = widget.slides ?? OnboardingFixtures.standard(translations);
+    final compact = layoutClass == AppLayoutClass.compact;
 
     return FScaffold(
       childPad: false,
@@ -86,23 +89,25 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
         child: Column(
           key: ValueKey('onboarding-layout-${layoutClass.name}'),
           children: [
+            // The quiet header: the wordmark (the brand's only logo) on the
+            // start side and the skip affordance on the end side. Skip is the
+            // least important action on the screen, so it is a plain muted
+            // label on the app type scale — never the first thing focused.
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
                 spacing.xl,
                 spacing.sm,
-                spacing.xl,
-                0,
+                spacing.sm,
+                spacing.sm,
               ),
-              child: Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: FButton(
-                  key: const ValueKey('onboarding-skip'),
-                  variant: .ghost,
-                  autofocus: true,
-                  mainAxisSize: .min,
-                  onPress: widget.onSkip,
-                  child: Text(translations.common.skip),
-                ),
+              child: Row(
+                children: [
+                  // Header wordmark at the shell's text-lg default (BRAND.md
+                  // s7): the same size the expanded shell header carries.
+                  AppWordmark(name: translations.app.name),
+                  const Spacer(),
+                  _QuietSkip(label: translations.common.skip, onPress: widget.onSkip),
+                ],
               ),
             ),
             Expanded(
@@ -113,7 +118,6 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                 onPageChanged: _onPageChanged,
                 itemBuilder: (context, index) => OnboardingSlide(
                   data: slides[index],
-                  brandLabel: translations.onboarding.brand,
                   layoutClass: layoutClass,
                 ),
               ),
@@ -128,69 +132,32 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
               child: Column(
                 children: [
                   Semantics(
+                    key: const ValueKey('onboarding-progress'),
                     liveRegion: true,
-                    child: Text(
-                      translations.onboarding.progress(current: _page + 1, total: slides.length),
-                      key: const ValueKey('onboarding-progress'),
-                      style: context.theme.typography.body.sm.copyWith(
-                        color: context.theme.colors.mutedForeground,
+                    label: translations.onboarding.progress(
+                      current: _page + 1,
+                      total: slides.length,
+                    ),
+                    child: _ProgressMarkers(count: slides.length, current: _page),
+                  ),
+                  SizedBox(height: spacing.lg),
+                  if (compact)
+                    _CompactActions(
+                      back: _page > 0 ? _buildBackButton(translations) : null,
+                      continueButton: _buildContinueButton(
+                        translations,
+                        isLastPage: _page == slides.length - 1,
+                      ),
+                    )
+                  else
+                    _WideActions(
+                      back: _page > 0 ? _buildBackButton(translations, mainAxisSize: .min) : null,
+                      continueButton: _buildContinueButton(
+                        translations,
+                        isLastPage: _page == slides.length - 1,
+                        mainAxisSize: .min,
                       ),
                     ),
-                  ),
-                  SizedBox(height: spacing.md),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < slides.length; i++)
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: spacing.xs),
-                          child: ExcludeSemantics(
-                            child: AppRingMarker(
-                              filled: i == _page,
-                              color: i == _page
-                                  ? context.theme.colors.primary
-                                  : context.theme.colors.mutedForeground,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  SizedBox(height: spacing.md),
-                  Row(
-                    children: [
-                      if (_page > 0)
-                        FButton(
-                          key: const ValueKey('onboarding-back'),
-                          variant: .outline,
-                          mainAxisSize: .min,
-                          onPress: _previous,
-                          builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                          child: Text(
-                            translations.common.back,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      if (_page > 0) const Spacer(),
-                      FButton(
-                        key: const ValueKey('onboarding-continue'),
-                        mainAxisSize: .min,
-                        onPress: _page == slides.length - 1 ? widget.onOpenPaywall : _next,
-                        builder: (_, _, _, _, _, child) => Flexible(child: child!),
-                        child: Text(
-                          _page == slides.length - 1
-                              ? translations.onboarding.openPaywall
-                              : translations.common.continueAction,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -199,6 +166,60 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
       ),
     );
   }
+
+  Widget _buildBackButton(Translations translations, {MainAxisSize mainAxisSize = .max}) {
+    return FButton(
+      key: const ValueKey('onboarding-back'),
+      variant: .outline,
+      mainAxisSize: mainAxisSize,
+      style: _lineOnlyOutline,
+      onPress: _previous,
+      child: Text(translations.common.back),
+    );
+  }
+
+  Widget _buildContinueButton(
+    Translations translations, {
+    required bool isLastPage,
+    MainAxisSize mainAxisSize = .max,
+  }) {
+    // Calm entry (the ask): nothing is focused until the visitor acts, so
+    // no focus ring is painted on arrival on pointer surfaces. Ten-foot
+    // presentation is the exception — directional focus is the only input
+    // there, so the primary action takes the cold focus (the platform rule
+    // the shell's TV focus anchors assert).
+    final usesDirectionalFocus =
+        AppPresentationPolicy.maybeOf(context)?.usesDirectionalFocus ?? false;
+    return FButton(
+      key: const ValueKey('onboarding-continue'),
+      autofocus: usesDirectionalFocus,
+      mainAxisSize: mainAxisSize,
+      style: _noPressMotion,
+      onPress: isLastPage ? widget.onOpenPaywall : _next,
+      child: Text(
+        isLastPage ? translations.onboarding.openPaywall : translations.common.continueAction,
+      ),
+    );
+  }
+
+  /// Brand motion rule (BRAND.md s10): press feedback is color only, so the
+  /// stock press bounce is switched off on every action here.
+  static const FButtonStyleDelta _noPressMotion = FButtonStyleDelta.delta(
+    tappableStyle: FTappableStyleDelta.delta(motion: FTappableMotion.none),
+  );
+
+  /// Brand outline recipe (BRAND.md s9, s13): an outline button is a line at
+  /// rest in both modes — no fill. ForUI's inherit fills the outline variant
+  /// with the card color, which reads as a grey-filled control in dark mode,
+  /// so the rest state's fill is stripped here. Only the base (rest)
+  /// decoration is touched: the inherit's own hover and press deltas are
+  /// kept, so feedback stays color-only.
+  static final FButtonStyleDelta _lineOnlyOutline = FButtonStyleDelta.delta(
+    tappableStyle: const FTappableStyleDelta.delta(motion: FTappableMotion.none),
+    decoration: FVariantsDelta.delta([
+      FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
+    ]),
+  );
 
   void _next() => _moveTo(_page + 1);
 
@@ -232,5 +253,108 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
       WidgetsBinding.instance.addPostFrameCallback((_) => previousController.dispose());
     }
     _lastLayoutClass = layoutClass;
+  }
+}
+
+/// The skip affordance: muted 14 text on the app type scale, sitting on the
+/// md control size (44 on touch), calm but findable. Hover and press stay
+/// color-only; nothing here is focused at entry, so no ring is painted
+/// until the visitor interacts.
+class _QuietSkip extends StatelessWidget {
+  const _QuietSkip({required this.label, required this.onPress});
+
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return FButton(
+      key: const ValueKey('onboarding-skip'),
+      variant: .ghost,
+      mainAxisSize: .min,
+      style: const FButtonStyleDelta.delta(
+        tappableStyle: FTappableStyleDelta.delta(motion: FTappableMotion.none),
+      ),
+      onPress: onPress,
+      child: Text(
+        label,
+        style: context.theme.typography.body.sm.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
+    );
+  }
+}
+
+/// A row of the brand's ring markers (BRAND.md s7): the current page's ring
+/// is filled and orange, the rest hollow. The markers carry no meaning on
+/// their own — the surrounding live region announces the progress words.
+class _ProgressMarkers extends StatelessWidget {
+  const _ProgressMarkers({required this.count, required this.current});
+
+  final int count;
+  final int current;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.spacing;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing.sm),
+            child: AppRingMarker(
+              filled: i == current,
+              color: i == current
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Compact bottom actions: the primary Continue fills the width and Back
+/// (outline) sits above it, equally wide.
+class _CompactActions extends StatelessWidget {
+  const _CompactActions({required this.back, required this.continueButton});
+
+  final Widget? back;
+  final Widget continueButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (back != null) ...[
+          back!,
+          SizedBox(height: context.spacing.sm),
+        ],
+        continueButton,
+      ],
+    );
+  }
+}
+
+/// Wide bottom actions: both buttons right-aligned at their content size,
+/// the primary Continue last.
+class _WideActions extends StatelessWidget {
+  const _WideActions({required this.back, required this.continueButton});
+
+  final Widget? back;
+  final Widget continueButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (back != null) ...[back!, SizedBox(width: context.spacing.md)],
+        continueButton,
+      ],
+    );
   }
 }

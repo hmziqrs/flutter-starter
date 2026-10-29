@@ -769,11 +769,16 @@ BrandMaterialRecipe? brandMaterialById(String id) {
 }
 
 /// FNV-1a as in the brand kit's `motion/rings.ts`: a stable 32-bit number
-/// from a string, so the same name always picks the same material. Walks
-/// UTF-16 code units, matching the kit's `charCodeAt` over code points.
+/// from a string, so the same name always picks the same material. Walks code
+/// points like the kit's `for (const c of text)` loop: an astral character
+/// contributes its high surrogate once (its `charCodeAt(0)`), never both
+/// surrogates.
 int brandStringHash(String text) {
   var h = 0x811C9DC5;
-  for (final unit in text.codeUnits) {
+  for (final rune in text.runes) {
+    final unit = rune < 0x10000
+        ? rune
+        : 0xD800 + ((rune - 0x10000) >> 10); // High surrogate, as charCodeAt(0).
     h ^= unit & 0xFFFF;
     h = (h * 0x01000193) & 0xFFFFFFFF;
   }

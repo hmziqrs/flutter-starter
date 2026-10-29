@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show immutable, listEquals;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/fx/oklab.dart';
 
 // The hmziq glass recipe, ported from brand-core glass.css
 // ([data-slot="glass"], packages/brand-core/glass.css).
@@ -75,15 +76,15 @@ final class GlassSurfaceStyle {
   /// Resolves the recipe for [variant] from [theme].
   ///
   /// [fallback] renders the solid card variant: card fill, the variant's
-  /// border and shine kept, no blur. [dockShadow] adds the deeper shadow a
-  /// floating dock needs. The default radius is the theme's large radius,
-  /// which carries the brand radius plus 4 (glass.css
-  /// `calc(var(--radius) + 4px)`).
+  /// border and shine kept, no blur. The default radius is the theme's large
+  /// radius, which carries the brand radius plus 4 (glass.css
+  /// `calc(var(--radius) + 4px)`; --radius is 10px, ForUI's lg is 14px).
+  /// Every surface — panel and dock alike — carries exactly the two glass.css
+  /// shadow lines; the brand dock is a plain glass pill with no extra depth.
   factory GlassSurfaceStyle.resolve({
     required GlassVariant variant,
     required FThemeData theme,
     BorderRadius? radius,
-    bool dockShadow = false,
     bool fallback = false,
   }) {
     final colors = theme.colors;
@@ -93,7 +94,10 @@ final class GlassSurfaceStyle {
     final (double cssBlur, double fill, Color washBase) = switch (variant) {
       GlassVariant.frost => (22, 0.64, background),
       GlassVariant.smoke => (32, 0.8, background),
-      GlassVariant.tint => (22, 0.66, Color.lerp(background, colors.primary, 0.16)!),
+      // glass.css mixes the tint wash in oklab
+      // (`color-mix(in oklab, var(--primary) 16%, var(--background))`), so
+      // the hue leans true orange instead of the sRGB lerp's muddier step.
+      GlassVariant.tint => (22, 0.66, oklabMix(background, colors.primary, 0.16)),
       GlassVariant.clear => (12, 0.34, background),
     };
 
@@ -130,13 +134,6 @@ final class GlassSurfaceStyle {
           blurRadius: 48,
           spreadRadius: -24,
         ),
-        if (dockShadow)
-          BoxShadow(
-            color: background.withValues(alpha: 0.6),
-            offset: const Offset(0, 32),
-            blurRadius: 64,
-            spreadRadius: -32,
-          ),
       ],
       radius: radius ?? theme.style.borderRadius.lg,
     );
@@ -178,7 +175,7 @@ final class GlassSurfaceStyle {
   ui.ImageFilter? get backdropFilter => blurSigma == null
       ? null
       : ui.ImageFilter.compose(
-          outer: ui.ImageFilter.matrix(_saturationMatrix(1.5)),
+          outer: ui.ImageFilter.matrix(saturationMatrix(1.5)),
           inner: ui.ImageFilter.blur(sigmaX: blurSigma!, sigmaY: blurSigma!),
         );
 
@@ -209,7 +206,11 @@ final class GlassSurfaceStyle {
   /// A 4x4 column-major saturation matrix equal to the CSS `saturate(s)`
   /// filter, built from the Rec. 709 luminance weights (0.213 / 0.715 /
   /// 0.072) the CSS filter-effects spec defines it with.
-  static Float64List _saturationMatrix(double saturation) {
+  ///
+  /// Public so the liquid surface can fold its brighter 1.6x saturation (the
+  /// web kit composes `saturate(1.6) brightness(1.05)` over the refraction)
+  /// into one color matrix; the flat variants use 1.5 via [backdropFilter].
+  static Float64List saturationMatrix(double saturation) {
     const redLuminance = 0.213;
     const greenLuminance = 0.715;
     const blueLuminance = 0.072;
@@ -263,6 +264,13 @@ class GlassEdgePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = style.radius.toRRect(rect);
+    // The border strokes paint on a rrect pulled 0.5px inside the boundary,
+    // so a 1px centered stroke lands exactly on the CSS border-box band
+    // ([0, 1] inward) and survives the panel's ClipRRect, which would shave
+    // the outer half off a boundary-centered stroke.
+    final fitsBorderBand = rect.width > 1 && rect.height > 1;
+    final borderRect = fitsBorderBand ? rect.deflate(0.5) : rect;
+    final borderRrect = fitsBorderBand ? style.radius.toRRect(borderRect) : rrect;
 
     // Inset top highlight: the first glass.css box-shadow line, drawn by hand
     // because Flutter has no inset shadows. Clipped to the corners.
@@ -275,18 +283,22 @@ class GlassEdgePainter extends CustomPainter {
       )
       ..restore()
       ..drawRRect(
-        rrect,
+        borderRrect,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1
           ..color = style.edge,
       )
+      // The 160deg shine rides the same band, over the edge, exactly like the
+      // masked ::before ring reads once the browser composites it (the CSS
+      // ring sits in the 1px outside the border box, which the panel clip
+      // cannot show; the border band is the honest in-clip stand-in).
       ..drawRRect(
-        rrect,
+        borderRrect,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1
-          ..shader = style.shineGradient(rect),
+          ..shader = style.shineGradient(borderRect),
       );
   }
 

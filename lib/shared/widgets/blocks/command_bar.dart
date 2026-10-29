@@ -42,8 +42,8 @@ class ShellToken {
 }
 
 /// Splits a shell command into [ShellToken]s: the first word is the
-/// program, `-`-prefixed words are flags, quoted words are strings.
-@visibleForTesting
+/// program, `-`-prefixed words are flags, quoted words are strings. Shared
+/// by the command bar and the command box, which color the same way.
 List<ShellToken> tokenizeShellCommand(String command) {
   final tokens = <ShellToken>[];
   final pattern = RegExp(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''');
@@ -60,6 +60,61 @@ List<ShellToken> tokenizeShellCommand(String command) {
     }
   }
   return tokens;
+}
+
+/// The brand command line (BRAND.md s8, command.svelte): the bare `$`
+/// prompt and highlighted command, no container — for prose and lists where
+/// the pill would shout.
+///
+/// The prompt can't be selected in the svelte, so a copy by hand gets only
+/// the command; in Flutter the caller copies [command], never the sigil.
+class AppCommandLine extends StatelessWidget {
+  const AppCommandLine({required this.command, this.prompt = r'$', super.key});
+
+  /// The command to show.
+  final String command;
+
+  /// The prompt sigil, `$` by default.
+  final String prompt;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final brand = theme.brand;
+    // The svelte line inherits the page's body size (16); the mono face is
+    // the brand's JetBrains Mono either way.
+    final base = TextStyle(
+      fontFamily: 'JetBrains Mono',
+      fontSize: 16,
+      color: theme.colors.foreground,
+    );
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: <InlineSpan>[
+          TextSpan(
+            text: prompt,
+            style: TextStyle(color: theme.colors.primary),
+          ),
+          const TextSpan(text: ' '),
+          for (final token in tokenizeShellCommand(command))
+            TextSpan(
+              text: '${token.text} ',
+              style: TextStyle(
+                color: switch (token.kind) {
+                  ShellToken.keyword => theme.colors.primary,
+                  ShellToken.function => brand.info,
+                  ShellToken.string => brand.success,
+                  _ => theme.colors.foreground,
+                },
+              ),
+            ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 }
 
 /// The brand command bar (BRAND.md s8): as wide as the command, in an
@@ -87,14 +142,21 @@ class AppCommandBar extends StatelessWidget {
     final brand = theme.brand;
     final base = TextStyle(
       fontFamily: 'JetBrains Mono',
-      fontSize: 13,
-      height: 1.7,
+      fontSize: 14,
+      height: 1.4,
       color: theme.colors.foreground,
     );
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: Container(
-        padding: const EdgeInsetsDirectional.only(start: 16, end: 8, top: 4, bottom: 4),
+        // command-bar.svelte: pl-4.5; with the button `py-1.5 pr-1.5`, without
+        // it `py-2.5 pr-4.5`, and a 16dp gap to the button (gap-4).
+        padding: EdgeInsetsDirectional.only(
+          start: 18,
+          end: copyLabel == null ? 18 : 6,
+          top: copyLabel == null ? 10 : 6,
+          bottom: copyLabel == null ? 10 : 6,
+        ),
         decoration: ShapeDecoration(
           color: Colors.transparent,
           shape: RoundedSuperellipseBorder(
@@ -133,9 +195,10 @@ class AppCommandBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
-            if (copyLabel != null)
+            if (copyLabel != null) ...<Widget>[
+              const SizedBox(width: 16),
               AppCopyButton(text: command, label: copyLabel!, style: AppCopyButtonStyle.outline),
+            ],
           ],
         ),
       ),

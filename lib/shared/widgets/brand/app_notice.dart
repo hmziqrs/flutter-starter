@@ -37,7 +37,8 @@ class AppNotice extends StatelessWidget {
       container: true,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        // The brand alert's px-4 py-3 (APP-BLOCKS.md notice recipe).
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: ShapeDecoration(
           color: Colors.transparent,
           shape: RoundedSuperellipseBorder(
@@ -49,10 +50,11 @@ class AppNotice extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Padding(
-              padding: const EdgeInsetsDirectional.only(top: 1),
+              // The brand alert nudges the icon 2px down to sit on the title.
+              padding: const EdgeInsetsDirectional.only(top: 2),
               child: Icon(icon, size: 16, color: roleColor),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

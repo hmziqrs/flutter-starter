@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
-/// A quiet note where content would be (BRAND.md s9, content pieces): one
-/// muted sentence, centered, no box.
+/// A quiet note where content would be (empty-note.svelte): one muted
+/// sentence that opens with a primary ring, with air above and below.
 ///
 /// For the moment a list, section or feed has nothing to show. It is a
 /// note, not a state block with actions — the page draws anything the
@@ -10,7 +11,7 @@ import 'package:forui/forui.dart';
 class AppEmptyNote extends StatelessWidget {
   const AppEmptyNote(
     this.message, {
-    this.padding = const EdgeInsets.symmetric(vertical: 24),
+    this.padding = const EdgeInsets.symmetric(vertical: 32),
     super.key,
   });
 
@@ -23,12 +24,21 @@ class AppEmptyNote extends StatelessWidget {
     final theme = context.theme;
     return Padding(
       padding: padding,
-      child: Center(
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground),
-        ),
+      child: Row(
+        children: <Widget>[
+          // The ring takes the primary; the words stay muted.
+          AppRingMarker(color: theme.colors.primary),
+          // gap-2.5 (10).
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.typography.body.sm.copyWith(
+                color: theme.colors.mutedForeground,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 
-/// The wordmark's end mark on its own (BRAND.md s7): a solid `markSquare`
-/// orange square, sized in em of the surrounding text at 0.36 — the same
-/// ratio the `AppWordmark` square uses — so it sits next to type of any
-/// size and scales with it.
+/// The wordmark's end mark on its own (BRAND.md s7): a solid orange square,
+/// sized in em of the surrounding text at 0.36 — the same ratio the
+/// `AppWordmark` square uses — so it sits next to type of any size and
+/// scales with it.
 ///
-/// Always the bright orange in both modes, always square, always
-/// decorative: pair it with real text that carries the meaning.
+/// It paints the theme's primary, like the wordmark's `bg-primary`
+/// (wordmark.svelte:44): the mode's orange while the accent is oxide —
+/// F38230 dark, AA530A light. The always-bright `markSquare` belongs to the
+/// Mark tile, not the wordmark's square. Always square, always decorative:
+/// pair it with real text that carries the meaning.
 class LogoSquare extends StatelessWidget {
   const LogoSquare({super.key});
 
@@ -20,7 +22,7 @@ class LogoSquare extends StatelessWidget {
       child: SizedBox(
         width: extent,
         height: extent,
-        child: ColoredBox(color: context.theme.brand.markSquare),
+        child: ColoredBox(color: context.theme.colors.primary),
       ),
     );
   }

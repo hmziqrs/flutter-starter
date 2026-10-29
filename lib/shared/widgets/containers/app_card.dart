@@ -53,9 +53,11 @@ class _AppCardState extends State<AppCard> {
   /// a transparent fill and a 1px border that tints toward primary on hover.
   FCardStyle _outlineStyle(BuildContext context) {
     final theme = context.theme;
+    // The card's ring is the foreground at 10% (outline-card.svelte:
+    // ring-1 ring-foreground/10), not the theme's border token.
     final borderColor = _hovered
         ? theme.colors.primary.withValues(alpha: 0.5)
-        : theme.colors.border;
+        : theme.colors.foreground.withValues(alpha: 0.10);
     // Minimal dependent fix from the settings-profile area to keep the tree
     // compiling: the delta factory lives on FCardStyleDelta, and a null fill
     // paints nothing (transparent).

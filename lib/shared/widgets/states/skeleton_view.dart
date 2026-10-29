@@ -3,55 +3,43 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
-import 'package:starter/shared/motion/app_motion.dart';
+
+/// The stock skeleton's animate-pulse timing: a 2s cycle on
+/// cubic-bezier(0.4, 0, 0.6, 1), easing each opacity half separately.
+const _pulseDuration = Duration(milliseconds: 2000);
+const _pulseCurve = Cubic(0.4, 0, 0.6, 1);
 
 @immutable
 class SkeletonStyle {
   const SkeletonStyle({
     required this.baseColor,
-    required this.highlightColor,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
   });
 
   factory SkeletonStyle.of(BuildContext context) {
     final colors = context.theme.colors;
-    final base = _lerp(colors.background, colors.foreground, 0.10);
-    // The brighter pole of the theme, so the shimmer band stays quiet and
-    // token-derived in both modes instead of hardcoding a color literal.
-    final brightest = switch (colors.brightness) {
-      Brightness.dark => colors.foreground,
-      Brightness.light => colors.background,
-    };
-    final highlight = _lerp(base, brightest, 0.35);
     return SkeletonStyle(
-      baseColor: base,
-      highlightColor: highlight,
+      // The stock skeleton's `bg-muted` (ui/skeleton/skeleton.svelte).
+      baseColor: colors.muted,
       borderRadius: context.theme.style.borderRadius.sm,
     );
   }
 
   final Color baseColor;
 
-  final Color highlightColor;
-
   final BorderRadius borderRadius;
-
-  static Color _lerp(Color a, Color b, double t) => Color.lerp(a, b, t) ?? a;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SkeletonStyle &&
-          baseColor == other.baseColor &&
-          highlightColor == other.highlightColor &&
-          borderRadius == other.borderRadius;
+      other is SkeletonStyle && baseColor == other.baseColor && borderRadius == other.borderRadius;
 
   @override
-  int get hashCode => Object.hash(baseColor, highlightColor, borderRadius);
+  int get hashCode => Object.hash(baseColor, borderRadius);
 }
 
-class _SkeletonShimmerScope extends InheritedWidget {
-  const _SkeletonShimmerScope({
+class _SkeletonPulseScope extends InheritedWidget {
+  const _SkeletonPulseScope({
     required this.style,
     required this.animation,
     required this.textDirection,
@@ -60,16 +48,17 @@ class _SkeletonShimmerScope extends InheritedWidget {
 
   final SkeletonStyle style;
 
+  /// Drives the bone's opacity through the pulse; null under reduced motion.
   final Animation<double>? animation;
 
   final TextDirection textDirection;
 
   @override
-  bool updateShouldNotify(_SkeletonShimmerScope old) =>
+  bool updateShouldNotify(_SkeletonPulseScope old) =>
       style != old.style || animation != old.animation || textDirection != old.textDirection;
 
-  static _SkeletonShimmerScope? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_SkeletonShimmerScope>();
+  static _SkeletonPulseScope? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_SkeletonPulseScope>();
 }
 
 class SkeletonView extends StatefulWidget {
@@ -106,13 +95,16 @@ class _SkeletonViewState extends State<SkeletonView> with SingleTickerProviderSt
       return;
     }
     if (_controller == null) {
-      final controller = AnimationController(
-        vsync: this,
-        duration: AppMotion.deliberate * 3,
-      );
-      unawaited(controller.repeat());
+      // The stock skeleton's animate-pulse: opacity 1 -> 0.5 -> 1 over the
+      // 2s cycle with the tailwind easing per half, paused entirely under
+      // reduced motion (motion-reduce:animate-none).
+      final controller = AnimationController(vsync: this, duration: _pulseDuration);
+      unawaited(controller.repeat(reverse: true));
       _controller = controller;
-      _animation = controller.drive(CurveTween(curve: AppMotion.emphasizedCurve));
+      _animation = Tween<double>(
+        begin: 1,
+        end: 0.5,
+      ).animate(CurvedAnimation(parent: controller, curve: _pulseCurve));
     }
   }
 
@@ -132,7 +124,7 @@ class _SkeletonViewState extends State<SkeletonView> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final style = widget.style ?? SkeletonStyle.of(context);
     final label = widget.semanticsLabel ?? context.t.states.loadingTitle;
-    return _SkeletonShimmerScope(
+    return _SkeletonPulseScope(
       style: style,
       animation: _animation,
       textDirection: Directionality.of(context),
@@ -162,7 +154,7 @@ class SkeletonBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = _SkeletonShimmerScope.of(context);
+    final scope = _SkeletonPulseScope.of(context);
     final style = scope?.style ?? SkeletonStyle.of(context);
     final radius = borderRadius ?? style.borderRadius;
     final animation = scope?.animation;
@@ -240,43 +232,28 @@ class _BonePainter extends CustomPainter {
   }) : super(repaint: animation);
 
   final SkeletonStyle style;
+
   final BorderRadius borderRadius;
+
   final TextDirection textDirection;
+
+  /// The pulse's opacity for this frame; null paints the static bone.
   final Animation<double>? animation;
 
-  late final Paint _basePaint = Paint()..color = style.baseColor;
-  late final Paint _shimmerPaint = Paint();
-  late final LinearGradient _shimmerGradient = LinearGradient(
-    colors: <Color>[style.baseColor, style.highlightColor, style.baseColor],
-    stops: const <double>[0.4, 0.5, 0.6],
-  );
+  late final Paint _bonePaint = Paint()..color = style.baseColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect);
 
-    canvas.drawRRect(rrect, _basePaint);
-
-    final progress = animation?.value;
-    if (progress == null) return;
-
-    final w = rect.width;
-    if (w <= 0 || rect.height <= 0) return;
-    final virtual = Rect.fromLTWH(
-      rect.left - 2 * w + progress * 2 * w,
-      rect.top,
-      3 * w,
-      rect.height,
-    );
-    _shimmerPaint.shader = _shimmerGradient.createShader(virtual, textDirection: textDirection);
-    canvas.drawRRect(rrect, _shimmerPaint);
+    final opacity = animation?.value ?? 1;
+    canvas.drawRRect(rrect, _bonePaint..color = style.baseColor.withValues(alpha: opacity));
   }
 
   @override
   bool shouldRepaint(covariant _BonePainter old) =>
       style.baseColor != old.style.baseColor ||
-      style.highlightColor != old.style.highlightColor ||
       borderRadius != old.borderRadius ||
       textDirection != old.textDirection ||
       animation != old.animation;

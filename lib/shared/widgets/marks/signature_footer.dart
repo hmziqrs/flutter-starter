@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 
 /// The signature (BRAND.md s7 "Wordmark" footer recipe): the site's
 /// [name] ending in a solid orange square, laid out at a computed font
@@ -13,8 +12,10 @@ import 'package:starter/shared/theme/brand_tokens.dart';
 /// with `pb-[0.2em]`; here the font size is measured with a [TextPainter]
 /// at a reference size and scaled so the wordmark plus its square and gap
 /// fill exactly the measured width. The letters keep the wordmark weight
-/// (w600, never heavier) and the square keeps the bright `markSquare`
-/// orange in both modes.
+/// (w600, never heavier) and the square takes the theme primary — the
+/// wordmark's `bg-primary` (wordmark.svelte:44): the mode's orange while
+/// the accent is oxide (F38230 dark, AA530A light), not the Mark tile's
+/// always-bright mark-square.
 class SignatureFooter extends StatelessWidget {
   const SignatureFooter({required this.name, required this.copyright, super.key});
 
@@ -27,7 +28,6 @@ class SignatureFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    final brand = theme.brand;
     // The measured and rendered styles must share a typeface or the span
     // drifts: take the ambient family (Onest in production).
     final fontFamily = DefaultTextStyle.of(context).style.fontFamily;
@@ -76,7 +76,7 @@ class SignatureFooter extends StatelessWidget {
                               child: SizedBox(
                                 width: squareExtent,
                                 height: squareExtent,
-                                child: ColoredBox(color: brand.markSquare),
+                                child: ColoredBox(color: theme.colors.primary),
                               ),
                             ),
                           ),

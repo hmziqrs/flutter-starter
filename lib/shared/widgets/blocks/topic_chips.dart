@@ -1,19 +1,21 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
 /// One topic chip: its label and the one color its category keeps
 /// everywhere (BRAND.md s4). Pass a color from the theme's brand palette
-/// (`context.theme.brand.teal`, for instance) or leave `tone` null for the
-/// plain grey tag.
+/// (`context.theme.brand.teal`, for instance) and the chip opens with that
+/// color's ring marker; leave `tone` null for a plain chip.
 typedef AppTopicChip = ({String label, Color? tone});
 
-/// The brand topic chips (BRAND.md s8, blog index): soft tags in one color
-/// per category, radius-full.
+/// The brand topic chips (topic-chips.svelte, blog index): 32dp outline
+/// pills whose category color lives on a small ring marker.
 ///
-/// With [onSelected] they filter: the picked chip takes the selected look
-/// (primary border at 60%, soft primary fill, primary text) and every chip
-/// grows to the 32dp touch floor. Without it they are quiet 20dp tags.
+/// The picked chip is drawn in the text color with a text-colored border
+/// (`border-foreground text-foreground`) — the marker carries the color,
+/// the fill never changes. Feedback is color only: hover warms the words to
+/// the foreground, focus draws the primary ring, nothing moves.
 class AppTopicChips extends StatelessWidget {
   const AppTopicChips({
     required this.chips,
@@ -27,21 +29,22 @@ class AppTopicChips extends StatelessWidget {
   /// The picked chip's index, when they filter.
   final int? selectedIndex;
 
-  /// Called with the tapped chip's index; omit for non-interactive tags.
+  /// Called with the tapped chip's index; omit for a quiet row that only
+  /// shows the topics.
   final ValueChanged<int>? onSelected;
 
   @override
   Widget build(BuildContext context) {
+    // The row wraps with gap-1.5 (6).
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 6,
+      runSpacing: 6,
       children: <Widget>[
         for (var index = 0; index < chips.length; index++)
           _TopicChipView(
             chip: chips[index],
             selected: onSelected != null && index == selectedIndex,
             interactive: onSelected != null,
-            isDark: context.theme.colors.brightness == Brightness.dark,
             onTap: onSelected == null ? null : () => onSelected!(index),
           ),
       ],
@@ -54,7 +57,6 @@ class _TopicChipView extends StatefulWidget {
     required this.chip,
     required this.selected,
     required this.interactive,
-    required this.isDark,
     this.onTap,
   });
 
@@ -63,8 +65,6 @@ class _TopicChipView extends StatefulWidget {
   final bool selected;
 
   final bool interactive;
-
-  final bool isDark;
 
   final VoidCallback? onTap;
 
@@ -83,28 +83,12 @@ class _TopicChipViewState extends State<_TopicChipView> {
     super.dispose();
   }
 
-  (Color, Color) _tonePair(FThemeData theme) {
-    if (widget.selected) {
-      final opacity = widget.isDark ? 0.20 : 0.10;
-      return (
-        theme.colors.primary.withValues(alpha: opacity),
-        theme.colors.primary,
-      );
-    }
-    final tone = widget.chip.tone;
-    if (tone == null) {
-      return (theme.colors.secondary, theme.colors.secondaryForeground);
-    }
-    final opacity = widget.isDark ? 0.20 : 0.10;
-    return (tone.withValues(alpha: opacity), tone);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final interactive = widget.interactive;
-    final (fill, content) = _tonePair(theme);
     final hovering = _hovering && interactive;
+    final selected = widget.selected;
     return FocusableActionDetector(
       focusNode: interactive ? _focusNode : null,
       mouseCursor: interactive ? SystemMouseCursors.click : MouseCursor.defer,
@@ -128,30 +112,53 @@ class _TopicChipViewState extends State<_TopicChipView> {
           : null,
       child: Semantics(
         button: interactive,
-        selected: widget.selected,
+        selected: selected,
         child: GestureDetector(
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            height: interactive ? 32 : 20,
-            padding: EdgeInsets.symmetric(horizontal: interactive ? 12 : 8),
-            alignment: Alignment.center,
+            // The chip: h-8 with a 1px outline and px-3
+            // (topic-chips.svelte).
+            height: 32,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: ShapeDecoration(
-              color: hovering ? theme.colors.muted : fill,
               shape: StadiumBorder(
-                side: widget.selected
-                    ? BorderSide(color: theme.colors.primary.withValues(alpha: 0.6))
-                    : _focused
-                    ? BorderSide(color: theme.colors.primary.withValues(alpha: 0.5), width: 2)
-                    : BorderSide.none,
+                side: BorderSide(
+                  // The picked chip's border turns the text color
+                  // (aria-pressed:border-foreground); focus draws the
+                  // primary ring at half strength.
+                  color: _focused
+                      ? theme.colors.primary.withValues(alpha: 0.5)
+                      : selected
+                      ? theme.colors.foreground
+                      // The resting border is the theme's hairline.
+                      : theme.colors.border,
+                ),
               ),
             ),
-            child: Text(
-              widget.chip.label,
-              style: theme.typography.body.xs.copyWith(
-                color: content,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (widget.chip.tone != null) ...<Widget>[
+                  // The category's color lives on the chip's marker:
+                  // size-1.75 (7) with a 1.5px ring in the tone.
+                  AppRingMarker(color: widget.chip.tone, size: 7, borderWidth: 1.5),
+                  // gap-2 between marker and words.
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  widget.chip.label,
+                  // text-[0.8125rem] font-medium; the words warm to the
+                  // foreground on hover and when picked.
+                  style: theme.typography.body.sm.copyWith(
+                    color: selected || hovering
+                        ? theme.colors.foreground
+                        : theme.colors.mutedForeground,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

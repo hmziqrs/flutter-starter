@@ -546,15 +546,17 @@ vec3 ramp(float t0) {
   return mix(lower, uBright.rgb, smoothstep(0.57, 1.0, t));
 }
 
-// The mixed height field (layer a blended with layer b) at one position. The
-// SkSL runtime target has no dFdx/dFdy, so the surface normal below comes from
-// pixel-scaled forward differences of this field — the same per-pixel
+// The mixed height field (layer a blended with layer b) at one position —
+// the same channel the web kit differentiates: height mixes the two layers'
+// raw heights directly; only the tone channel goes through the blend mode.
+// The SkSL runtime target has no dFdx/dFdy, so the surface normal below comes
+// from pixel-scaled forward differences of this field — the same per-pixel
 // difference the web kit gets from its screen-space derivatives.
 float heightField(vec2 pos) {
   float h = material(pos, uAShape, uASurface, uATone).x;
   if (uMixing.x > 0.0001) {
-    vec3 b = material(pos, uBShape, uBSurface, uBTone);
-    h = mix(h, blend(h, b.y, int(uMixing.y + 0.5)), uMixing.x);
+    float bh = material(pos, uBShape, uBSurface, uBTone).x;
+    h = mix(h, bh, uMixing.x);
   }
   return h;
 }

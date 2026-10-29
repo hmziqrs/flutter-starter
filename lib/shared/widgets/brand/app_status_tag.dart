@@ -34,21 +34,29 @@ class AppStatusTag extends StatelessWidget {
     final background = roleColor?.withValues(alpha: fillOpacity) ?? colors.secondary;
     final contentColor = roleColor ?? colors.secondaryForeground;
     return Container(
-      height: 20,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      // A floor, not a ceiling: at large text scales the pill grows with its
+      // label instead of clipping it (20px is the rest-state recipe).
+      constraints: const BoxConstraints(minHeight: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: ShapeDecoration(color: background, shape: const StadiumBorder()),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (showMarker) ...<Widget>[
-            AppRingMarker(color: contentColor, size: 7),
+            // The tag's marker is the smaller recipe: 7px ring at 1.5px
+            // (tag.svelte's size-1.75 border-[1.5px]).
+            AppRingMarker(color: contentColor, size: 7, borderWidth: 1.5),
             const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            style: theme.typography.body.xs.copyWith(
-              color: contentColor,
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.typography.body.xs.copyWith(
+                color: contentColor,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/brand/app_status_tag.dart';
 import 'package:starter/shared/widgets/rings/corner_rings.dart';
@@ -80,7 +79,9 @@ class _ElementCardState extends State<ElementCard> {
               color: Colors.transparent,
               shape: RoundedSuperellipseBorder(
                 side: BorderSide(
-                  color: _hovered ? theme.brand.oxide.withValues(alpha: 0.5) : theme.colors.border,
+                  color: _hovered
+                      ? theme.colors.primary.withValues(alpha: 0.5)
+                      : theme.colors.foreground.withValues(alpha: 0.10),
                   width: theme.style.borderWidth,
                 ),
                 borderRadius: theme.style.borderRadius.lg,
@@ -136,9 +137,11 @@ class _ElementCardState extends State<ElementCard> {
                       ),
                       Text(
                         widget.name,
+                        // The svelte h3 carries tracking-[-0.01em].
                         style: TextStyle(
                           fontSize: 18,
                           height: 1.25,
+                          letterSpacing: -0.01 * 18,
                           fontWeight: FontWeight.w500,
                           color: theme.colors.foreground,
                         ),
@@ -152,11 +155,13 @@ class _ElementCardState extends State<ElementCard> {
                         ),
                       ),
                       // mt-auto: the kind row hugs the bottom of a stretched
-                      // card and keeps a normal gap at intrinsic height.
+                      // card and keeps a normal gap at intrinsic height — the
+                      // svelte row's mt-auto pt-2, so 8dp more than the
+                      // column's 12dp rhythm.
                       if (constraints.hasBoundedHeight)
                         const Spacer()
                       else
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                       Row(
                         children: <Widget>[
                           AppRingMarker(color: widget.kindColor),

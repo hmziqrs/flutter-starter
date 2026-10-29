@@ -9,13 +9,21 @@ import 'package:forui/forui.dart';
 /// square, never an emoji. Decorative on its own: pair it with a text label
 /// that carries the meaning.
 class AppRingMarker extends StatelessWidget {
-  const AppRingMarker({this.filled = false, this.color, this.size = 9, super.key});
+  const AppRingMarker({
+    this.filled = false,
+    this.color,
+    this.size = 9,
+    this.borderWidth = 1.75,
+    super.key,
+  });
 
   final bool filled;
 
   final Color? color;
 
   final double size;
+
+  final double borderWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +34,9 @@ class AppRingMarker extends StatelessWidget {
       height: size,
       decoration: ShapeDecoration(
         color: filled ? resolvedColor : Colors.transparent,
-        shape: CircleBorder(side: BorderSide(color: resolvedColor, width: 1.75)),
+        shape: CircleBorder(
+          side: BorderSide(color: resolvedColor, width: borderWidth),
+        ),
       ),
     );
   }

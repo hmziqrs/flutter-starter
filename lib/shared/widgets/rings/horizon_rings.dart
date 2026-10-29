@@ -23,10 +23,8 @@ const double _rippleRingDelay = 0.14;
 /// All measures are in the 600x320 viewBox and scale together with the box.
 /// [awakeMix] fades the whole palette from the asleep state (sun out, stars
 /// up) to awake (sun in primary) over its 0..1 value, matching the web's
-/// 0.8s color transition. [reveal] (0..1) fades pieces in one after another
-/// — sun first, rings outwards, then glints and stars — for scroll-linked
-/// reveals; 1 draws everything. When `ripple` is on, the faint rings light
-/// up in a wave toward the primary at 85% and back, `elapsed` seconds in.
+/// 0.8s color transition. When `ripple` is on, the faint rings light up in
+/// a wave toward the primary at 85% and back, `elapsed` seconds in.
 class HorizonRingsPainter extends CustomPainter {
   HorizonRingsPainter({
     required this.arcs,
@@ -35,13 +33,10 @@ class HorizonRingsPainter extends CustomPainter {
     required this.accentColor,
     required this.foregroundColor,
     this.awakeMix = 1,
-    this.reveal = 1,
     this.ripple = false,
     ValueListenable<double>? elapsed,
-    ValueListenable<double>? revealListenable,
     super.repaint,
-  }) : _elapsed = elapsed ?? const _StillElapsed(0),
-       _reveal = revealListenable;
+  }) : _elapsed = elapsed ?? const _StillElapsed(0);
 
   /// The picture's half rings, in viewBox units.
   final List<HorizonArc> arcs;
@@ -61,13 +56,6 @@ class HorizonRingsPainter extends CustomPainter {
   /// 0 = asleep (sun out, stars up), 1 = awake (sun in primary).
   final double awakeMix;
 
-  /// 0 = nothing drawn yet, 1 = everything; pieces fade in one by one.
-  final double reveal;
-
-  /// Overrides [reveal] with a live value; read at paint time so scroll
-  /// repaints without rebuilding.
-  final ValueListenable<double>? _reveal;
-
   /// Whether the faint rings light up in a wave while awake.
   final bool ripple;
 
@@ -76,16 +64,6 @@ class HorizonRingsPainter extends CustomPainter {
   static const Size viewBox = Size(600, 320);
   static const Offset center = Offset(300, 262);
   static const double _sunRadius = 30;
-
-  /// Fade-in window per piece of the picture.
-  static const double _revealWindow = 0.1;
-
-  /// The reveal value the painter will use next, for tests.
-  @visibleForTesting
-  double get revealValue => _reveal?.value ?? reveal;
-
-  double _fade(double threshold, double share) =>
-      ((revealValue - threshold) / _revealWindow).clamp(0.0, 1.0) * share;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -97,8 +75,7 @@ class HorizonRingsPainter extends CustomPainter {
       ..scale(scale);
 
     // The sky: a radial glow of primary around the sun, awake only.
-    final skyAlpha = _fade(0, awakeMix);
-    if (skyAlpha > 0) {
+    if (awakeMix > 0) {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, viewBox.width, center.dy),
         Paint()
@@ -106,8 +83,8 @@ class HorizonRingsPainter extends CustomPainter {
             center,
             230,
             <Color>[
-              accentColor.withValues(alpha: 0.45 * skyAlpha),
-              accentColor.withValues(alpha: 0.12 * skyAlpha),
+              accentColor.withValues(alpha: 0.45 * awakeMix),
+              accentColor.withValues(alpha: 0.12 * awakeMix),
               accentColor.withValues(alpha: 0),
             ],
             <double>[0, 0.45, 1],
@@ -116,7 +93,7 @@ class HorizonRingsPainter extends CustomPainter {
     }
 
     // Stars: out when asleep, gone when awake.
-    final starAlpha = _fade(0.85, 0.55 * (1 - awakeMix));
+    final starAlpha = 0.55 * (1 - awakeMix);
     if (starAlpha > 0) {
       final starPaint = Paint()..color = foregroundColor.withValues(alpha: starAlpha);
       for (final (position, radius) in stars) {
@@ -125,10 +102,6 @@ class HorizonRingsPainter extends CustomPainter {
     }
 
     for (final (index, arc) in arcs.indexed) {
-      final fade = _fade(0.06 + index * 0.075, 1);
-      if (fade <= 0) {
-        continue;
-      }
       final rect = Rect.fromCircle(center: center, radius: arc.radius);
       Color color;
       if (arc.accent) {
@@ -145,64 +118,55 @@ class HorizonRingsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeWidth = arc.accent ? 2.5 : 1.25
-        ..color = color.withValues(alpha: color.a * fade);
+        ..color = color;
       for (final (start, sweep) in arc.segments) {
         canvas.drawArc(rect, start, sweep, false, paint);
       }
       final end = arc.end;
       if (end != null) {
         final dot = Color.lerp(lineColor, accentColor, awakeMix)!;
-        canvas.drawCircle(end, 5.5, Paint()..color = dot.withValues(alpha: dot.a * fade));
+        canvas.drawCircle(end, 5.5, Paint()..color = dot);
       }
     }
 
     // The sun: a half disc sitting on the horizon.
-    final sunFade = _fade(0, 1);
-    if (sunFade > 0) {
-      final sunStroke = Color.lerp(lineColor, accentColor, awakeMix)!;
-      final sunPath = Path()
-        ..moveTo(center.dx - _sunRadius, center.dy)
-        ..arcTo(
-          Rect.fromCircle(center: center, radius: _sunRadius),
-          math.pi,
-          math.pi,
-          false,
-        )
-        ..close();
-      canvas
-        ..drawPath(
-          sunPath,
-          Paint()
-            ..style = PaintingStyle.fill
-            ..color = accentColor.withValues(alpha: awakeMix * sunFade),
-        )
-        ..drawPath(
-          sunPath,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5
-            ..strokeCap = StrokeCap.round
-            ..color = sunStroke.withValues(alpha: sunStroke.a * sunFade),
-        );
-    }
-
-    // The horizon line.
-    final horizon = foregroundColor.withValues(alpha: 0.35 * _fade(0, 1));
-    canvas.drawLine(
-      Offset(16, center.dy),
-      Offset(584, center.dy),
-      Paint()
-        ..strokeWidth = 1
-        ..color = horizon,
-    );
+    final sunStroke = Color.lerp(lineColor, accentColor, awakeMix)!;
+    final sunPath = Path()
+      ..moveTo(center.dx - _sunRadius, center.dy)
+      ..arcTo(
+        Rect.fromCircle(center: center, radius: _sunRadius),
+        math.pi,
+        math.pi,
+        false,
+      )
+      ..close();
+    canvas
+      ..drawPath(
+        sunPath,
+        Paint()
+          ..style = PaintingStyle.fill
+          ..color = accentColor.withValues(alpha: awakeMix),
+      )
+      ..drawPath(
+        sunPath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round
+          ..color = sunStroke,
+      )
+      // The horizon line.
+      ..drawLine(
+        Offset(16, center.dy),
+        Offset(584, center.dy),
+        Paint()
+          ..strokeWidth = 1
+          ..color = foregroundColor.withValues(alpha: 0.35),
+      );
 
     // Glints under the horizon, biggest first.
     for (var i = 0; i < 4; i += 1) {
       final width = const <double>[64, 44, 28, 14][i];
-      final fade = _fade(0.78 + i * 0.05, 1);
-      if (fade <= 0) {
-        continue;
-      }
       final color = Color.lerp(lineColor, accentColor, awakeMix)!;
       final opacity = 0.6 + (0.7 - i * 0.15 - 0.6) * awakeMix;
       canvas.drawLine(
@@ -211,7 +175,7 @@ class HorizonRingsPainter extends CustomPainter {
         Paint()
           ..strokeWidth = 1.5
           ..strokeCap = StrokeCap.round
-          ..color = color.withValues(alpha: color.a * opacity * fade),
+          ..color = color.withValues(alpha: color.a * opacity),
       );
     }
 
@@ -226,7 +190,6 @@ class HorizonRingsPainter extends CustomPainter {
       accentColor != oldDelegate.accentColor ||
       foregroundColor != oldDelegate.foregroundColor ||
       awakeMix != oldDelegate.awakeMix ||
-      reveal != oldDelegate.reveal ||
       ripple != oldDelegate.ripple;
 }
 

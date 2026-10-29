@@ -17,6 +17,7 @@ import 'package:starter/shared/forms/form_field_reveal.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
@@ -32,6 +33,9 @@ class UpdateProfilePage extends StatefulWidget {
     required this.onAvatarPicked,
     this.presentationState = const ProfilePresentationState.defaults(),
     this.pickedAvatar,
+    this.isAnonymous = false,
+    this.onSignIn,
+    this.onContinueAsGuest,
     super.key,
   });
 
@@ -39,6 +43,17 @@ class UpdateProfilePage extends StatefulWidget {
   final ProfilePresentationState presentationState;
   final ProfileSaveCallback onSave;
   final PickedMedia? pickedAvatar;
+
+  /// True when the session is anonymous: the page renders the sign-in state
+  /// instead of the edit form. The boilerplate has no hard login, so profile
+  /// edit degrades to this state rather than redirecting to /auth/login.
+  final bool isAnonymous;
+
+  /// Opens the sign-in flow; null disables the action.
+  final VoidCallback? onSignIn;
+
+  /// Leaves the edit flow for home without signing in.
+  final VoidCallback? onContinueAsGuest;
 
   final AvatarPickedCallback onAvatarPicked;
 
@@ -222,6 +237,37 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
       builder: (context, layoutClass) {
         final spacing = context.spacing;
         final tokens = context.presentationTokens;
+        if (widget.isAnonymous) {
+          return FScaffold(
+            childPad: false,
+            child: SafeArea(
+              child: ListView(
+                key: const ValueKey('profile-anonymous-layout'),
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  spacing.xl,
+                  spacing.xl,
+                  spacing.xl,
+                  spacing.xl2,
+                ),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: layoutClass == AppLayoutClass.expanded
+                            ? tokens.wideContentMaxWidth
+                            : tokens.formContentMaxWidth,
+                      ),
+                      child: _AnonymousProfileState(
+                        onSignIn: widget.onSignIn,
+                        onContinueAsGuest: widget.onContinueAsGuest,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         final form = _ProfileForm(
           formKey: _formKey,
           displayNameFieldKey: _displayNameFieldKey,
@@ -435,6 +481,81 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> with RestorationM
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
       composing: TextRange.empty,
+    );
+  }
+}
+
+/// The anonymous-session state: a plain statement of what signing in unlocks,
+/// an outline sign-in action, and an explicit way out to home. The boilerplate
+/// has no hard login, so profile edit degrades to this instead of a redirect.
+class _AnonymousProfileState extends StatelessWidget {
+  const _AnonymousProfileState({required this.onSignIn, required this.onContinueAsGuest});
+
+  final VoidCallback? onSignIn;
+
+  final VoidCallback? onContinueAsGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    final translations = context.t;
+    final spacing = context.spacing;
+    final titleStyle = context.theme.typography.display.xl;
+    return AppCard(
+      key: const ValueKey('profile-anonymous'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Align(child: AppIconTile(icon: FLucideIcons.userRoundPen)),
+          SizedBox(height: spacing.md),
+          Text(
+            translations.profile.update.anonymousTitle,
+            key: const ValueKey('profile-anonymous-title'),
+            textAlign: TextAlign.center,
+            style: titleStyle.copyWith(
+              fontWeight: FontWeight.w500,
+              letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+            ),
+          ),
+          SizedBox(height: spacing.sm),
+          Text(
+            translations.profile.update.anonymousBody,
+            key: const ValueKey('profile-anonymous-body'),
+            textAlign: TextAlign.center,
+            style: context.theme.typography.body.md.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          SizedBox(height: spacing.xl),
+          FButton(
+            key: const ValueKey('profile-anonymous-sign-in'),
+            variant: .outline,
+            onPress: onSignIn,
+            // Long labels and accessibility font scaling must wrap, not
+            // overflow the button's content row.
+            builder: (_, _, _, _, _, child) => Flexible(child: child!),
+            prefix: const Icon(FLucideIcons.logIn),
+            child: Text(
+              translations.auth.login.submit,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: spacing.sm),
+          FButton(
+            key: const ValueKey('profile-anonymous-continue'),
+            variant: .outline,
+            onPress: onContinueAsGuest,
+            builder: (_, _, _, _, _, child) => Flexible(child: child!),
+            child: Text(
+              translations.profile.update.continueAsGuest,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

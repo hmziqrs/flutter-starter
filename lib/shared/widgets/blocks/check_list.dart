@@ -6,12 +6,14 @@ import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 /// One row of an [AppCheckList]: a label and whether it holds.
 typedef AppCheckItem = ({String label, bool checked});
 
-/// A ticking checklist (BRAND.md s8, sign-up password rules): rows muted
+/// A ticking checklist (the sign-up form's password rules): rows muted
 /// until they are met.
 ///
 /// A met row's marker fills in the success green — filled means done — and
 /// its label reads in the normal text color. Unmet rows stay hollow and
-/// muted. The words always carry the meaning; the ring only supports them.
+/// muted. Rows sit 6dp apart (gap-1.5) with their rings centered on the
+/// line (items-center), as the auth form's rules list draws them. The words
+/// always carry the meaning; the ring only supports them.
 class AppCheckList extends StatelessWidget {
   const AppCheckList({required this.items, super.key});
 
@@ -27,20 +29,14 @@ class AppCheckList extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           for (var index = 0; index < items.length; index++) ...<Widget>[
-            if (index > 0) const SizedBox(height: 8),
+            if (index > 0) const SizedBox(height: 6),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(top: 5.5),
-                  child: AppRingMarker(
-                    filled: items[index].checked,
-                    color: items[index].checked
-                        ? theme.brand.success
-                        : theme.colors.mutedForeground,
-                  ),
+                AppRingMarker(
+                  filled: items[index].checked,
+                  color: items[index].checked ? theme.brand.success : theme.colors.mutedForeground,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     items[index].label,

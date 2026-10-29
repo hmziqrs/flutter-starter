@@ -8,8 +8,8 @@ typedef AppRingStat = ({String value, String label, double? share, int? count});
 /// Key numbers as ring gauges (BRAND.md s7): a grid of [AppRingGauge]s,
 /// one accent ring each — only the line plus one orange accent.
 ///
-/// Only real numbers belong here. Up to three columns from 640dp, two
-/// below.
+/// Only real numbers belong here. The brand block is `grid gap-8
+/// sm:grid-cols-3`: one column below 640, up to [columns] from 640.
 class AppRingStats extends StatelessWidget {
   const AppRingStats({required this.stats, this.columns = 3, super.key});
 
@@ -23,7 +23,7 @@ class AppRingStats extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 640;
-        final columnCount = wide ? columns.clamp(1, 3) : 2;
+        final columnCount = wide ? columns.clamp(1, 3) : 1;
         final rowCount = (stats.length / columnCount).ceil();
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -41,6 +41,8 @@ class AppRingStats extends StatelessWidget {
                               label: stats[row * columnCount + cell].label,
                               share: stats[row * columnCount + cell].share,
                               count: stats[row * columnCount + cell].count,
+                              // The block's `flex items-center gap-4.5`.
+                              spacing: 18,
                             )
                           : const SizedBox.shrink(),
                     ),

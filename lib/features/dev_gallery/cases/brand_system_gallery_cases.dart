@@ -64,7 +64,7 @@ String _caseDescription(BrandSystemGalleryKind kind) => switch (kind) {
   BrandSystemGalleryKind.wordmark => 'The name in Onest 600 with a trailing orange square.',
   BrandSystemGalleryKind.markers => 'A hollow ring for bullets and live status; filled means on.',
   BrandSystemGalleryKind.statusTags => 'Soft pills in the five status roles.',
-  BrandSystemGalleryKind.iconTiles => 'Outline tiles with the icon in primary or a token tone.',
+  BrandSystemGalleryKind.iconTiles => 'Outline tiles; a tone fills one softly in its own color.',
   BrandSystemGalleryKind.notices => 'A thin line and an icon in the note color, no fill.',
   BrandSystemGalleryKind.ringGauges => 'A 72px ring with a value and its label.',
   BrandSystemGalleryKind.surfaces =>
@@ -132,10 +132,12 @@ class _CaseHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    // Page title: `text-2xl font-medium tracking-tight` (APP-BLOCKS.md app
+    // type scale); Tailwind's `tracking-tight` is -0.025em.
     final titleStyle = theme.typography.display.xl.copyWith(
       color: theme.colors.foreground,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.02 * (theme.typography.display.xl.fontSize ?? 24),
+      letterSpacing: -0.025 * (theme.typography.display.xl.fontSize ?? 24),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,22 +222,26 @@ class _MarkerStory extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final body = theme.typography.body.sm.copyWith(color: theme.colors.foreground);
+    final mutedBody = body.copyWith(color: theme.colors.mutedForeground);
+    // The brand pairs the marker with its label at gap-2.5 (10px;
+    // marker.stories.svelte), which sits between the spacing tokens.
+    const markerGap = SizedBox(width: 10);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Row(
           children: <Widget>[
-            const AppRingMarker(),
-            SizedBox(width: context.spacing.sm),
-            Expanded(child: Text('Hollow at rest', style: body)),
+            AppRingMarker(color: theme.colors.primary),
+            markerGap,
+            Expanded(child: Text('Hollow at rest, taking the color you give it', style: mutedBody)),
           ],
         ),
         SizedBox(height: context.spacing.lg),
         Row(
           children: <Widget>[
-            const AppRingMarker(filled: true),
-            SizedBox(width: context.spacing.sm),
+            AppRingMarker(color: theme.colors.primary, filled: true),
+            markerGap,
             Expanded(child: Text('Filled: on, open, done or selected', style: body)),
           ],
         ),
@@ -243,7 +249,7 @@ class _MarkerStory extends StatelessWidget {
         Row(
           children: <Widget>[
             AppRingMarker(color: theme.brand.success, filled: true),
-            SizedBox(width: context.spacing.sm),
+            markerGap,
             Expanded(
               child: Text('Takes any token color when the color means something', style: body),
             ),
@@ -262,7 +268,7 @@ class _MarkerStory extends StatelessWidget {
                 color: theme.colors.mutedForeground,
               ),
             ),
-            SizedBox(width: context.spacing.sm),
+            markerGap,
             Expanded(
               child: Text(
                 'Wrong: a solid dot. Bullets are hollow rings, filled only '
@@ -359,7 +365,8 @@ class _IconTileStory extends StatelessWidget {
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'Icon in primary by default. Pass a tone only when the color means something.',
+          'Outline tile with the icon in primary; a tone fills it softly with '
+          'one color at 10% (20% in dark).',
         ),
       ],
     );
@@ -408,6 +415,8 @@ class _RingGaugeStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The brand's Gauges story (rings.stories.svelte): a full ring, a 90%
+    // share, and five segments — 1 draws full, 0.9 nearly, 5 splits.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -417,12 +426,13 @@ class _RingGaugeStory extends StatelessWidget {
           spacing: context.spacing.lg,
           runSpacing: context.spacing.lg,
           children: const <Widget>[
-            AppRingGauge(share: 0.68, value: '68%', label: 'Storage used'),
-            AppRingGauge(count: 6, value: '6', label: 'Steps completed'),
+            AppRingGauge(share: 1, value: '100%', label: 'Open source'),
+            AppRingGauge(share: 0.9, value: '90%+', label: 'Tests that pass'),
+            AppRingGauge(count: 5, value: '5', label: 'Rounds of review'),
           ],
         ),
         SizedBox(height: context.spacing.lg),
-        const _Caption('A track and one orange arc for a share; six segments drawn by count.'),
+        const _Caption('A full ring, a 90% arc over its track, and five segments drawn by count.'),
       ],
     );
   }
@@ -498,7 +508,8 @@ class _SurfaceCard extends StatelessWidget {
         color: greyFilled ? theme.colors.muted : Colors.transparent,
         shape: RoundedSuperellipseBorder(
           side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
-          borderRadius: theme.style.borderRadius.xl,
+          // The card recipe's rounded-xl (--radius + 4 = 14px), AppCard's lg.
+          borderRadius: theme.style.borderRadius.lg,
         ),
       ),
       child: Column(
@@ -629,10 +640,12 @@ class _TypeStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    // Page title: `text-2xl font-medium tracking-tight` (APP-BLOCKS.md app
+    // type scale); Tailwind's `tracking-tight` is -0.025em.
     final pageTitle = theme.typography.display.xl.copyWith(
       color: theme.colors.foreground,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.02 * (theme.typography.display.xl.fontSize ?? 24),
+      letterSpacing: -0.025 * (theme.typography.display.xl.fontSize ?? 24),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

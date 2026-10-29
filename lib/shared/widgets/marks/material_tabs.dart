@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/fx/shaders/brand_material_recipe.dart';
 import 'package:starter/shared/fx/shaders/brand_material_surface.dart';
-import 'package:starter/shared/theme/brand_tokens.dart';
 
-/// A tab strip whose active tab carries a brand-material quad (the
-/// shader-kit variant of the line tabs): the pill keeps the thin theme line,
-/// and the selection shows as the one place the material appears — feedback
-/// is color only, nothing moves.
+/// A tab strip whose selection carries a thin brand-material bar (the
+/// shader-kit variant of the kit's line tabs): every tab keeps its text on
+/// the page color and a 2px rule under it — the theme line at rest, the
+/// material under the selected one — the way the kit's tabs mark selection
+/// with a border accent and never put words on raw metal (BRAND.md s13).
+///
+/// Feedback is color only, nothing moves.
 class MaterialTabs extends StatelessWidget {
   const MaterialTabs({
     required this.recipe,
@@ -19,7 +21,7 @@ class MaterialTabs extends StatelessWidget {
     super.key,
   });
 
-  /// The material behind the active tab's label; one recipe for the whole
+  /// The material in the selected tab's accent bar; one recipe for the whole
   /// strip — the selection moves it, it never re-themes per tab.
   final BrandMaterialRecipe recipe;
 
@@ -52,15 +54,24 @@ class MaterialTabs extends StatelessWidget {
         ),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          // Bottom-aligned rather than stretched: stretch asserts under the
+          // unbounded height a vertical scrollable hands this strip, and the
+          // single-line labels keep every tab the same height anyway.
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               for (var index = 0; index < tabs.length; index++)
-                _MaterialTab(
-                  label: tabs[index],
-                  selected: index == selectedIndex,
-                  recipe: recipe,
-                  onTap: () => onSelected(index),
+                // Each tab hugs its label's intrinsic width; the tab's inner
+                // stretch needs that bounded width (the scroll view hands the
+                // row unbounded width) for its full-width selection rule.
+                IntrinsicWidth(
+                  child: _MaterialTab(
+                    label: tabs[index],
+                    selected: index == selectedIndex,
+                    recipe: recipe,
+                    onTap: () => onSelected(index),
+                  ),
                 ),
             ],
           ),
@@ -127,69 +138,42 @@ class _MaterialTabState extends State<_MaterialTab> {
         child: GestureDetector(
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: ShapeDecoration(
-              color: _hovering && !widget.selected ? theme.colors.muted : Colors.transparent,
-              shape: RoundedSuperellipseBorder(
-                borderRadius: theme.style.borderRadius.md,
-              ),
-            ),
-            child: widget.selected
-                ? _MaterialLabel(label: widget.label, recipe: widget.recipe)
-                : Text(
+            // The label stays on the page color; the material lives only in
+            // the 2px rule under the selected tab (the kit's border accent).
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Text(
                     widget.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: theme.typography.body.sm.copyWith(
-                      color: _hovering || _focused
+                      color: widget.selected || _hovering || _focused
                           ? theme.colors.foreground
                           : theme.colors.mutedForeground,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The selected tab's label over its material quad; the label sizes the
-/// quad, and the material fills behind it.
-class _MaterialLabel extends StatelessWidget {
-  const _MaterialLabel({required this.label, required this.recipe});
-
-  final String label;
-
-  final BrandMaterialRecipe recipe;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    final radius = theme.style.borderRadius.sm.resolve(Directionality.of(context));
-    return ClipRRect(
-      borderRadius: radius,
-      child: Stack(
-        children: <Widget>[
-          Positioned.fill(child: BrandMaterialSurface(recipe: recipe)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.typography.body.sm.copyWith(
-                // Text over the material reads in the on-orange token, the
-                // one color designed to sit on the brand's saturated fills
-                // (BRAND.md s4).
-                color: theme.brand.onOrange,
-                fontWeight: FontWeight.w500,
-              ),
+                ),
+                SizedBox(
+                  height: 2,
+                  child: widget.selected
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(1),
+                          child: BrandMaterialSurface(recipe: widget.recipe),
+                        )
+                      : ColoredBox(color: theme.colors.border),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

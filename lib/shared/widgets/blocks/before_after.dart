@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
-/// Before and after (BRAND.md s8, "Code and comparisons"): two outline
-/// columns — the manual way struck through, then what the tool does
-/// instead.
+/// Before and after (BRAND.md s8, before-after.svelte): the manual way
+/// struck through, then what the tool does instead.
 ///
-/// Both columns are thin outlines with no fill; only the before label is
-/// struck through, everything else keeps the normal text colors. They sit
-/// side by side from 600dp and stack below it.
+/// The app draws the two sides as thin outline columns: the before side
+/// strikes its items through in muted words (the svelte `<s>` at
+/// decoration-muted-foreground/70), the after side marks each item with the
+/// filled primary ring. Only colors and the strike change — nothing moves.
+/// They sit side by side from 600dp and stack below it.
 class AppBeforeAfter extends StatelessWidget {
   const AppBeforeAfter({
     required this.beforeLabel,
@@ -107,7 +108,6 @@ class _Column extends StatelessWidget {
             style: theme.typography.body.sm.copyWith(
               color: labelColor,
               fontWeight: FontWeight.w500,
-              decoration: struckThrough ? TextDecoration.lineThrough : TextDecoration.none,
             ),
           ),
           const SizedBox(height: 12),
@@ -116,16 +116,23 @@ class _Column extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(top: 5.5),
-                  child: AppRingMarker(color: theme.colors.mutedForeground),
-                ),
-                const SizedBox(width: 10),
+                // The after side carries the filled primary ring
+                // (before-after.svelte: Marker filled text-primary); the
+                // struck side runs bare, like the svelte's plain `<s>`.
+                if (!struckThrough) ...<Widget>[
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(top: 5.5),
+                    child: AppRingMarker(filled: true, color: theme.colors.primary),
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Text(
                     items[index],
                     style: theme.typography.body.sm.copyWith(
                       color: struckThrough ? theme.colors.mutedForeground : theme.colors.foreground,
+                      decoration: struckThrough ? TextDecoration.lineThrough : TextDecoration.none,
+                      decorationColor: theme.colors.mutedForeground.withValues(alpha: 0.70),
                     ),
                   ),
                 ),

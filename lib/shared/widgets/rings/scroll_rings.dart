@@ -1,25 +1,28 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/rings/brand_rings.dart';
 import 'package:starter/shared/widgets/rings/brand_seed.dart';
-import 'package:starter/shared/widgets/rings/horizon_rings.dart';
 
-/// A horizon band that reveals with scroll position: the one place
-/// scroll-linked motion is allowed (BRAND.md s10).
+/// The hero rings drawing themselves as they scroll into view (the kits'
+/// `scroll-rings`): the same seeded picture as [BrandRings] — eleven rings
+/// around (440, 225) drawn from [ScrollRings.seed] — with each ring's dash
+/// growing from nothing, one after another, the accent ring last and its dot
+/// appearing at the very end.
 ///
-/// The picture — sun, rings, glints, stars — fades in piece by piece as the
-/// user scrolls, and back out on the way up; nothing animates on its own.
-/// Without a scrollable ancestor it draws the whole picture. Reduced motion
-/// skips the reveal and always draws the whole still picture. Listens to
-/// [controller] when given, otherwise to the nearest [Scrollable]; the same
-/// [ScrollRings.seed] always draws the same picture. Decorative: pass
-/// [ScrollRings.semanticsLabel] to describe the picture, otherwise it is
-/// excluded from semantics.
+/// The draw follows the scroll position (the kit's `animation-timeline:
+/// view()`): [ScrollRings.revealSpan] viewports of scrolling take the whole
+/// draw. Without a scrollable ancestor, before the position knows its
+/// dimensions, or under reduced motion, the picture draws fully — the kit's
+/// `@supports` fallback. Decorative: pass [ScrollRings.semanticsLabel] to
+/// describe the picture, otherwise it is excluded from semantics.
 class ScrollRings extends StatefulWidget {
   const ScrollRings({
     required this.seed,
     this.controller,
-    this.awake = true,
     this.revealSpan = 0.5,
     this.semanticsLabel,
     super.key,
@@ -31,10 +34,7 @@ class ScrollRings extends StatefulWidget {
   /// The scroll position to follow; defaults to the nearest scrollable.
   final ScrollController? controller;
 
-  /// Whether the sun is up; asleep, the sun goes out and stars come up.
-  final bool awake;
-
-  /// How much scrolling (in viewport heights) the full reveal takes.
+  /// How much scrolling (in viewport heights) the full draw takes.
   final double revealSpan;
 
   /// What the picture shows, for screen readers.
@@ -47,11 +47,9 @@ class ScrollRings extends StatefulWidget {
 class _ScrollRingsState extends State<ScrollRings> {
   ScrollPosition? _position;
 
-  final ValueNotifier<double> _reveal = ValueNotifier<double>(0);
+  final ValueNotifier<double> _progress = ValueNotifier<double>(0);
 
-  late List<HorizonArc> _arcs;
-
-  late List<(Offset, double)> _stars;
+  late List<RingArc> _arcs;
 
   bool _reducedMotion = false;
 
@@ -97,7 +95,7 @@ class _ScrollRingsState extends State<ScrollRings> {
   void dispose() {
     _position?.removeListener(_onScroll);
     widget.controller?.removeListener(_onScroll);
-    _reveal.dispose();
+    _progress.dispose();
     super.dispose();
   }
 
@@ -105,45 +103,34 @@ class _ScrollRingsState extends State<ScrollRings> {
     final position = _position;
     // Nothing has scrolled into view yet: the picture waits at zero until
     // the position knows its dimensions. Reduced motion shows the whole
-    // still picture, and so does having no scrollable to follow.
-    var fraction = 0.0;
+    // drawn picture, and so does having no scrollable to follow.
+    var progress = 0.0;
     if (_reducedMotion || position == null) {
-      fraction = 1.0;
+      progress = 1.0;
     } else if (position.hasContentDimensions &&
         position.hasViewportDimension &&
         position.viewportDimension > 0) {
-      fraction = (position.pixels / (position.viewportDimension * widget.revealSpan)).clamp(
+      progress = (position.pixels / (position.viewportDimension * widget.revealSpan)).clamp(
         0.0,
         1.0,
       );
     }
-    _reveal.value = fraction;
+    _progress.value = progress;
   }
 
   void _draw() {
-    _arcs = horizonArcs(
-      widget.seed,
-      cx: HorizonRingsPainter.center.dx,
-      cy: HorizonRingsPainter.center.dy,
-      radii: <double>[for (var i = 0; i < 10; i += 1) 46.0 + 24 * i],
-      accent: 2,
-    );
-    _stars = horizonStars(widget.seed);
+    _arcs = heroRings(widget.seed).arcs;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     Widget picture = CustomPaint(
-      painter: HorizonRingsPainter(
+      painter: ScrollRingsPainter(
         arcs: _arcs,
-        stars: _stars,
+        progress: _progress,
         lineColor: theme.brand.line,
         accentColor: theme.colors.primary,
-        foregroundColor: theme.colors.foreground,
-        awakeMix: widget.awake ? 1 : 0,
-        revealListenable: _reveal,
-        repaint: _reveal,
       ),
     );
     final label = widget.semanticsLabel;
@@ -152,9 +139,92 @@ class _ScrollRingsState extends State<ScrollRings> {
     } else {
       picture = ExcludeSemantics(child: picture);
     }
-    return AspectRatio(
-      aspectRatio: HorizonRingsPainter.viewBox.aspectRatio,
-      child: picture,
-    );
+    return AspectRatio(aspectRatio: ScrollRingsPainter.viewBox.aspectRatio, child: picture);
   }
+}
+
+/// Paints the hero picture with each ring's dash growing with scroll
+/// progress, in the kits' 520x440 viewBox.
+///
+/// The draw windows are the kit's `animation-range` values: the accent ring
+/// draws over progress 34-46%, faint ring *i* over `4 + 2.5 * i`% to
+/// `22 + 2.5 * i`%, and the accent dot fades in over 45-48%.
+class ScrollRingsPainter extends CustomPainter {
+  // The listenable keeps a public name at the call site, unlike the
+  // codebase's private initializing formals.
+  ScrollRingsPainter({
+    required this.arcs,
+    required ValueListenable<double> progress,
+    required this.lineColor,
+    required this.accentColor,
+  }) : _progress = progress; // ignore: prefer_initializing_formals
+
+  /// The rings to draw, in viewBox units, as [heroRings] returns them.
+  final List<RingArc> arcs;
+
+  final ValueListenable<double> _progress;
+
+  final Color lineColor;
+
+  final Color accentColor;
+
+  static const Size viewBox = Size(520, 440);
+
+  static const Offset center = Offset(440, 225);
+
+  /// The progress value the painter draws at, for tests.
+  @visibleForTesting
+  double get progressValue => _progress.value;
+
+  double _window(double progress, double start, double end) =>
+      ((progress - start) / (end - start)).clamp(0.0, 1.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / viewBox.width;
+    final progress = _progress.value;
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size)
+      ..scale(scale);
+    for (final (index, arc) in arcs.indexed) {
+      final start = arc.accent ? 0.34 : 0.04 + index * 0.025;
+      final end = arc.accent ? 0.46 : 0.22 + index * 0.025;
+      final share = _window(progress, start, end);
+      if (share <= 0) {
+        continue;
+      }
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: arc.radius),
+        arc.rotateDegrees * math.pi / 180,
+        share * arc.drawn / arc.radius,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = arc.accent ? 3 : 1.25
+          ..strokeCap = StrokeCap.round
+          ..color = arc.accent ? accentColor : lineColor,
+      );
+      final end_ = arc.end;
+      if (end_ != null) {
+        // The dot comes in at the very end of the draw, the kit's 45-48%.
+        final opacity = _window(progress, 0.45, 0.48);
+        if (opacity > 0) {
+          canvas.drawCircle(
+            end_,
+            7,
+            Paint()..color = accentColor.withValues(alpha: opacity),
+          );
+        }
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(ScrollRingsPainter oldDelegate) =>
+      arcs != oldDelegate.arcs ||
+      progressValue != oldDelegate.progressValue ||
+      lineColor != oldDelegate.lineColor ||
+      accentColor != oldDelegate.accentColor;
 }

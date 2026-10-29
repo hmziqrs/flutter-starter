@@ -13,12 +13,21 @@ class AppLineTabs extends StatelessWidget {
     required this.tabs,
     required this.selectedIndex,
     required this.onSelected,
+    this.counts,
     this.semanticLabel,
     super.key,
-  });
+  }) : assert(
+         counts == null || counts.length == tabs.length,
+         'counts must align with tabs.',
+       );
 
   /// Tab labels, in order. Sentence case comes from the caller.
   final List<String> tabs;
+
+  /// Optional per-tab counts, aligned with [tabs]; a null entry draws no
+  /// chip. The chip is the svelte's foreground-at-8% pill in tabular
+  /// figures.
+  final List<int?>? counts;
 
   /// The zero-based active tab.
   final int selectedIndex;
@@ -36,7 +45,9 @@ class AppLineTabs extends StatelessWidget {
       container: semanticLabel != null,
       label: semanticLabel,
       child: Container(
-        height: 40,
+        // The row rides on the 1px bottom border (line-tabs.svelte's list
+        // `border-b`); the triggers' own 2px underline draws inside, directly
+        // above it.
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: theme.colors.border)),
         ),
@@ -45,12 +56,17 @@ class AppLineTabs extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              for (var index = 0; index < tabs.length; index++)
+              for (var index = 0; index < tabs.length; index++) ...<Widget>[
+                // The list spaces triggers with gap-6 (24); triggers carry
+                // no horizontal padding, so the underline spans the words.
+                if (index > 0) const SizedBox(width: 24),
                 _LineTab(
                   label: tabs[index],
+                  count: counts?[index],
                   selected: index == selectedIndex,
                   onTap: () => onSelected(index),
                 ),
+              ],
             ],
           ),
         ),
@@ -60,9 +76,16 @@ class AppLineTabs extends StatelessWidget {
 }
 
 class _LineTab extends StatefulWidget {
-  const _LineTab({required this.label, required this.selected, required this.onTap});
+  const _LineTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.count,
+  });
 
   final String label;
+
+  final int? count;
 
   final bool selected;
 
@@ -110,9 +133,11 @@ class _LineTabState extends State<_LineTab> {
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            // The trigger's own air: py-3 (12) over the text, with the
+            // 2px underline at its foot and no horizontal padding — the
+            // underline hugs the words.
+            padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: _hovering ? theme.colors.muted : null,
               border: Border(
                 bottom: BorderSide(
                   color: widget.selected
@@ -127,16 +152,44 @@ class _LineTabState extends State<_LineTab> {
               ),
             ),
             child: Center(
-              child: Text(
-                widget.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.typography.body.sm.copyWith(
-                  color: widget.selected || _hovering
-                      ? theme.colors.foreground
-                      : theme.colors.mutedForeground,
-                  fontWeight: widget.selected ? FontWeight.w500 : FontWeight.w400,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      // One weight everywhere: the svelte trigger changes
+                      // color and line only, so glyphs never reflow when
+                      // the tab turns.
+                      style: theme.typography.body.sm.copyWith(
+                        color: widget.selected || _hovering
+                            ? theme.colors.foreground
+                            : theme.colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                  if (widget.count != null) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Container(
+                      // The count chip (line-tabs.svelte): foreground at 8%
+                      // on a pill, tabular figures on a 12dp face.
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: ShapeDecoration(
+                        color: theme.colors.foreground.withValues(alpha: 0.08),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text(
+                        '${widget.count}',
+                        style: theme.typography.body.xs.copyWith(
+                          height: 1,
+                          fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),

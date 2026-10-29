@@ -62,12 +62,13 @@ String _glassCaseDescription(BrandGlassGalleryKind kind) => switch (kind) {
   BrandGlassGalleryKind.panels =>
     'Frost, smoke, tint and clear floating over a scrolling list. Glass carries one blur and never nests.',
   BrandGlassGalleryKind.dock =>
-    'A floating pill of icon controls. Every icon-only control announces what it does.',
+    'A floating pill of controls, labels riding beside the icons like the '
+        'brand storybook dock. Every control also announces what it does.',
   BrandGlassGalleryKind.grain => 'The seeded grain overlay behind the panel content.',
   BrandGlassGalleryKind.fallback =>
     'The honest degraded path: solid card fill, same border, no blur layer.',
   BrandGlassGalleryKind.liquid =>
-    'Backdrop refraction through a fragment shader; solid card where the engine cannot.',
+    'Backdrop refraction through a fragment shader; frosted where the engine cannot, solid card under the fallback.',
 };
 
 /// The rings stories (BRAND.md s7): the hero picture, corner fingerprints,
@@ -426,47 +427,93 @@ class _DockStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         SizedBox(
-          height: 360,
+          height: 430,
           child: Stack(
             children: <Widget>[
               const Positioned.fill(child: _GlassContentList()),
+              // The reading dock: the active entry reads pressed (foreground
+              // at 10%) and groups part on a hairline, like the brand's
+              // storybook reading dock.
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 96,
+                child: Center(
+                  child: GlassDock(
+                    actions: <GlassDockEntry>[
+                      GlassDockAction(
+                        icon: FLucideIcons.listTree,
+                        label: 'Contents',
+                        semanticLabel: 'Contents',
+                        pressed: true,
+                        onPressed: _noop,
+                      ),
+                      GlassDockAction(
+                        icon: FLucideIcons.link,
+                        label: 'Copy link',
+                        semanticLabel: 'Copy link',
+                        onPressed: _noop,
+                      ),
+                      GlassDockAction(
+                        icon: FLucideIcons.share,
+                        label: 'Share',
+                        semanticLabel: 'Share',
+                        onPressed: _noop,
+                      ),
+                      GlassDockSeparator(),
+                      GlassDockAction(
+                        icon: FLucideIcons.arrowUp,
+                        label: 'Back to top',
+                        semanticLabel: 'Back to top',
+                        onPressed: _noop,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // The selection dock: lead words, then a hairline, then the
+              // groups, then the one main action set apart.
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 24,
                 child: Center(
                   child: GlassDock(
-                    actions: <GlassDockAction>[
+                    lead: const Text('3 selected'),
+                    actions: const <GlassDockEntry>[
                       GlassDockAction(
-                        icon: FLucideIcons.skipBack,
-                        semanticLabel: 'Previous track',
-                        onPressed: () {},
+                        icon: FLucideIcons.archive,
+                        label: 'Archive',
+                        semanticLabel: 'Archive',
+                        onPressed: _noop,
                       ),
                       GlassDockAction(
-                        icon: FLucideIcons.play,
-                        semanticLabel: 'Play',
-                        onPressed: () {},
-                      ),
-                      const GlassDockAction(
-                        icon: FLucideIcons.pause,
-                        semanticLabel: 'Pause',
+                        icon: FLucideIcons.folderInput,
+                        label: 'Move',
+                        semanticLabel: 'Move',
+                        onPressed: _noop,
                       ),
                       GlassDockAction(
-                        icon: FLucideIcons.skipForward,
-                        semanticLabel: 'Next track',
-                        onPressed: () {},
-                      ),
-                      GlassDockAction(
-                        icon: FLucideIcons.volume2,
-                        semanticLabel: 'Mute',
-                        onPressed: () {},
+                        icon: FLucideIcons.trash2,
+                        label: 'Delete',
+                        semanticLabel: 'Delete',
+                        onPressed: _noop,
                       ),
                     ],
+                    action: FButton(
+                      size: .sm,
+                      onPress: () {},
+                      // The web story's `Button size="sm" class="rounded-full"`:
+                      // one pill main action at the end.
+                      style: _pillActionStyle(theme),
+                      child: const Text('Done'),
+                    ),
                   ),
                 ),
               ),
@@ -475,12 +522,46 @@ class _DockStory extends StatelessWidget {
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'A pill of icon controls over the page. Hover and focus change '
-          'color only; the disabled control reads at half strength.',
+          'A pill of entries over the page: pressed reads foreground at 10%, '
+          'hover 8%, groups part on a hairline, and the one main action sits '
+          'behind a hairline at the end. Hover and focus change color only; '
+          'the disabled control reads at half strength.',
         ),
       ],
     );
   }
+}
+
+void _noop() {}
+
+/// The web story's action button (`Button size="sm" class="rounded-full"`):
+/// the theme's sm style with every state's shape re-pinned to a full pill,
+/// the way the theme factory re-pins button shapes without losing the
+/// per-state colors.
+FButtonStyle _pillActionStyle(FThemeData theme) {
+  final style = theme.buttonStyles.primary.sm;
+  ShapeDecoration pill(Decoration decoration) {
+    final shapeDecoration = decoration as ShapeDecoration;
+    final border = shapeDecoration.shape as RoundedSuperellipseBorder;
+    return ShapeDecoration(
+      color: shapeDecoration.color,
+      image: shapeDecoration.image,
+      gradient: shapeDecoration.gradient,
+      shadows: shapeDecoration.shadows,
+      shape: border.copyWith(borderRadius: BorderRadius.circular(100)),
+    );
+  }
+
+  return FButtonStyle(
+    decoration: FVariants.raw(pill(style.decoration.base), <FTappableVariantConstraint, Decoration>{
+      for (final MapEntry(key: constraint, :value) in style.decoration.variants.entries)
+        constraint: pill(value),
+    }),
+    contentStyle: style.contentStyle,
+    iconContentStyle: style.iconContentStyle,
+    tappableStyle: style.tappableStyle,
+    focusedOutlineStyle: style.focusedOutlineStyle,
+  );
 }
 
 class _GrainStory extends StatefulWidget {
@@ -719,7 +800,9 @@ class _LiquidStory extends StatelessWidget {
                     'so the top pane refracts. The engine writes the texture size '
                     'and the backdrop; the widget only sets the lens.'
               : 'ImageFilter.shader needs Impeller; this renderer cannot, so '
-                    'both panes take the solid path — the honest degraded glass.',
+                    'the top pane frosts — blur 11 and 1.5x saturation, the '
+                    "web kit's non-Chromium fallback — while the marked pane "
+                    'takes the solid card.',
         ),
       ],
     );
@@ -950,16 +1033,8 @@ class _IndicatorStory extends StatelessWidget {
               child: RingLoader(semanticsLabel: 'Loading'),
             ),
             _Indicator(
-              label: 'Loader 36',
-              child: RingLoader(size: 36, strokeWidth: 3, semanticsLabel: 'Loading'),
-            ),
-            _Indicator(
-              label: 'Meter 68%',
-              child: RingMeter(value: 0.68, size: 48, semanticsLabel: '68 percent'),
-            ),
-            _Indicator(
-              label: 'Meter 30%',
-              child: RingMeter(value: 0.3, size: 48, semanticsLabel: '30 percent'),
+              label: 'Loader 40',
+              child: RingLoader(size: 40, semanticsLabel: 'Loading'),
             ),
             _Indicator(
               label: 'Status off',
@@ -969,12 +1044,28 @@ class _IndicatorStory extends StatelessWidget {
               label: 'Status on',
               child: StatusRing(active: true),
             ),
+            _Indicator(
+              label: 'Status stale',
+              child: StatusRing(active: false, stale: true),
+            ),
           ],
         ),
         SizedBox(height: context.spacing.lg),
+        const RingMeter(
+          label: 'Usage this month',
+          items: <RingMeterItem>[
+            RingMeterItem(label: 'Storage', value: 0.72, detail: '7.2 of 10 GB'),
+            RingMeterItem(label: 'Build minutes', value: 0.4, detail: '1,200 of 3,000'),
+            RingMeterItem(label: 'Bandwidth', value: 0.18, detail: '18 of 100 GB'),
+          ],
+          semanticsLabel: 'Usage this month',
+        ),
+        SizedBox(height: context.spacing.lg),
         const _Caption(
-          'The accent arc sweeps the loader; the meter draws a value on a '
-          'track; the status ring fills only when the thing is on.',
+          'The meter stacks the shares as rings inside rings, the first in '
+          'orange; the loader sweeps its three arcs; the status ring turns '
+          'when the thing is on, breaks when it is stale, and rests faint '
+          'otherwise.',
         ),
       ],
     );
@@ -1010,15 +1101,18 @@ class _DividerStory extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const RingDivider(),
-        SizedBox(height: context.spacing.sm),
-        const _Caption('Hollow at rest, between sections.'),
-        SizedBox(height: context.spacing.lg),
-        const RingDivider(filled: true),
+        const RingDivider(label: 'Part two'),
         SizedBox(height: context.spacing.sm),
         const _Caption(
-          'Filled only when the divider marks something done, open or '
-          'selected.',
+          'A seeded three-ring cluster drawn from the name; the accent dot '
+          'rides the accent ring.',
+        ),
+        SizedBox(height: context.spacing.lg),
+        const RingDivider(filled: true, seed: 'done'),
+        SizedBox(height: context.spacing.sm),
+        const _Caption(
+          'The dot fills only when the divider marks something done, open '
+          'or selected.',
         ),
       ],
     );
@@ -1046,7 +1140,7 @@ class _MotionStoryState extends State<_MotionStory> {
       children: <Widget>[
         AppSegmented<String>(
           options: <AppSegmentOption<String>>[
-            for (final name in _presetNames) (value: name, label: name),
+            for (final name in _presetNames) (value: name, label: name, key: null),
           ],
           value: _preset,
           onChanged: (value) => setState(() => _preset = value),

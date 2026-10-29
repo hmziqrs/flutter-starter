@@ -1,8 +1,16 @@
 // The liquid glass shader: a displacement-map refraction over the backdrop,
 // standing in for the web kit's SVG feDisplacementMap liquid glass. Pixels
-// near the rounded edge bend outward along the surface normal (strongest at
-// the rim, zero at the center), with a slight per-channel spread for the
-// chromatic fringe the web filter carries, and a thin bright rim highlight.
+// near the rounded edge displace along the surface normal (strongest at the
+// rim, zero at the center), with an optional per-channel spread for a
+// chromatic fringe — the web filter carries none, so the brand default is
+// dispersion 0 — and a thin bright rim highlight.
+//
+// Direction note: the web map samples outward past the rim (its R/G ramp
+// reads beyond the element). Here the backdrop snapshot clamps at its
+// bounds, so the sample pulls inward (`p - n * bend`) — still displacement
+// along the rounded-rect normal, but magnifying at the rim instead of
+// minifying. Flipping the sign is a one-character change once a snapshot
+// with margins is verified on an Impeller device.
 //
 // Written for ImageFilter.shader (dart:ui), which the engine only supports
 // on Impeller. The engine contract: the first float uniform is a vec2 the

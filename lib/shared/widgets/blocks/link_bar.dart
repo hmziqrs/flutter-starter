@@ -16,9 +16,13 @@ class AppLinkAction {
   final VoidCallback onPressed;
 }
 
-/// The share bar (BRAND.md s8, blog post pattern): the address in mono, a
-/// copy button, then the caller's networks as small round buttons whose
-/// icons take the text color.
+/// A link to copy (link-bar.svelte): the address in mono inside the
+/// command bar's outline — the URL without `https://`, then a labelled
+/// copy button.
+///
+/// [actions] extend the bar the way share-bar.svelte's `bar` variant does:
+/// small round outlined buttons after the bar, whose icons take the text
+/// color and whose border warms on hover. Feedback is color only.
 class AppLinkBar extends StatelessWidget {
   const AppLinkBar({
     required this.url,
@@ -27,7 +31,7 @@ class AppLinkBar extends StatelessWidget {
     super.key,
   });
 
-  /// The address to show and copy.
+  /// The address to show and copy; `https://` is stripped for display.
   final String url;
 
   /// The copy button's semantics label, e.g. "Copy link".
@@ -38,30 +42,52 @@ class AppLinkBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final displayUrl = url.startsWith('https://') ? url.substring('https://'.length) : url;
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 8,
       runSpacing: 8,
       children: <Widget>[
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Text(
-            url,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 13,
-              color: theme.colors.mutedForeground,
+        Container(
+          // The bar: w-fit, gap-4, rounded-xl, border, py-1.5 pr-1.5
+          // pl-4.5 (link-bar.svelte).
+          constraints: const BoxConstraints(maxWidth: 480),
+          padding: const EdgeInsetsDirectional.fromSTEB(18, 6, 6, 6),
+          decoration: ShapeDecoration(
+            shape: RoundedSuperellipseBorder(
+              side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
+              borderRadius: theme.style.borderRadius.lg,
             ),
           ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  displayUrl,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // The address runs in mono at the body size, in the
+                  // normal text color — machine value, not muted words.
+                  style: theme.typography.body.sm.copyWith(
+                    fontFamily: 'JetBrains Mono',
+                  ),
+                ),
+              ),
+              // gap-4 between address and button.
+              const SizedBox(width: 16),
+              AppCopyButton(text: url, label: copyLabel, style: AppCopyButtonStyle.outline),
+            ],
+          ),
         ),
-        AppCopyButton(text: url, label: copyLabel),
         for (final action in actions) _RoundAction(action: action),
       ],
     );
   }
 }
 
+/// The share networks' round button (share-bar.svelte's rings): 36dp with a
+/// 1px outline; the icon takes the text color and hover warms the border.
 class _RoundAction extends StatefulWidget {
   const _RoundAction({required this.action});
 
@@ -109,20 +135,29 @@ class _RoundActionState extends State<_RoundAction> {
           onTap: widget.action.onPressed,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            width: 32,
-            height: 32,
+            // size-9 (36) with the ring outline.
+            width: 36,
+            height: 36,
             alignment: Alignment.center,
             decoration: ShapeDecoration(
-              color: _hovering ? theme.colors.muted : Colors.transparent,
               shape: CircleBorder(
-                side: _focused
-                    ? BorderSide(color: theme.colors.primary.withValues(alpha: 0.5), width: 2)
-                    : BorderSide.none,
+                side: BorderSide(
+                  // Hover warms the border to foreground/45
+                  // (`hover:border-foreground/45`); focus draws the
+                  // primary ring at half strength (ring-3 at 50%).
+                  color: _focused
+                      ? theme.colors.primary.withValues(alpha: 0.5)
+                      : _hovering
+                      ? theme.colors.foreground.withValues(alpha: 0.45)
+                      : theme.colors.border,
+                  width: _focused ? 3 : theme.style.borderWidth,
+                ),
               ),
             ),
             child: Icon(
               widget.action.icon,
-              size: 16,
+              // size-3.75 (15).
+              size: 15,
               // The icons take the text color; they are not statuses.
               color: theme.colors.foreground,
             ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 /// Runs a step that deserves a second look (APP-BLOCKS.md "ConfirmAction"):
@@ -205,7 +206,6 @@ class _ConfirmDialogBodyState extends State<_ConfirmDialogBody> {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    final destructive = theme.brand.destructive;
     final confirmText = widget.action.confirmText;
 
     return Padding(
@@ -216,9 +216,11 @@ class _ConfirmDialogBodyState extends State<_ConfirmDialogBody> {
         children: <Widget>[
           Text(
             widget.action.title,
-            style: theme.typography.body.sm.copyWith(
+            // The stock alert dialog's title: text-lg font-semibold
+            // (APP-BLOCKS.md ConfirmAction look).
+            style: theme.typography.body.lg.copyWith(
               color: theme.colors.foreground,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
@@ -269,10 +271,9 @@ class _ConfirmDialogBodyState extends State<_ConfirmDialogBody> {
           ],
           if (_error != null) ...<Widget>[
             const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: theme.typography.body.sm.copyWith(color: destructive),
-            ),
+            // The failure surfaces as a destructive notice inside the
+            // dialog, which stays open so it can be tried again.
+            AppNotice(title: _error!, role: AppStatusRole.destructive),
           ],
           const SizedBox(height: 24),
           Wrap(
@@ -293,9 +294,9 @@ class _ConfirmDialogBodyState extends State<_ConfirmDialogBody> {
                 ),
               ),
               _SoftDestructiveButton(
-                label: _pending
-                    ? (widget.action.confirmPendingLabel ?? widget.action.confirmLabel)
-                    : widget.action.confirmLabel,
+                label: widget.action.confirmLabel,
+                pending: _pending,
+                pendingLabel: widget.action.confirmPendingLabel,
                 enabled: _confirmEnabled,
                 autofocus: false,
                 onPress: _pending ? null : () => unawaited(_confirm()),
@@ -309,16 +310,25 @@ class _ConfirmDialogBodyState extends State<_ConfirmDialogBody> {
 }
 
 /// The destructive-soft confirm button: red text on the role's soft fill,
-/// never a solid red slab.
+/// never a solid red slab. While the action runs a spinner joins the label
+/// and the button holds still.
 class _SoftDestructiveButton extends StatefulWidget {
   const _SoftDestructiveButton({
     required this.label,
     required this.enabled,
     required this.autofocus,
+    this.pending = false,
+    this.pendingLabel,
     this.onPress,
   });
 
   final String label;
+
+  /// Whether the action is running: a spinner joins the label.
+  final bool pending;
+
+  /// The label while [pending], if the caller renames it.
+  final String? pendingLabel;
 
   final bool enabled;
 
@@ -359,6 +369,7 @@ class _SoftDestructiveButtonState extends State<_SoftDestructiveButton> {
     final destructive = theme.brand.destructive;
     final fillOpacity = theme.colors.brightness == Brightness.dark ? 0.20 : 0.10;
     final enabled = widget.enabled;
+    final label = widget.pending ? (widget.pendingLabel ?? widget.label) : widget.label;
     _focusNode.canRequestFocus = enabled;
     return FocusableActionDetector(
       focusNode: _focusNode,
@@ -396,12 +407,30 @@ class _SoftDestructiveButtonState extends State<_SoftDestructiveButton> {
               borderRadius: theme.style.borderRadius.sm,
             ),
           ),
-          child: Text(
-            widget.label,
-            style: theme.typography.body.sm.copyWith(
-              color: destructive,
-              fontWeight: FontWeight.w500,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (widget.pending) ...<Widget>[
+                // The pending spinner (Loader2 animate-spin, size-4).
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    strokeCap: StrokeCap.round,
+                    color: destructive,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: theme.typography.body.sm.copyWith(
+                  color: destructive,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

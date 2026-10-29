@@ -1,130 +1,158 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/onboarding/onboarding_view_data.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
+import 'package:starter/shared/widgets/rings/brand_rings.dart';
 
+/// One onboarding slide, composed from the brand's signature pieces
+/// (BRAND.md s7): the slide's own seeded hero rings as the visual, an
+/// outline icon tile, and copy on the app type scale — a 24 w500 tight
+/// title over a muted 14 body (APP-BLOCKS.md). No card fills; the page
+/// itself is the surface.
+///
+/// The rings sit beside the words only (BRAND.md s13): compact has no room
+/// for "beside", so the rings sit out and the outline icon tile carries the
+/// visual — never a ring picture stacked into the slide's height. The rings
+/// are still: an intro screen does not need movement, and the page
+/// transition may animate. The same slide id always draws the same picture.
 class OnboardingSlide extends StatelessWidget {
-  const OnboardingSlide({
-    required this.data,
-    required this.brandLabel,
-    required this.layoutClass,
-    super.key,
-  });
+  const OnboardingSlide({required this.data, required this.layoutClass, super.key});
 
   final OnboardingSlideViewData data;
-  final String brandLabel;
   final AppLayoutClass layoutClass;
 
   @override
   Widget build(BuildContext context) {
-    final visual = _OnboardingVisual(data: data, brandLabel: brandLabel);
-    final copy = _OnboardingCopy(data: data);
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
+    final padding = EdgeInsetsDirectional.fromSTEB(spacing.xl, spacing.lg, spacing.xl, spacing.xl);
 
-    return SingleChildScrollView(
-      key: ValueKey('onboarding-slide-${data.id}'),
-      padding: EdgeInsetsDirectional.fromSTEB(
-        spacing.xl,
-        spacing.lg,
-        spacing.xl,
-        spacing.xl,
-      ),
-      child: switch (layoutClass) {
-        AppLayoutClass.compact => Column(
-          children: [
-            visual,
-            SizedBox(height: spacing.xl),
-            copy,
-          ],
-        ),
-        AppLayoutClass.medium => Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: tokens.readingContentMaxWidth,
-            ),
-            child: FCard(
-              child: Padding(
-                padding: EdgeInsets.all(spacing.xl2),
-                child: Column(
-                  children: [
-                    visual,
-                    SizedBox(height: spacing.xl2),
-                    copy,
-                  ],
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        key: ValueKey('onboarding-slide-${data.id}'),
+        padding: padding,
+        child: ConstrainedBox(
+          // Fill the viewport when there is room, so the composition centers
+          // on tall screens and only scrolls when it must.
+          constraints: BoxConstraints(
+            minHeight: math.max(0, constraints.maxHeight - padding.top - padding.bottom),
+          ),
+          child: switch (layoutClass) {
+            // Compact has no room for the rings beside the words, so they
+            // sit out (BRAND.md s13): a centered column on the app type
+            // scale, the outline icon tile carrying the visual.
+            AppLayoutClass.compact => Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: tokens.formContentMaxWidth),
+                child: _SlideCopy(data: data, centered: true),
               ),
             ),
-          ),
-        ),
-        AppLayoutClass.expanded => Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: tokens.wideContentMaxWidth),
-            child: Row(
-              children: [
-                Expanded(child: visual),
-                SizedBox(width: spacing.xl3),
-                Expanded(
-                  child: FCard(
-                    child: Padding(
-                      padding: EdgeInsets.all(spacing.xl2),
-                      child: copy,
-                    ),
-                  ),
-                ),
-              ],
+            AppLayoutClass.medium => Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: tokens.readingContentMaxWidth),
+                child: _beside(context, ringsMaxWidth: 320),
+              ),
             ),
+            AppLayoutClass.expanded => Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: tokens.wideContentMaxWidth),
+                child: _beside(context, ringsMaxWidth: 440),
+              ),
+            ),
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Words on the left, the rings beside them on the right — the web hero's
+  /// arrangement (BRAND.md s8), used wherever the width has room for it.
+  Widget _beside(BuildContext context, {required double ringsMaxWidth}) {
+    final spacing = context.spacing;
+    return Row(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: EdgeInsetsDirectional.symmetric(vertical: spacing.xl2),
+            child: _SlideCopy(data: data, centered: false),
           ),
         ),
-      },
+        SizedBox(width: spacing.xl3),
+        Expanded(
+          child: _SlideRings(seed: data.id, maxWidth: ringsMaxWidth),
+        ),
+      ],
     );
   }
 }
 
-class _OnboardingVisual extends StatelessWidget {
-  const _OnboardingVisual({required this.data, required this.brandLabel});
+/// The slide's visual: its own hero rings, seeded from the slide id, capped
+/// so the picture never crowds the copy. Decorative — excluded from
+/// semantics by [BrandRings] itself.
+class _SlideRings extends StatelessWidget {
+  const _SlideRings({required this.seed, required this.maxWidth});
 
-  final OnboardingSlideViewData data;
-  final String brandLabel;
+  /// The slide id: a stable seed, so every slide draws its own picture and
+  /// the picture never changes between visits or languages.
+  final String seed;
+
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
-      child: Padding(
-        padding: EdgeInsets.all(context.spacing.xl2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(_iconFor(data.visual), size: 72, color: context.theme.colors.primary),
-            SizedBox(height: context.spacing.lg),
-            Text(
-              brandLabel,
-              textAlign: TextAlign.center,
-              style: context.theme.typography.body.lg,
-            ),
-          ],
-        ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: BrandRings(seed: seed),
       ),
     );
   }
 }
 
-class _OnboardingCopy extends StatelessWidget {
-  const _OnboardingCopy({required this.data});
+/// The slide's words on the app type scale: an outline icon tile, a 24 w500
+/// tight title, and a muted 14 body held to a reading measure.
+class _SlideCopy extends StatelessWidget {
+  const _SlideCopy({required this.data, required this.centered});
 
   final OnboardingSlideViewData data;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
+    final spacing = context.spacing;
+    final tokens = context.presentationTokens;
+    final titleSize = theme.typography.display.xl.fontSize ?? 24;
+    final align = centered ? TextAlign.center : TextAlign.start;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        Text(data.title, style: context.theme.typography.display.xl2),
-        SizedBox(height: context.spacing.md),
-        Text(data.body, style: context.theme.typography.body.lg),
+        AppIconTile(icon: _iconFor(data.visual)),
+        SizedBox(height: spacing.lg),
+        Text(
+          data.title,
+          textAlign: align,
+          style: theme.typography.display.xl.copyWith(
+            color: theme.colors.foreground,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -titleSize * 0.02,
+          ),
+        ),
+        SizedBox(height: spacing.sm),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: tokens.formContentMaxWidth),
+          child: Text(
+            data.body,
+            textAlign: align,
+            style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground),
+          ),
+        ),
       ],
     );
   }

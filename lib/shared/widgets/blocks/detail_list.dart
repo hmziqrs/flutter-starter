@@ -22,10 +22,13 @@ class AppDetailItem {
 /// A record's facts (APP-BLOCKS.md "DetailList"): label and value pairs,
 /// laid out as rows or as a grid.
 ///
-/// No panel of its own — the page draws the outline around it. Machine
-/// values run in mono; a copyable value carries a copy button; a missing
-/// value shows [unsetText] (or an em dash) in muted words. Copy button
-/// labels come from the caller so pages can localize them.
+/// Rows put the label on the left in a 160dp column and the value at the
+/// row's end (`justify-between`), divided by 1px lines. The grid stacks
+/// each label over its value in columns 32dp apart. No panel of its own —
+/// the page draws the outline around it. Machine values run in mono; a
+/// copyable value carries a copy button; a missing value shows [unsetText]
+/// (or an em dash) in muted words. Copy button labels come from the caller
+/// so pages can localize them.
 class AppDetailList extends StatelessWidget {
   const AppDetailList({
     required this.items,
@@ -60,17 +63,15 @@ class AppDetailList extends StatelessWidget {
       items.every((item) => !item.copyable) || copyLabel != null,
       'A copyable item needs copyLabel.',
     );
-    final rows = <Widget>[
-      for (final item in items) _DetailRow(item: item, list: this),
-    ];
     if (layout == AppDetailListLayout.rows) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          for (var index = 0; index < rows.length; index++) ...<Widget>[
+          // divide-y: one 1px line between rows, never doubled.
+          for (var index = 0; index < items.length; index++) ...<Widget>[
             if (index > 0) Container(height: 1, color: theme.colors.border),
-            rows[index],
+            _DetailRow(item: items[index], list: this),
           ],
         ],
       );
@@ -79,20 +80,27 @@ class AppDetailList extends StatelessWidget {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 480;
         final columnCount = wide ? columns.clamp(1, 3) : 1;
-        const gap = 16.0;
+        // The grid's gap-x-8 (32) between columns.
+        const gap = 32.0;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            for (var index = 0; index < rows.length; index += columnCount)
+            for (var index = 0; index < items.length; index += columnCount)
               Padding(
-                padding: EdgeInsets.only(bottom: index + columnCount < rows.length ? 12 : 0),
+                padding: EdgeInsets.only(bottom: index + columnCount < items.length ? 12 : 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     for (var cell = 0; cell < columnCount; cell++) ...<Widget>[
                       if (cell > 0) const SizedBox(width: gap),
-                      Expanded(child: rows[index + cell]),
+                      // The last row can be short: cells past the items
+                      // stay empty rather than overflowing.
+                      Expanded(
+                        child: index + cell < items.length
+                            ? _GridCell(item: items[index + cell], list: this)
+                            : const SizedBox.shrink(),
+                      ),
                     ],
                   ],
                 ),
@@ -106,8 +114,9 @@ class AppDetailList extends StatelessWidget {
 
 enum AppDetailListLayout { rows, grid }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.item, required this.list});
+/// The value, with the copy button 8dp beside it when there is one.
+class _Value extends StatelessWidget {
+  const _Value({required this.item, required this.list});
 
   final AppDetailItem item;
 
@@ -118,11 +127,46 @@ class _DetailRow extends StatelessWidget {
     final theme = context.theme;
     final value = item.value ?? list.unsetText ?? '—';
     final isUnset = item.value == null;
-    final valueStyle = theme.typography.body.sm.copyWith(
-      color: isUnset ? theme.colors.mutedForeground : theme.colors.foreground,
-      fontFamily: item.mono && !isUnset ? 'JetBrains Mono' : null,
+    final valueWidget = Text(
+      value,
+      // min-w-0: long values wrap instead of pushing the row wide.
+      style: theme.typography.body.sm.copyWith(
+        color: isUnset ? theme.colors.mutedForeground : theme.colors.foreground,
+        fontFamily: item.mono && !isUnset ? 'JetBrains Mono' : null,
+      ),
     );
-    final valueWidget = Text(value, style: valueStyle);
+    if (!item.copyable || item.value == null) {
+      return valueWidget;
+    }
+    // flex-wrap items-center gap-2 around the value and its button.
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 4,
+      children: <Widget>[
+        valueWidget,
+        AppCopyButton(
+          text: item.value!,
+          label: list.copyLabel!,
+          copiedLabel: list.copiedLabel,
+        ),
+      ],
+    );
+  }
+}
+
+/// A rows-layout row: the label in a 160dp column, the value at the row's
+/// end, 14dp of air above and below (py-3.5, justify-between).
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.item, required this.list});
+
+  final AppDetailItem item;
+
+  final AppDetailList list;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
@@ -134,22 +178,45 @@ class _DetailRow extends StatelessWidget {
               style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground),
             ),
           ),
-          const SizedBox(width: 16),
+          // sm:gap-6 keeps the pair apart while justify-between pushes the
+          // value to the row's end.
+          const SizedBox(width: 24),
           Expanded(
-            child: item.copyable && item.value != null
-                ? Wrap(
-                    spacing: 4,
-                    children: <Widget>[
-                      valueWidget,
-                      AppCopyButton(
-                        text: item.value!,
-                        label: list.copyLabel!,
-                        copiedLabel: list.copiedLabel,
-                      ),
-                    ],
-                  )
-                : valueWidget,
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: _Value(item: item, list: list),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A grid cell: the label stacked over the value with 4dp between
+/// (flex flex-col gap-1 py-3.5).
+class _GridCell extends StatelessWidget {
+  const _GridCell({required this.item, required this.list});
+
+  final AppDetailItem item;
+
+  final AppDetailList list;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            item.label,
+            style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground),
+          ),
+          const SizedBox(height: 4),
+          _Value(item: item, list: list),
         ],
       ),
     );

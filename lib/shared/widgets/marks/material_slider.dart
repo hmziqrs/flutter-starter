@@ -3,12 +3,12 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/fx/shaders/brand_material_recipe.dart';
 import 'package:starter/shared/fx/shaders/brand_material_surface.dart';
 
-/// A slider whose fill and thumb carry a brand material (the shader-kit
-/// variant of the slider): the muted track fills with material up to the
-/// thumb, and the thumb itself is a material stud in the thin theme line.
+/// A slider whose filled part carries a brand material (the kit's
+/// `material-slider`): the outline track fills with material up to the thumb,
+/// and the thumb itself stays a page-colored stud in the primary line — the
+/// value carries the meaning; the material is only the fill.
 ///
-/// Drag or tap to set. The value carries the meaning; the material is the
-/// finish.
+/// Drag or tap to set.
 class MaterialSlider extends StatefulWidget {
   const MaterialSlider({
     required this.recipe,
@@ -34,7 +34,9 @@ class MaterialSlider extends StatefulWidget {
 }
 
 class _MaterialSliderState extends State<MaterialSlider> {
-  static const _trackExtent = 8.0;
+  // The kit's track: 0.625rem (10px) tall, transparent with a 1px inset
+  // text-color line at 12% — never a grey fill.
+  static const _trackExtent = 10.0;
 
   static const _thumbExtent = 20.0;
 
@@ -64,25 +66,46 @@ class _MaterialSliderState extends State<MaterialSlider> {
                 child: Stack(
                   alignment: AlignmentDirectional.centerStart,
                   children: <Widget>[
-                    // The track: a muted stadium the material fill sits in.
-                    ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(_trackExtent / 2)),
-                      child: Container(
-                        height: _trackExtent,
-                        width: width,
-                        color: theme.colors.muted,
+                    // The track: an outline stadium the material fill sits in
+                    // (the kit's inset 1px foreground/12% ring).
+                    Container(
+                      height: _trackExtent,
+                      width: width,
+                      foregroundDecoration: ShapeDecoration(
+                        color: Colors.transparent,
+                        shape: RoundedSuperellipseBorder(
+                          side: BorderSide(
+                            color: theme.colors.foreground.withValues(alpha: 0.12),
+                          ),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(_trackExtent / 2),
+                          ),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(_trackExtent / 2),
+                        ),
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: SizedBox(
                             width: (width - _thumbExtent) * share + _thumbExtent / 2,
                             height: _trackExtent,
-                            child: BrandMaterialSurface(recipe: widget.recipe),
+                            // The kit's fill carries `rounded-full`, so its
+                            // moving end stays a pill.
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(_trackExtent / 2),
+                              ),
+                              child: BrandMaterialSurface(recipe: widget.recipe),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    // The thumb: a material stud in a page-colored ring and
-                    // the theme line.
+                    // The thumb: a page-colored circle in the kit's 2px
+                    // primary border — no material in it, the fill alone
+                    // carries the metal.
                     Positioned(
                       left: (width - _thumbExtent) * share,
                       child: Container(
@@ -91,17 +114,10 @@ class _MaterialSliderState extends State<MaterialSlider> {
                         decoration: ShapeDecoration(
                           color: theme.colors.background,
                           shape: RoundedSuperellipseBorder(
-                            side: BorderSide(
-                              color: theme.colors.border,
-                              width: theme.style.borderWidth,
+                            side: BorderSide(color: theme.colors.primary, width: 2),
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(_thumbExtent / 2),
                             ),
-                            borderRadius: const BorderRadius.all(Radius.circular(_thumbExtent / 2)),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(5),
-                        child: ClipOval(
-                          child: SizedBox.expand(
-                            child: BrandMaterialSurface(recipe: widget.recipe),
                           ),
                         ),
                       ),

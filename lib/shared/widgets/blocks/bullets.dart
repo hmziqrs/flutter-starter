@@ -2,11 +2,12 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
-/// A list whose bullets are the brand's hollow ring markers (BRAND.md s7):
-/// never a solid dot, square or emoji.
+/// A list whose bullets are the brand's hollow ring markers (BRAND.md s7).
 ///
-/// The marker takes the surrounding text color and stays hollow; a filled
-/// ring is reserved for on, open, done or selected states elsewhere.
+/// The svelte list draws every ring in the primary ("A list with orange
+/// rings for bullets"); the ring stays hollow — a filled ring is reserved
+/// for on, open, done or selected states elsewhere. Never a solid dot,
+/// square or emoji.
 class AppBullets extends StatelessWidget {
   const AppBullets({required this.items, super.key});
 
@@ -20,16 +21,17 @@ class AppBullets extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (var index = 0; index < items.length; index++) ...<Widget>[
-          if (index > 0) const SizedBox(height: 8),
+          if (index > 0) const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Padding(
-                // Hangs the ring on the first text line, like `list-disc`.
+                // Hangs the ring on the first text line, like the svelte
+                // grid's baseline row.
                 padding: const EdgeInsetsDirectional.only(top: 5.5),
-                child: AppRingMarker(color: theme.colors.mutedForeground),
+                child: AppRingMarker(color: theme.colors.primary),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   items[index],
