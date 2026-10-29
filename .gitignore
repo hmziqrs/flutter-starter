@@ -60,3 +60,6 @@ android/.kotlin/
 # Local agent-chain working dirs (z-proflow evidence, workflow drafts)
 .zflow/
 .zcode/
+
+# Local capture/video working dir from verification runs
+.video_agent/
