@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 
 class TelevisionAppShell extends StatefulWidget {
   const TelevisionAppShell({
@@ -157,10 +158,13 @@ class _TelevisionAppShellState extends State<TelevisionAppShell> {
                       tokens.cardGap,
                       tokens.cardGap / 2,
                     ),
-                    child: Text(
+                    // The wordmark scales with the ten-foot display type so it
+                    // stays a header-sized brand mark on TV. The 320px
+                    // navigation column always fits it on one line.
+                    child: AppWordmark(
                       key: const ValueKey('television-navigation-brand'),
-                      context.t.app.name,
-                      style: context.theme.typography.display.lg,
+                      name: context.t.app.name,
+                      fontSize: context.theme.typography.display.lg.fontSize ?? 18,
                     ),
                   ),
                   child: ListView(

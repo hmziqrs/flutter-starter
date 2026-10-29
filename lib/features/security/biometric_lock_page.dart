@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
 import 'package:starter/features/security/biometric_unlock_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 class BiometricLockPage extends ConsumerWidget {
@@ -80,27 +81,31 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
-          child: _BiometricLockIcon(unavailable: isUnavailable),
+          child: AppIconTile(
+            icon: isUnavailable ? FLucideIcons.lockKeyhole : FLucideIcons.scanFace,
+            size: 48,
+          ),
         ),
         SizedBox(height: spacing.xl),
         Text(
           isUnavailable ? translations.unavailableTitle : translations.lockTitle,
           key: const ValueKey('biometric-lock-title'),
-          style: context.theme.typography.display.xl2,
+          style: entryPageTitleStyle(context),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: spacing.md),
         Text(
           isUnavailable ? translations.unavailableBody : translations.lockBody,
           key: const ValueKey('biometric-lock-body'),
-          style: context.theme.typography.body.md,
+          style: entryMutedBodyStyle(context),
           textAlign: TextAlign.center,
         ),
         if (_lastAttemptFailed) ...[
           SizedBox(height: spacing.xl),
           FAlert(
             key: const ValueKey('biometric-lock-failure'),
-            variant: .destructive,
+            style: AuthFeedbackAlert.noticeStyle(context, AppStatusRole.destructive),
+            icon: const Icon(FLucideIcons.octagonAlert),
             title: Text(translations.authFailedTitle),
           ),
         ],
@@ -142,51 +147,5 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
         setState(() => _unlocking = false);
       }
     }
-  }
-}
-
-final _motionScale = MovieTweenProperty<double>();
-final _motionOpacity = MovieTweenProperty<double>();
-final _motionTween = MovieTween()
-  ..tween<double>(
-    _motionScale,
-    Tween(begin: 0.85, end: 1),
-    duration: AppMotion.standard,
-    curve: AppMotion.emphasizedCurve,
-  )
-  ..tween<double>(
-    _motionOpacity,
-    Tween(begin: 0, end: 1),
-    duration: AppMotion.standard,
-    curve: AppMotion.standardCurve,
-  );
-
-class _BiometricLockIcon extends StatelessWidget {
-  const _BiometricLockIcon({required this.unavailable});
-
-  final bool unavailable;
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = Icon(
-      unavailable ? FLucideIcons.lockKeyhole : FLucideIcons.scanFace,
-      size: context.spacing.xl3,
-      color: context.theme.colors.primary,
-    );
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return icon;
-    }
-
-    return PlayAnimationBuilder<Movie>(
-      tween: _motionTween,
-      duration: _motionTween.duration,
-      child: KeyedSubtree(key: ValueKey(unavailable), child: icon),
-      builder: (context, movie, child) {
-        return Opacity(
-          opacity: _motionOpacity.from(movie),
-          child: Transform.scale(scale: _motionScale.from(movie), child: child),
-        );
-      },
-    );
   }
 }

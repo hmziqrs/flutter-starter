@@ -9,7 +9,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(156));
+    expect(cases, hasLength(210));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -53,6 +53,27 @@ void main() {
         'feedback.submitting',
         'feedback.failed',
         'feedback.success',
+        'brandSystem.wordmark',
+        'brandMaterial.swatches',
+        'brandMaterial.pause',
+        'brandMaterial.variants',
+        'brandMaterial.surfaces',
+        'brandGlass.panels',
+        'brandGlass.fallback',
+        'brandGlass.liquid',
+        'brandRings.hero',
+        'brandRings.motion',
+        'brandMarks.marks',
+        'brandMarks.ctaBand',
+        'brandMarks.brandIcons',
+        'brandBlocks.stepper',
+        'brandBlocks.pageIntro',
+        'brandBlocks.commands',
+        'brandBlocks.detailSection',
+        'brandBlocks.people',
+        'brandBlocks.releases',
+        'brandBlocks.endpoints',
+        'brandBlocks.toc',
       ]),
     );
     expect(

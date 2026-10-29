@@ -9,6 +9,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 
 class PaywallPage extends StatefulWidget {
@@ -100,6 +101,11 @@ class _PaywallPageState extends State<PaywallPage> {
                   variant: .ghost,
                   autofocus: true,
                   mainAxisSize: .min,
+                  style: const .delta(
+                    tappableStyle: .delta(
+                      motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                    ),
+                  ),
                   onPress: widget.onSkip,
                   child: Text(translations.common.skip),
                 ),
@@ -122,14 +128,18 @@ class _PaywallPageState extends State<PaywallPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // App type scale (APP-BLOCKS): page title 24 w500
+                          // tight; body descriptions 14 muted.
                           Text(
                             translations.pricing.paywallTitle,
-                            style: context.theme.typography.display.xl3,
+                            style: context.theme.typography.display.xl,
                           ),
                           SizedBox(height: spacing.md),
                           Text(
                             translations.pricing.paywallBody,
-                            style: context.theme.typography.body.lg,
+                            style: context.theme.typography.body.sm.copyWith(
+                              color: context.theme.colors.mutedForeground,
+                            ),
                           ),
                           SizedBox(height: spacing.lg),
                           _BenefitList(
@@ -149,10 +159,10 @@ class _PaywallPageState extends State<PaywallPage> {
                           ),
                           if (!_hasAvailablePlan) ...[
                             SizedBox(height: spacing.lg),
-                            FAlert(
+                            AppNotice(
                               key: const ValueKey('paywall-unavailable'),
-                              variant: .destructive,
-                              title: Text(translations.pricing.unavailableReason),
+                              role: AppStatusRole.destructive,
+                              title: translations.pricing.unavailableReason,
                             ),
                           ],
                           SizedBox(height: spacing.xl),
@@ -186,6 +196,10 @@ class _PaywallPageState extends State<PaywallPage> {
                                             ? null
                                             : translations.pricing.unavailable,
                                         selected: plan.id == _selectedPlanId,
+                                        // Continue is this view's one primary
+                                        // button (BRAND.md s4); plan actions
+                                        // stay outline.
+                                        primaryAction: false,
                                         onSelect: _isAvailable(plan)
                                             ? () => setState(() => _selectedPlanId = plan.id)
                                             : null,
@@ -201,6 +215,11 @@ class _PaywallPageState extends State<PaywallPage> {
                             onPress: _canContinue
                                 ? () => widget.onContinue(_selectedPlan, _billingPeriod)
                                 : null,
+                            style: const .delta(
+                              tappableStyle: .delta(
+                                motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                              ),
+                            ),
                             builder: (_, _, _, _, _, child) => Flexible(child: child!),
                             child: Text(
                               translations.pricing.paywallContinue,
@@ -225,6 +244,11 @@ class _PaywallPageState extends State<PaywallPage> {
                                 key: const ValueKey('paywall-restore'),
                                 variant: .ghost,
                                 mainAxisSize: .min,
+                                style: const .delta(
+                                  tappableStyle: .delta(
+                                    motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                                  ),
+                                ),
                                 onPress: widget.onRestore,
                                 child: Text(translations.pricing.restore),
                               ),
@@ -232,6 +256,11 @@ class _PaywallPageState extends State<PaywallPage> {
                                 key: const ValueKey('paywall-terms'),
                                 variant: .ghost,
                                 mainAxisSize: .min,
+                                style: const .delta(
+                                  tappableStyle: .delta(
+                                    motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                                  ),
+                                ),
                                 onPress: widget.onOpenTerms,
                                 child: Text(translations.pricing.terms),
                               ),
@@ -239,6 +268,11 @@ class _PaywallPageState extends State<PaywallPage> {
                                 key: const ValueKey('paywall-privacy'),
                                 variant: .ghost,
                                 mainAxisSize: .min,
+                                style: const .delta(
+                                  tappableStyle: .delta(
+                                    motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                                  ),
+                                ),
                                 onPress: widget.onOpenPrivacy,
                                 child: Text(translations.pricing.privacy),
                               ),

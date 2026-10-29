@@ -17,6 +17,7 @@ import 'package:starter/shared/forms/form_field_reveal.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 import 'package:starter/shared/widgets/feedback/app_confirmation_dialog.dart';
@@ -488,14 +489,26 @@ class _ProfileForm extends StatelessWidget {
     final translations = context.t;
     final profile = translations.profile.update;
     final spacing = context.spacing;
+    final titleStyle = context.theme.typography.display.xl;
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(profile.title, style: context.theme.typography.display.xl3),
+          Text(
+            profile.title,
+            style: titleStyle.copyWith(
+              fontWeight: FontWeight.w500,
+              letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+            ),
+          ),
           SizedBox(height: spacing.sm),
-          Text(profile.body, style: context.theme.typography.body.lg),
+          Text(
+            profile.body,
+            style: context.theme.typography.body.md.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
           SizedBox(height: spacing.xl2),
           _AvatarEditor(
             onAvatarPicked: onAvatarPicked,
@@ -608,10 +621,10 @@ class _ProfileForm extends StatelessWidget {
           ),
           SizedBox(height: spacing.xl),
           if (phase == ProfilePresentationPhase.saved) ...[
-            FAlert(
+            AppNotice(
               key: const ValueKey('profile-saved'),
-              icon: const Icon(FLucideIcons.circleCheck),
-              title: Text(profile.saved),
+              title: profile.saved,
+              role: AppStatusRole.success,
             ),
             SizedBox(height: spacing.lg),
           ],
@@ -770,10 +783,15 @@ class _ProfilePreview extends StatelessWidget {
           Text(
             draft.displayName,
             key: const ValueKey('profile-preview-name'),
-            style: context.theme.typography.display.lg,
+            style: context.theme.typography.display.lg.copyWith(fontWeight: FontWeight.w500),
           ),
           SizedBox(height: spacing.xs),
-          Text('@${draft.username}', style: context.theme.typography.body.sm),
+          Text(
+            '@${draft.username}',
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
           if (draft.bio.trim().isNotEmpty) ...[
             SizedBox(height: spacing.lg),
             Text(draft.bio, style: context.theme.typography.body.sm),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/text_preset.dart';
+import 'package:starter/features/settings/widgets/inline_save_error_text.dart';
 import 'package:starter/features/settings/widgets/labeled_section_card.dart';
 import 'package:starter/features/settings/widgets/settings_save_failure.dart';
 import 'package:starter/i18n/translations.g.dart';
@@ -61,12 +62,9 @@ class _AccessibilityPresetSelectorState extends ConsumerState<AccessibilityPrese
         ),
         if (saveFailed) ...[
           SizedBox(height: context.spacing.md),
-          Text(
-            translations.common.notConnected,
-            key: const ValueKey('a11y-preset-save-error'),
-            style: context.theme.typography.body.sm.copyWith(
-              color: context.theme.colors.error,
-            ),
+          InlineSaveErrorText(
+            message: translations.common.notConnected,
+            valueKey: 'a11y-preset-save-error',
           ),
         ],
       ],
@@ -90,6 +88,7 @@ class _PresetTile extends StatelessWidget {
     final translations = context.t;
     return FTile(
       key: ValueKey('a11y-preset-${preset.name}'),
+      style: _outlineTileStyle(),
       title: Text(_PresetLabels.title(translations, preset)),
       subtitle: Text(_PresetLabels.description(translations, preset)),
       suffix: Icon(
@@ -100,6 +99,20 @@ class _PresetTile extends StatelessWidget {
       onPress: onPress,
     );
   }
+}
+
+/// Brand outline treatment for tiles sitting in the page (BRAND.md s8, s13):
+/// a transparent fill under the theme's 1px border. Hover stays a color
+/// change only — the theme's muted hover fill is kept.
+FItemStyleDelta _outlineTileStyle() {
+  return FItemStyleDelta.delta(
+    backgroundColor: FVariantsValueDelta.delta([
+      FVariantValueDeltaOperation.base(null),
+    ]),
+    contentDecoration: FVariantsDelta.delta([
+      FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
+    ]),
+  );
 }
 
 final class _PresetLabels {

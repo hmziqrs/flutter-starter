@@ -10,6 +10,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
 class OnboardingPage extends StatefulWidget {
   OnboardingPage({
@@ -131,7 +132,28 @@ class _OnboardingPageState extends State<OnboardingPage> with RestorationMixin {
                     child: Text(
                       translations.onboarding.progress(current: _page + 1, total: slides.length),
                       key: const ValueKey('onboarding-progress'),
+                      style: context.theme.typography.body.sm.copyWith(
+                        color: context.theme.colors.mutedForeground,
+                      ),
                     ),
+                  ),
+                  SizedBox(height: spacing.md),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < slides.length; i++)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: spacing.xs),
+                          child: ExcludeSemantics(
+                            child: AppRingMarker(
+                              filled: i == _page,
+                              color: i == _page
+                                  ? context.theme.colors.primary
+                                  : context.theme.colors.mutedForeground,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   SizedBox(height: spacing.md),
                   Row(

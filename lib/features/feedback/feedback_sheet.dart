@@ -10,6 +10,7 @@ import 'package:starter/shared/forms/form_validators.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_bottom_sheet.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/busy_indicator.dart';
 
 Future<bool> showFeedbackSheet({required BuildContext context}) async {
@@ -171,6 +172,8 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
             textInputAction: TextInputAction.newline,
             enabled: !busy,
             textCapitalization: TextCapitalization.sentences,
+            // Brand text field: a line, no fill (BRAND.md s9 Text field).
+            style: .delta(color: .delta([.base(null), .variants(null)])),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return translations.validation.required(
@@ -192,6 +195,7 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             enabled: !busy,
+            style: .delta(color: .delta([.base(null), .variants(null)])),
             validator: (value) {
               if (value == null || value.trim().isEmpty) return null;
               return validateEmail(
@@ -220,6 +224,13 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
               Expanded(
                 child: FButton(
                   key: const ValueKey('feedback-submit'),
+                  // The sheet's single primary (orange) action; the label is
+                  // the i18n-owned "what happens" copy.
+                  style: const .delta(
+                    tappableStyle: .delta(
+                      motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                    ),
+                  ),
                   onPress: busy ? null : () => unawaited(_submit(presentation, isFixture)),
                   child: Text(translations.feedback.submit),
                 ),
@@ -230,6 +241,11 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
           FButton(
             key: const ValueKey('feedback-cancel'),
             variant: .ghost,
+            style: const .delta(
+              tappableStyle: .delta(
+                motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+              ),
+            ),
             onPress: busy ? null : widget.onDismiss,
             child: Text(translations.feedback.cancel),
           ),
@@ -246,11 +262,13 @@ class _FeedbackSheetBodyState extends ConsumerState<FeedbackSheetBody> {
       FeedbackPresentationStatus.validating ||
       FeedbackPresentationStatus.submitting => null,
       FeedbackPresentationStatus.success => null,
-      FeedbackPresentationStatus.failed => FAlert(
+      // Role-styled brand notice (BRAND.md s9): thin destructive line and
+      // icon, transparent fill, text in the normal colors.
+      FeedbackPresentationStatus.failed => AppNotice(
         key: const ValueKey('feedback-failed'),
-        variant: .destructive,
-        title: Text(translations.common.notConnected),
-        subtitle: Text(translations.feedback.failedTitle),
+        role: AppStatusRole.destructive,
+        title: translations.common.notConnected,
+        body: translations.feedback.failedTitle,
       ),
     };
   }
@@ -315,13 +333,15 @@ class _SuccessCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Success is the green role, always soft (BRAND.md s4 Status): a thin
+    // green line and icon on a transparent fill, text in the normal colors.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FAlert(
-          icon: const Icon(FLucideIcons.circleCheck),
-          title: Text(title),
-          subtitle: Text(body),
+        AppNotice(
+          role: AppStatusRole.success,
+          title: title,
+          body: body,
         ),
       ],
     );

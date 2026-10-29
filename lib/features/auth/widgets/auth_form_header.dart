@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart';
+import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 
 class AuthFormHeader extends StatelessWidget {
@@ -22,9 +22,9 @@ class AuthFormHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, style: context.theme.typography.display.xl2),
+        Text(title, style: entryPageTitleStyle(context)),
         SizedBox(height: context.spacing.md),
-        Text(body, style: context.theme.typography.body.md),
+        Text(body, style: entryMutedBodyStyle(context)),
         for (final alert in alerts) ...[
           SizedBox(height: context.spacing.xl),
           alert,

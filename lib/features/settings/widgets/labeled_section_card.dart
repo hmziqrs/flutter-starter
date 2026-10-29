@@ -3,6 +3,8 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 
+/// A titled settings section: an outline card with the section title set one
+/// step above body text at medium weight, never uppercase.
 class LabeledSectionCard extends StatelessWidget {
   const LabeledSectionCard({
     required this.title,
@@ -19,7 +21,10 @@ class LabeledSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: context.theme.typography.body.lg),
+          Text(
+            title,
+            style: context.theme.typography.body.md.copyWith(fontWeight: FontWeight.w500),
+          ),
           SizedBox(height: context.spacing.lg),
           child,
         ],

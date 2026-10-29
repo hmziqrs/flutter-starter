@@ -205,6 +205,12 @@ class _SearchHeader extends StatelessWidget {
             key: const ValueKey('search-back'),
             variant: .ghost,
             semanticsLabel: context.t.common.back,
+            // Feedback is color only (BRAND.md s10) — no press scale.
+            style: const .delta(
+              tappableStyle: .delta(
+                motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+              ),
+            ),
             onPress: onBack,
             child: Icon(
               Directionality.of(context) == TextDirection.rtl
@@ -217,7 +223,8 @@ class _SearchHeader extends StatelessWidget {
             child: Text(
               title,
               key: const ValueKey('search-title'),
-              style: context.theme.typography.display.lg,
+              // App type scale (APP-BLOCKS): page title 24 w500 tight.
+              style: context.theme.typography.display.xl,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -235,8 +242,28 @@ class _SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Brand surface (BRAND.md s8/s13): outline only — the theme's
+    // card-colored fills are cleared, the 1px border stays.
     return FTile(
       key: ValueKey('search-result-${result.id}'),
+      style: .delta(
+        backgroundColor: .delta([.base(null), .variants(null)]),
+        contentDecoration: .delta([
+          .base(
+            DecorationDelta.value(
+              ShapeDecoration(
+                shape: RoundedSuperellipseBorder(
+                  side: BorderSide(
+                    color: context.theme.colors.border,
+                    width: context.theme.style.borderWidth,
+                  ),
+                  borderRadius: context.theme.style.borderRadius.md,
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
       title: Text(
         result.title,
         key: ValueKey('search-result-${result.id}-title'),

@@ -5,6 +5,8 @@ import 'package:forui/forui.dart';
 import 'package:starter/features/force_update/force_update_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 Future<void> showSoftUpdateDialog(
@@ -69,6 +71,11 @@ class SoftUpdateCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: AppIconTile(icon: FLucideIcons.info, tone: context.theme.brand.info),
+          ),
+          SizedBox(height: spacing.lg),
           Text(
             translations.softUpdate.title,
             key: const ValueKey('soft-update-title'),

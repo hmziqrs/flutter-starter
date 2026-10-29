@@ -18,6 +18,7 @@ import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/feedback/app_confirmation_dialog.dart';
@@ -394,25 +395,25 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
         RegisterPresentationStatus.submitting => null,
         RegisterPresentationStatus.invalid => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-register-invalid'),
-          variant: FAlertVariant.destructive,
+          role: AppStatusRole.destructive,
           title: Text(
             translations.validation.required(field: translations.auth.common.displayName),
           ),
         ),
         RegisterPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-register-field-failure'),
-          variant: FAlertVariant.destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.validation.email),
         ),
         RegisterPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-register-global-failure'),
-          variant: FAlertVariant.destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.register.globalError),
         ),
         RegisterPresentationStatus.success => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-register-success'),
+          role: AppStatusRole.success,
           title: Text(translations.auth.register.success),
-          icon: const Icon(FLucideIcons.circleCheck),
         ),
       },
     );
@@ -511,6 +512,7 @@ class _PasswordRequirements extends StatelessWidget {
     return Text(
       key: const ValueKey('auth-register-password-requirements'),
       text,
+      style: entryMutedBodyStyle(context),
     );
   }
 }

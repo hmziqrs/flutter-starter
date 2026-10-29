@@ -13,6 +13,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
@@ -161,6 +162,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
               description: Text(
                 translations.auth.common.passwordRequirements,
                 key: const ValueKey('auth-reset-password-requirements'),
+                style: entryMutedBodyStyle(context),
               ),
               autofillHints: const [AutofillHints.newPassword],
               nextFocusNode: _confirmPasswordFocus,
@@ -214,23 +216,23 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
         ResetPasswordPresentationStatus.submitting => null,
         ResetPasswordPresentationStatus.invalid => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-reset-password-invalid'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.validation.passwordWeak),
         ),
         ResetPasswordPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-reset-password-field-failure'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.validation.passwordMismatch),
         ),
         ResetPasswordPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-reset-password-global-failure'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.resetPassword.globalError),
         ),
         ResetPasswordPresentationStatus.success => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-reset-password-success'),
+          role: AppStatusRole.success,
           title: Text(translations.auth.resetPassword.success),
-          icon: const Icon(FLucideIcons.circleCheck),
         ),
       },
     );

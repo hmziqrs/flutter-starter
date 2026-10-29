@@ -23,6 +23,24 @@ class CompactAppShell extends StatelessWidget {
         key: const ValueKey('compact-navigation'),
         index: selectedIndex,
         onChange: onSelectTab,
+        // Brand rules: the active destination reads as the muted selection —
+        // a quiet foreground label, never an orange announcement — with only
+        // the icon carrying the brand color (APP-BLOCKS AppShell states).
+        // Press feedback is color only, and labels never exceed w600.
+        style: FBottomNavigationBarStyleDelta.delta(
+          itemStyle: FBottomNavigationBarItemStyleDelta.delta(
+            tappableStyle: const FTappableStyleDelta.delta(motion: FTappableMotion.none),
+            textStyle: FVariantsDelta.delta([
+              FVariantOperation.match(
+                {FTappableVariant.selected},
+                TextStyleDelta.delta(
+                  color: context.theme.colors.foreground,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ]),
+          ),
+        ),
         children: [
           FBottomNavigationBarItem(
             icon: const Icon(FLucideIcons.house),

@@ -146,6 +146,7 @@ class _SettingsOverview extends StatelessWidget {
         children: [
           FTile(
             key: const ValueKey('settings-open-appearance'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.palette),
             title: Text(translations.settings.appearance),
             suffix: const _DirectionalChevron(),
@@ -153,6 +154,7 @@ class _SettingsOverview extends StatelessWidget {
           ),
           FTile(
             key: const ValueKey('settings-open-language'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.languages),
             title: Text(translations.settings.language),
             suffix: const _DirectionalChevron(),
@@ -160,6 +162,7 @@ class _SettingsOverview extends StatelessWidget {
           ),
           FTile(
             key: const ValueKey('settings-open-accessibility'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.accessibility),
             title: Text(translations.settings.accessibility.title),
             suffix: const _DirectionalChevron(),
@@ -167,6 +170,7 @@ class _SettingsOverview extends StatelessWidget {
           ),
           FTile(
             key: const ValueKey('settings-open-account'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.userRound),
             title: Text(translations.settings.account),
             suffix: const _DirectionalChevron(),
@@ -174,6 +178,7 @@ class _SettingsOverview extends StatelessWidget {
           ),
           FTile(
             key: const ValueKey('settings-open-subscription'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.creditCard),
             title: Text(translations.settings.subscription),
             suffix: const _DirectionalChevron(),
@@ -181,6 +186,7 @@ class _SettingsOverview extends StatelessWidget {
           ),
           FTile(
             key: const ValueKey('settings-open-privacy-about'),
+            style: _outlineTileStyle(),
             prefix: const Icon(FLucideIcons.shieldCheck),
             title: Text(translations.settings.privacyAbout),
             suffix: const _DirectionalChevron(),
@@ -232,6 +238,7 @@ class _SettingsWideLayout extends StatelessWidget {
     final translations = context.t;
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
+    final titleStyle = context.theme.typography.display.xl;
     return _SettingsDirectionalFocusBridge(
       navigation: FocusTraversalGroup(
         policy: WidgetOrderTraversalPolicy(),
@@ -250,7 +257,10 @@ class _SettingsWideLayout extends StatelessWidget {
                       children: [
                         Text(
                           translations.settings.title,
-                          style: context.theme.typography.display.xl,
+                          style: titleStyle.copyWith(
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+                          ),
                         ),
                         SizedBox(height: spacing.xl),
                         AppSidebarItemGroup(
@@ -491,6 +501,7 @@ class _AccountSettingsContent extends StatelessWidget {
             children: [
               FTile(
                 key: const ValueKey('settings-open-profile'),
+                style: _outlineTileStyle(),
                 prefix: const Icon(FLucideIcons.userRoundPen),
                 title: Text(translations.settings.openProfile),
                 suffix: const _DirectionalChevron(),
@@ -498,6 +509,7 @@ class _AccountSettingsContent extends StatelessWidget {
               ),
               FTile(
                 key: const ValueKey('settings-open-login'),
+                style: _outlineTileStyle(),
                 prefix: const Icon(FLucideIcons.logIn),
                 title: Text(translations.settings.openLogin),
                 suffix: const _DirectionalChevron(),
@@ -575,6 +587,7 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
           SpacedColumn(
             children: [
               FTile(
+                style: _outlineTileStyle(),
                 title: Text(translations.settings.aboutBuild),
                 details: FutureBuilder<String>(
                   future: _buildLabel,
@@ -595,18 +608,21 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
               const AnalyticsOptInTile(),
               FTile(
                 key: const ValueKey('settings-open-terms'),
+                style: _outlineTileStyle(),
                 title: Text(translations.settings.terms),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenTerms,
               ),
               FTile(
                 key: const ValueKey('settings-open-privacy'),
+                style: _outlineTileStyle(),
                 title: Text(translations.settings.privacy),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenPrivacy,
               ),
               FTile(
                 key: const ValueKey('settings-open-license'),
+                style: _outlineTileStyle(),
                 title: Text(translations.settings.about.license),
                 suffix: const _DirectionalChevron(),
                 onPress: widget.onOpenLicense,
@@ -614,6 +630,7 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
               const FeedbackShakeTile(),
               FTile(
                 key: const ValueKey('settings-send-feedback'),
+                style: _outlineTileStyle(),
                 title: Text(translations.feedback.title),
                 suffix: const _DirectionalChevron(),
                 onPress: () => unawaited(showFeedbackSheet(context: context)),
@@ -624,6 +641,20 @@ class _PrivacyAboutSettingsContentState extends State<_PrivacyAboutSettingsConte
       ),
     );
   }
+}
+
+/// Brand outline treatment for tiles sitting in the page (BRAND.md s8, s13):
+/// a transparent fill under the theme's 1px border. Hover stays a color
+/// change only — the theme's muted hover fill is kept.
+FItemStyleDelta _outlineTileStyle() {
+  return FItemStyleDelta.delta(
+    backgroundColor: FVariantsValueDelta.delta([
+      FVariantValueDeltaOperation.base(null),
+    ]),
+    contentDecoration: FVariantsDelta.delta([
+      FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
+    ]),
+  );
 }
 
 class _DirectionalChevron extends StatelessWidget {
@@ -656,7 +687,6 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
       settingsControllerProvider.select(
         (state) => (
           themeMode: state.themeMode,
-          accent: state.accent,
           fontScale: state.fontScale,
           spacingVariant: state.spacingVariant,
           radiusVariant: state.radiusVariant,
@@ -677,30 +707,11 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               runSpacing: spacing.sm,
               children: [
                 for (final mode in AppThemeMode.values)
-                  FButton(
-                    key: ValueKey('theme-${mode.name}'),
-                    variant: settings.themeMode == mode ? .primary : .outline,
-                    mainAxisSize: .min,
+                  _SettingsOptionButton(
+                    buttonKey: ValueKey('theme-${mode.name}'),
+                    label: _themeModeLabel(translations, mode),
+                    selected: settings.themeMode == mode,
                     onPress: () => runSave(() => controller.setThemeMode(mode)),
-                    child: Text(_themeModeLabel(translations, mode)),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: spacing.lg),
-          LabeledSectionCard(
-            title: translations.settings.accent,
-            child: Wrap(
-              spacing: spacing.sm,
-              runSpacing: spacing.sm,
-              children: [
-                for (final accent in AppAccent.values)
-                  FButton(
-                    key: ValueKey('accent-${accent.name}'),
-                    variant: settings.accent == accent ? .primary : .outline,
-                    mainAxisSize: .min,
-                    onPress: () => runSave(() => controller.setAccent(accent)),
-                    child: Text(_accentLabel(translations, accent)),
                   ),
               ],
             ),
@@ -744,12 +755,11 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               runSpacing: spacing.sm,
               children: [
                 for (final variant in AppSpacingVariant.values)
-                  FButton(
-                    key: ValueKey('spacing-${variant.name}'),
-                    variant: settings.spacingVariant == variant ? .primary : .outline,
-                    mainAxisSize: .min,
+                  _SettingsOptionButton(
+                    buttonKey: ValueKey('spacing-${variant.name}'),
+                    label: _spacingVariantLabel(translations, variant),
+                    selected: settings.spacingVariant == variant,
                     onPress: () => runSave(() => controller.setSpacingVariant(variant)),
-                    child: Text(_spacingVariantLabel(translations, variant)),
                   ),
               ],
             ),
@@ -762,12 +772,11 @@ class _AppearanceSettingsContentState extends ConsumerState<_AppearanceSettingsC
               runSpacing: spacing.sm,
               children: [
                 for (final variant in AppRadiusVariant.values)
-                  FButton(
-                    key: ValueKey('radius-${variant.name}'),
-                    variant: settings.radiusVariant == variant ? .primary : .outline,
-                    mainAxisSize: .min,
+                  _SettingsOptionButton(
+                    buttonKey: ValueKey('radius-${variant.name}'),
+                    label: _radiusVariantLabel(translations, variant),
+                    selected: settings.radiusVariant == variant,
                     onPress: () => runSave(() => controller.setRadiusVariant(variant)),
-                    child: Text(_radiusVariantLabel(translations, variant)),
                   ),
               ],
             ),
@@ -855,10 +864,71 @@ class _LocaleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FTile(
+      style: _outlineTileStyle(),
       title: Text(label),
       selected: selected,
       suffix: Icon(selected ? FLucideIcons.circleCheck : FLucideIcons.circle),
       onPress: onPress,
+    );
+  }
+}
+
+/// One option in a picker row. Feedback is color only: the picked option sits
+/// on a soft primary fill with a primary border, never a second solid button.
+class _SettingsOptionButton extends StatelessWidget {
+  const _SettingsOptionButton({
+    required this.label,
+    required this.selected,
+    required this.onPress,
+    this.buttonKey,
+  });
+
+  final Key? buttonKey;
+  final String label;
+  final bool selected;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final fillAlpha = switch (colors.brightness) {
+      Brightness.dark => 0.2,
+      Brightness.light => 0.1,
+    };
+    return FButton(
+      key: buttonKey,
+      variant: .outline,
+      mainAxisSize: .min,
+      style: selected
+          ? FButtonStyleDelta.delta(
+              decoration: FVariantsDelta.delta([
+                FVariantOperation.base(
+                  DecorationDelta.boxDelta(
+                    color: colors.primary.withValues(alpha: fillAlpha),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.6)),
+                  ),
+                ),
+              ]),
+            )
+          // Brand outline control (BRAND.md s9): line-only at rest — the
+          // theme's card fill is cleared and the border stays; the muted
+          // hover/selected fill from the outline variant is kept.
+          : FButtonStyleDelta.delta(
+              decoration: FVariantsDelta.delta([
+                FVariantOperation.base(const DecorationDelta.shapeDelta(color: null)),
+              ]),
+            ),
+      onPress: onPress,
+      child: selected
+          ? Builder(
+              builder: (buttonContext) => Text(
+                label,
+                style: DefaultTextStyle.of(
+                  buttonContext,
+                ).style.copyWith(color: colors.primary),
+              ),
+            )
+          : Text(label),
     );
   }
 }
@@ -929,17 +999,6 @@ String _themeModeLabel(Translations translations, AppThemeMode mode) {
     AppThemeMode.system => translations.settings.system,
     AppThemeMode.light => translations.settings.light,
     AppThemeMode.dark => translations.settings.dark,
-  };
-}
-
-String _accentLabel(Translations translations, AppAccent accent) {
-  return switch (accent) {
-    AppAccent.neutral => translations.settings.accentNeutral,
-    AppAccent.green => translations.settings.accentGreen,
-    AppAccent.blue => translations.settings.accentBlue,
-    AppAccent.amber => translations.settings.accentAmber,
-    AppAccent.rose => translations.settings.accentRose,
-    AppAccent.violet => translations.settings.accentViolet,
   };
 }
 

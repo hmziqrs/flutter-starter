@@ -105,7 +105,9 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.text(en.splash.tagline), findsOneWidget);
-    expect(find.text(en.app.name), findsOneWidget);
+    // The wordmark rides its orange square inline, so the rendered plain
+    // text carries a trailing object-replacement character.
+    expect(find.textContaining(en.app.name), findsOneWidget);
   });
 
   testWidgets('fires onComplete when the startup future resolves (no pumpAndSettle)', (

@@ -12,6 +12,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
+import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 
 void main() {
   setUp(() async {
@@ -45,6 +46,27 @@ void main() {
 
     expect(find.byKey(const ValueKey('compact-navigation')), findsOneWidget);
     expect(find.byKey(const ValueKey('television-shell')), findsNothing);
+  });
+
+  testWidgets('television navigation header renders the brand wordmark', (tester) async {
+    await _pumpTelevisionShell(tester, selectedIndex: 0);
+
+    final wordmark = tester.widget<AppWordmark>(
+      find.byKey(const ValueKey('television-navigation-brand')),
+    );
+    expect(wordmark.name, t.app.name);
+    expect(wordmark.showSquare, isTrue);
+
+    final wordmarkRect = tester.getRect(
+      find.byKey(const ValueKey('television-navigation-brand')),
+    );
+    final navigationRect = tester.getRect(
+      find.byKey(const ValueKey('television-navigation-region')),
+    );
+    // The wordmark must fit the navigation column on one line, never wrap
+    // mid-word and never spill past the sidebar's right edge.
+    expect(wordmarkRect.left, greaterThanOrEqualTo(navigationRect.left));
+    expect(wordmarkRect.right, lessThanOrEqualTo(navigationRect.right));
   });
 
   testWidgets('selected destination receives cold autofocus and activates', (

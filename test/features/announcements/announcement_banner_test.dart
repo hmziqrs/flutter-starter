@@ -5,11 +5,12 @@ import 'package:starter/features/announcements/announcement_banner.dart';
 import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 void main() {
   group('AnnouncementBannerView', () {
-    testWidgets('renders the dismiss control', (tester) async {
+    testWidgets('renders the dismiss control and the info presentation', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: AnnouncementBannerView(
@@ -21,7 +22,8 @@ void main() {
       );
 
       expect(find.byIcon(FLucideIcons.x), findsOneWidget);
-      expect(find.byType(FAlert), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.info), findsOneWidget);
+      _expectSoftRoleFill(tester, AppBrandColors.light.info);
     });
 
     testWidgets('invokes onDismiss when the in-card X is tapped', (tester) async {
@@ -54,9 +56,9 @@ void main() {
         ),
       );
 
-      expect(find.text('Learn more'), findsOneWidget);
+      expect(find.text('See details'), findsOneWidget);
 
-      await tester.tap(find.text('Learn more'));
+      await tester.tap(find.text('See details'));
       await tester.pumpAndSettle();
 
       expect(acted, 1);
@@ -83,8 +85,9 @@ void main() {
       );
 
       expect(find.byIcon(FLucideIcons.x), findsNothing);
-      expect(find.byType(FAlert), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.octagonAlert), findsOneWidget);
       expect(find.text('Pinned'), findsOneWidget);
+      _expectSoftRoleFill(tester, AppBrandColors.light.destructive);
     });
 
     testWidgets('renders the welcome copy', (tester) async {
@@ -99,6 +102,30 @@ void main() {
       );
 
       expect(find.text('Welcome to the starter'), findsOneWidget);
+    });
+
+    testWidgets('maps every severity to its brand status role', (tester) async {
+      final expected = <(AnnouncementSeverity, IconData, Color)>[
+        (AnnouncementSeverity.info, FLucideIcons.info, AppBrandColors.light.info),
+        (AnnouncementSeverity.success, FLucideIcons.circleCheck, AppBrandColors.light.green),
+        (AnnouncementSeverity.warning, FLucideIcons.triangleAlert, AppBrandColors.light.yellow),
+        (AnnouncementSeverity.critical, FLucideIcons.octagonAlert, AppBrandColors.light.red),
+      ];
+
+      for (final (severity, icon, color) in expected) {
+        await tester.pumpWidget(
+          _harness(
+            child: AnnouncementBannerView(
+              announcement: AnnouncementFixtures.forSeverity(severity),
+              onDismiss: () {},
+              onAction: () {},
+            ),
+          ),
+        );
+
+        expect(find.byIcon(icon), findsOneWidget, reason: '${severity.name} role icon');
+        _expectSoftRoleFill(tester, color, reason: '${severity.name} soft fill');
+      }
     });
 
     testWidgets('keeps a long title clear of the action strip in LTR', (tester) async {
@@ -126,6 +153,24 @@ const _longTitle =
     'A deliberately long announcement title that keeps going and going and going and '
     'going to force the banner title to wrap onto two lines and ellipsize before it '
     'reaches the floating action controls.';
+
+void _expectSoftRoleFill(WidgetTester tester, Color roleColor, {String? reason}) {
+  final container = tester.widget<Container>(
+    find.byKey(const ValueKey('announcement-banner')),
+  );
+  final decoration = container.decoration! as BoxDecoration;
+  // Status is always soft: a 10% role fill over the page background in light
+  // mode, never a solid background. The blend keeps the strip opaque so the
+  // soft fill reads correctly above routed content too.
+  expect(
+    decoration.color,
+    Color.alphaBlend(
+      roleColor.withValues(alpha: 0.10),
+      generated.lightTheme.colors.background,
+    ),
+    reason: reason,
+  );
+}
 
 Future<void> _pumpLongTitleBanner(
   WidgetTester tester, {

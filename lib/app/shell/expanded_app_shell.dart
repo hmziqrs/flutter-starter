@@ -4,6 +4,7 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_sidebar_item_group.dart';
+import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 
 class ExpandedAppShell extends StatelessWidget {
   const ExpandedAppShell({
@@ -35,22 +36,33 @@ class ExpandedAppShell extends StatelessWidget {
         width: width,
         child: FSidebar.raw(
           key: const ValueKey('expanded-navigation'),
-          header: SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(
-                navigationInset + itemPadding.left,
-                context.spacing.lg,
-                navigationInset + itemPadding.right,
-                context.spacing.sm,
-              ),
-              child: Text(
-                key: const ValueKey('expanded-navigation-brand'),
-                translations.app.name,
-                style: context.theme.typography.display.lg,
-              ),
-            ),
-          ),
+          // The compact sidebar (88px) cannot hold the wordmark without
+          // squeezing or clipping it, so the wordmark header only shows in the
+          // expanded sidebar where the name always fits on one line.
+          header: compactSidebar
+              ? null
+              : SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      navigationInset + itemPadding.left,
+                      context.spacing.lg,
+                      navigationInset + itemPadding.right,
+                      context.spacing.sm,
+                    ),
+                    // Minimal dependent fix from the settings-profile area:
+                    // long translated names (ar) overflow the sidebar, so the
+                    // wordmark scales down instead of overflowing.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: AppWordmark(
+                        key: const ValueKey('expanded-navigation-brand'),
+                        name: translations.app.name,
+                      ),
+                    ),
+                  ),
+                ),
           child: ListView(
             padding: EdgeInsets.symmetric(horizontal: navigationInset),
             children: [

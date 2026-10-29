@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:starter/features/auth/auth_page_scaffold.dart';
+import 'package:starter/features/auth/widgets/auth_feedback_alert.dart';
 import 'package:starter/features/security/auto_lock_controller.dart';
 import 'package:starter/features/security/passcode_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
-import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 enum PasscodePageMode { entry, setup }
@@ -77,7 +78,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
   final FocusNode _entryFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
   bool _submitting = false;
-  bool _shake = false;
   String? _entryError;
   String? _setupError;
 
@@ -134,10 +134,12 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             _buildSetupSurface(context),
           if (_entryError != null || _setupError != null) ...[
             SizedBox(height: context.spacing.lg),
-            FAlert(
-              key: ValueKey('passcode-error-${_entryError ?? _setupError}'),
-              variant: .destructive,
-              title: Text(_entryError ?? _setupError!),
+            AuthFeedbackAlert<Object>(
+              spec: AuthFeedbackAlertSpec(
+                key: ValueKey('passcode-error-${_entryError ?? _setupError}'),
+                role: AppStatusRole.destructive,
+                title: Text(_entryError ?? _setupError!),
+              ),
             ),
           ],
         ],
@@ -158,21 +160,21 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
         Text(
           translations.enterTitle,
           key: const ValueKey('passcode-entry-title'),
-          style: context.theme.typography.display.xl2,
+          style: entryPageTitleStyle(context),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: spacing.md),
         Text(
           translations.enterBody,
           key: const ValueKey('passcode-entry-body'),
-          style: context.theme.typography.body.md,
+          style: entryMutedBodyStyle(context),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: spacing.xl),
         _PasscodeDots(
           filled: _entryController.text.length,
           total: widget.passcodeLength,
-          pulse: isLockedOut,
+          alert: isLockedOut,
         ),
         SizedBox(height: spacing.lg),
         if (isLockedOut)
@@ -195,27 +197,24 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
             autofocus: true,
           ),
         SizedBox(height: spacing.lg),
-        _ShakeGuard(
-          shaking: _shake,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FButton(
+              key: const ValueKey('passcode-unlock'),
+              onPress: _submitting || isLockedOut ? null : () => unawaited(_submitEntry()),
+              child: Text(translations.enterTitle),
+            ),
+            if (widget.onDisable != null) ...[
+              SizedBox(height: spacing.md),
               FButton(
-                key: const ValueKey('passcode-unlock'),
-                onPress: _submitting || isLockedOut ? null : () => unawaited(_submitEntry()),
-                child: Text(translations.enterTitle),
+                key: const ValueKey('passcode-disable'),
+                variant: .ghost,
+                onPress: _submitting ? null : widget.onDisable,
+                child: Text(translations.disable),
               ),
-              if (widget.onDisable != null) ...[
-                SizedBox(height: spacing.md),
-                FButton(
-                  key: const ValueKey('passcode-disable'),
-                  variant: .ghost,
-                  onPress: _submitting ? null : widget.onDisable,
-                  child: Text(translations.disable),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ],
     );
@@ -230,7 +229,7 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
         _PasscodeDots(
           filled: (_confirmFocus.hasFocus ? _confirmController : _entryController).text.length,
           total: widget.passcodeLength,
-          pulse: false,
+          alert: false,
         ),
         SizedBox(height: spacing.lg),
         Form(
@@ -369,30 +368,28 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
     }
   }
 
+  /// Wrong-passcode feedback is color and copy only: the notice below the dots
+  /// carries the error and the entry clears for the next try (BRAND.md s10).
   void _signalIncorrect({required String message}) {
     _entryController.clear();
-    if (mounted) setState(() {});
-    if (!MediaQuery.disableAnimationsOf(context)) {
-      setState(() {
-        _shake = true;
-        _entryError = message;
-      });
-      Future<void>.delayed(AppMotion.deliberate, () {
-        if (mounted) setState(() => _shake = false);
-      });
-    } else {
-      setState(() => _entryError = message);
-    }
+    setState(() => _entryError = message);
     _entryFocus.requestFocus();
   }
 }
 
 class _PasscodeDots extends StatelessWidget {
-  const _PasscodeDots({required this.filled, required this.total, required this.pulse});
+  const _PasscodeDots({
+    required this.filled,
+    required this.total,
+    required this.alert,
+  });
 
   final int filled;
   final int total;
-  final bool pulse;
+
+  /// True while the entry is locked out: the markers read destructive instead
+  /// of animating.
+  final bool alert;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +404,11 @@ class _PasscodeDots extends StatelessWidget {
               for (var i = 0; i < total; i++)
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: context.spacing.xs),
-                  child: _Dot(active: i < filled, pulse: pulse && i < filled),
+                  child: AppRingMarker(
+                    filled: i < filled && !alert,
+                    color: _dotColor(context, filledNow: i < filled, alert: alert),
+                    size: 10,
+                  ),
                 ),
             ],
           ),
@@ -415,32 +416,14 @@ class _PasscodeDots extends StatelessWidget {
       ],
     );
   }
-}
 
-class _Dot extends StatelessWidget {
-  const _Dot({required this.active, required this.pulse});
-
-  final bool active;
-  final bool pulse;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? context.theme.colors.primary : context.theme.colors.mutedForeground;
-    final icon = Icon(
-      active ? FLucideIcons.circle : FLucideIcons.circleDashed,
-      size: 18,
-      color: color,
-    );
-    if (!pulse || MediaQuery.disableAnimationsOf(context)) {
-      return icon;
+  Color _dotColor(BuildContext context, {required bool filledNow, required bool alert}) {
+    final brand = context.theme.brand;
+    final colors = context.theme.colors;
+    if (alert) {
+      return brand.destructive;
     }
-    return LoopAnimationBuilder<Movie>(
-      tween: _dotTween,
-      duration: _dotTween.duration,
-      builder: (context, movie, child) =>
-          Transform.scale(scale: _dotScale.from(movie), child: child),
-      child: icon,
-    );
+    return filledNow ? colors.primary : colors.mutedForeground;
   }
 }
 
@@ -452,59 +435,14 @@ class _LockedOutNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t.security.passcode;
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: context.spacing.md),
-      child: Text(
+    return FAlert(
+      key: const ValueKey('passcode-locked-out'),
+      style: AuthFeedbackAlert.noticeStyle(context, AppStatusRole.destructive),
+      icon: const Icon(FLucideIcons.octagonAlert),
+      title: Text(
         translations.lockedOut(n: seconds, seconds: seconds),
-        key: const ValueKey('passcode-locked-out'),
-        style: context.theme.typography.body.lg,
         textAlign: TextAlign.center,
       ),
     );
   }
 }
-
-class _ShakeGuard extends StatelessWidget {
-  const _ShakeGuard({required this.shaking, required this.child});
-
-  final bool shaking;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!shaking || MediaQuery.disableAnimationsOf(context)) {
-      return child;
-    }
-    return PlayAnimationBuilder<Movie>(
-      tween: _shakeTween,
-      duration: _shakeTween.duration,
-      builder: (context, movie, child) => Transform.translate(
-        offset: Offset(_shakeX.from(movie), 0),
-        child: child,
-      ),
-      child: child,
-    );
-  }
-}
-
-final _dotScale = MovieTweenProperty<double>();
-final _shakeX = MovieTweenProperty<double>();
-final _dotTween = MovieTween()
-  ..tween<double>(
-    _dotScale,
-    Tween(begin: 1, end: 0.8),
-    duration: AppMotion.deliberate,
-    curve: AppMotion.standardCurve,
-  );
-final _shakeTween = MovieTween()
-  ..tween<double>(
-    _shakeX,
-    TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: -8), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -8, end: 8), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 8, end: -4), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -4, end: 0), weight: 1),
-    ]),
-    duration: AppMotion.standard,
-    curve: AppMotion.standardCurve,
-  );

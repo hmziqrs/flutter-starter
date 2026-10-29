@@ -181,30 +181,36 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'compact layout at 639px');
 
     expect(find.byKey(const ValueKey('compact-navigation')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('accent-blue')));
+    // The brand ships a single accent (BRAND.md s13), so the appearance page
+    // no longer offers accent chips; drive the persisted theme state directly
+    // and verify it survives the live resizes.
+    final container = ProviderScope.containerOf(
+      tester.element(find.byKey(const ValueKey('compact-navigation'))),
+    );
+    unawaited(container.read(settingsControllerProvider.notifier).setAccent(AppAccent.blue));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'compact theme update at 639px');
-    _expectBlueAccent(tester);
+    _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(640, 844);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'medium layout at 640px');
     expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
     expect(find.text('Appearance'), findsWidgets);
-    _expectBlueAccent(tester);
+    _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(1023, 844);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'medium layout at 1023px');
     expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
-    _expectBlueAccent(tester);
+    _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(1024, 844);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
     expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
     expect(find.text('Appearance'), findsWidgets);
-    _expectBlueAccent(tester);
+    _expectBlueAccent(container);
   });
 
   testWidgets('startup error exposes only a safe diagnostic identifier', (tester) async {
@@ -389,9 +395,6 @@ void _setViewport(WidgetTester tester, Size size) {
   addTearDown(tester.view.resetPhysicalSize);
 }
 
-void _expectBlueAccent(WidgetTester tester) {
-  final container = ProviderScope.containerOf(
-    tester.element(find.byKey(const ValueKey('accent-blue'))),
-  );
+void _expectBlueAccent(ProviderContainer container) {
   expect(container.read(settingsControllerProvider).accent, AppAccent.blue);
 }

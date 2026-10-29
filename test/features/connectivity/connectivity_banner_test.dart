@@ -7,7 +7,9 @@ import 'package:starter/features/connectivity/connectivity_banner.dart';
 import 'package:starter/features/connectivity/connectivity_controller.dart';
 import 'package:starter/features/connectivity/connectivity_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
 import '../../infrastructure/connectivity/fake_connectivity_service.dart';
 
@@ -15,6 +17,23 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   for (var frame = 0; frame < 8; frame += 1) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+void _expectSoftRoleFill(WidgetTester tester, Color roleColor) {
+  final container = tester.widget<Container>(
+    find.byKey(const ValueKey('connectivity-banner')),
+  );
+  final decoration = container.decoration! as BoxDecoration;
+  // Status is always soft: a 10% role fill over the page background in light
+  // mode, never a solid background. The blend keeps the strip opaque so the
+  // soft fill reads correctly above routed content too.
+  expect(
+    decoration.color,
+    Color.alphaBlend(
+      roleColor.withValues(alpha: 0.10),
+      generated.lightTheme.colors.background,
+    ),
+  );
 }
 
 Widget _harness({
@@ -87,7 +106,8 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.text(t.connectivity.offline), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.wifiOff), findsOneWidget);
+    expect(find.byType(AppRingMarker), findsOneWidget);
+    _expectSoftRoleFill(tester, AppBrandColors.light.destructive);
   });
 
   testWidgets('renders the limited banner for the limited state', (tester) async {
@@ -101,7 +121,8 @@ void main() {
     await _pumpFrames(tester);
 
     expect(find.text(t.connectivity.limited), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.wifiLow), findsOneWidget);
+    expect(find.byType(AppRingMarker), findsOneWidget);
+    _expectSoftRoleFill(tester, AppBrandColors.light.warning);
   });
 
   testWidgets('fires the back-online toast on the recovery edge and hides the banner', (

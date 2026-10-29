@@ -170,19 +170,60 @@ void main() {
     expect(dialogRect.right, lessThanOrEqualTo(viewportRect.right));
     expect(dialogRect.bottom, lessThanOrEqualTo(viewportRect.bottom));
   });
+
+  testWidgets('paints the canvas from the preview theme, not the app theme', (tester) async {
+    // The gallery environment is independent of the app's theme mode. When
+    // they disagree, an ambient canvas puts one mode's content on the other
+    // mode's surface (light foreground text on a dark canvas, and so on).
+    final lightEnvironment = GalleryEnvironment.defaults();
+    final darkEnvironment = lightEnvironment.copyWith(brightness: Brightness.dark);
+
+    await _pumpPreview(tester, lightEnvironment, hostBrightness: Brightness.dark);
+    expect(
+      tester
+          .widget<ColoredBox>(
+            find.byKey(const ValueKey('gallery-preview-canvas')),
+          )
+          .color,
+      ForuiThemeFactory.build(
+        brightness: Brightness.light,
+        accent: AppAccent.neutral,
+        fontScale: 1,
+        interactionPolicy: AppInteractionPolicy.touch,
+      ).colors.background,
+      reason: 'light preview environment under a dark app theme',
+    );
+
+    await _pumpPreview(tester, darkEnvironment);
+    expect(
+      tester
+          .widget<ColoredBox>(
+            find.byKey(const ValueKey('gallery-preview-canvas')),
+          )
+          .color,
+      ForuiThemeFactory.build(
+        brightness: Brightness.dark,
+        accent: AppAccent.neutral,
+        fontScale: 1,
+        interactionPolicy: AppInteractionPolicy.touch,
+      ).colors.background,
+      reason: 'dark preview environment under a light app theme',
+    );
+  });
 }
 
 Future<void> _pumpPreview(
   WidgetTester tester,
   GalleryEnvironment environment, {
   Widget child = const _Probe(),
+  Brightness hostBrightness = Brightness.light,
 }) async {
   tester.view
     ..devicePixelRatio = 1
     ..physicalSize = const Size(390, 844);
   await LocaleSettings.setLocale(environment.locale);
   final hostTheme = ForuiThemeFactory.build(
-    brightness: Brightness.light,
+    brightness: hostBrightness,
     accent: AppAccent.neutral,
     fontScale: 1,
     interactionPolicy: AppInteractionPolicy.touch,

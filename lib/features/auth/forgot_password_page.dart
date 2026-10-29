@@ -14,6 +14,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/forms/email_form_field.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
@@ -215,23 +216,23 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
       ForgotPasswordPresentationStatus.submitting => null,
       ForgotPasswordPresentationStatus.invalid => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-invalid'),
-        variant: FAlertVariant.destructive,
+        role: AppStatusRole.destructive,
         title: Text(translations.validation.email),
       ),
       ForgotPasswordPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-field-failure'),
-        variant: FAlertVariant.destructive,
+        role: AppStatusRole.destructive,
         title: Text(translations.validation.email),
       ),
       ForgotPasswordPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-global-failure'),
-        variant: FAlertVariant.destructive,
+        role: AppStatusRole.destructive,
         title: Text(translations.common.notConnected),
       ),
       ForgotPasswordPresentationStatus.success => AuthFeedbackAlertSpec(
         key: const ValueKey('auth-forgot-password-success'),
+        role: AppStatusRole.success,
         title: Text(translations.auth.forgotPassword.success),
-        icon: const Icon(FLucideIcons.circleCheck),
       ),
     };
   }

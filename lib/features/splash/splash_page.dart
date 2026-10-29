@@ -11,6 +11,8 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
+import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({
@@ -103,20 +105,28 @@ class _SplashLoading extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _LogoReveal(child: _BrandMark()),
-          SizedBox(height: spacing.xl),
-          Text(
-            translations.app.name,
-            key: const ValueKey('splash-title'),
-            style: context.theme.typography.display.xl2,
+          _LogoReveal(
+            // Long translated names (ar) overflow a narrow viewport, so the
+            // wordmark scales down instead of overflowing (same dependent
+            // fix as the expanded shell sidebar).
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: AppWordmark(
+                name: translations.app.name,
+                fontSize: 28,
+              ),
+            ),
           ),
-          SizedBox(height: spacing.sm),
+          SizedBox(height: spacing.lg),
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: context.presentationTokens.formContentMaxWidth),
             child: Text(
               translations.splash.tagline,
               key: const ValueKey('splash-tagline'),
-              style: context.theme.typography.body.lg,
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -125,7 +135,9 @@ class _SplashLoading extends StatelessWidget {
             Text(
               translations.splash.loading,
               key: const ValueKey('splash-loading-label'),
-              style: context.theme.typography.body.md,
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             )
           else
             _Spinner(semanticsLabel: translations.splash.loading),
@@ -148,24 +160,26 @@ class _SplashDone extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _BrandMark(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: AppWordmark(name: translations.app.name, fontSize: 28),
+          ),
           SizedBox(height: spacing.lg),
           Icon(
             FLucideIcons.circleCheck,
-            size: 32,
-            color: context.theme.colors.primary,
-          ),
-          SizedBox(height: spacing.md),
-          Text(
-            translations.app.name,
-            style: context.theme.typography.display.xl2,
+            size: 24,
+            color: context.theme.brand.success,
           ),
           if (viewData.buildLabel case final label?) ...[
             SizedBox(height: spacing.sm),
             Text(
               label,
               key: const ValueKey('splash-build-label'),
-              style: context.theme.typography.body.sm,
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+                fontFamily: 'JetBrains Mono',
+              ),
             ),
           ],
         ],
@@ -182,6 +196,7 @@ class _SplashError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
+    final spacing = context.spacing;
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: context.presentationTokens.formContentMaxWidth),
       child: SingleChildScrollView(
@@ -189,50 +204,37 @@ class _SplashError extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(
-              FLucideIcons.triangleAlert,
-              size: 40,
-              color: context.theme.colors.error,
+            Center(
+              child: Icon(
+                FLucideIcons.octagonAlert,
+                size: 24,
+                color: context.theme.brand.destructive,
+              ),
             ),
-            SizedBox(height: context.spacing.lg),
+            SizedBox(height: spacing.lg),
             Text(
               translations.splash.error,
               key: const ValueKey('splash-error'),
-              style: context.theme.typography.display.xl,
+              style: context.theme.typography.display.xl.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: -(context.theme.typography.display.xl.fontSize ?? 24) * 0.02,
+              ),
               textAlign: TextAlign.center,
             ),
             if (viewData.errorDiagnosticId case final id?) ...[
-              SizedBox(height: context.spacing.lg),
+              SizedBox(height: spacing.lg),
               SelectableText(
                 translations.startupFailure.diagnosticId(id: id),
                 key: const ValueKey('splash-diagnostic-id'),
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                  fontFamily: 'JetBrains Mono',
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 96,
-      height: 96,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: context.theme.colors.primary,
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        FLucideIcons.sparkles,
-        size: 44,
-        color: context.theme.colors.primaryForeground,
       ),
     );
   }
@@ -249,7 +251,7 @@ class _Spinner extends StatelessWidget {
       width: 24,
       height: 24,
       child: CircularProgressIndicator(
-        strokeWidth: 2.5,
+        strokeWidth: 2,
         semanticsLabel: semanticsLabel,
         valueColor: AlwaysStoppedAnimation<Color>(context.theme.colors.primary),
       ),
@@ -257,6 +259,8 @@ class _Spinner extends StatelessWidget {
   }
 }
 
+/// The splash opens with a fade only: openings may fade in, nothing scales or
+/// moves (BRAND.md section 10). Reduced motion gets the settled picture.
 class _LogoReveal extends StatefulWidget {
   const _LogoReveal({required this.child});
 
@@ -273,9 +277,6 @@ class _LogoRevealState extends State<_LogoReveal> with SingleTickerProviderState
   );
   late final Animation<double> _fade = Tween<double>(begin: 0, end: 1).animate(
     CurvedAnimation(parent: _controller, curve: AppMotion.standardCurve),
-  );
-  late final Animation<double> _scale = Tween<double>(begin: 0.92, end: 1).animate(
-    CurvedAnimation(parent: _controller, curve: AppMotion.emphasizedCurve),
   );
   bool _started = false;
 
@@ -300,9 +301,6 @@ class _LogoRevealState extends State<_LogoReveal> with SingleTickerProviderState
   @override
   Widget build(BuildContext context) {
     _sync(!MediaQuery.disableAnimationsOf(context));
-    return FadeTransition(
-      opacity: _fade,
-      child: ScaleTransition(scale: _scale, child: widget.child),
-    );
+    return FadeTransition(opacity: _fade, child: widget.child);
   }
 }

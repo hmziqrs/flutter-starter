@@ -93,16 +93,16 @@ void main() {
     expect(find.byKey(const ValueKey('information-dialog-close')), findsNothing);
   });
 
-  testWidgets('expanded settings and accent labels remain localized', (tester) async {
+  testWidgets('expanded settings and spacing labels remain localized', (tester) async {
     _setViewport(tester, const Size(1024, 844));
     await LocaleSettings.setLocale(AppLocale.ar);
     await tester.pumpWidget(_app(initialLocation: '/settings/appearance'));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
-    expect(find.text('أزرق'), findsOneWidget);
-    expect(find.text('blue'), findsNothing);
-    expect(Directionality.of(tester.element(find.text('أزرق'))), TextDirection.rtl);
+    expect(find.text('واسع'), findsOneWidget);
+    expect(find.text('relaxed'), findsNothing);
+    expect(Directionality.of(tester.element(find.text('واسع'))), TextDirection.rtl);
   });
 
   testWidgets('appearance spacing and radius variants render and persist', (tester) async {

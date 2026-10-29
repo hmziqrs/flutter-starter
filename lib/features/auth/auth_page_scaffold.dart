@@ -3,6 +3,30 @@ import 'package:forui/forui.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
+
+/// Shared presentation helpers for the entry-flow screens (APP-BLOCKS type
+/// scale): page titles at 24 w500 with tight tracking and muted 14
+/// descriptions.
+///
+/// The app theme already carries the Onest faces and the w500 display weight;
+/// these helpers only pin the scale so pages built on the raw generated theme
+/// (tests, previews) read the same.
+TextStyle entryPageTitleStyle(BuildContext context) {
+  final typography = context.theme.typography;
+  final fontSize = typography.display.xl.fontSize ?? 24;
+  return typography.display.xl.copyWith(
+    fontWeight: FontWeight.w500,
+    letterSpacing: -fontSize * 0.02,
+  );
+}
+
+TextStyle entryMutedBodyStyle(BuildContext context) {
+  return context.theme.typography.body.sm.copyWith(
+    color: context.theme.colors.mutedForeground,
+  );
+}
 
 class AuthPageScaffold extends StatelessWidget {
   const AuthPageScaffold({
@@ -57,11 +81,11 @@ class AuthPageScaffold extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(icon, size: spacing.xl3),
-                        SizedBox(height: spacing.xl),
-                        Text(title, style: context.theme.typography.display.xl4),
+                        AppIconTile(icon: icon),
                         SizedBox(height: spacing.lg),
-                        Text(body, style: context.theme.typography.body.lg),
+                        Text(title, style: entryPageTitleStyle(context)),
+                        SizedBox(height: spacing.md),
+                        Text(body, style: entryMutedBodyStyle(context)),
                       ],
                     ),
                   ),
@@ -100,13 +124,13 @@ class AuthPageScaffold extends StatelessWidget {
               constraints: BoxConstraints(
                 maxWidth: tokens.formContentMaxWidth,
               ),
-              child: FCard(
-                child: Padding(
-                  padding: EdgeInsets.all(spacing.xl),
-                  child: FocusTraversalGroup(
-                    policy: ReadingOrderTraversalPolicy(),
-                    child: form,
-                  ),
+              // The brand outline card (transparent fill, 1px border, no
+              // shadow) — never the filled default FCard panel.
+              child: AppCard(
+                padding: EdgeInsets.all(spacing.xl),
+                child: FocusTraversalGroup(
+                  policy: ReadingOrderTraversalPolicy(),
+                  child: form,
                 ),
               ),
             ),

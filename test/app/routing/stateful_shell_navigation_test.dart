@@ -24,10 +24,14 @@ void main() {
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
 
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('accent-blue')));
+      // The brand ships a single accent (BRAND.md s13), so the appearance
+      // page has no accent chips; the spacing toggle carries the same
+      // persisted-state round-trip through branch navigation.
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('spacing-relaxed')));
+      await tester.tap(find.byKey(const ValueKey('spacing-relaxed')).hitTestable());
       await tester.pumpAndSettle();
-      _expectAccent(tester, AppAccent.blue);
+      _expectSpacingVariant(tester, AppSpacingVariant.relaxed);
 
       await tester.tap(
         find.descendant(
@@ -46,8 +50,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
-      _expectAccent(tester, AppAccent.blue);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
+      _expectSpacingVariant(tester, AppSpacingVariant.relaxed);
     },
   );
 
@@ -55,7 +59,7 @@ void main() {
     'retapping the active compact settings tab resets to the overview with no in-app back to the detail',
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
 
       await tester.tap(
         find.descendant(
@@ -66,7 +70,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
-      expect(find.byKey(const ValueKey('accent-blue')), findsNothing);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsNothing);
 
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
@@ -102,7 +106,7 @@ void main() {
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
 
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
         isFalse,
@@ -120,7 +124,7 @@ void main() {
       );
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
 
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       expect(find.byKey(const ValueKey('locale-system')), findsNothing);
       final pathBefore = GoRouterState.of(
         tester.element(find.byType(SettingsPage)),
@@ -143,7 +147,7 @@ void main() {
       );
 
       expect(find.byKey(const ValueKey('locale-system')), findsOneWidget);
-      expect(find.byKey(const ValueKey('accent-blue')), findsNothing);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsNothing);
 
       await tester.ensureVisible(find.widgetWithText(FSidebarItem, 'Language'));
       await tester.tap(find.widgetWithText(FSidebarItem, 'Language'));
@@ -188,7 +192,7 @@ void main() {
     'go to a top-level flow resets every branch stack on return (shell-lifetime boundary)',
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
 
       GoRouter.of(tester.element(find.byType(Navigator).first)).go(
         AppRoutes.onboardingPath,
@@ -208,7 +212,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
-      expect(find.byKey(const ValueKey('accent-blue')), findsNothing);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsNothing);
     },
   );
 
@@ -316,7 +320,7 @@ void main() {
 
       await tester.tap(sidebarItem(FLucideIcons.settings));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
 
       await tester.tap(sidebarItem(FLucideIcons.house));
       await tester.pumpAndSettle();
@@ -422,7 +426,7 @@ void main() {
     'cold-start /settings/appearance survives a compact->expanded->compact resize round-trip',
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.appearanceSettingsPath);
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
         isFalse,
@@ -432,7 +436,7 @@ void main() {
       tester.view.physicalSize = const Size(1024, 844);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       final expandedUri = GoRouterState.of(
         tester.element(find.byType(SettingsPage)),
       ).uri;
@@ -441,7 +445,7 @@ void main() {
 
       tester.view.physicalSize = const Size(390, 844);
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
         isFalse,
@@ -532,11 +536,11 @@ void _setViewport(WidgetTester tester, Size size) {
   addTearDown(tester.view.resetPhysicalSize);
 }
 
-void _expectAccent(WidgetTester tester, AppAccent accent) {
+void _expectSpacingVariant(WidgetTester tester, AppSpacingVariant variant) {
   final container = ProviderScope.containerOf(
-    tester.element(find.byKey(const ValueKey('accent-blue'))),
+    tester.element(find.byType(SettingsPage)),
   );
-  expect(container.read(settingsControllerProvider).accent, accent);
+  expect(container.read(settingsControllerProvider).spacingVariant, variant);
 }
 
 final _developmentConfig = AppConfig(

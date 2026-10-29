@@ -13,6 +13,8 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
 import 'package:starter/shared/widgets/refresh/app_refresh_indicator.dart';
@@ -180,11 +182,17 @@ class _PricingPageState extends ConsumerState<PricingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(translations.pricing.title, style: context.theme.typography.display.xl3),
+              // App type scale (APP-BLOCKS): page title 24 w500 tight.
+              Text(translations.pricing.title, style: context.theme.typography.display.xl),
               SizedBox(height: spacing.md),
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: tokens.readingContentMaxWidth),
-                child: Text(translations.pricing.body, style: context.theme.typography.body.lg),
+                child: Text(
+                  translations.pricing.body,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
               ),
               SizedBox(height: spacing.xl),
               BillingSelector(
@@ -196,10 +204,10 @@ class _PricingPageState extends ConsumerState<PricingPage> {
               ),
               if (!_hasAvailablePlan) ...[
                 SizedBox(height: spacing.lg),
-                FAlert(
+                AppNotice(
                   key: const ValueKey('pricing-unavailable'),
-                  variant: .destructive,
-                  title: Text(translations.pricing.unavailableReason),
+                  role: AppStatusRole.destructive,
+                  title: translations.pricing.unavailableReason,
                 ),
               ],
               SizedBox(height: spacing.xl),
@@ -234,48 +242,57 @@ class _PricingPageState extends ConsumerState<PricingPage> {
               if (!_showingSkeleton && _plansError == null)
                 PlanComparison(title: translations.pricing.comparisonTitle, plans: plans),
               SizedBox(height: spacing.xl),
-              FCard(
-                child: Padding(
-                  padding: EdgeInsets.all(spacing.xl),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        translations.pricing.faqTitle,
-                        style: context.theme.typography.display.lg,
-                      ),
-                      SizedBox(height: spacing.md),
-                      Text(
-                        translations.pricing.faqQuestion,
-                        style: context.theme.typography.body.lg,
-                      ),
-                      SizedBox(height: spacing.sm),
-                      Text(translations.pricing.faqAnswer),
-                      SizedBox(height: spacing.lg),
-                      Text(translations.pricing.staticPurchaseNotice),
-                      SizedBox(height: spacing.lg),
-                      Wrap(
-                        spacing: spacing.sm,
-                        runSpacing: spacing.sm,
-                        children: [
-                          FButton(
-                            key: const ValueKey('pricing-terms'),
-                            variant: .ghost,
-                            mainAxisSize: .min,
-                            onPress: widget.onOpenTerms,
-                            child: Text(translations.pricing.terms),
+              AppCard(
+                padding: EdgeInsets.all(spacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Section titles run 16 w500 (APP-BLOCKS).
+                    Text(
+                      translations.pricing.faqTitle,
+                      style: context.theme.typography.display.sm,
+                    ),
+                    SizedBox(height: spacing.md),
+                    Text(
+                      translations.pricing.faqQuestion,
+                      style: context.theme.typography.body.lg,
+                    ),
+                    SizedBox(height: spacing.sm),
+                    Text(translations.pricing.faqAnswer),
+                    SizedBox(height: spacing.lg),
+                    Text(translations.pricing.staticPurchaseNotice),
+                    SizedBox(height: spacing.lg),
+                    Wrap(
+                      spacing: spacing.sm,
+                      runSpacing: spacing.sm,
+                      children: [
+                        FButton(
+                          key: const ValueKey('pricing-terms'),
+                          variant: .ghost,
+                          mainAxisSize: .min,
+                          style: const .delta(
+                            tappableStyle: .delta(
+                              motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                            ),
                           ),
-                          FButton(
-                            key: const ValueKey('pricing-privacy'),
-                            variant: .ghost,
-                            mainAxisSize: .min,
-                            onPress: widget.onOpenPrivacy,
-                            child: Text(translations.pricing.privacy),
+                          onPress: widget.onOpenTerms,
+                          child: Text(translations.pricing.terms),
+                        ),
+                        FButton(
+                          key: const ValueKey('pricing-privacy'),
+                          variant: .ghost,
+                          mainAxisSize: .min,
+                          style: const .delta(
+                            tappableStyle: .delta(
+                              motion: .delta(bounceTween: FTappableMotion.noBounceTween),
+                            ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          onPress: widget.onOpenPrivacy,
+                          child: Text(translations.pricing.privacy),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

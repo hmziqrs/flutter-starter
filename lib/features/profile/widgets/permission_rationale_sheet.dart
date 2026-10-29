@@ -6,6 +6,7 @@ import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/app_bottom_sheet.dart';
+import 'package:starter/shared/widgets/brand/app_notice.dart';
 
 enum PermissionRationaleResult { continueRequest, openSettings, dismiss }
 
@@ -73,7 +74,12 @@ class PermissionRationaleBody extends StatelessWidget {
                       Icon(copy.icon, size: 28),
                       SizedBox(width: spacing.md),
                       Expanded(
-                        child: Text(copy.title, style: context.theme.typography.display.lg),
+                        child: Text(
+                          copy.title,
+                          style: context.theme.typography.display.lg.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -81,9 +87,9 @@ class PermissionRationaleBody extends StatelessWidget {
                   Text(copy.rationale, style: context.theme.typography.body.md),
                   if (permanentlyDenied) ...[
                     SizedBox(height: spacing.md),
-                    FAlert(
-                      icon: const Icon(FLucideIcons.octagonAlert),
-                      title: Text(translations.permission.permanentlyDenied),
+                    AppNotice(
+                      title: translations.permission.permanentlyDenied,
+                      role: AppStatusRole.destructive,
                     ),
                   ],
                   SizedBox(height: spacing.xl),

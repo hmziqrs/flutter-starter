@@ -17,6 +17,7 @@ import 'package:starter/shared/forms/password_form_field.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/forms/form_submit_button.dart';
 
@@ -201,31 +202,31 @@ class _LoginViewState extends ConsumerState<_LoginView>
         LoginPresentationStatus.submitting => null,
         LoginPresentationStatus.invalid => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-login-invalid'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(
             translations.validation.required(field: translations.auth.common.email),
           ),
         ),
         LoginPresentationStatus.fieldFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-login-field-failure'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.validation.email),
         ),
         LoginPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-login-global-failure'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.login.globalError),
         ),
         LoginPresentationStatus.success => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-login-success'),
+          role: AppStatusRole.success,
           title: Text(
             widget.presentation.successMessage ?? translations.auth.login.success,
           ),
-          icon: const Icon(FLucideIcons.circleCheck),
         ),
         LoginPresentationStatus.locked => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-login-locked'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.login.lockedTitle),
           subtitle: ValueListenableBuilder<int>(
             valueListenable: _lockoutCountdown,

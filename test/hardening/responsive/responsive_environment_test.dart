@@ -310,7 +310,7 @@ void main() {
     expect(mediaQuery.boldText, isTrue);
     expect(MediaQuery.textScalerOf(context), isA<GalleryMaximumTextScaler>());
     expect(find.byKey(const ValueKey('theme-system')), findsOneWidget);
-    expect(find.byKey(const ValueKey('accent-blue')), findsOneWidget);
+    expect(find.byKey(const ValueKey('spacing-relaxed')), findsOneWidget);
     expect(
       tester.widget<FButton>(find.byKey(const ValueKey('theme-system'))).onPress,
       isNotNull,

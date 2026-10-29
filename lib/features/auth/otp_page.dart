@@ -17,6 +17,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/forms/restorable_text_controller.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/app_tv_editable_field.dart';
 import 'package:starter/shared/widgets/busy_overlay.dart';
 import 'package:starter/shared/widgets/forms/form_submit_button.dart';
@@ -320,6 +321,7 @@ class _OtpViewState extends ConsumerState<_OtpView>
     }
     return FAlert(
       key: const ValueKey('auth-otp-countdown'),
+      style: AuthFeedbackAlert.noticeStyle(context, AppStatusRole.info),
       icon: const Icon(FLucideIcons.clock),
       title: Text(
         context.t.auth.otp.expiresIn(n: remaining, seconds: remaining),
@@ -340,21 +342,22 @@ class _OtpViewState extends ConsumerState<_OtpView>
         OtpPresentationStatus.submitting => null,
         OtpPresentationStatus.invalid => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-otp-invalid'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.otp.invalid),
         ),
         OtpPresentationStatus.expired => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-otp-expired'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.otp.expired),
         ),
         OtpPresentationStatus.globalFailure => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-otp-global-failure'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.common.notConnected),
         ),
         OtpPresentationStatus.success => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-otp-success'),
+          role: AppStatusRole.success,
           title: Text(
             switch (widget.purpose) {
               OtpPurpose.registration => translations.auth.otp.registrationSuccess,
@@ -362,11 +365,10 @@ class _OtpViewState extends ConsumerState<_OtpView>
               OtpPurpose.mfa => translations.auth.otp.mfaSuccess,
             },
           ),
-          icon: const Icon(FLucideIcons.circleCheck),
         ),
         OtpPresentationStatus.locked => AuthFeedbackAlertSpec(
           key: const ValueKey('auth-otp-locked'),
-          variant: .destructive,
+          role: AppStatusRole.destructive,
           title: Text(translations.auth.otp.lockedTitle),
           subtitle: ValueListenableBuilder<int>(
             valueListenable: _lockout,

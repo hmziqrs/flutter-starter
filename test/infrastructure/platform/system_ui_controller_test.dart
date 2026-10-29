@@ -46,7 +46,7 @@ void main() {
     }
 
     test('is exhaustive over the current AppAccent cardinality', () {
-      expect(AppAccent.values, hasLength(6));
+      expect(AppAccent.values, hasLength(7));
       expect(Brightness.values, hasLength(2));
     });
   });

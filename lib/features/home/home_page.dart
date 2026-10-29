@@ -10,6 +10,8 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
+import 'package:starter/shared/widgets/containers/app_card.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
@@ -123,13 +125,20 @@ class _HomeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // App type scale (APP-BLOCKS): page title 24 w500 tight.
         Text(
           translations.greeting(name: viewData.greetingName),
           key: const ValueKey('home-greeting'),
-          style: context.theme.typography.display.xl3,
+          style: context.theme.typography.display.xl,
         ),
         SizedBox(height: context.spacing.sm),
-        Text(translations.summary, style: context.theme.typography.body.lg),
+        // Descriptions run 14 muted (APP-BLOCKS).
+        Text(
+          translations.summary,
+          style: context.theme.typography.body.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
       ],
     );
   }
@@ -156,7 +165,8 @@ class _QuickActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(translations.quickActions, style: context.theme.typography.display.lg),
+        // Section titles run 16 w500 (APP-BLOCKS).
+        Text(translations.quickActions, style: context.theme.typography.display.sm),
         SizedBox(height: context.spacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -239,6 +249,26 @@ class _QuickAction extends StatelessWidget {
     return FButton(
       key: buttonKey,
       variant: .outline,
+      // Brand outline button: only its line at rest, no grey fill; the
+      // theme's hover/pressed secondary tint stays and is color-only.
+      style: .delta(
+        decoration: .delta([
+          .base(
+            DecorationDelta.value(
+              ShapeDecoration(
+                shape: RoundedSuperellipseBorder(
+                  side: BorderSide(
+                    color: context.theme.colors.border,
+                    width: context.theme.style.borderWidth,
+                  ),
+                  borderRadius: context.theme.style.borderRadius.md,
+                ),
+              ),
+            ),
+          ),
+        ]),
+        tappableStyle: const .delta(motion: .delta(bounceTween: FTappableMotion.noBounceTween)),
+      ),
       mainAxisAlignment: MainAxisAlignment.start,
       prefix: Icon(icon),
       builder: (_, _, _, _, _, child) => Flexible(child: child!),
@@ -259,7 +289,8 @@ class _StatusSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(context.t.home.statusTitle, style: context.theme.typography.display.lg),
+        // Section titles run 16 w500 (APP-BLOCKS).
+        Text(context.t.home.statusTitle, style: context.theme.typography.display.sm),
         SizedBox(height: context.spacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -294,20 +325,18 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = _statusContent(context.t, status.kind);
     final spacing = context.spacing;
-    return FCard(
+    return AppCard(
       key: ValueKey('home-status-${status.id}'),
-      child: Padding(
-        padding: EdgeInsets.all(spacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(content.icon),
-            SizedBox(height: spacing.md),
-            Text(content.title, style: context.theme.typography.display.md),
-            SizedBox(height: spacing.sm),
-            Text(content.body, style: context.theme.typography.body.sm),
-          ],
-        ),
+      padding: EdgeInsets.all(spacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIconTile(icon: content.icon),
+          SizedBox(height: spacing.md),
+          Text(content.title, style: context.theme.typography.display.md),
+          SizedBox(height: spacing.sm),
+          Text(content.body, style: context.theme.typography.body.sm),
+        ],
       ),
     );
   }
@@ -323,7 +352,8 @@ class _RecentActivity extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(translations.recentTitle, style: context.theme.typography.display.lg),
+        // Section titles run 16 w500 (APP-BLOCKS).
+        Text(translations.recentTitle, style: context.theme.typography.display.sm),
         SizedBox(height: context.spacing.sm),
         switch (feed) {
           AsyncData(:final value) =>
@@ -376,8 +406,29 @@ class _ActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = _statusContent(context.t, activity.kind);
+    // Brand surface (BRAND.md s8/s13): a tile sitting in the page is outline
+    // only — the theme's card-colored fills are cleared, its 1px border and
+    // color-only hover tint stay.
     return FTile(
       key: ValueKey('home-activity-${activity.id}'),
+      style: .delta(
+        backgroundColor: .delta([.base(null), .variants(null)]),
+        contentDecoration: .delta([
+          .base(
+            DecorationDelta.value(
+              ShapeDecoration(
+                shape: RoundedSuperellipseBorder(
+                  side: BorderSide(
+                    color: context.theme.colors.border,
+                    width: context.theme.style.borderWidth,
+                  ),
+                  borderRadius: context.theme.style.borderRadius.md,
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
       prefix: Icon(content.icon),
       title: Text(content.title),
       subtitle: Text(content.body),
