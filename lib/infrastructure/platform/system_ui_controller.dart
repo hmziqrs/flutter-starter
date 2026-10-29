@@ -35,7 +35,8 @@ abstract final class SystemUiController {
     return switch ((brightness, accent)) {
       (
         Brightness.light,
-        AppAccent.neutral ||
+        AppAccent.oxide ||
+            AppAccent.neutral ||
             AppAccent.green ||
             AppAccent.blue ||
             AppAccent.amber ||
@@ -49,7 +50,8 @@ abstract final class SystemUiController {
         ),
       (
         Brightness.dark,
-        AppAccent.neutral ||
+        AppAccent.oxide ||
+            AppAccent.neutral ||
             AppAccent.green ||
             AppAccent.blue ||
             AppAccent.amber ||

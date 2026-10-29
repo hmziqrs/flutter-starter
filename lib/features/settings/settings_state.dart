@@ -6,7 +6,7 @@ part 'settings_state.freezed.dart';
 
 enum AppThemeMode { system, light, dark }
 
-enum AppAccent { neutral, green, blue, amber, rose, violet }
+enum AppAccent { oxide, neutral, green, blue, amber, rose, violet }
 
 enum AppSpacingVariant {
   compact(0.85),
@@ -48,7 +48,7 @@ class SettingsState with _$SettingsState {
 
   const SettingsState.defaults()
     : themeMode = AppThemeMode.system,
-      accent = AppAccent.neutral,
+      accent = AppAccent.oxide,
       fontScale = 1,
       textPreset = AppTextPreset.comfortable,
       spacingVariant = AppSpacingVariant.standard,

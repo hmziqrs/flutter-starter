@@ -7,9 +7,13 @@ import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
+import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 abstract final class ForuiThemeFactory {
+  /// Brand typeface (BRAND.md section 5): Onest for everything people read.
+  static const String defaultFontFamily = 'Onest';
+
   static const scriptFontFamilies = <String>['Noto Sans Arabic', 'Noto Sans SC'];
   static const _displayTokens = <({double size, double height})>[
     (size: 10, height: 1.2),
@@ -88,6 +92,9 @@ abstract final class ForuiThemeFactory {
     final colors = generatedTheme.colors.copyWith(
       primary: accentColors.$1,
       primaryForeground: accentColors.$2,
+      // Brand neutral: the AA-tuned light muted-foreground (#6F6F6F, BRAND.md
+      // section 4); the dark generated value already matches the brand (#A1A1A1).
+      mutedForeground: brightness == Brightness.light ? const Color(0xFF6F6F6F) : null,
       destructiveForeground: destructiveForeground,
       errorForeground: destructiveForeground,
     );
@@ -142,6 +149,14 @@ abstract final class ForuiThemeFactory {
       ),
       minimumHeight: presentationTokens.controlMinHeight,
     );
+    final textFieldStyles = _brandTextFieldStyles(
+      FTextFieldSizeStyles.inherit(
+        colors: colors,
+        typography: typography,
+        style: style,
+        touch: touch,
+      ),
+    );
 
     return FThemeData(
       debugLabel: '${accent.name} ${brightness.name} ${touch ? 'touch' : 'desktop'}',
@@ -152,7 +167,27 @@ abstract final class ForuiThemeFactory {
       style: style,
       touch: touch,
       buttonStyles: buttonStyles,
-      extensions: [presentationTokens],
+      textFieldStyles: textFieldStyles,
+      extensions: [presentationTokens, AppBrandColors.forBrightness(brightness)],
+    );
+  }
+
+  /// Brand text field recipe (BRAND.md s9): `shadow-none dark:bg-transparent`
+  /// — the field is a line, no fill. The ForUI inherit paints the card color
+  /// behind the input, which reads as a solid grey box in dark mode; both
+  /// modes get a transparent fill and keep the inherit's line border.
+  static FTextFieldSizeStyles _brandTextFieldStyles(FTextFieldSizeStyles styles) {
+    return FTextFieldSizeStyles(
+      FVariants.raw(_lineOnlyFieldFill(styles.base), {
+        for (final MapEntry(key: constraint, :value) in styles.variants.entries)
+          constraint: _lineOnlyFieldFill(value),
+      }),
+    );
+  }
+
+  static FTextFieldStyle _lineOnlyFieldFill(FTextFieldStyle style) {
+    return style.copyWith(
+      color: FVariants(Colors.transparent, variants: const {}),
     );
   }
 
@@ -226,17 +261,21 @@ abstract final class ForuiThemeFactory {
     required double displaySizeScalar,
     String? fontFamily,
   }) {
+    // Brand weights (BRAND.md section 5): headings 500, body 400, never above
+    // 600. Onest is the default family; the user's fontFamily setting wins.
     return typography.copyWith(
       display: _buildTypeface(
         typography.display,
         tokens: _displayTokens,
         sizeScalar: displaySizeScalar,
+        weight: FontWeight.w500,
         fontFamily: fontFamily,
       ),
       body: _buildTypeface(
         typography.body,
         tokens: _bodyTokens,
         sizeScalar: bodySizeScalar,
+        weight: FontWeight.w400,
         fontFamily: fontFamily,
       ),
     );
@@ -246,15 +285,17 @@ abstract final class ForuiThemeFactory {
     FTypeface typeface, {
     required List<({double size, double height})> tokens,
     required double sizeScalar,
+    required FontWeight weight,
     String? fontFamily,
   }) {
-    final resolvedFontFamily = fontFamily ?? typeface.fontFamily;
+    final resolvedFontFamily = fontFamily ?? defaultFontFamily;
     TextStyle token(TextStyle style, int index) {
       final token = tokens[index];
       return style.copyWith(
         fontFamily: resolvedFontFamily,
         fontFamilyFallback: scriptFontFamilies,
         fontSize: token.size * sizeScalar,
+        fontWeight: weight,
         height: token.height,
         leadingDistribution: TextLeadingDistribution.even,
       );
@@ -305,33 +346,21 @@ abstract final class ForuiThemeFactory {
       return (colors.primary, colors.primaryForeground);
     }
 
-    return switch ((brightness, accent)) {
-      (Brightness.light, AppAccent.green) => (const Color(0xff15803d), Colors.white),
-      (Brightness.dark, AppAccent.green) => (
-        const Color(0xff4ade80),
-        const Color(0xff052e16),
-      ),
-      (Brightness.light, AppAccent.blue) => (const Color(0xff2563eb), Colors.white),
-      (Brightness.dark, AppAccent.blue) => (
-        const Color(0xff60a5fa),
-        const Color(0xff0c1b33),
-      ),
-      (Brightness.light, AppAccent.amber) => (const Color(0xffb45309), Colors.white),
-      (Brightness.dark, AppAccent.amber) => (
-        const Color(0xfffbbf24),
-        const Color(0xff2e2100),
-      ),
-      (Brightness.light, AppAccent.rose) => (const Color(0xffbe123c), Colors.white),
-      (Brightness.dark, AppAccent.rose) => (
-        const Color(0xfffb7185),
-        const Color(0xff3f0712),
-      ),
-      (Brightness.light, AppAccent.violet) => (const Color(0xff7c3aed), Colors.white),
-      (Brightness.dark, AppAccent.violet) => (
-        const Color(0xffa78bfa),
-        const Color(0xff2e1065),
-      ),
-      (_, AppAccent.neutral) => throw StateError('Neutral uses generated theme colors.'),
+    // Every accent points at a brand palette token (BRAND.md section 4):
+    // picking an accent re-points --primary at that palette color, so a
+    // "green" accent is the app's own success green, amber is brand yellow,
+    // rose is brand red and violet is brand purple. The on-color follows the
+    // brand's primary-foreground rule: white on light shades, near-black
+    // (on-orange) on dark shades.
+    final brand = AppBrandColors.forBrightness(brightness);
+    return switch (accent) {
+      AppAccent.oxide => (brand.oxide, brand.onOrange),
+      AppAccent.green => (brand.green, brand.onOrange),
+      AppAccent.blue => (brand.blue, brand.onOrange),
+      AppAccent.amber => (brand.yellow, brand.onOrange),
+      AppAccent.rose => (brand.red, brand.onOrange),
+      AppAccent.violet => (brand.purple, brand.onOrange),
+      AppAccent.neutral => throw StateError('Neutral uses generated theme colors.'),
     };
   }
 }

@@ -19,7 +19,6 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-
     <!-- Opaque television-only themes prevent a light flash while Flutter starts.
          They deliberately do not force immersive mode so system accessibility
          surfaces remain under platform control. -->
@@ -32,7 +31,6 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
-
     <style name="TvNormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">@color/tv_window_background</item>
         <item name="android:windowIsTranslucent">false</item>

@@ -5,15 +5,14 @@
 #   just splash-remove  # dart run flutter_native_splash:remove
 #
 # Brand color sourcing (keep in sync with the app theme):
-# The background is pinned to the SAME accent value the neutral-default theme
+# The background is pinned to the SAME accent value the default theme
 # ships in lib/shared/theme/forui_theme_factory.dart (`_accentColors`).
-# For AppAccent.neutral, `_accentColors` returns the generated theme's
-# `colors.primary`, which resolves (see lib/shared/theme/colors.dart) to:
-#   - light brightness: FColors.lightColors.primary  = #171717
-#   - dark  brightness: FColors.darkColors.primary   = #E5E5E5
-# Do NOT introduce a divergent brand color here — if the neutral-default
-# primary token changes in generated_forui_theme.dart, update these two
-# hex values and rerun `just splash`.
+# The default accent is AppAccent.oxide, whose `_accentColors` entries are:
+#   - light brightness: oxide #AA530A (on-orange #FFFFFF)
+#   - dark  brightness: oxide #F38230 (on-orange #0A0A0A)
+# Do NOT introduce a divergent brand color here — if the oxide-default
+# entries change in forui_theme_factory.dart, update these hex values and
+# rerun `just splash`.
 #
 # Logo assets live in assets/brand/. logo_light.png is shown on the light
 # (default) splash background; logo_dark.png on the dark splash background.
@@ -21,9 +20,9 @@
 # docs/release_readiness.md).
 
 flutter_native_splash:
-  # Brand background — neutral-default primary token (see header note).
-  color: "#171717"
-  color_dark: "#E5E5E5"
+  # Brand background — oxide-default primary token (see header note).
+  color: "#AA530A"
+  color_dark: "#F38230"
 
   # Brand logo — sized for ~4x pixel density (~288px renders at ~72dp).
   image: assets/brand/logo_light.png
@@ -32,12 +31,12 @@ flutter_native_splash:
   # Android 12+ (Splash Screen API) uses a separate icon-on-background
   # surface; mirror the same brand tokens so the handoff matches.
   android_12:
-    color: "#171717"
-    color_dark: "#E5E5E5"
+    color: "#AA530A"
+    color_dark: "#F38230"
     image: assets/brand/logo_light.png
     image_dark: assets/brand/logo_dark.png
-    icon_background_color: "#171717"
-    icon_background_color_dark: "#E5E5E5"
+    icon_background_color: "#AA530A"
+    icon_background_color_dark: "#F38230"
 
   # Platform coverage matches the starter's targets (iOS/Android/macOS).
   # Web is optional in the starter; generation is enabled so a web build

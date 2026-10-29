@@ -5,7 +5,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.12.0
-  flutter: ">=3.44.0 <3.45.0"
+  flutter: ">=3.44.0 <4.0.0"
 
 dependencies:
   app_links: ^7.2.1
@@ -26,6 +26,7 @@ dependencies:
   flutter_local_notifications: ^23.0.0-dev.2
   flutter_riverpod: ^3.3.2
   flutter_secure_storage: ^11.2.0
+  flutter_shaders: ^0.1.5
   flutter_tvos: ^1.1.2
   forui: ^0.25.0
   freezed_annotation: ^3.1.0
@@ -36,6 +37,7 @@ dependencies:
   local_auth: ^3.0.2
   package_info_plus: ^10.2.1
   package_info_plus_tvos: ^0.0.1
+  path_drawing: ^1.0.1
   path_provider: ^2.1.5
   path_provider_tvos: ^0.0.3
   permission_handler: ^13.0.2
@@ -71,6 +73,18 @@ dev_dependencies:
 
 flutter:
   fonts:
+    - family: Onest
+      fonts:
+        - asset: assets/fonts/Onest/onest-latin-400-normal.ttf
+          weight: 400
+        - asset: assets/fonts/Onest/onest-latin-500-normal.ttf
+          weight: 500
+        - asset: assets/fonts/Onest/onest-latin-600-normal.ttf
+          weight: 600
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrains_Mono/jetbrains-mono-latin-400-normal.ttf
+          weight: 400
     - family: Noto Sans
       fonts:
         - asset: assets/fonts/Noto_Sans/NotoSans.ttf
@@ -89,4 +103,7 @@ flutter:
     - family: Noto Sans SC
       fonts:
         - asset: assets/fonts/Noto_Sans_SC/NotoSansSC.ttf
+  shaders:
+    - assets/shaders/brand_material.frag
+    - assets/shaders/liquid_glass.frag
   uses-material-design: true
