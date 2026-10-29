@@ -9,7 +9,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(212));
+    expect(cases, hasLength(215));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,

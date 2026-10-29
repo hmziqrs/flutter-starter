@@ -33,7 +33,16 @@ import 'package:starter/shared/widgets/rings/status_ring.dart';
 /// variants floating over scrolling content, the dock, the grain toggle, the
 /// solid fallback and the liquid refraction. Dev-only surface, so the labels
 /// are literal English.
-enum BrandGlassGalleryKind { panels, dock, grain, fallback, liquid }
+enum BrandGlassGalleryKind {
+  panels,
+  dock,
+  grain,
+  fallback,
+  liquid,
+  overMaterial,
+  liquidOverMaterial,
+  overRings,
+}
 
 /// Builds the "Glass" gallery cases, one per glass capability.
 List<GalleryCase> buildBrandGlassGalleryCases() {
@@ -56,6 +65,9 @@ String _glassCaseLabel(BrandGlassGalleryKind kind) => switch (kind) {
   BrandGlassGalleryKind.grain => 'Grain',
   BrandGlassGalleryKind.fallback => 'Solid fallback',
   BrandGlassGalleryKind.liquid => 'Liquid glass',
+  BrandGlassGalleryKind.overMaterial => 'Glass over a material',
+  BrandGlassGalleryKind.liquidOverMaterial => 'Liquid lens over a material',
+  BrandGlassGalleryKind.overRings => 'Rings behind glass',
 };
 
 String _glassCaseDescription(BrandGlassGalleryKind kind) => switch (kind) {
@@ -69,6 +81,15 @@ String _glassCaseDescription(BrandGlassGalleryKind kind) => switch (kind) {
     'The honest degraded path: solid card fill, same border, no blur layer.',
   BrandGlassGalleryKind.liquid =>
     'Backdrop refraction through a fragment shader; frosted where the engine cannot, solid card under the fallback.',
+  BrandGlassGalleryKind.overMaterial =>
+    'The signature pairing: a full-bleed material stays the picture while a '
+        'smoke grain panel borrows its color for the reading surface.',
+  BrandGlassGalleryKind.liquidOverMaterial =>
+    'The liquid lens and a formatting dock floating over etched silk. On '
+        'renderers without Impeller the lens takes the honest solid path.',
+  BrandGlassGalleryKind.overRings =>
+    'Hero rings seeded with a name behind a frost panel: where the panel '
+        'crosses the rings they soften into it, like looking through a window.',
 };
 
 /// The rings stories (BRAND.md s7): the hero picture, corner fingerprints,
@@ -152,6 +173,9 @@ class _BrandGlassPreview extends ConsumerWidget {
               BrandGlassGalleryKind.grain => const _GrainStory(),
               BrandGlassGalleryKind.fallback => const _FallbackStory(),
               BrandGlassGalleryKind.liquid => const _LiquidStory(),
+              BrandGlassGalleryKind.overMaterial => const _GlassOverMaterialStory(),
+              BrandGlassGalleryKind.liquidOverMaterial => const _LiquidOverMaterialStory(),
+              BrandGlassGalleryKind.overRings => const _RingsBehindGlassStory(),
             },
           ],
         ),
@@ -803,6 +827,271 @@ class _LiquidStory extends StatelessWidget {
                     'the top pane frosts — blur 11 and 1.5x saturation, the '
                     "web kit's non-Chromium fallback — while the marked pane "
                     'takes the solid card.',
+        ),
+      ],
+    );
+  }
+}
+
+/// The brand's signature pairing (glass.stories.svelte "over a shader"):
+/// a full-bleed copper material stays the picture while a smoke grain panel
+/// borrows its color for the reading surface.
+class _GlassOverMaterialStory extends StatelessWidget {
+  const _GlassOverMaterialStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          height: 460,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: BrandMaterialSurface(recipe: brandMaterialById('copper-sweep')!),
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 512),
+                  child: GlassPanel(
+                    variant: GlassVariant.smoke,
+                    grain: true,
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const Text(
+                          'Copper, through frosted glass.',
+                          style: TextStyle(
+                            fontSize: 30,
+                            height: 1.15,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -0.9,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'The material stays the picture. The panel only '
+                          'borrows its color, so the reading surface never '
+                          'has an edge in it.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.625,
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: context.spacing.lg),
+        const _Caption(
+          'Smoke over copper-sweep, exactly as the brand story stages it: '
+          'the material keeps its edges, the panel keeps none.',
+        ),
+      ],
+    );
+  }
+}
+
+/// The liquid story's own composition (liquid-glass.stories.svelte): a
+/// circular lens and a formatting dock floating over etched silk.
+class _LiquidOverMaterialStory extends StatelessWidget {
+  const _LiquidOverMaterialStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          height: 460,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: BrandMaterialSurface(recipe: brandMaterialById('etched-silk')!),
+              ),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    // The lens: size-44 (176dp) rounded-full, bend 60 / edge
+                    // 26 in the kit's own units — here refraction 30 (the
+                    // port's displacement is bend/2) with the same edge.
+                    SizedBox(
+                      width: 176,
+                      height: 176,
+                      child: LiquidGlass(
+                        radius: BorderRadius.circular(88),
+                        refraction: 30,
+                        edgeWidth: 26,
+                        padding: EdgeInsets.zero,
+                        child: const Center(
+                          child: Text(
+                            'A lens',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 64),
+                    LiquidGlass(
+                      radius: BorderRadius.circular(24),
+                      padding: const EdgeInsets.all(6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 4,
+                        children: <Widget>[
+                          for (final icon in <IconData>[
+                            FLucideIcons.bold,
+                            FLucideIcons.italic,
+                            FLucideIcons.link,
+                            FLucideIcons.list,
+                          ])
+                            _LiquidToolbarButton(icon: icon),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: context.spacing.lg),
+        const _Caption(
+          'Etched silk under a liquid lens and a formatting dock. On '
+          'renderers without Impeller the liquid takes its honest solid '
+          'path — the composition is the point.',
+        ),
+      ],
+    );
+  }
+}
+
+/// One 36dp round icon control inside the liquid formatting dock (the
+/// story's size-9 rounded-full buttons, hover foreground at 10%).
+class _LiquidToolbarButton extends StatefulWidget {
+  const _LiquidToolbarButton({required this.icon});
+
+  final IconData icon;
+
+  @override
+  State<_LiquidToolbarButton> createState() => _LiquidToolbarButtonState();
+}
+
+class _LiquidToolbarButtonState extends State<_LiquidToolbarButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: _noop,
+          child: Tooltip(
+            excludeFromSemantics: true,
+            message: switch (widget.icon) {
+              FLucideIcons.bold => 'Bold',
+              FLucideIcons.italic => 'Italic',
+              FLucideIcons.link => 'Link',
+              _ => 'List',
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _hovering ? theme.colors.foreground.withValues(alpha: 0.10) : null,
+              ),
+              child: Icon(widget.icon, size: 16, color: theme.colors.foreground),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Rings behind glass." (glass.stories.svelte): hero rings seeded with a
+/// name bleed off the right edge while a frost panel floats at the left.
+class _RingsBehindGlassStory extends StatelessWidget {
+  const _RingsBehindGlassStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          height: 460,
+          child: Stack(
+            children: <Widget>[
+              const Positioned(
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: 500,
+                child: Center(child: BrandRings(seed: 'glass')),
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 448),
+                    child: GlassPanel(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Text(
+                            'Rings behind glass.',
+                            style: TextStyle(
+                              fontSize: 24,
+                              height: 1.2,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -0.72,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Where the panel crosses the rings they soften '
+                            'into it, like looking through a window.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.625,
+                              color: context.theme.colors.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: context.spacing.lg),
+        const _Caption(
+          'Hero rings seeded with "glass" — the same name always draws the '
+          'same picture — behind a frost panel.',
         ),
       ],
     );
