@@ -142,8 +142,8 @@ class Translations$common$en {
 	/// en: 'Information preview'
 	String get legalPlaceholderTitle => 'Information preview';
 
-	/// en: 'This starter shows deterministic placeholder content until product-specific legal text is approved.'
-	String get legalPlaceholderBody => 'This starter shows deterministic placeholder content until product-specific legal text is approved.';
+	/// en: 'This starter shows placeholder content until product-specific legal text is approved.'
+	String get legalPlaceholderBody => 'This starter shows placeholder content until product-specific legal text is approved.';
 
 	/// en: 'Confirm'
 	String get confirm => 'Confirm';
@@ -214,8 +214,8 @@ class Translations$onboarding$en {
 	/// en: 'Build from a durable foundation'
 	String get firstTitle => 'Build from a durable foundation';
 
-	/// en: 'Start with explicit configuration, strict quality checks, and an interface that is ready to grow.'
-	String get firstBody => 'Start with explicit configuration, strict quality checks, and an interface that is ready to grow.';
+	/// en: 'Start with clear configuration, strict quality checks, and an interface that is ready to grow.'
+	String get firstBody => 'Start with clear configuration, strict quality checks, and an interface that is ready to grow.';
 
 	/// en: 'Designed for every screen'
 	String get middleTitle => 'Designed for every screen';
@@ -244,8 +244,8 @@ class Translations$pricing$en {
 	/// en: 'Plans for the way you work'
 	String get title => 'Plans for the way you work';
 
-	/// en: 'Compare a small, honest set of static plans. Purchasing is intentionally not connected in this starter.'
-	String get body => 'Compare a small, honest set of static plans. Purchasing is intentionally not connected in this starter.';
+	/// en: 'Compare a small set of static plans. Purchasing is not connected in this starter.'
+	String get body => 'Compare a small set of static plans. Purchasing is not connected in this starter.';
 
 	/// en: 'Monthly'
 	String get monthly => 'Monthly';
@@ -289,8 +289,8 @@ class Translations$pricing$en {
 	/// en: 'Can I change plans later?'
 	String get faqQuestion => 'Can I change plans later?';
 
-	/// en: 'Yes. This static experience demonstrates the layout only; no subscription is created.'
-	String get faqAnswer => 'Yes. This static experience demonstrates the layout only; no subscription is created.';
+	/// en: 'Yes. This static experience demonstrates the layout only. No subscription is created.'
+	String get faqAnswer => 'Yes. This static experience demonstrates the layout only. No subscription is created.';
 
 	/// en: 'Restore purchases'
 	String get restore => 'Restore purchases';
@@ -313,8 +313,8 @@ class Translations$pricing$en {
 	/// en: 'Keep building with more room'
 	String get paywallTitle => 'Keep building with more room';
 
-	/// en: 'Review the benefits, choose a billing period, or skip and continue exploring the starter.'
-	String get paywallBody => 'Review the benefits, choose a billing period, or skip and continue exploring the starter.';
+	/// en: 'Review the benefits and choose a billing period. You can also skip this and keep exploring the starter.'
+	String get paywallBody => 'Review the benefits and choose a billing period. You can also skip this and keep exploring the starter.';
 
 	/// en: 'Preview selected plan and continue'
 	String get paywallContinue => 'Preview selected plan and continue';
@@ -325,8 +325,8 @@ class Translations$pricing$en {
 	/// en: 'English, Arabic, and Simplified Chinese'
 	String get benefitLocalized => 'English, Arabic, and Simplified Chinese';
 
-	/// en: 'Accessible scaling and input policies'
-	String get benefitAccessible => 'Accessible scaling and input policies';
+	/// en: 'Accessible text scaling and input modes'
+	String get benefitAccessible => 'Accessible text scaling and input modes';
 
 	late final Translations$pricing$plans$en plans = Translations$pricing$plans$en.internal(_root);
 }
@@ -342,14 +342,14 @@ class Translations$home$en {
 	/// en: 'A durable place to begin'
 	String get title => 'A durable place to begin';
 
-	/// en: 'The application shell is running with explicit configuration, adaptive navigation, and localized controls.'
-	String get body => 'The application shell is running with explicit configuration, adaptive navigation, and localized controls.';
+	/// en: 'The app is running with clear configuration, adaptive navigation, and localized controls.'
+	String get body => 'The app is running with clear configuration, adaptive navigation, and localized controls.';
 
 	/// en: 'Welcome, $name'
 	String greeting({required Object name}) => 'Welcome, ${name}';
 
-	/// en: 'Your starter is configured and ready for the next real product capability.'
-	String get summary => 'Your starter is configured and ready for the next real product capability.';
+	/// en: 'Your starter is set up and ready for the next real feature.'
+	String get summary => 'Your starter is set up and ready for the next real feature.';
 
 	/// en: 'Quick actions'
 	String get quickActions => 'Quick actions';
@@ -393,8 +393,8 @@ class Translations$home$en {
 	/// en: 'Nothing here yet'
 	String get recentEmptyTitle => 'Nothing here yet';
 
-	/// en: 'Real product activity can replace this honest empty state when a domain is chosen.'
-	String get recentEmptyBody => 'Real product activity can replace this honest empty state when a domain is chosen.';
+	/// en: 'When you choose a product domain, real activity will replace this empty state.'
+	String get recentEmptyBody => 'When you choose a product domain, real activity will replace this empty state.';
 }
 
 // Path: settings
@@ -614,8 +614,8 @@ class Translations$softUpdate$en {
 	/// en: 'A newer version is available'
 	String get title => 'A newer version is available';
 
-	/// en: 'Update to the latest version for the latest improvements and fixes.'
-	String get body => 'Update to the latest version for the latest improvements and fixes.';
+	/// en: 'Update to the latest version for improvements and fixes.'
+	String get body => 'Update to the latest version for improvements and fixes.';
 
 	/// en: 'Update'
 	String get update => 'Update';
@@ -698,11 +698,11 @@ class Translations$announcements$en {
 	/// en: 'Dismiss'
 	String get dismiss => 'Dismiss';
 
-	/// en: 'Learn more'
-	String get actionLearnMore => 'Learn more';
+	/// en: 'See details'
+	String get actionLearnMore => 'See details';
 
-	/// en: 'Couldn't dismiss the announcement.'
-	String get dismissFailed => 'Couldn\'t dismiss the announcement.';
+	/// en: 'Couldn't dismiss the announcement. Try again.'
+	String get dismissFailed => 'Couldn\'t dismiss the announcement. Try again.';
 
 	/// en: 'Information'
 	String get severityInfo => 'Information';
@@ -763,8 +763,8 @@ class Translations$routeError$en {
 	/// en: 'We could not open that page'
 	String get title => 'We could not open that page';
 
-	/// en: 'The address is unknown or incomplete. You can return to a safe page.'
-	String get body => 'The address is unknown or incomplete. You can return to a safe page.';
+	/// en: 'The address is unknown or incomplete. You can return home.'
+	String get body => 'The address is unknown or incomplete. You can return home.';
 
 	/// en: 'Requested address: $path'
 	String path({required Object path}) => 'Requested address: ${path}';
@@ -1800,8 +1800,8 @@ class Translations$auth$register$en {
 	/// en: 'Create your account'
 	String get title => 'Create your account';
 
-	/// en: 'Enter the details used to demonstrate registration and confirmation behavior.'
-	String get body => 'Enter the details used to demonstrate registration and confirmation behavior.';
+	/// en: 'Enter some details to see how registration and confirmation work.'
+	String get body => 'Enter some details to see how registration and confirmation work.';
 
 	/// en: 'I agree to the terms and privacy preview.'
 	String get acceptTerms => 'I agree to the terms and privacy preview.';
@@ -1848,14 +1848,14 @@ class Translations$auth$forgotPassword$en {
 	/// en: 'Reset your password'
 	String get title => 'Reset your password';
 
-	/// en: 'Enter an email address. The confirmation remains neutral and does not reveal whether an account exists.'
-	String get body => 'Enter an email address. The confirmation remains neutral and does not reveal whether an account exists.';
+	/// en: 'Enter an email address. The confirmation is the same whether or not the account exists.'
+	String get body => 'Enter an email address. The confirmation is the same whether or not the account exists.';
 
 	/// en: 'Send verification code'
 	String get submit => 'Send verification code';
 
-	/// en: 'Preparing verification'
-	String get submitting => 'Preparing verification';
+	/// en: 'Sending verification code'
+	String get submitting => 'Sending verification code';
 
 	/// en: 'If the address can receive a reset, a verification code will be available.'
 	String get success => 'If the address can receive a reset, a verification code will be available.';
@@ -1936,8 +1936,8 @@ class Translations$auth$otp$en {
 	/// en: 'Verify your sign-in'
 	String get mfaTitle => 'Verify your sign-in';
 
-	/// en: 'Enter the six-digit code we sent to complete sign-in.'
-	String get mfaBody => 'Enter the six-digit code we sent to complete sign-in.';
+	/// en: 'Enter the six-digit code to complete sign-in.'
+	String get mfaBody => 'Enter the six-digit code to complete sign-in.';
 
 	/// en: '(one) {Expires in 1 second} (other) {Expires in $seconds seconds}'
 	String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
@@ -1993,8 +1993,8 @@ class Translations$profile$update$en {
 	/// en: 'Update profile'
 	String get title => 'Update profile';
 
-	/// en: 'Edit non-sensitive account details. Drafts remain only while this page is mounted.'
-	String get body => 'Edit non-sensitive account details. Drafts remain only while this page is mounted.';
+	/// en: 'Edit non-sensitive account details. Drafts are kept only while this page is open.'
+	String get body => 'Edit non-sensitive account details. Drafts are kept only while this page is open.';
 
 	/// en: 'Profile image placeholder'
 	String get avatar => 'Profile image placeholder';
@@ -2313,7 +2313,7 @@ extension on Translations {
 			'common.saving' => 'Saving…',
 			'common.notConnected' => 'This action is not connected yet.',
 			'common.legalPlaceholderTitle' => 'Information preview',
-			'common.legalPlaceholderBody' => 'This starter shows deterministic placeholder content until product-specific legal text is approved.',
+			'common.legalPlaceholderBody' => 'This starter shows placeholder content until product-specific legal text is approved.',
 			'common.confirm' => 'Confirm',
 			'common.success' => 'Success',
 			'common.discard' => 'Discard',
@@ -2328,14 +2328,14 @@ extension on Translations {
 			'onboarding.brand' => 'A thoughtful starting point',
 			'onboarding.progress' => ({required Object current, required Object total}) => 'Step ${current} of ${total}',
 			'onboarding.firstTitle' => 'Build from a durable foundation',
-			'onboarding.firstBody' => 'Start with explicit configuration, strict quality checks, and an interface that is ready to grow.',
+			'onboarding.firstBody' => 'Start with clear configuration, strict quality checks, and an interface that is ready to grow.',
 			'onboarding.middleTitle' => 'Designed for every screen',
 			'onboarding.middleBody' => 'The same production pages adapt from compact touch layouts to precise desktop workflows.',
 			'onboarding.finalTitle' => 'Your preferences stay yours',
 			'onboarding.finalBody' => 'Choose appearance, language, and text size without hiding system accessibility settings.',
 			'onboarding.openPaywall' => 'Review plans',
 			'pricing.title' => 'Plans for the way you work',
-			'pricing.body' => 'Compare a small, honest set of static plans. Purchasing is intentionally not connected in this starter.',
+			'pricing.body' => 'Compare a small set of static plans. Purchasing is not connected in this starter.',
 			'pricing.monthly' => 'Monthly',
 			'pricing.annual' => 'Annual',
 			'pricing.billedMonthly' => 'Billed every month',
@@ -2350,7 +2350,7 @@ extension on Translations {
 			'pricing.comparisonTitle' => 'Compare plans',
 			'pricing.faqTitle' => 'Common questions',
 			'pricing.faqQuestion' => 'Can I change plans later?',
-			'pricing.faqAnswer' => 'Yes. This static experience demonstrates the layout only; no subscription is created.',
+			'pricing.faqAnswer' => 'Yes. This static experience demonstrates the layout only. No subscription is created.',
 			'pricing.restore' => 'Restore purchases',
 			'pricing.restoreUnavailable' => 'Purchase restoration is not connected in this starter.',
 			'pricing.terms' => 'Terms',
@@ -2358,11 +2358,11 @@ extension on Translations {
 			'pricing.staticPurchaseNotice' => 'No payment or purchase will be made.',
 			'pricing.staticSuccess' => 'Plan selection preview complete. No purchase was made.',
 			'pricing.paywallTitle' => 'Keep building with more room',
-			'pricing.paywallBody' => 'Review the benefits, choose a billing period, or skip and continue exploring the starter.',
+			'pricing.paywallBody' => 'Review the benefits and choose a billing period. You can also skip this and keep exploring the starter.',
 			'pricing.paywallContinue' => 'Preview selected plan and continue',
 			'pricing.benefitAdaptive' => 'Adaptive layouts for phone and desktop',
 			'pricing.benefitLocalized' => 'English, Arabic, and Simplified Chinese',
-			'pricing.benefitAccessible' => 'Accessible scaling and input policies',
+			'pricing.benefitAccessible' => 'Accessible text scaling and input modes',
 			'pricing.plans.basicName' => 'Basic',
 			'pricing.plans.basicDescription' => 'A focused foundation for personal projects.',
 			'pricing.plans.basicBenefitOne' => 'Core starter screens',
@@ -2379,9 +2379,9 @@ extension on Translations {
 			'pricing.plans.teamBenefitTwo' => 'Team-ready conventions',
 			'pricing.plans.teamBenefitThree' => 'Multi-platform release workflow',
 			'home.title' => 'A durable place to begin',
-			'home.body' => 'The application shell is running with explicit configuration, adaptive navigation, and localized controls.',
+			'home.body' => 'The app is running with clear configuration, adaptive navigation, and localized controls.',
 			'home.greeting' => ({required Object name}) => 'Welcome, ${name}',
-			'home.summary' => 'Your starter is configured and ready for the next real product capability.',
+			'home.summary' => 'Your starter is set up and ready for the next real feature.',
 			'home.quickActions' => 'Quick actions',
 			'home.editProfile' => 'Update profile',
 			'home.openSettings' => 'Open settings',
@@ -2396,7 +2396,7 @@ extension on Translations {
 			'home.statusLocalizedBody' => 'Application and ForUI copy share the selected language and direction.',
 			'home.recentTitle' => 'Recent activity',
 			'home.recentEmptyTitle' => 'Nothing here yet',
-			'home.recentEmptyBody' => 'Real product activity can replace this honest empty state when a domain is chosen.',
+			'home.recentEmptyBody' => 'When you choose a product domain, real activity will replace this empty state.',
 			'settings.title' => 'Settings',
 			'settings.appearance' => 'Appearance',
 			'settings.language' => 'Language',
@@ -2479,7 +2479,7 @@ extension on Translations {
 			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
 			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.register.title' => 'Create your account',
-			'auth.register.body' => 'Enter the details used to demonstrate registration and confirmation behavior.',
+			'auth.register.body' => 'Enter some details to see how registration and confirmation work.',
 			'auth.register.acceptTerms' => 'I agree to the terms and privacy preview.',
 			'auth.register.terms' => 'Review terms',
 			'auth.register.privacy' => 'Review privacy',
@@ -2492,9 +2492,9 @@ extension on Translations {
 			'auth.register.stay' => 'Keep editing',
 			'auth.register.discard' => 'Discard details',
 			'auth.forgotPassword.title' => 'Reset your password',
-			'auth.forgotPassword.body' => 'Enter an email address. The confirmation remains neutral and does not reveal whether an account exists.',
+			'auth.forgotPassword.body' => 'Enter an email address. The confirmation is the same whether or not the account exists.',
 			'auth.forgotPassword.submit' => 'Send verification code',
-			'auth.forgotPassword.submitting' => 'Preparing verification',
+			'auth.forgotPassword.submitting' => 'Sending verification code',
 			'auth.forgotPassword.success' => 'If the address can receive a reset, a verification code will be available.',
 			'auth.otp.registrationTitle' => 'Verify your registration',
 			'auth.otp.registrationBody' => 'Enter the six-digit code to finish the static registration flow.',
@@ -2516,7 +2516,7 @@ extension on Translations {
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 attempt remaining', other: '${count} attempts remaining', ), 
 			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, zero: 'Try again now.', one: 'Try again in 1 second.', other: 'Try again in ${seconds} seconds.', ), 
 			'auth.otp.mfaTitle' => 'Verify your sign-in',
-			'auth.otp.mfaBody' => 'Enter the six-digit code we sent to complete sign-in.',
+			'auth.otp.mfaBody' => 'Enter the six-digit code to complete sign-in.',
 			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Expires in 1 second', other: 'Expires in ${seconds} seconds', ), 
 			'auth.otp.expiredTitle' => 'Code expired',
 			'auth.otp.expiredBody' => 'Your verification code expired. Request a new code to continue.',
@@ -2528,7 +2528,7 @@ extension on Translations {
 			'auth.resetPassword.globalError' => 'The static password update could not be completed.',
 			'auth.resetPassword.success' => 'Password update preview complete. Return to login.',
 			'profile.update.title' => 'Update profile',
-			'profile.update.body' => 'Edit non-sensitive account details. Drafts remain only while this page is mounted.',
+			'profile.update.body' => 'Edit non-sensitive account details. Drafts are kept only while this page is open.',
 			'profile.update.avatar' => 'Profile image placeholder',
 			'profile.update.changeAvatar' => 'Change profile image',
 			'profile.update.avatarUnavailable' => 'Image selection is not connected and no permission was requested.',
@@ -2568,7 +2568,7 @@ extension on Translations {
 			'forceUpdate.body' => 'This version is no longer supported. Update to the latest version to continue.',
 			'forceUpdate.updateNow' => 'Update now',
 			'softUpdate.title' => 'A newer version is available',
-			'softUpdate.body' => 'Update to the latest version for the latest improvements and fixes.',
+			'softUpdate.body' => 'Update to the latest version for improvements and fixes.',
 			'softUpdate.update' => 'Update',
 			'softUpdate.later' => 'Later',
 			'session.expired' => 'Your session has expired. Please sign in again.',
@@ -2584,8 +2584,8 @@ extension on Translations {
 			'states.errorBody' => 'Something went wrong while loading. Try again.',
 			'states.loadingTitle' => 'Loading…',
 			'announcements.dismiss' => 'Dismiss',
-			'announcements.actionLearnMore' => 'Learn more',
-			'announcements.dismissFailed' => 'Couldn\'t dismiss the announcement.',
+			'announcements.actionLearnMore' => 'See details',
+			'announcements.dismissFailed' => 'Couldn\'t dismiss the announcement. Try again.',
 			'announcements.severityInfo' => 'Information',
 			'announcements.severitySuccess' => 'Success',
 			'announcements.severityWarning' => 'Warning',
@@ -2607,7 +2607,7 @@ extension on Translations {
 			'validation.username' => 'Use 3–24 letters, numbers, periods, or underscores.',
 			'validation.bioTooLong' => ({required Object maximum}) => 'Keep the bio to ${maximum} characters or fewer.',
 			'routeError.title' => 'We could not open that page',
-			'routeError.body' => 'The address is unknown or incomplete. You can return to a safe page.',
+			'routeError.body' => 'The address is unknown or incomplete. You can return home.',
 			'routeError.path' => ({required Object path}) => 'Requested address: ${path}',
 			'routeError.invalidOtpPurpose' => 'The verification address needs a valid registration or password-reset purpose.',
 			'startupFailure.title' => 'The application could not start',

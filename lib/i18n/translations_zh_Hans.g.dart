@@ -103,7 +103,7 @@ class _Translations$common$zh_Hans extends Translations$common$en {
 	@override String get saving => '正在保存…';
 	@override String get notConnected => '此操作尚未连接。';
 	@override String get legalPlaceholderTitle => '信息预览';
-	@override String get legalPlaceholderBody => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。';
+	@override String get legalPlaceholderBody => '在产品专属法律文本获批前，此模板会显示占位内容。';
 	@override String get confirm => '确认';
 	@override String get success => '成功';
 	@override String get discard => '放弃';
@@ -145,7 +145,7 @@ class _Translations$onboarding$zh_Hans extends Translations$onboarding$en {
 	@override String get brand => '经过思考的起点';
 	@override String progress({required Object current, required Object total}) => '第 ${current} 步，共 ${total} 步';
 	@override String get firstTitle => '从可靠的基础开始';
-	@override String get firstBody => '从明确配置、严格质量检查和可持续扩展的界面开始构建。';
+	@override String get firstBody => '从清晰的配置、严格的质量检查和可持续扩展的界面开始构建。';
 	@override String get middleTitle => '为每一种屏幕而设计';
 	@override String get middleBody => '同一套生产页面可从紧凑触控布局适配到精确的桌面工作流。';
 	@override String get finalTitle => '偏好始终由你掌控';
@@ -161,7 +161,7 @@ class _Translations$pricing$zh_Hans extends Translations$pricing$en {
 
 	// Translations
 	@override String get title => '适合不同工作方式的方案';
-	@override String get body => '比较一组精简、透明的静态方案。此模板不会连接真实购买流程。';
+	@override String get body => '比较一组精简的静态方案。此模板不会连接真实购买流程。';
 	@override String get monthly => '按月';
 	@override String get annual => '按年';
 	@override String get billedMonthly => '每月结算';
@@ -176,7 +176,7 @@ class _Translations$pricing$zh_Hans extends Translations$pricing$en {
 	@override String get comparisonTitle => '方案对比';
 	@override String get faqTitle => '常见问题';
 	@override String get faqQuestion => '以后可以更换方案吗？';
-	@override String get faqAnswer => '可以。此静态体验仅演示布局，不会创建任何订阅。';
+	@override String get faqAnswer => '可以。此静态体验仅演示布局。不会创建任何订阅。';
 	@override String get restore => '恢复购买';
 	@override String get restoreUnavailable => '此模板未连接购买恢复功能。';
 	@override String get terms => '条款';
@@ -184,11 +184,11 @@ class _Translations$pricing$zh_Hans extends Translations$pricing$en {
 	@override String get staticPurchaseNotice => '不会产生付款或购买。';
 	@override String get staticSuccess => '方案选择预览已完成，未产生购买。';
 	@override String get paywallTitle => '用更多空间继续构建';
-	@override String get paywallBody => '查看权益并选择结算周期，也可以跳过后继续探索模板。';
+	@override String get paywallBody => '查看权益并选择结算周期。也可以跳过后继续探索模板。';
 	@override String get paywallContinue => '预览所选方案并继续';
 	@override String get benefitAdaptive => '适配手机和桌面的布局';
 	@override String get benefitLocalized => '支持英语、阿拉伯语和简体中文';
-	@override String get benefitAccessible => '兼顾无障碍的缩放和输入策略';
+	@override String get benefitAccessible => '兼顾无障碍的文字缩放和输入方式';
 	@override late final _Translations$pricing$plans$zh_Hans plans = _Translations$pricing$plans$zh_Hans._(_root);
 }
 
@@ -200,9 +200,9 @@ class _Translations$home$zh_Hans extends Translations$home$en {
 
 	// Translations
 	@override String get title => '从可靠的基础开始';
-	@override String get body => '应用外壳已使用显式配置、自适应导航和本地化控件运行。';
+	@override String get body => '应用已使用清晰配置、自适应导航和本地化控件运行。';
 	@override String greeting({required Object name}) => '欢迎，${name}';
-	@override String get summary => '模板已配置完成，可以开始添加下一个真实产品能力。';
+	@override String get summary => '模板已配置完成，可以开始添加下一个真实功能。';
 	@override String get quickActions => '快捷操作';
 	@override String get editProfile => '更新个人资料';
 	@override String get openSettings => '打开设置';
@@ -217,7 +217,7 @@ class _Translations$home$zh_Hans extends Translations$home$en {
 	@override String get statusLocalizedBody => '应用文案与 ForUI 文案共同使用所选语言和方向。';
 	@override String get recentTitle => '最近活动';
 	@override String get recentEmptyTitle => '暂无活动';
-	@override String get recentEmptyBody => '确定产品领域后，真实活动可以替换这一明确的空状态。';
+	@override String get recentEmptyBody => '确定产品领域后，真实活动会替换这一空状态。';
 }
 
 // Path: settings
@@ -335,7 +335,7 @@ class _Translations$softUpdate$zh_Hans extends Translations$softUpdate$en {
 
 	// Translations
 	@override String get title => '有新版本可用';
-	@override String get body => '更新至最新版本以获取最新改进和修复。';
+	@override String get body => '更新至最新版本以获取改进和修复。';
 	@override String get update => '更新';
 	@override String get later => '稍后';
 }
@@ -387,8 +387,8 @@ class _Translations$announcements$zh_Hans extends Translations$announcements$en 
 
 	// Translations
 	@override String get dismiss => '关闭';
-	@override String get actionLearnMore => '了解更多';
-	@override String get dismissFailed => '无法关闭此公告。';
+	@override String get actionLearnMore => '查看详情';
+	@override String get dismissFailed => '无法关闭此公告，请重试。';
 	@override String get severityInfo => '信息';
 	@override String get severitySuccess => '成功';
 	@override String get severityWarning => '警告';
@@ -421,7 +421,7 @@ class _Translations$routeError$zh_Hans extends Translations$routeError$en {
 
 	// Translations
 	@override String get title => '无法打开该页面';
-	@override String get body => '地址未知或不完整。你可以返回安全页面。';
+	@override String get body => '地址未知或不完整。你可以返回主页。';
 	@override String path({required Object path}) => '请求的地址：${path}';
 	@override String get invalidOtpPurpose => '验证地址必须包含有效的注册或密码重置用途。';
 }
@@ -874,7 +874,7 @@ class _Translations$auth$register$zh_Hans extends Translations$auth$register$en 
 
 	// Translations
 	@override String get title => '创建账户';
-	@override String get body => '输入用于演示注册和确认行为的信息。';
+	@override String get body => '输入一些信息，了解注册和确认的运作方式。';
 	@override String get acceptTerms => '我同意条款与隐私预览。';
 	@override String get terms => '查看条款';
 	@override String get privacy => '查看隐私';
@@ -896,9 +896,9 @@ class _Translations$auth$forgotPassword$zh_Hans extends Translations$auth$forgot
 
 	// Translations
 	@override String get title => '重置密码';
-	@override String get body => '输入电子邮箱。确认信息保持中立，不会透露账户是否存在。';
+	@override String get body => '输入电子邮箱。无论账户是否存在，确认信息均相同。';
 	@override String get submit => '发送验证码';
-	@override String get submitting => '正在准备验证';
+	@override String get submitting => '正在发送验证码';
 	@override String get success => '如果该地址可以接收重置请求，验证码将会可用。';
 }
 
@@ -934,7 +934,7 @@ class _Translations$auth$otp$zh_Hans extends Translations$auth$otp$en {
 		other: '请在 ${seconds} 秒后重试。',
 	);
 	@override String get mfaTitle => '验证登录';
-	@override String get mfaBody => '输入我们发送的六位验证码以完成登录。';
+	@override String get mfaBody => '输入六位验证码以完成登录。';
 	@override String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n,
 		other: '将在 ${seconds} 秒后过期',
 	);
@@ -966,7 +966,7 @@ class _Translations$profile$update$zh_Hans extends Translations$profile$update$e
 
 	// Translations
 	@override String get title => '更新个人资料';
-	@override String get body => '编辑非敏感账户信息。草稿只在此页面保持挂载时保留。';
+	@override String get body => '编辑非敏感账户信息。草稿仅在此页面打开时保留。';
 	@override String get avatar => '个人头像占位图';
 	@override String get changeAvatar => '更换个人头像';
 	@override String get avatarUnavailable => '图片选择尚未连接，也没有请求任何权限。';
@@ -1171,7 +1171,7 @@ extension on TranslationsZhHans {
 			'common.saving' => '正在保存…',
 			'common.notConnected' => '此操作尚未连接。',
 			'common.legalPlaceholderTitle' => '信息预览',
-			'common.legalPlaceholderBody' => '在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。',
+			'common.legalPlaceholderBody' => '在产品专属法律文本获批前，此模板会显示占位内容。',
 			'common.confirm' => '确认',
 			'common.success' => '成功',
 			'common.discard' => '放弃',
@@ -1186,14 +1186,14 @@ extension on TranslationsZhHans {
 			'onboarding.brand' => '经过思考的起点',
 			'onboarding.progress' => ({required Object current, required Object total}) => '第 ${current} 步，共 ${total} 步',
 			'onboarding.firstTitle' => '从可靠的基础开始',
-			'onboarding.firstBody' => '从明确配置、严格质量检查和可持续扩展的界面开始构建。',
+			'onboarding.firstBody' => '从清晰的配置、严格的质量检查和可持续扩展的界面开始构建。',
 			'onboarding.middleTitle' => '为每一种屏幕而设计',
 			'onboarding.middleBody' => '同一套生产页面可从紧凑触控布局适配到精确的桌面工作流。',
 			'onboarding.finalTitle' => '偏好始终由你掌控',
 			'onboarding.finalBody' => '自由选择外观、语言和文字大小，同时保留系统无障碍设置。',
 			'onboarding.openPaywall' => '查看方案',
 			'pricing.title' => '适合不同工作方式的方案',
-			'pricing.body' => '比较一组精简、透明的静态方案。此模板不会连接真实购买流程。',
+			'pricing.body' => '比较一组精简的静态方案。此模板不会连接真实购买流程。',
 			'pricing.monthly' => '按月',
 			'pricing.annual' => '按年',
 			'pricing.billedMonthly' => '每月结算',
@@ -1208,7 +1208,7 @@ extension on TranslationsZhHans {
 			'pricing.comparisonTitle' => '方案对比',
 			'pricing.faqTitle' => '常见问题',
 			'pricing.faqQuestion' => '以后可以更换方案吗？',
-			'pricing.faqAnswer' => '可以。此静态体验仅演示布局，不会创建任何订阅。',
+			'pricing.faqAnswer' => '可以。此静态体验仅演示布局。不会创建任何订阅。',
 			'pricing.restore' => '恢复购买',
 			'pricing.restoreUnavailable' => '此模板未连接购买恢复功能。',
 			'pricing.terms' => '条款',
@@ -1216,11 +1216,11 @@ extension on TranslationsZhHans {
 			'pricing.staticPurchaseNotice' => '不会产生付款或购买。',
 			'pricing.staticSuccess' => '方案选择预览已完成，未产生购买。',
 			'pricing.paywallTitle' => '用更多空间继续构建',
-			'pricing.paywallBody' => '查看权益并选择结算周期，也可以跳过后继续探索模板。',
+			'pricing.paywallBody' => '查看权益并选择结算周期。也可以跳过后继续探索模板。',
 			'pricing.paywallContinue' => '预览所选方案并继续',
 			'pricing.benefitAdaptive' => '适配手机和桌面的布局',
 			'pricing.benefitLocalized' => '支持英语、阿拉伯语和简体中文',
-			'pricing.benefitAccessible' => '兼顾无障碍的缩放和输入策略',
+			'pricing.benefitAccessible' => '兼顾无障碍的文字缩放和输入方式',
 			'pricing.plans.basicName' => '基础版',
 			'pricing.plans.basicDescription' => '适合个人项目的专注基础。',
 			'pricing.plans.basicBenefitOne' => '核心模板页面',
@@ -1237,9 +1237,9 @@ extension on TranslationsZhHans {
 			'pricing.plans.teamBenefitTwo' => '面向团队的约定',
 			'pricing.plans.teamBenefitThree' => '多平台发布工作流',
 			'home.title' => '从可靠的基础开始',
-			'home.body' => '应用外壳已使用显式配置、自适应导航和本地化控件运行。',
+			'home.body' => '应用已使用清晰配置、自适应导航和本地化控件运行。',
 			'home.greeting' => ({required Object name}) => '欢迎，${name}',
-			'home.summary' => '模板已配置完成，可以开始添加下一个真实产品能力。',
+			'home.summary' => '模板已配置完成，可以开始添加下一个真实功能。',
 			'home.quickActions' => '快捷操作',
 			'home.editProfile' => '更新个人资料',
 			'home.openSettings' => '打开设置',
@@ -1254,7 +1254,7 @@ extension on TranslationsZhHans {
 			'home.statusLocalizedBody' => '应用文案与 ForUI 文案共同使用所选语言和方向。',
 			'home.recentTitle' => '最近活动',
 			'home.recentEmptyTitle' => '暂无活动',
-			'home.recentEmptyBody' => '确定产品领域后，真实活动可以替换这一明确的空状态。',
+			'home.recentEmptyBody' => '确定产品领域后，真实活动会替换这一空状态。',
 			'settings.title' => '设置',
 			'settings.appearance' => '外观',
 			'settings.language' => '语言',
@@ -1337,7 +1337,7 @@ extension on TranslationsZhHans {
 			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
 			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
 			'auth.register.title' => '创建账户',
-			'auth.register.body' => '输入用于演示注册和确认行为的信息。',
+			'auth.register.body' => '输入一些信息，了解注册和确认的运作方式。',
 			'auth.register.acceptTerms' => '我同意条款与隐私预览。',
 			'auth.register.terms' => '查看条款',
 			'auth.register.privacy' => '查看隐私',
@@ -1350,9 +1350,9 @@ extension on TranslationsZhHans {
 			'auth.register.stay' => '继续编辑',
 			'auth.register.discard' => '放弃信息',
 			'auth.forgotPassword.title' => '重置密码',
-			'auth.forgotPassword.body' => '输入电子邮箱。确认信息保持中立，不会透露账户是否存在。',
+			'auth.forgotPassword.body' => '输入电子邮箱。无论账户是否存在，确认信息均相同。',
 			'auth.forgotPassword.submit' => '发送验证码',
-			'auth.forgotPassword.submitting' => '正在准备验证',
+			'auth.forgotPassword.submitting' => '正在发送验证码',
 			'auth.forgotPassword.success' => '如果该地址可以接收重置请求，验证码将会可用。',
 			'auth.otp.registrationTitle' => '验证注册',
 			'auth.otp.registrationBody' => '输入六位验证码以完成静态注册流程。',
@@ -1374,7 +1374,7 @@ extension on TranslationsZhHans {
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '剩余 ${count} 次尝试', ), 
 			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, zero: '现在可以重试。', other: '请在 ${seconds} 秒后重试。', ), 
 			'auth.otp.mfaTitle' => '验证登录',
-			'auth.otp.mfaBody' => '输入我们发送的六位验证码以完成登录。',
+			'auth.otp.mfaBody' => '输入六位验证码以完成登录。',
 			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('zh'))(n, other: '将在 ${seconds} 秒后过期', ), 
 			'auth.otp.expiredTitle' => '验证码已过期',
 			'auth.otp.expiredBody' => '您的验证码已过期，请重新获取以继续。',
@@ -1386,7 +1386,7 @@ extension on TranslationsZhHans {
 			'auth.resetPassword.globalError' => '无法完成静态密码更新。',
 			'auth.resetPassword.success' => '密码更新预览已完成，请返回登录。',
 			'profile.update.title' => '更新个人资料',
-			'profile.update.body' => '编辑非敏感账户信息。草稿只在此页面保持挂载时保留。',
+			'profile.update.body' => '编辑非敏感账户信息。草稿仅在此页面打开时保留。',
 			'profile.update.avatar' => '个人头像占位图',
 			'profile.update.changeAvatar' => '更换个人头像',
 			'profile.update.avatarUnavailable' => '图片选择尚未连接，也没有请求任何权限。',
@@ -1426,7 +1426,7 @@ extension on TranslationsZhHans {
 			'forceUpdate.body' => '此版本已不再受支持。请更新至最新版本以继续。',
 			'forceUpdate.updateNow' => '立即更新',
 			'softUpdate.title' => '有新版本可用',
-			'softUpdate.body' => '更新至最新版本以获取最新改进和修复。',
+			'softUpdate.body' => '更新至最新版本以获取改进和修复。',
 			'softUpdate.update' => '更新',
 			'softUpdate.later' => '稍后',
 			'session.expired' => '您的会话已过期，请重新登录。',
@@ -1442,8 +1442,8 @@ extension on TranslationsZhHans {
 			'states.errorBody' => '加载时出现问题。请重试。',
 			'states.loadingTitle' => '加载中…',
 			'announcements.dismiss' => '关闭',
-			'announcements.actionLearnMore' => '了解更多',
-			'announcements.dismissFailed' => '无法关闭此公告。',
+			'announcements.actionLearnMore' => '查看详情',
+			'announcements.dismissFailed' => '无法关闭此公告，请重试。',
 			'announcements.severityInfo' => '信息',
 			'announcements.severitySuccess' => '成功',
 			'announcements.severityWarning' => '警告',
@@ -1465,7 +1465,7 @@ extension on TranslationsZhHans {
 			'validation.username' => '使用 3–24 个字母、数字、句点或下划线。',
 			'validation.bioTooLong' => ({required Object maximum}) => '个人简介不能超过 ${maximum} 个字符。',
 			'routeError.title' => '无法打开该页面',
-			'routeError.body' => '地址未知或不完整。你可以返回安全页面。',
+			'routeError.body' => '地址未知或不完整。你可以返回主页。',
 			'routeError.path' => ({required Object path}) => '请求的地址：${path}',
 			'routeError.invalidOtpPurpose' => '验证地址必须包含有效的注册或密码重置用途。',
 			'startupFailure.title' => '应用无法启动',

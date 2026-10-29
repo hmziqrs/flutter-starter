@@ -20,7 +20,7 @@
     "saving": "Saving…",
     "notConnected": "This action is not connected yet.",
     "legalPlaceholderTitle": "Information preview",
-    "legalPlaceholderBody": "This starter shows deterministic placeholder content until product-specific legal text is approved.",
+    "legalPlaceholderBody": "This starter shows placeholder content until product-specific legal text is approved.",
     "confirm": "Confirm",
     "success": "Success",
     "discard": "Discard",
@@ -41,7 +41,7 @@
     "brand": "A thoughtful starting point",
     "progress": "Step $current of $total",
     "firstTitle": "Build from a durable foundation",
-    "firstBody": "Start with explicit configuration, strict quality checks, and an interface that is ready to grow.",
+    "firstBody": "Start with clear configuration, strict quality checks, and an interface that is ready to grow.",
     "middleTitle": "Designed for every screen",
     "middleBody": "The same production pages adapt from compact touch layouts to precise desktop workflows.",
     "finalTitle": "Your preferences stay yours",
@@ -50,7 +50,7 @@
   },
   "pricing": {
     "title": "Plans for the way you work",
-    "body": "Compare a small, honest set of static plans. Purchasing is intentionally not connected in this starter.",
+    "body": "Compare a small set of static plans. Purchasing is not connected in this starter.",
     "monthly": "Monthly",
     "annual": "Annual",
     "billedMonthly": "Billed every month",
@@ -65,7 +65,7 @@
     "comparisonTitle": "Compare plans",
     "faqTitle": "Common questions",
     "faqQuestion": "Can I change plans later?",
-    "faqAnswer": "Yes. This static experience demonstrates the layout only; no subscription is created.",
+    "faqAnswer": "Yes. This static experience demonstrates the layout only. No subscription is created.",
     "restore": "Restore purchases",
     "restoreUnavailable": "Purchase restoration is not connected in this starter.",
     "terms": "Terms",
@@ -73,11 +73,11 @@
     "staticPurchaseNotice": "No payment or purchase will be made.",
     "staticSuccess": "Plan selection preview complete. No purchase was made.",
     "paywallTitle": "Keep building with more room",
-    "paywallBody": "Review the benefits, choose a billing period, or skip and continue exploring the starter.",
+    "paywallBody": "Review the benefits and choose a billing period. You can also skip this and keep exploring the starter.",
     "paywallContinue": "Preview selected plan and continue",
     "benefitAdaptive": "Adaptive layouts for phone and desktop",
     "benefitLocalized": "English, Arabic, and Simplified Chinese",
-    "benefitAccessible": "Accessible scaling and input policies",
+    "benefitAccessible": "Accessible text scaling and input modes",
     "plans": {
       "basicName": "Basic",
       "basicDescription": "A focused foundation for personal projects.",
@@ -98,9 +98,9 @@
   },
   "home": {
     "title": "A durable place to begin",
-    "body": "The application shell is running with explicit configuration, adaptive navigation, and localized controls.",
+    "body": "The app is running with clear configuration, adaptive navigation, and localized controls.",
     "greeting": "Welcome, $name",
-    "summary": "Your starter is configured and ready for the next real product capability.",
+    "summary": "Your starter is set up and ready for the next real feature.",
     "quickActions": "Quick actions",
     "editProfile": "Update profile",
     "openSettings": "Open settings",
@@ -115,7 +115,7 @@
     "statusLocalizedBody": "Application and ForUI copy share the selected language and direction.",
     "recentTitle": "Recent activity",
     "recentEmptyTitle": "Nothing here yet",
-    "recentEmptyBody": "Real product activity can replace this honest empty state when a domain is chosen."
+    "recentEmptyBody": "When you choose a product domain, real activity will replace this empty state."
   },
   "settings": {
     "title": "Settings",
@@ -224,7 +224,7 @@
     },
     "register": {
       "title": "Create your account",
-      "body": "Enter the details used to demonstrate registration and confirmation behavior.",
+      "body": "Enter some details to see how registration and confirmation work.",
       "acceptTerms": "I agree to the terms and privacy preview.",
       "terms": "Review terms",
       "privacy": "Review privacy",
@@ -239,9 +239,9 @@
     },
     "forgotPassword": {
       "title": "Reset your password",
-      "body": "Enter an email address. The confirmation remains neutral and does not reveal whether an account exists.",
+      "body": "Enter an email address. The confirmation is the same whether or not the account exists.",
       "submit": "Send verification code",
-      "submitting": "Preparing verification",
+      "submitting": "Sending verification code",
       "success": "If the address can receive a reset, a verification code will be available."
     },
     "otp": {
@@ -272,7 +272,7 @@
         "other": "Try again in $seconds seconds."
       },
       "mfaTitle": "Verify your sign-in",
-      "mfaBody": "Enter the six-digit code we sent to complete sign-in.",
+      "mfaBody": "Enter the six-digit code to complete sign-in.",
       "expiresIn(seconds)": {
         "one": "Expires in 1 second",
         "other": "Expires in $seconds seconds"
@@ -293,7 +293,7 @@
   "profile": {
     "update": {
       "title": "Update profile",
-      "body": "Edit non-sensitive account details. Drafts remain only while this page is mounted.",
+      "body": "Edit non-sensitive account details. Drafts are kept only while this page is open.",
       "avatar": "Profile image placeholder",
       "changeAvatar": "Change profile image",
       "avatarUnavailable": "Image selection is not connected and no permission was requested.",
@@ -351,7 +351,7 @@
   },
   "softUpdate": {
     "title": "A newer version is available",
-    "body": "Update to the latest version for the latest improvements and fixes.",
+    "body": "Update to the latest version for improvements and fixes.",
     "update": "Update",
     "later": "Later"
   },
@@ -375,8 +375,8 @@
   },
   "announcements": {
     "dismiss": "Dismiss",
-    "actionLearnMore": "Learn more",
-    "dismissFailed": "Couldn't dismiss the announcement.",
+    "actionLearnMore": "See details",
+    "dismissFailed": "Couldn't dismiss the announcement. Try again.",
     "severityInfo": "Information",
     "severitySuccess": "Success",
     "severityWarning": "Warning",
@@ -412,7 +412,7 @@
   },
   "routeError": {
     "title": "We could not open that page",
-    "body": "The address is unknown or incomplete. You can return to a safe page.",
+    "body": "The address is unknown or incomplete. You can return home.",
     "path": "Requested address: $path",
     "invalidOtpPurpose": "The verification address needs a valid registration or password-reset purpose."
   },

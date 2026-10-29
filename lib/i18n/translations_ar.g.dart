@@ -103,7 +103,7 @@ class _Translations$common$ar extends Translations$common$en {
 	@override String get saving => 'جارٍ الحفظ…';
 	@override String get notConnected => 'هذا الإجراء غير متصل بعد.';
 	@override String get legalPlaceholderTitle => 'معاينة المعلومات';
-	@override String get legalPlaceholderBody => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.';
+	@override String get legalPlaceholderBody => 'يعرض هذا القالب محتوى تجريبيًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.';
 	@override String get confirm => 'تأكيد';
 	@override String get success => 'تم بنجاح';
 	@override String get discard => 'تجاهل';
@@ -145,7 +145,7 @@ class _Translations$onboarding$ar extends Translations$onboarding$en {
 	@override String get brand => 'نقطة بداية مدروسة';
 	@override String progress({required Object current, required Object total}) => 'الخطوة ${current} من ${total}';
 	@override String get firstTitle => 'ابدأ من أساس متين';
-	@override String get firstBody => 'ابدأ بإعدادات صريحة وفحوص جودة صارمة وواجهة جاهزة للنمو.';
+	@override String get firstBody => 'ابدأ بإعدادات واضحة وفحوص جودة صارمة وواجهة جاهزة للنمو.';
 	@override String get middleTitle => 'مصمم لكل شاشة';
 	@override String get middleBody => 'تتكيف صفحات الإنتاج نفسها من شاشات اللمس المدمجة إلى سير عمل سطح المكتب الدقيق.';
 	@override String get finalTitle => 'تفضيلاتك ملكك';
@@ -161,7 +161,7 @@ class _Translations$pricing$ar extends Translations$pricing$en {
 
 	// Translations
 	@override String get title => 'خطط تناسب طريقة عملك';
-	@override String get body => 'قارن مجموعة صغيرة وواضحة من الخطط التجريبية. الشراء غير متصل عمدًا في هذا القالب.';
+	@override String get body => 'قارن مجموعة صغيرة من الخطط التجريبية. الشراء غير متصل في هذا القالب.';
 	@override String get monthly => 'شهري';
 	@override String get annual => 'سنوي';
 	@override String get billedMonthly => 'الفوترة كل شهر';
@@ -176,7 +176,7 @@ class _Translations$pricing$ar extends Translations$pricing$en {
 	@override String get comparisonTitle => 'مقارنة الخطط';
 	@override String get faqTitle => 'أسئلة شائعة';
 	@override String get faqQuestion => 'هل يمكنني تغيير الخطة لاحقًا؟';
-	@override String get faqAnswer => 'نعم. هذه التجربة الثابتة تعرض التخطيط فقط، ولا تنشئ أي اشتراك.';
+	@override String get faqAnswer => 'نعم. هذه التجربة الثابتة تعرض التخطيط فقط. لا يتم إنشاء أي اشتراك.';
 	@override String get restore => 'استعادة المشتريات';
 	@override String get restoreUnavailable => 'استعادة المشتريات غير متصلة في هذا القالب.';
 	@override String get terms => 'الشروط';
@@ -184,11 +184,11 @@ class _Translations$pricing$ar extends Translations$pricing$en {
 	@override String get staticPurchaseNotice => 'لن يتم إجراء دفع أو شراء.';
 	@override String get staticSuccess => 'اكتملت معاينة اختيار الخطة. لم يتم أي شراء.';
 	@override String get paywallTitle => 'واصل البناء بمساحة أكبر';
-	@override String get paywallBody => 'راجع المزايا واختر دورة الفوترة أو تخطَّ وتابع استكشاف القالب.';
+	@override String get paywallBody => 'راجع المزايا واختر دورة الفوترة. يمكنك أيضًا التخطي ومتابعة استكشاف القالب.';
 	@override String get paywallContinue => 'معاينة الخطة المحددة والمتابعة';
 	@override String get benefitAdaptive => 'تخطيطات متكيفة للهاتف وسطح المكتب';
 	@override String get benefitLocalized => 'الإنجليزية والعربية والصينية المبسطة';
-	@override String get benefitAccessible => 'تحجيم وسياسات إدخال تراعي إمكانية الوصول';
+	@override String get benefitAccessible => 'تحجيم نصوص وأوضاع إدخال تراعي إمكانية الوصول';
 	@override late final _Translations$pricing$plans$ar plans = _Translations$pricing$plans$ar._(_root);
 }
 
@@ -200,9 +200,9 @@ class _Translations$home$ar extends Translations$home$en {
 
 	// Translations
 	@override String get title => 'بداية متينة لتطبيقك';
-	@override String get body => 'تعمل بنية التطبيق الآن بإعدادات صريحة وتنقل متكيف وعناصر مترجمة.';
+	@override String get body => 'يعمل التطبيق الآن بإعدادات واضحة وتنقل متكيف وعناصر مترجمة.';
 	@override String greeting({required Object name}) => 'مرحبًا، ${name}';
-	@override String get summary => 'القالب مضبوط وجاهز لإضافة القدرة الحقيقية التالية للمنتج.';
+	@override String get summary => 'القالب مضبوط وجاهز لإضافة الميزة الحقيقية التالية.';
 	@override String get quickActions => 'إجراءات سريعة';
 	@override String get editProfile => 'تحديث الملف الشخصي';
 	@override String get openSettings => 'فتح الإعدادات';
@@ -217,7 +217,7 @@ class _Translations$home$ar extends Translations$home$en {
 	@override String get statusLocalizedBody => 'تستخدم نصوص التطبيق وForUI اللغة والاتجاه المحددين معًا.';
 	@override String get recentTitle => 'النشاط الأخير';
 	@override String get recentEmptyTitle => 'لا يوجد نشاط بعد';
-	@override String get recentEmptyBody => 'يمكن أن يحل نشاط المنتج الحقيقي محل هذه الحالة الفارغة الواضحة عند اختيار مجال المنتج.';
+	@override String get recentEmptyBody => 'عند اختيار مجال المنتج، سيحل النشاط الحقيقي محل هذه الحالة الفارغة.';
 }
 
 // Path: settings
@@ -335,7 +335,7 @@ class _Translations$softUpdate$ar extends Translations$softUpdate$en {
 
 	// Translations
 	@override String get title => 'يتوفر إصدار أحدث';
-	@override String get body => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.';
+	@override String get body => 'حدّث إلى أحدث إصدار للحصول على التحسينات والإصلاحات.';
 	@override String get update => 'تحديث';
 	@override String get later => 'لاحقًا';
 }
@@ -387,8 +387,8 @@ class _Translations$announcements$ar extends Translations$announcements$en {
 
 	// Translations
 	@override String get dismiss => 'إغلاق';
-	@override String get actionLearnMore => 'اعرف المزيد';
-	@override String get dismissFailed => 'تعذّر إغلاق الإعلان.';
+	@override String get actionLearnMore => 'عرض التفاصيل';
+	@override String get dismissFailed => 'تعذّر إغلاق الإعلان. حاول مرة أخرى.';
 	@override String get severityInfo => 'معلومة';
 	@override String get severitySuccess => 'نجاح';
 	@override String get severityWarning => 'تحذير';
@@ -421,7 +421,7 @@ class _Translations$routeError$ar extends Translations$routeError$en {
 
 	// Translations
 	@override String get title => 'تعذر فتح هذه الصفحة';
-	@override String get body => 'العنوان غير معروف أو غير مكتمل. يمكنك العودة إلى صفحة آمنة.';
+	@override String get body => 'العنوان غير معروف أو غير مكتمل. يمكنك العودة إلى الرئيسية.';
 	@override String path({required Object path}) => 'العنوان المطلوب: ${path}';
 	@override String get invalidOtpPurpose => 'يحتاج عنوان التحقق إلى غرض صالح للتسجيل أو إعادة تعيين كلمة المرور.';
 }
@@ -883,7 +883,7 @@ class _Translations$auth$register$ar extends Translations$auth$register$en {
 
 	// Translations
 	@override String get title => 'إنشاء حسابك';
-	@override String get body => 'أدخل التفاصيل المستخدمة لعرض سلوك التسجيل والتأكيد.';
+	@override String get body => 'أدخل بعض التفاصيل لترى كيف يعمل التسجيل والتأكيد.';
 	@override String get acceptTerms => 'أوافق على معاينة الشروط والخصوصية.';
 	@override String get terms => 'مراجعة الشروط';
 	@override String get privacy => 'مراجعة الخصوصية';
@@ -905,9 +905,9 @@ class _Translations$auth$forgotPassword$ar extends Translations$auth$forgotPassw
 
 	// Translations
 	@override String get title => 'إعادة تعيين كلمة المرور';
-	@override String get body => 'أدخل بريدًا إلكترونيًا. يبقى التأكيد محايدًا ولا يكشف عن وجود حساب.';
+	@override String get body => 'أدخل بريدًا إلكترونيًا. يكون التأكيد نفسه سواء وُجد الحساب أم لا.';
 	@override String get submit => 'إرسال رمز التحقق';
-	@override String get submitting => 'جارٍ إعداد التحقق';
+	@override String get submitting => 'جارٍ إرسال رمز التحقق';
 	@override String get success => 'إذا كان العنوان قادرًا على استقبال إعادة التعيين، فسيكون رمز التحقق متاحًا.';
 }
 
@@ -952,7 +952,7 @@ class _Translations$auth$otp$ar extends Translations$auth$otp$en {
 		other: 'أعد المحاولة خلال ${seconds} ثانية.',
 	);
 	@override String get mfaTitle => 'تحقق من تسجيل الدخول';
-	@override String get mfaBody => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.';
+	@override String get mfaBody => 'أدخل الرمز المكون من ستة أرقام لإكمال تسجيل الدخول.';
 	@override String expiresIn({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n,
 		zero: 'تنتهي صلاحيته الآن',
 		one: 'تنتهي صلاحيته خلال ثانية واحدة',
@@ -1201,7 +1201,7 @@ extension on TranslationsAr {
 			'common.saving' => 'جارٍ الحفظ…',
 			'common.notConnected' => 'هذا الإجراء غير متصل بعد.',
 			'common.legalPlaceholderTitle' => 'معاينة المعلومات',
-			'common.legalPlaceholderBody' => 'يعرض هذا القالب محتوى تجريبيًا واضحًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.',
+			'common.legalPlaceholderBody' => 'يعرض هذا القالب محتوى تجريبيًا إلى أن تتم الموافقة على النص القانوني الخاص بالمنتج.',
 			'common.confirm' => 'تأكيد',
 			'common.success' => 'تم بنجاح',
 			'common.discard' => 'تجاهل',
@@ -1216,14 +1216,14 @@ extension on TranslationsAr {
 			'onboarding.brand' => 'نقطة بداية مدروسة',
 			'onboarding.progress' => ({required Object current, required Object total}) => 'الخطوة ${current} من ${total}',
 			'onboarding.firstTitle' => 'ابدأ من أساس متين',
-			'onboarding.firstBody' => 'ابدأ بإعدادات صريحة وفحوص جودة صارمة وواجهة جاهزة للنمو.',
+			'onboarding.firstBody' => 'ابدأ بإعدادات واضحة وفحوص جودة صارمة وواجهة جاهزة للنمو.',
 			'onboarding.middleTitle' => 'مصمم لكل شاشة',
 			'onboarding.middleBody' => 'تتكيف صفحات الإنتاج نفسها من شاشات اللمس المدمجة إلى سير عمل سطح المكتب الدقيق.',
 			'onboarding.finalTitle' => 'تفضيلاتك ملكك',
 			'onboarding.finalBody' => 'اختر المظهر واللغة وحجم النص من دون إخفاء إعدادات إمكانية الوصول في النظام.',
 			'onboarding.openPaywall' => 'مراجعة الخطط',
 			'pricing.title' => 'خطط تناسب طريقة عملك',
-			'pricing.body' => 'قارن مجموعة صغيرة وواضحة من الخطط التجريبية. الشراء غير متصل عمدًا في هذا القالب.',
+			'pricing.body' => 'قارن مجموعة صغيرة من الخطط التجريبية. الشراء غير متصل في هذا القالب.',
 			'pricing.monthly' => 'شهري',
 			'pricing.annual' => 'سنوي',
 			'pricing.billedMonthly' => 'الفوترة كل شهر',
@@ -1238,7 +1238,7 @@ extension on TranslationsAr {
 			'pricing.comparisonTitle' => 'مقارنة الخطط',
 			'pricing.faqTitle' => 'أسئلة شائعة',
 			'pricing.faqQuestion' => 'هل يمكنني تغيير الخطة لاحقًا؟',
-			'pricing.faqAnswer' => 'نعم. هذه التجربة الثابتة تعرض التخطيط فقط، ولا تنشئ أي اشتراك.',
+			'pricing.faqAnswer' => 'نعم. هذه التجربة الثابتة تعرض التخطيط فقط. لا يتم إنشاء أي اشتراك.',
 			'pricing.restore' => 'استعادة المشتريات',
 			'pricing.restoreUnavailable' => 'استعادة المشتريات غير متصلة في هذا القالب.',
 			'pricing.terms' => 'الشروط',
@@ -1246,11 +1246,11 @@ extension on TranslationsAr {
 			'pricing.staticPurchaseNotice' => 'لن يتم إجراء دفع أو شراء.',
 			'pricing.staticSuccess' => 'اكتملت معاينة اختيار الخطة. لم يتم أي شراء.',
 			'pricing.paywallTitle' => 'واصل البناء بمساحة أكبر',
-			'pricing.paywallBody' => 'راجع المزايا واختر دورة الفوترة أو تخطَّ وتابع استكشاف القالب.',
+			'pricing.paywallBody' => 'راجع المزايا واختر دورة الفوترة. يمكنك أيضًا التخطي ومتابعة استكشاف القالب.',
 			'pricing.paywallContinue' => 'معاينة الخطة المحددة والمتابعة',
 			'pricing.benefitAdaptive' => 'تخطيطات متكيفة للهاتف وسطح المكتب',
 			'pricing.benefitLocalized' => 'الإنجليزية والعربية والصينية المبسطة',
-			'pricing.benefitAccessible' => 'تحجيم وسياسات إدخال تراعي إمكانية الوصول',
+			'pricing.benefitAccessible' => 'تحجيم نصوص وأوضاع إدخال تراعي إمكانية الوصول',
 			'pricing.plans.basicName' => 'أساسية',
 			'pricing.plans.basicDescription' => 'أساس مركز للمشاريع الشخصية.',
 			'pricing.plans.basicBenefitOne' => 'شاشات القالب الأساسية',
@@ -1267,9 +1267,9 @@ extension on TranslationsAr {
 			'pricing.plans.teamBenefitTwo' => 'قواعد جاهزة للفريق',
 			'pricing.plans.teamBenefitThree' => 'سير إصدار متعدد المنصات',
 			'home.title' => 'بداية متينة لتطبيقك',
-			'home.body' => 'تعمل بنية التطبيق الآن بإعدادات صريحة وتنقل متكيف وعناصر مترجمة.',
+			'home.body' => 'يعمل التطبيق الآن بإعدادات واضحة وتنقل متكيف وعناصر مترجمة.',
 			'home.greeting' => ({required Object name}) => 'مرحبًا، ${name}',
-			'home.summary' => 'القالب مضبوط وجاهز لإضافة القدرة الحقيقية التالية للمنتج.',
+			'home.summary' => 'القالب مضبوط وجاهز لإضافة الميزة الحقيقية التالية.',
 			'home.quickActions' => 'إجراءات سريعة',
 			'home.editProfile' => 'تحديث الملف الشخصي',
 			'home.openSettings' => 'فتح الإعدادات',
@@ -1284,7 +1284,7 @@ extension on TranslationsAr {
 			'home.statusLocalizedBody' => 'تستخدم نصوص التطبيق وForUI اللغة والاتجاه المحددين معًا.',
 			'home.recentTitle' => 'النشاط الأخير',
 			'home.recentEmptyTitle' => 'لا يوجد نشاط بعد',
-			'home.recentEmptyBody' => 'يمكن أن يحل نشاط المنتج الحقيقي محل هذه الحالة الفارغة الواضحة عند اختيار مجال المنتج.',
+			'home.recentEmptyBody' => 'عند اختيار مجال المنتج، سيحل النشاط الحقيقي محل هذه الحالة الفارغة.',
 			'settings.title' => 'الإعدادات',
 			'settings.appearance' => 'المظهر',
 			'settings.language' => 'اللغة',
@@ -1367,7 +1367,7 @@ extension on TranslationsAr {
 			'auth.login.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
 			'auth.login.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
 			'auth.register.title' => 'إنشاء حسابك',
-			'auth.register.body' => 'أدخل التفاصيل المستخدمة لعرض سلوك التسجيل والتأكيد.',
+			'auth.register.body' => 'أدخل بعض التفاصيل لترى كيف يعمل التسجيل والتأكيد.',
 			'auth.register.acceptTerms' => 'أوافق على معاينة الشروط والخصوصية.',
 			'auth.register.terms' => 'مراجعة الشروط',
 			'auth.register.privacy' => 'مراجعة الخصوصية',
@@ -1380,9 +1380,9 @@ extension on TranslationsAr {
 			'auth.register.stay' => 'متابعة التحرير',
 			'auth.register.discard' => 'تجاهل التفاصيل',
 			'auth.forgotPassword.title' => 'إعادة تعيين كلمة المرور',
-			'auth.forgotPassword.body' => 'أدخل بريدًا إلكترونيًا. يبقى التأكيد محايدًا ولا يكشف عن وجود حساب.',
+			'auth.forgotPassword.body' => 'أدخل بريدًا إلكترونيًا. يكون التأكيد نفسه سواء وُجد الحساب أم لا.',
 			'auth.forgotPassword.submit' => 'إرسال رمز التحقق',
-			'auth.forgotPassword.submitting' => 'جارٍ إعداد التحقق',
+			'auth.forgotPassword.submitting' => 'جارٍ إرسال رمز التحقق',
 			'auth.forgotPassword.success' => 'إذا كان العنوان قادرًا على استقبال إعادة التعيين، فسيكون رمز التحقق متاحًا.',
 			'auth.otp.registrationTitle' => 'تحقق من التسجيل',
 			'auth.otp.registrationBody' => 'أدخل الرمز المكون من ستة أرقام لإكمال تدفق التسجيل الثابت.',
@@ -1404,7 +1404,7 @@ extension on TranslationsAr {
 			'auth.otp.attemptsRemaining' => ({required num n, required Object count}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'لا محاولات متبقية', one: 'محاولة واحدة متبقية', two: 'محاولتان متبقيتان', few: '${count} محاولات متبقية', many: '${count} محاولة متبقية', other: '${count} محاولة متبقية', ), 
 			'auth.otp.lockedBody' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'أعد المحاولة الآن.', one: 'أعد المحاولة خلال ثانية واحدة.', two: 'أعد المحاولة خلال ثانيتين.', few: 'أعد المحاولة خلال ${seconds} ثوانٍ.', many: 'أعد المحاولة خلال ${seconds} ثانية.', other: 'أعد المحاولة خلال ${seconds} ثانية.', ), 
 			'auth.otp.mfaTitle' => 'تحقق من تسجيل الدخول',
-			'auth.otp.mfaBody' => 'أدخل الرمز المكون من ستة أرقام الذي أرسلناه لإكمال تسجيل الدخول.',
+			'auth.otp.mfaBody' => 'أدخل الرمز المكون من ستة أرقام لإكمال تسجيل الدخول.',
 			'auth.otp.expiresIn' => ({required num n, required Object seconds}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('ar'))(n, zero: 'تنتهي صلاحيته الآن', one: 'تنتهي صلاحيته خلال ثانية واحدة', two: 'تنتهي صلاحيته خلال ثانيتين', few: 'تنتهي صلاحيته خلال ${seconds} ثوانٍ', many: 'تنتهي صلاحيته خلال ${seconds} ثانية', other: 'تنتهي صلاحيته خلال ${seconds} ثانية', ), 
 			'auth.otp.expiredTitle' => 'انتهت صلاحية الرمز',
 			'auth.otp.expiredBody' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا للمتابعة.',
@@ -1456,7 +1456,7 @@ extension on TranslationsAr {
 			'forceUpdate.body' => 'لم يعد هذا الإصدار مدعومًا. حدّث إلى أحدث إصدار للمتابعة.',
 			'forceUpdate.updateNow' => 'تحديث الآن',
 			'softUpdate.title' => 'يتوفر إصدار أحدث',
-			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على أحدث التحسينات والإصلاحات.',
+			'softUpdate.body' => 'حدّث إلى أحدث إصدار للحصول على التحسينات والإصلاحات.',
 			'softUpdate.update' => 'تحديث',
 			'softUpdate.later' => 'لاحقًا',
 			'session.expired' => 'انتهت جلستك. يُرجى تسجيل الدخول من جديد.',
@@ -1472,8 +1472,8 @@ extension on TranslationsAr {
 			'states.errorBody' => 'حدث خطأ أثناء التحميل. حاول مرة أخرى.',
 			'states.loadingTitle' => 'جارٍ التحميل…',
 			'announcements.dismiss' => 'إغلاق',
-			'announcements.actionLearnMore' => 'اعرف المزيد',
-			'announcements.dismissFailed' => 'تعذّر إغلاق الإعلان.',
+			'announcements.actionLearnMore' => 'عرض التفاصيل',
+			'announcements.dismissFailed' => 'تعذّر إغلاق الإعلان. حاول مرة أخرى.',
 			'announcements.severityInfo' => 'معلومة',
 			'announcements.severitySuccess' => 'نجاح',
 			'announcements.severityWarning' => 'تحذير',
@@ -1495,7 +1495,7 @@ extension on TranslationsAr {
 			'validation.username' => 'استخدم من 3 إلى 24 حرفًا أو رقمًا أو نقطة أو شرطة سفلية.',
 			'validation.bioTooLong' => ({required Object maximum}) => 'اجعل النبذة في حدود ${maximum} حرفًا.',
 			'routeError.title' => 'تعذر فتح هذه الصفحة',
-			'routeError.body' => 'العنوان غير معروف أو غير مكتمل. يمكنك العودة إلى صفحة آمنة.',
+			'routeError.body' => 'العنوان غير معروف أو غير مكتمل. يمكنك العودة إلى الرئيسية.',
 			'routeError.path' => ({required Object path}) => 'العنوان المطلوب: ${path}',
 			'routeError.invalidOtpPurpose' => 'يحتاج عنوان التحقق إلى غرض صالح للتسجيل أو إعادة تعيين كلمة المرور.',
 			'startupFailure.title' => 'تعذر تشغيل التطبيق',

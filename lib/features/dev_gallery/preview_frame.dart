@@ -101,8 +101,16 @@ class _PreviewFrameState extends State<PreviewFrame> {
     );
     final direction = environment.locale == AppLocale.ar ? TextDirection.rtl : TextDirection.ltr;
 
+    // The canvas is the preview's page background, so it must come from the
+    // PREVIEW theme, not the ambient app theme. The gallery environment is
+    // independent of the app's theme mode; when the app runs dark and the
+    // environment is light (or the reverse), an ambient canvas puts the
+    // light-palette foreground and hairlines on a dark surface (or the
+    // reverse), rendering foreground text, inverse mark tiles and ring
+    // hairlines unreadable.
     return ColoredBox(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      key: const ValueKey('gallery-preview-canvas'),
+      color: theme.colors.background,
       child: SingleChildScrollView(
         key: const ValueKey('gallery-preview-horizontal-scroll'),
         scrollDirection: Axis.horizontal,

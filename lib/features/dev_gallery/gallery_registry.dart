@@ -3,6 +3,10 @@ import 'package:starter/features/dev_gallery/cases/a11y_presets_gallery_cases.da
 import 'package:starter/features/dev_gallery/cases/analytics_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/announcements_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/biometric_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/brand_blocks_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/brand_glass_rings_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/brand_material_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/brand_system_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/busy_indicator_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/connectivity_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/feedback_gallery_cases.dart';
@@ -51,6 +55,12 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildToastDialogsGalleryCases(),
     ...buildPinAutolockGalleryCases(),
     ...buildFeedbackGalleryCases(),
+    ...buildBrandSystemGalleryCases(),
+    ...buildBrandMaterialGalleryCases(),
+    ...buildBrandGlassGalleryCases(),
+    ...buildBrandRingsGalleryCases(),
+    ...buildBrandMarksGalleryCases(),
+    ...buildBrandBlocksGalleryCases(),
   ];
   final ids = <String>{};
   for (final galleryCase in cases) {

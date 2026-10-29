@@ -20,7 +20,7 @@
     "saving": "正在保存…",
     "notConnected": "此操作尚未连接。",
     "legalPlaceholderTitle": "信息预览",
-    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示明确且可复现的占位内容。",
+    "legalPlaceholderBody": "在产品专属法律文本获批前，此模板会显示占位内容。",
     "confirm": "确认",
     "success": "成功",
     "discard": "放弃",
@@ -41,7 +41,7 @@
     "brand": "经过思考的起点",
     "progress": "第 $current 步，共 $total 步",
     "firstTitle": "从可靠的基础开始",
-    "firstBody": "从明确配置、严格质量检查和可持续扩展的界面开始构建。",
+    "firstBody": "从清晰的配置、严格的质量检查和可持续扩展的界面开始构建。",
     "middleTitle": "为每一种屏幕而设计",
     "middleBody": "同一套生产页面可从紧凑触控布局适配到精确的桌面工作流。",
     "finalTitle": "偏好始终由你掌控",
@@ -50,7 +50,7 @@
   },
   "pricing": {
     "title": "适合不同工作方式的方案",
-    "body": "比较一组精简、透明的静态方案。此模板不会连接真实购买流程。",
+    "body": "比较一组精简的静态方案。此模板不会连接真实购买流程。",
     "monthly": "按月",
     "annual": "按年",
     "billedMonthly": "每月结算",
@@ -65,7 +65,7 @@
     "comparisonTitle": "方案对比",
     "faqTitle": "常见问题",
     "faqQuestion": "以后可以更换方案吗？",
-    "faqAnswer": "可以。此静态体验仅演示布局，不会创建任何订阅。",
+    "faqAnswer": "可以。此静态体验仅演示布局。不会创建任何订阅。",
     "restore": "恢复购买",
     "restoreUnavailable": "此模板未连接购买恢复功能。",
     "terms": "条款",
@@ -73,11 +73,11 @@
     "staticPurchaseNotice": "不会产生付款或购买。",
     "staticSuccess": "方案选择预览已完成，未产生购买。",
     "paywallTitle": "用更多空间继续构建",
-    "paywallBody": "查看权益并选择结算周期，也可以跳过后继续探索模板。",
+    "paywallBody": "查看权益并选择结算周期。也可以跳过后继续探索模板。",
     "paywallContinue": "预览所选方案并继续",
     "benefitAdaptive": "适配手机和桌面的布局",
     "benefitLocalized": "支持英语、阿拉伯语和简体中文",
-    "benefitAccessible": "兼顾无障碍的缩放和输入策略",
+    "benefitAccessible": "兼顾无障碍的文字缩放和输入方式",
     "plans": {
       "basicName": "基础版",
       "basicDescription": "适合个人项目的专注基础。",
@@ -98,9 +98,9 @@
   },
   "home": {
     "title": "从可靠的基础开始",
-    "body": "应用外壳已使用显式配置、自适应导航和本地化控件运行。",
+    "body": "应用已使用清晰配置、自适应导航和本地化控件运行。",
     "greeting": "欢迎，$name",
-    "summary": "模板已配置完成，可以开始添加下一个真实产品能力。",
+    "summary": "模板已配置完成，可以开始添加下一个真实功能。",
     "quickActions": "快捷操作",
     "editProfile": "更新个人资料",
     "openSettings": "打开设置",
@@ -115,7 +115,7 @@
     "statusLocalizedBody": "应用文案与 ForUI 文案共同使用所选语言和方向。",
     "recentTitle": "最近活动",
     "recentEmptyTitle": "暂无活动",
-    "recentEmptyBody": "确定产品领域后，真实活动可以替换这一明确的空状态。"
+    "recentEmptyBody": "确定产品领域后，真实活动会替换这一空状态。"
   },
   "settings": {
     "title": "设置",
@@ -222,7 +222,7 @@
     },
     "register": {
       "title": "创建账户",
-      "body": "输入用于演示注册和确认行为的信息。",
+      "body": "输入一些信息，了解注册和确认的运作方式。",
       "acceptTerms": "我同意条款与隐私预览。",
       "terms": "查看条款",
       "privacy": "查看隐私",
@@ -237,9 +237,9 @@
     },
     "forgotPassword": {
       "title": "重置密码",
-      "body": "输入电子邮箱。确认信息保持中立，不会透露账户是否存在。",
+      "body": "输入电子邮箱。无论账户是否存在，确认信息均相同。",
       "submit": "发送验证码",
-      "submitting": "正在准备验证",
+      "submitting": "正在发送验证码",
       "success": "如果该地址可以接收重置请求，验证码将会可用。"
     },
     "otp": {
@@ -268,7 +268,7 @@
         "other": "请在 $seconds 秒后重试。"
       },
       "mfaTitle": "验证登录",
-      "mfaBody": "输入我们发送的六位验证码以完成登录。",
+      "mfaBody": "输入六位验证码以完成登录。",
       "expiresIn(seconds)": {
         "other": "将在 $seconds 秒后过期"
       },
@@ -288,7 +288,7 @@
   "profile": {
     "update": {
       "title": "更新个人资料",
-      "body": "编辑非敏感账户信息。草稿只在此页面保持挂载时保留。",
+      "body": "编辑非敏感账户信息。草稿仅在此页面打开时保留。",
       "avatar": "个人头像占位图",
       "changeAvatar": "更换个人头像",
       "avatarUnavailable": "图片选择尚未连接，也没有请求任何权限。",
@@ -346,7 +346,7 @@
   },
   "softUpdate": {
     "title": "有新版本可用",
-    "body": "更新至最新版本以获取最新改进和修复。",
+    "body": "更新至最新版本以获取改进和修复。",
     "update": "更新",
     "later": "稍后"
   },
@@ -370,8 +370,8 @@
   },
   "announcements": {
     "dismiss": "关闭",
-    "actionLearnMore": "了解更多",
-    "dismissFailed": "无法关闭此公告。",
+    "actionLearnMore": "查看详情",
+    "dismissFailed": "无法关闭此公告，请重试。",
     "severityInfo": "信息",
     "severitySuccess": "成功",
     "severityWarning": "警告",
@@ -407,7 +407,7 @@
   },
   "routeError": {
     "title": "无法打开该页面",
-    "body": "地址未知或不完整。你可以返回安全页面。",
+    "body": "地址未知或不完整。你可以返回主页。",
     "path": "请求的地址：$path",
     "invalidOtpPurpose": "验证地址必须包含有效的注册或密码重置用途。"
   },

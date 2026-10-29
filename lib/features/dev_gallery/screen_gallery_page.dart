@@ -612,7 +612,10 @@ class _ChoiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FButton(
       key: buttonKey,
-      variant: selected ? .primary : .outline,
+      // Selected stays a muted fill (ForUI's [.selected] outline delta);
+      // solid primary is reserved for the one main action per view, and a
+      // rail can have many selections at once (BRAND.md s9/s4.1).
+      variant: .outline,
       size: .sm,
       mainAxisSize: .min,
       selected: selected,
@@ -625,6 +628,8 @@ class _ChoiceButton extends StatelessWidget {
 
 String _accentLabel(Translations translations, AppAccent accent) {
   return switch (accent) {
+    // Dev-gallery surface: literal English is acceptable here.
+    AppAccent.oxide => 'Oxide',
     AppAccent.neutral => translations.settings.accentNeutral,
     AppAccent.green => translations.settings.accentGreen,
     AppAccent.blue => translations.settings.accentBlue,
