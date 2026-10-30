@@ -44,6 +44,9 @@ class ExpandedAppShell extends StatelessWidget {
     final railMode = compactSidebar || !expanded;
     final width = railMode ? AppSizes.compactSidebarWidth : AppSizes.expandedSidebarWidth;
     final navigationInset = context.spacing.sm;
+    // The rail's own side air: 4 inside the 48px brand icon rail (the
+    // expanded sidebar keeps the theme inset).
+    const railInset = 4.0;
     final itemStyle = context.theme.sidebarStyle.groupStyle.itemStyle;
     final itemPadding = itemStyle.padding.resolve(Directionality.of(context));
 
@@ -54,7 +57,7 @@ class ExpandedAppShell extends StatelessWidget {
     // name on the tooltip, whose semantics label also carries it to assistive
     // tech (BRAND.md s6: icon-only controls stay labeled).
     final iconRailStyle = railMode
-        ? _iconRailStyle(itemStyle, itemPadding, width, navigationInset)
+        ? _iconRailStyle(itemStyle, itemPadding, width, railInset)
         : null;
 
     return FScaffold(
@@ -99,7 +102,9 @@ class ExpandedAppShell extends StatelessWidget {
                   ),
                 ),
           child: ListView(
-            padding: EdgeInsets.symmetric(horizontal: navigationInset),
+            // The 48px rail tightens the side air to 4 so the 36dp toggle
+            // fits without clipping; the expanded sidebar keeps its inset.
+            padding: EdgeInsets.symmetric(horizontal: railMode ? railInset : navigationInset),
             children: [
               if (railMode)
                 Align(
@@ -197,10 +202,10 @@ class ExpandedAppShell extends StatelessWidget {
     FSidebarItemStyle itemStyle,
     EdgeInsets itemPadding,
     double width,
-    double navigationInset,
+    double sideInset,
   ) {
     final iconSize = itemStyle.iconStyle.base.size ?? 16;
-    var inset = (width - 2 * navigationInset - iconSize) / 2;
+    var inset = (width - 2 * sideInset - iconSize) / 2;
     if (inset < 0) {
       // Extreme spacing scales can exhaust the rail; never a negative inset.
       inset = 0;
