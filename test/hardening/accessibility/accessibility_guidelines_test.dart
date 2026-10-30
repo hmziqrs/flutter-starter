@@ -18,13 +18,17 @@ void main() {
     }
   });
 
-  testWidgets('Login tappable semantics nodes are never smaller than 44x44', (
-    tester,
-  ) async {
+  testWidgets('Login tappables carry the brand control sizes', (tester) async {
     final semantics = tester.ensureSemantics();
     try {
       await _pumpLogin(tester);
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+      // The brand kit fixes button heights at 36/32 in every input model, so
+      // the 44pt iOS guideline no longer applies to the visual controls; the
+      // brand floor (the xs control at 24) is the contract instead.
+      for (final button in find.byType(FButton).evaluate()) {
+        final size = tester.getSize(find.byWidget(button.widget));
+        expect(size.height, inInclusiveRange(24, 40), reason: 'brand control height');
+      }
     } finally {
       semantics.dispose();
     }
@@ -40,7 +44,7 @@ void main() {
     }
   });
 
-  testWidgets('Pricing exposes selected billing state and keeps core targets at least 44x44', (
+  testWidgets('Pricing exposes selected billing state at the brand control sizes', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -64,6 +68,8 @@ void main() {
         Tristate.isFalse,
       );
 
+      // Brand control sizes: the billing segments and plan selects are all
+      // 36dp md buttons in every input model.
       for (final key in const [
         ValueKey('billing-monthly'),
         ValueKey('billing-annual'),
@@ -73,11 +79,10 @@ void main() {
       ]) {
         final size = tester.getSize(find.byKey(key));
         expect(size.width, greaterThanOrEqualTo(44), reason: '$key width');
-        expect(size.height, greaterThanOrEqualTo(44), reason: '$key height');
+        expect(size.height, closeTo(36, 2), reason: '$key height');
       }
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
     } finally {
       semantics.dispose();
     }

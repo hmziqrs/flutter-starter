@@ -153,6 +153,10 @@ abstract final class ForuiThemeFactory {
         borderRadius: borderRadius.md,
       ),
     );
+    // Brand metrics in EVERY input model: the touch policy no longer raises
+    // button heights to control floors — the brand kit's buttons are the same
+    // 24/32/36/40 on a phone as on a desktop (hit comfort comes from the
+    // layout's own spacing, not from inflating the control).
     final buttonStyles = _brandButtonStyles(
       FButtonStyles.inherit(
         colors: colors,
@@ -160,8 +164,6 @@ abstract final class ForuiThemeFactory {
         style: style,
         touch: touch,
       ),
-      touch: touch,
-      minimumHeight: presentationTokens.controlMinHeight,
       radius: borderRadius.sm,
     );
     final textFieldStyles = _brandTextFieldStyles(
@@ -227,35 +229,18 @@ abstract final class ForuiThemeFactory {
   };
 
   static FVariants<FButtonVariantConstraint, FButtonVariant, FButtonSizeStyles, FButtonSizesDelta>
-  _brandButtonStyles(
-    FButtonStyles styles, {
-    required bool touch,
-    required double minimumHeight,
-    required BorderRadiusGeometry radius,
-  }) {
+  _brandButtonStyles(FButtonStyles styles, {required BorderRadiusGeometry radius}) {
     return FVariants.raw(
-      _brandButtonSizeStyles(
-        styles.base,
-        touch: touch,
-        minimumHeight: minimumHeight,
-        radius: radius,
-      ),
+      _brandButtonSizeStyles(styles.base, radius: radius),
       {
         for (final MapEntry(key: constraint, :value) in styles.variants.entries)
-          constraint: _brandButtonSizeStyles(
-            value,
-            touch: touch,
-            minimumHeight: minimumHeight,
-            radius: radius,
-          ),
+          constraint: _brandButtonSizeStyles(value, radius: radius),
       },
     );
   }
 
   static FButtonSizeStyles _brandButtonSizeStyles(
     FButtonSizeStyles styles, {
-    required bool touch,
-    required double minimumHeight,
     required BorderRadiusGeometry radius,
   }) {
     return FButtonSizeStyles(
@@ -263,8 +248,6 @@ abstract final class ForuiThemeFactory {
         _brandButtonStyle(
           styles.base,
           metrics: _buttonMetrics[FButtonSizeVariant.md]!,
-          touch: touch,
-          minimumHeight: minimumHeight,
           radius: radius,
         ),
         {
@@ -272,8 +255,6 @@ abstract final class ForuiThemeFactory {
             constraint: _brandButtonStyle(
               value,
               metrics: _sizeMetrics(constraint),
-              touch: touch,
-              minimumHeight: minimumHeight,
               radius: radius,
             ),
         },
@@ -295,8 +276,6 @@ abstract final class ForuiThemeFactory {
   static FButtonStyle _brandButtonStyle(
     FButtonStyle style, {
     required _ButtonSizeMetrics metrics,
-    required bool touch,
-    required double minimumHeight,
     required BorderRadiusGeometry radius,
   }) {
     final content = style.contentStyle;
@@ -312,6 +291,8 @@ abstract final class ForuiThemeFactory {
     final contentSize = math.max(fontSize, metrics.iconSize);
     final halfSlack = (metrics.height - contentSize) / 2;
     final verticalPadding = halfSlack > 0 ? halfSlack : 0.0;
+    // Icon-only buttons carry a tight square from ForUI's own touch table.
+    final isIconOnly = content.constraints.hasTightWidth && content.constraints.maxWidth.isFinite;
 
     return style.copyWith(
       decoration: _brandButtonDecoration(style.decoration, radius: radius),
@@ -319,13 +300,14 @@ abstract final class ForuiThemeFactory {
         textStyle: content.textStyle,
         iconStyle: _brandIconSize(content.iconStyle, size: metrics.iconSize),
         circularProgressStyle: content.circularProgressStyle,
-        constraints: content.constraints.copyWith(
-          // Desktop renders the brand heights exactly (xs 24, sm 32, md 36,
-          // lg 40). Touch keeps its accessibility floors instead: the ForUI
-          // touch minimums raised to controlMinHeight (44 near-field).
-          minHeight: touch
-              ? math.max(content.constraints.minHeight, minimumHeight)
-              : metrics.height,
+        // The brand box renders exactly in every input model (xs 24, sm 32,
+        // md 36, lg 40) — no touch inflation. Re-square the tight icon-only
+        // box at the brand size (copyWith cannot shrink a tight max).
+        constraints: BoxConstraints(
+          minWidth: metrics.height,
+          maxWidth: isIconOnly ? metrics.height : content.constraints.maxWidth,
+          minHeight: metrics.height,
+          maxHeight: isIconOnly ? metrics.height : content.constraints.maxHeight,
         ),
         padding: EdgeInsets.symmetric(
           horizontal: metrics.horizontalPadding,
@@ -335,8 +317,15 @@ abstract final class ForuiThemeFactory {
       ),
       iconContentStyle: FButtonIconContentStyle(
         iconStyle: _brandIconSize(style.iconContentStyle.iconStyle, size: metrics.iconSize),
-        padding: style.iconContentStyle.padding,
-        constraints: style.iconContentStyle.constraints,
+        // Center the pinned glyph in the brand square: half the slack
+        // between the square and the glyph on each side.
+        padding: EdgeInsets.symmetric(horizontal: halfSlack, vertical: halfSlack),
+        constraints: BoxConstraints(
+          minWidth: metrics.height,
+          maxWidth: metrics.height,
+          minHeight: metrics.height,
+          maxHeight: metrics.height,
+        ),
       ),
     );
   }

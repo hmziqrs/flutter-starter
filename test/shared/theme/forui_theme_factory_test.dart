@@ -66,7 +66,7 @@ void main() {
     expect(theme.typography.body.md.fontSize, closeTo(16 * 1.2 * 1.1, 0.001));
   });
 
-  test('applies brand button metrics while keeping the interaction floor', () {
+  test('applies brand button metrics in every input model', () {
     final touch = ForuiThemeFactory.build(
       brightness: Brightness.light,
       accent: AppAccent.neutral,
@@ -82,22 +82,20 @@ void main() {
 
     // Brand kit button.svelte md: h-9 px-2.5 gap-1.5 — the vertical padding
     // centers the tallest glyph (the pinned 16px svg, not the 14px height:1
-    // label) inside the 36px brand height.
+    // label) inside the 36px brand height. The same box renders in every
+    // input model: no touch inflation.
     const brandMdPadding = EdgeInsets.symmetric(horizontal: 10, vertical: 10);
 
-    expect(touch.buttonStyles.primary.md.contentStyle.constraints.minHeight, 44);
-    expect(
-      touch.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr),
-      brandMdPadding,
-    );
-    expect(touch.buttonStyles.primary.md.contentStyle.textStyle.base.fontSize, 14);
-    expect(touch.buttonStyles.primary.md.contentStyle.spacing, 6);
-    expect(pointer.buttonStyles.primary.md.contentStyle.constraints.minHeight, 36);
-    expect(
-      pointer.buttonStyles.primary.md.contentStyle.padding.resolve(TextDirection.ltr),
-      brandMdPadding,
-    );
-    expect(pointer.buttonStyles.primary.md.contentStyle.spacing, 6);
+    for (final theme in [touch, pointer]) {
+      expect(theme.buttonStyles.primary.md.contentStyle.constraints.minHeight, 36);
+      expect(
+        theme.buttonStyles.primary.md.contentStyle.padding,
+        brandMdPadding,
+      );
+      expect(theme.buttonStyles.primary.sm.contentStyle.constraints.minHeight, 32);
+      expect(theme.buttonStyles.primary.lg.contentStyle.constraints.minHeight, 40);
+      expect(theme.buttonStyles.primary.xs.contentStyle.constraints.minHeight, 24);
+    }
   });
 
   test('scales spacing tokens by the density factor without shrinking touch floors', () {

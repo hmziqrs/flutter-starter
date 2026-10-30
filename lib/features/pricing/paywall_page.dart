@@ -7,6 +7,7 @@ import 'package:starter/features/pricing/widgets/plan_card.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/brand/app_notice.dart';
@@ -99,7 +100,11 @@ class _PaywallPageState extends State<PaywallPage> {
                 child: FButton(
                   key: const ValueKey('paywall-skip'),
                   variant: .ghost,
-                  autofocus: true,
+                  // Ten-foot presentation needs a focusable anchor on arrival
+                  // and the primary Continue is disabled until a plan is
+                  // picked, so the skip takes the cold focus there; pointer
+                  // surfaces stay calm (no focus ring on entry).
+                  autofocus: AppPresentationPolicy.maybeOf(context)?.usesDirectionalFocus ?? false,
                   mainAxisSize: .min,
                   style: const .delta(
                     tappableStyle: .delta(
@@ -212,6 +217,11 @@ class _PaywallPageState extends State<PaywallPage> {
                           SizedBox(height: spacing.xl),
                           FButton(
                             key: const ValueKey('paywall-continue'),
+                            // Ten-foot presentation focuses the primary
+                            // action on arrival; pointer surfaces stay calm.
+                            autofocus:
+                                AppPresentationPolicy.maybeOf(context)?.usesDirectionalFocus ??
+                                false,
                             onPress: _canContinue
                                 ? () => widget.onContinue(_selectedPlan, _billingPeriod)
                                 : null,

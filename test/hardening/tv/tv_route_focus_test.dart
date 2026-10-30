@@ -29,6 +29,8 @@ void main() {
     ),
     (
       location: AppRoutes.onboardingPaywallPath,
+      // The primary Continue is disabled until a plan is picked, so the TV
+      // cold focus anchors on the always-enabled skip.
       focusKey: 'paywall-skip',
     ),
     (

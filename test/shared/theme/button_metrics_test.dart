@@ -22,9 +22,8 @@ import 'package:starter/shared/theme/forui_theme_factory.dart';
 /// * hover/press/focus feedback is COLOR ONLY (BRAND.md s8) — a held press
 ///   must not scale, translate or rotate the button.
 ///
-/// The touch policy keeps its accessibility floors (ForUI's per-size touch
-/// minimums raised to the near-field controlMinHeight, 44) and gains the
-/// brand horizontal padding, gap, weight and icon pins.
+/// The brand heights render in every input model — the touch policy adds no
+/// inflation (the kit's buttons are the same size on a phone as on a desktop).
 typedef _BrandMetrics = ({double height, double horizontal, double gap, double iconSize});
 
 final _brand = <FButtonSizeVariant, _BrandMetrics>{
@@ -34,21 +33,20 @@ final _brand = <FButtonSizeVariant, _BrandMetrics>{
   FButtonSizeVariant.lg: (height: 40, horizontal: 10, gap: 6, iconSize: 16),
 };
 
-/// Label buttons on touch: max(ForUI touch floor, controlMinHeight).
+/// Label buttons on touch: the same brand heights.
 final _touchLabelHeights = <FButtonSizeVariant, double>{
-  FButtonSizeVariant.xs: 44,
-  FButtonSizeVariant.sm: 44,
-  FButtonSizeVariant.md: 44,
-  FButtonSizeVariant.lg: 48,
+  FButtonSizeVariant.xs: 24,
+  FButtonSizeVariant.sm: 32,
+  FButtonSizeVariant.md: 36,
+  FButtonSizeVariant.lg: 40,
 };
 
-/// Icon buttons are square at the size height; on touch that is ForUI's
-/// per-size touch height (never shrunk by the brand work).
+/// Icon buttons are square at the size height, in every input model.
 final _touchIconHeights = <FButtonSizeVariant, double>{
-  FButtonSizeVariant.xs: 32,
-  FButtonSizeVariant.sm: 40,
-  FButtonSizeVariant.md: 44,
-  FButtonSizeVariant.lg: 48,
+  FButtonSizeVariant.xs: 24,
+  FButtonSizeVariant.sm: 32,
+  FButtonSizeVariant.md: 36,
+  FButtonSizeVariant.lg: 40,
 };
 
 const _label = 'Save';
@@ -225,8 +223,8 @@ FButtonStyle _styleFor(FThemeData theme, FButtonSizeVariant size) =>
     theme.buttonStyles.resolve(<FVariant>{FButtonVariant.primary}).resolve(<FVariant>{size});
 
 /// Brand md height on desktop; the touch a11y floor on touch.
-double expectedLabelHeightForMd(AppInteractionPolicy policy) =>
-    policy == AppInteractionPolicy.precisionPointer ? 36 : 44;
+// The brand md height renders in every input model — no touch inflation.
+double expectedLabelHeightForMd(AppInteractionPolicy policy) => 36;
 
 Widget _frame(FThemeData theme, Widget child) => Directionality(
   textDirection: TextDirection.ltr,
