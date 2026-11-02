@@ -137,8 +137,10 @@ class _SettingsContentFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // APP-BLOCKS.md app type scale: the page title is 24 w500 tight (display
-    // .xl), not the 30 of display.xl2.
+    // APP-BLOCKS.md app type scale: the page title is 24 w500 tracking-tight
+    // (display .xl, tracking-tight = -0.025em), not the 30 of display.xl2.
+    // The gap under the title matches the wide layout's and the kit page
+    // intro's 24, so compact and wide settings open with one rhythm.
     final style = context.theme.typography.display.xl;
     return ReadingContentScrollFrame(
       child: SpacedColumn(
@@ -150,10 +152,10 @@ class _SettingsContentFrame extends StatelessWidget {
             style: style.copyWith(
               fontWeight: FontWeight.w500,
               height: 1.25,
-              letterSpacing: -(style.fontSize ?? 24) * 0.02,
+              letterSpacing: -(style.fontSize ?? 24) * 0.025,
             ),
           ),
-          SizedBox(height: context.spacing.md),
+          SizedBox(height: context.spacing.lg),
           ...sections,
         ],
       ),
@@ -306,7 +308,7 @@ class _SettingsWideLayout extends StatelessWidget {
                     translations.settings.title,
                     style: titleStyle.copyWith(
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+                      letterSpacing: -(titleStyle.fontSize ?? 24) * 0.025,
                     ),
                   ),
                   SizedBox(height: spacing.lg),
@@ -406,7 +408,7 @@ class _SettingsWideLayout extends StatelessWidget {
                           translations.settings.title,
                           style: titleStyle.copyWith(
                             fontWeight: FontWeight.w500,
-                            letterSpacing: -(titleStyle.fontSize ?? 24) * 0.02,
+                            letterSpacing: -(titleStyle.fontSize ?? 24) * 0.025,
                           ),
                         ),
                         SizedBox(height: spacing.xl),

@@ -31,11 +31,11 @@ void main() {
       final stack = tester.widget<Stack>(
         find.descendant(of: find.byType(ElementCard), matching: find.byType(Stack)),
       );
-      expect(stack.children.first, isA<Positioned>());
-      expect(
-        (stack.children.first as Positioned).width,
-        closeTo(320 * 0.7, 0.001),
-      );
+      final ringSlot = stack.children.first as Positioned;
+      // The fingerprint converges on the card's own corner (inset 0).
+      expect(ringSlot.top, 0);
+      expect(ringSlot.right, 0);
+      expect(ringSlot.width, closeTo(320 * 0.7, 0.001));
       final rings = tester.widget<CornerRings>(
         find.descendant(of: find.byType(ElementCard), matching: find.byType(CornerRings)),
       );

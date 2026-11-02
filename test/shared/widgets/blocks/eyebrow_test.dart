@@ -32,6 +32,8 @@ void main() {
 
       final label = tester.widget<Text>(find.text('Where the work goes'));
       expect(label.style!.fontSize, 13);
+      // Pinned even line box: every mark centers on whole pixels.
+      expect(label.style!.height, closeTo(20 / 13, 0.0001));
       expect(label.style!.fontWeight, FontWeight.w500);
       expect(label.style!.color, colors.primary);
     });
@@ -54,6 +56,13 @@ void main() {
         tester.widget<Text>(find.text('Where the work goes')).style!.color,
         colors.mutedForeground,
       );
+
+      // Pixel-snap regression: the 1px mark sits 9dp under the pinned 20dp
+      // line-box top — centered math would put it on a half pixel and paint
+      // two 50%-alpha rows instead of one crisp one.
+      final rowTop = tester.getRect(find.byType(AppEyebrow)).top;
+      final ruleTop = tester.getRect(find.byWidgetPredicate(_isRuleMark)).top;
+      expect(ruleTop - rowTop, 9);
     });
 
     testWidgets('count draws one 2x12 tick per step, filled up to the index', (

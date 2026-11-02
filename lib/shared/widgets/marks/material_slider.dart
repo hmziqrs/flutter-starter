@@ -61,69 +61,69 @@ class _MaterialSliderState extends State<MaterialSlider> {
             onTapDown: (details) => _setFromLocalX(details.localPosition.dx, width),
             onHorizontalDragUpdate: (details) => _setFromLocalX(details.localPosition.dx, width),
             child: SizedBox(
+              // As tall as the thumb: a stack hugging only the track would
+              // hard-clip the thumb ring to the track's 10px.
               height: _thumbExtent,
-              child: Center(
-                child: Stack(
-                  alignment: AlignmentDirectional.centerStart,
-                  children: <Widget>[
-                    // The track: an outline stadium the material fill sits in
-                    // (the kit's inset 1px foreground/12% ring).
-                    Container(
-                      height: _trackExtent,
-                      width: width,
-                      foregroundDecoration: ShapeDecoration(
-                        color: Colors.transparent,
-                        shape: RoundedSuperellipseBorder(
-                          side: BorderSide(
-                            color: theme.colors.foreground.withValues(alpha: 0.12),
-                          ),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(_trackExtent / 2),
-                          ),
+              child: Stack(
+                alignment: AlignmentDirectional.centerStart,
+                children: <Widget>[
+                  // The track: an outline stadium the material fill sits in
+                  // (the kit's inset 1px foreground/12% ring).
+                  Container(
+                    height: _trackExtent,
+                    width: width,
+                    foregroundDecoration: ShapeDecoration(
+                      color: Colors.transparent,
+                      shape: RoundedSuperellipseBorder(
+                        side: BorderSide(
+                          color: theme.colors.foreground.withValues(alpha: 0.12),
                         ),
-                      ),
-                      child: ClipRRect(
                         borderRadius: const BorderRadius.all(
                           Radius.circular(_trackExtent / 2),
                         ),
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: SizedBox(
-                            width: (width - _thumbExtent) * share + _thumbExtent / 2,
-                            height: _trackExtent,
-                            // The kit's fill carries `rounded-full`, so its
-                            // moving end stays a pill.
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(_trackExtent / 2),
-                              ),
-                              child: BrandMaterialSurface(recipe: widget.recipe),
-                            ),
-                          ),
-                        ),
                       ),
                     ),
-                    // The thumb: a page-colored circle in the kit's 2px
-                    // primary border — no material in it, the fill alone
-                    // carries the metal.
-                    Positioned(
-                      left: (width - _thumbExtent) * share,
-                      child: Container(
-                        width: _thumbExtent,
-                        height: _thumbExtent,
-                        decoration: ShapeDecoration(
-                          color: theme.colors.background,
-                          shape: RoundedSuperellipseBorder(
-                            side: BorderSide(color: theme.colors.primary, width: 2),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(_trackExtent / 2),
+                      ),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: SizedBox(
+                          width: (width - _thumbExtent) * share + _thumbExtent / 2,
+                          height: _trackExtent,
+                          // The kit's fill carries `rounded-full`, so its
+                          // moving end stays a pill.
+                          child: ClipRRect(
                             borderRadius: const BorderRadius.all(
-                              Radius.circular(_thumbExtent / 2),
+                              Radius.circular(_trackExtent / 2),
                             ),
+                            child: BrandMaterialSurface(recipe: widget.recipe),
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  // The thumb: a page-colored circle in the kit's 2px
+                  // primary border — no material in it, the fill alone
+                  // carries the metal.
+                  Positioned(
+                    left: (width - _thumbExtent) * share,
+                    child: Container(
+                      width: _thumbExtent,
+                      height: _thumbExtent,
+                      decoration: ShapeDecoration(
+                        color: theme.colors.background,
+                        shape: RoundedSuperellipseBorder(
+                          side: BorderSide(color: theme.colors.primary, width: 2),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(_thumbExtent / 2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );

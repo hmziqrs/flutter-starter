@@ -10,7 +10,9 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/blocks/page_intro.dart';
 import 'package:starter/shared/widgets/brand/app_notice.dart';
+import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 
 class PaywallPage extends StatefulWidget {
@@ -112,7 +114,14 @@ class _PaywallPageState extends State<PaywallPage> {
                     ),
                   ),
                   onPress: widget.onSkip,
-                  child: Text(translations.common.skip),
+                  // The least important action on the screen (the onboarding
+                  // page's _QuietSkip recipe): muted 14 on the app type scale.
+                  child: Text(
+                    translations.common.skip,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -133,18 +142,13 @@ class _PaywallPageState extends State<PaywallPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // App type scale (APP-BLOCKS): page title 24 w500
-                          // tight; body descriptions 14 muted.
-                          Text(
-                            translations.pricing.paywallTitle,
-                            style: context.theme.typography.display.xl,
-                          ),
-                          SizedBox(height: spacing.md),
-                          Text(
-                            translations.pricing.paywallBody,
-                            style: context.theme.typography.body.sm.copyWith(
-                              color: context.theme.colors.mutedForeground,
-                            ),
+                          // The kit's page-intro composition (page-intro.svelte
+                          // at the app type scale), the same recipe home and
+                          // pricing open with: title 24 w500 tracking-tight
+                          // over the one muted line at the block's gap-6.
+                          AppPageIntro(
+                            title: translations.pricing.paywallTitle,
+                            description: translations.pricing.paywallBody,
                           ),
                           SizedBox(height: spacing.lg),
                           _BenefitList(
@@ -316,18 +320,30 @@ class _BenefitList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
     final spacing = context.spacing;
     return AppCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // The plan-card benefit recipe (a filled orange ring before each
+          // item, the words 14dp muted): the same list shape the cards below
+          // use, so the page carries one bullet language.
           for (final benefit in benefits)
             Padding(
               padding: EdgeInsets.symmetric(vertical: spacing.xs),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  const Icon(FLucideIcons.circleCheck, size: 20),
-                  SizedBox(width: spacing.sm),
-                  Expanded(child: Text(benefit)),
+                  AppRingMarker(filled: true, color: theme.colors.primary),
+                  SizedBox(width: spacing.md),
+                  Expanded(
+                    child: Text(
+                      benefit,
+                      style: TextStyle(fontSize: 14, color: theme.colors.mutedForeground),
+                    ),
+                  ),
                 ],
               ),
             ),

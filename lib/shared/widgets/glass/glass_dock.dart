@@ -7,18 +7,20 @@ import 'package:starter/shared/widgets/glass/glass_style.dart';
 // most-used actions): one frost pill, entries separated by hairlines, an
 // optional lead text and one set-apart main action, exactly like the web
 // kit's GlassDock (a Glass with rounded-full, p-1.5 and gap-1; the buttons
-// are h-9 pills whose text is muted until hover or press). The glass recipe
+// are h-9 pills whose text is muted until hover or press). Below the web
+// breakpoint where the kit's labels hide (`hidden sm:inline`, sm = 640px)
+// the entries read icon-only, so the pill never pushes its main action off
+// screen; the labels stay in semantics either way. The glass recipe
 // comes from glass_style.dart; the dock only adds the pill shape and the
 // entry anatomy.
 //
 // Nothing user-visible is hardcoded: every control's label comes from
-// the caller, shown beside the icon like the web kit's reading-width items
-// and carried as a semantics label either way, because an icon-only control
-// must announce what it does. Hover and press are color only — foreground at
-// 8% under the cursor, foreground at 10% while pressed, the way the web
-// button's bg-foreground/8 and aria-pressed:bg-foreground/10 read — and
-// focus draws the brand ring (primary at 50%, 3px). Nothing scales, lifts
-// or translates.
+// the caller, shown beside the icon at reading widths and carried as a
+// semantics label either way, because an icon-only control must announce
+// what it does. Hover and press are color only — foreground at 8% under the
+// cursor, foreground at 10% while pressed, the way the web button's
+// bg-foreground/8 and aria-pressed:bg-foreground/10 read — and focus draws
+// the brand ring (primary at 50%, 3px). Nothing scales, lifts or translates.
 
 /// One entry in a [GlassDock]'s row: an action, or a hairline separator
 /// between groups of actions (glass-dock.svelte's `items: (Item |
@@ -48,10 +50,11 @@ class GlassDockAction extends GlassDockEntry {
   /// The Lucide icon to draw (ForUI ships `FLucideIcons`).
   final IconData icon;
 
-  /// The label written beside the icon, the way the web kit's dock shows
-  /// its item labels at reading widths (glass-dock.svelte's
-  /// `<span class="hidden sm:inline">{item.label}</span>`). Null keeps an
-  /// icon-only round control, whose meaning must then ride entirely on
+  /// The label written beside the icon at reading widths (glass-dock.svelte's
+  /// `<span class="hidden sm:inline">{item.label}</span>`): hidden below the
+  /// web kit's sm breakpoint (640px), where the kit reads icon-only, and
+  /// still announced through [semanticLabel]. Null keeps an icon-only round
+  /// control at every width, whose meaning must then ride entirely on
   /// [semanticLabel].
   final String? label;
 
@@ -235,6 +238,11 @@ class _GlassDockButtonState extends State<_GlassDockButton> {
     // (text-muted-foreground, hover:text-foreground,
     // aria-pressed:text-foreground).
     final active = _pressed || _hovered;
+    // The web kit hides the label below its sm breakpoint
+    // (`hidden sm:inline` on the label span, sm = 640px): the pill keeps its
+    // main action on screen at phone widths and every entry still announces
+    // itself through semantics.
+    final labeled = widget.action.label != null && _showsLabels(context);
     return FocusableActionDetector(
       enabled: _enabled,
       mouseCursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
@@ -262,11 +270,11 @@ class _GlassDockButtonState extends State<_GlassDockButton> {
           onTap: widget.action.onPressed,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              // An icon-only control reads as a 36px round; a labeled one is
-              // a full pill, the web button's rounded-full at h-9 (an
-              // oversized radius collapses to the stadium).
-              shape: widget.action.label == null ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: widget.action.label == null ? null : BorderRadius.circular(999),
+              // A control is the web button's rounded-full pill at h-9: an
+              // icon-only entry collapses to the same stadium (px-3 keeps the
+              // kit's inset), a labeled one stretches.
+              shape: labeled ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: labeled ? BorderRadius.circular(999) : null,
               // Press reads foreground/10, hover foreground/8, the web
               // button's aria-pressed and hover washes; pressed wins. The
               // border width is constant so the focus ring never shifts the
@@ -289,11 +297,8 @@ class _GlassDockButtonState extends State<_GlassDockButton> {
               // The web button's h-9, icon-only controls included.
               height: 36,
               child: Padding(
-                // The web button's px-3; a bare round keeps the 10px inset
-                // that squares the 16px icon into its 36px circle.
-                padding: EdgeInsets.symmetric(
-                  horizontal: widget.action.label == null ? 10 : 12,
-                ),
+                // The web button's px-3 on every control, icon-only included.
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Opacity(
                   opacity: _enabled ? 1 : 0.5,
                   child: Row(
@@ -305,9 +310,9 @@ class _GlassDockButtonState extends State<_GlassDockButton> {
                         size: 16, // the kit's [&_svg]:size-4
                         color: active ? theme.colors.foreground : theme.colors.mutedForeground,
                       ),
-                      if (widget.action.label case final String label)
+                      if (labeled)
                         Text(
-                          label,
+                          widget.action.label!,
                           // The web button's text-sm, muted until hover or
                           // press.
                           style: theme.typography.body.sm.copyWith(
@@ -324,4 +329,8 @@ class _GlassDockButtonState extends State<_GlassDockButton> {
       ),
     );
   }
+
+  /// Whether the ambient viewport has reached the web kit's sm breakpoint,
+  /// where the kit's labels unhide (`hidden sm:inline`, sm = 640px).
+  static bool _showsLabels(BuildContext context) => MediaQuery.sizeOf(context).width >= 640;
 }

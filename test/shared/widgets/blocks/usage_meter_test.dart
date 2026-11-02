@@ -41,7 +41,7 @@ void main() {
       );
 
       expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 1);
-      expect(find.text('12,420 / 10,000 events'), findsOneWidget);
+      expect(find.text('12,420 of 10,000 events'), findsOneWidget);
       expect(find.text('You\u2019ve used every event this month.'), findsOneWidget);
       expect(
         tester.widget<Text>(find.text('You\u2019ve used every event this month.')).style!.color,

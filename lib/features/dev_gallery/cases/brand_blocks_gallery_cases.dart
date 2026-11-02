@@ -1213,21 +1213,29 @@ class _BeforeAfterStory extends StatelessWidget {
         const AppBeforeAfter(
           beforeLabel: 'By hand',
           afterLabel: 'With the kit',
-          beforeItems: <String>[
-            'Pick hexes per screen.',
-            'Restyle status chips everywhere.',
-            'Hope the modes match.',
-          ],
-          afterItems: <String>[
-            'Resolve tokens from the theme.',
-            'Status roles stay soft everywhere.',
-            'Both modes read right by construction.',
+          rows: <AppBeforeAfterRow>[
+            AppBeforeAfterRow(
+              what: 'Colors',
+              before: 'Pick hexes per screen.',
+              after: 'Resolve tokens from the theme.',
+            ),
+            AppBeforeAfterRow(
+              what: 'Status',
+              before: 'Restyle status chips everywhere.',
+              after: 'Status roles stay soft everywhere.',
+            ),
+            AppBeforeAfterRow(
+              what: 'Modes',
+              before: 'Hope the modes match.',
+              after: 'Both modes read right by construction.',
+            ),
           ],
         ),
         SizedBox(height: context.spacing.lg),
         const _Caption(
-          'Two outline columns; the before items strike through and the '
-          'after items carry the filled primary ring.',
+          'One hairline list: the before items strike through in muted words '
+          'and the after items carry the filled primary ring; the wide row '
+          'grows the 16rem "what" column and the arrow.',
         ),
       ],
     );

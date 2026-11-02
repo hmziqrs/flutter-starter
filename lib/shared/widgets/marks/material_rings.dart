@@ -188,8 +188,11 @@ class _MaterialRingsPainter extends CustomPainter {
     // Sheet and mask in one isolated layer: floor under the metal, the metal
     // multiplied/screened onto it (materials.css), then dstIn keeps only the
     // strokes' alpha — the gaps go fully transparent and the page shows
-    // through, like the kit's mask.
-    final bounds = Offset.zero & size;
+    // through, like the kit's mask. The canvas is scaled into viewBox units
+    // by now, so the layer bounds must be too: a device-px rect would cover
+    // only `scale` of the surface and clip the rings into its top-left
+    // corner.
+    final bounds = Offset.zero & _viewBox;
     final shader = program.newShader();
     try {
       applyBrandMaterialUniforms(
@@ -215,9 +218,15 @@ class _MaterialRingsPainter extends CustomPainter {
     } finally {
       shader.dispose();
     }
+    // The mask is its own layer composited with dstIn: a dstIn paint on the
+    // arc calls alone would only touch the pixels the strokes cover and
+    // leave the sheet intact everywhere else, while a whole layer's restore
+    // blends its full bounds — erasing the sheet wherever no stroke drew.
+    canvas.saveLayer(bounds, Paint()..blendMode = BlendMode.dstIn);
     final maskPaint = Paint()
-      ..blendMode = BlendMode.dstIn
-      ..color = const Color(0xFFFFFFFF);
+      ..color = const Color(0xFFFFFFFF)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
     for (final (index, arc) in arcs.indexed) {
       if (arc.accent) {
         continue;
@@ -227,13 +236,13 @@ class _MaterialRingsPainter extends CustomPainter {
         arc.rotateDegrees * math.pi / 180,
         arc.drawn / arc.radius,
         false,
-        maskPaint
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 5.0 + index * 1.5
-          ..strokeCap = StrokeCap.round,
+        maskPaint..strokeWidth = 5.0 + index * 1.5,
       );
     }
-    canvas.restore();
+    canvas
+      ..restore()
+      // Composite the masked sheet onto the picture.
+      ..restore();
 
     // The accent ring and its dot, painted on top in primary (never masked).
     for (final arc in arcs) {

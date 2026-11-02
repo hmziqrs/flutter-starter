@@ -38,7 +38,8 @@ class AppUsageMeter extends StatelessWidget {
   final String unit;
 
   /// The words under the bar, e.g. "7,420 of 10,000 events". When null,
-  /// composed from the numbers as `used / limit unit`.
+  /// composed from the numbers as `used of limit unit` (usage-meter.svelte's
+  /// words snippet).
   final String? valueText;
 
   /// When the allowance starts over, e.g. "Resets on 1 November".
@@ -87,7 +88,7 @@ class AppUsageMeter extends StatelessWidget {
     if (limit == null) {
       return '${_whole.format(used)} $unit${noLimitText == null ? '' : ' \u00b7 $noLimitText'}';
     }
-    return '${_whole.format(used)} / ${_whole.format(limit)} $unit';
+    return '${_whole.format(used)} of ${_whole.format(limit)} $unit';
   }
 
   static final NumberFormat _whole = NumberFormat.decimalPattern('en_US')
@@ -151,15 +152,24 @@ class AppUsageMeter extends StatelessWidget {
         ),
         if (atLimit && limitMessage != null) ...<Widget>[
           const SizedBox(height: 8),
+          // The message row separates its parts by 12dp (usage-meter.svelte:
+          // gap-x-3 gap-y-1.5); the icon keeps its own 6dp to the words
+          // (the span's gap-1.5).
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 6,
-            runSpacing: 4,
+            spacing: 12,
+            runSpacing: 6,
             children: <Widget>[
-              Icon(FLucideIcons.circleAlert, size: 16, color: theme.brand.destructive),
-              Text(
-                limitMessage!,
-                style: theme.typography.body.sm.copyWith(color: theme.brand.destructive),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                children: <Widget>[
+                  Icon(FLucideIcons.circleAlert, size: 16, color: theme.brand.destructive),
+                  Text(
+                    limitMessage!,
+                    style: theme.typography.body.sm.copyWith(color: theme.brand.destructive),
+                  ),
+                ],
               ),
               ?action,
             ],

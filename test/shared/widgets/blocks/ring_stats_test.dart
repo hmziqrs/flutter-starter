@@ -16,13 +16,14 @@ void main() {
       );
 
       // `grid gap-8 sm:grid-cols-3` — no columns until sm, so a single column.
+      // Row pitch pins both the 72px ring box and the 32px gap-8 row gap.
       final gauges = _rects(tester);
       expect(gauges, hasLength(3));
       for (final gauge in gauges) {
         expect(gauge.left, gauges.first.left);
       }
-      expect(gauges[1].top - gauges[0].top, greaterThan(72));
-      expect(gauges[2].top - gauges[1].top, greaterThan(72));
+      expect(gauges[1].top - gauges[0].top, 104);
+      expect(gauges[2].top - gauges[1].top, 104);
     });
 
     testWidgets('three columns from 640 with 32px gutters', (tester) async {
@@ -38,8 +39,11 @@ void main() {
       for (final gauge in gauges) {
         expect(gauge.top, gauges.first.top);
       }
-      expect(gauges[1].left - gauges[0].left, greaterThan(72));
-      expect(gauges[2].left - gauges[1].left, greaterThan(72));
+      // gap-8: each cell is an equal Expanded, so the step from one gauge to
+      // the next is exactly its cell width plus the 32px gutter.
+      final cellWidth = gauges.first.width;
+      expect(gauges[1].left - gauges[0].left, closeTo(cellWidth + 32, 0.01));
+      expect(gauges[2].left - gauges[1].left, closeTo(cellWidth + 32, 0.01));
     });
 
     testWidgets('sits the text 18 from the ring, the brand gap-4.5', (tester) async {

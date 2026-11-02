@@ -139,10 +139,12 @@ class _AppQuestionState extends State<AppQuestion> {
                       child: Text(
                         widget.question,
                         // The summary inherits the prose size in the svelte
-                        // (16, font-medium) — the app section-title token.
+                        // (16, font-medium, prose leading 1.5) — the app
+                        // section-title token.
                         style: theme.typography.body.md.copyWith(
                           color: _hovering ? theme.colors.primary : theme.colors.foreground,
                           fontWeight: FontWeight.w500,
+                          height: 1.5,
                         ),
                       ),
                     ),

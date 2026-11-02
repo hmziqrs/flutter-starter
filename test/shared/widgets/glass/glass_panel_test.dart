@@ -1,3 +1,5 @@
+import 'dart:ui' as ui show Image;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -159,7 +161,14 @@ void main() {
     expect(_edgePainter(tester).style.radius, radius);
   });
 
-  testWidgets('grain mounts an overlay above the wash', (tester) async {
+  testWidgets('grain mounts a painted tile in one frame, deterministically', (
+    tester,
+  ) async {
+    // The tile is rendered synchronously (Picture.toImageSync): the first
+    // frame already carries the grain. An async decode would leave the
+    // panel grainless for its first frames — permanently under the
+    // fake-async pumps of tests and goldens, which never settle engine
+    // futures.
     await tester.pumpWidget(
       _harness(
         child: const GlassPanel(grain: true, child: SizedBox(width: 80)),
@@ -168,6 +177,24 @@ void main() {
     await tester.pump();
 
     expect(_grainOverlayFinder(), findsOneWidget);
+    final painter = tester.widget<CustomPaint>(
+      find
+          .descendant(
+            of: _grainOverlayFinder(),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is CustomPaint &&
+                  widget.painter != null &&
+                  widget.painter!.runtimeType.toString() == '_GrainPainter',
+            ),
+          )
+          .first,
+    );
+    // A real 160x160 tile rides the painter, seeded so the same seed always
+    // draws the same grain.
+    final tile = (painter.painter! as dynamic).tile as ui.Image;
+    expect(tile.width, 160);
+    expect(tile.height, 160);
 
     await tester.pumpWidget(
       _harness(child: const GlassPanel(child: SizedBox(width: 80))),

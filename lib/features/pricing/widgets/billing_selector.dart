@@ -29,36 +29,43 @@ class BillingSelector extends StatelessWidget {
       container: true,
       child: FocusTraversalGroup(
         policy: WidgetOrderTraversalPolicy(),
-        child: Container(
-          key: const ValueKey('billing-selector'),
-          padding: EdgeInsets.all(context.spacing.xs),
-          decoration: ShapeDecoration(
-            shape: RoundedSuperellipseBorder(
-              side: BorderSide(
-                color: colors.border,
-                width: context.theme.style.borderWidth,
+        // The control hugs its content (BRAND.md s8 Segmented: "a thin outline
+        // around a few buttons"): Align breaks the tight width a stretched
+        // page column hands down so the outline ends at the last segment
+        // instead of ruling the whole content width like a form field.
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Container(
+            key: const ValueKey('billing-selector'),
+            padding: EdgeInsets.all(context.spacing.xs),
+            decoration: ShapeDecoration(
+              shape: RoundedSuperellipseBorder(
+                side: BorderSide(
+                  color: colors.border,
+                  width: context.theme.style.borderWidth,
+                ),
+                borderRadius: context.theme.style.borderRadius.md,
               ),
-              borderRadius: context.theme.style.borderRadius.md,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _Segment(
-                buttonKey: const ValueKey('billing-monthly'),
-                label: monthlyLabel,
-                selected: value == BillingPeriod.monthly,
-                enabled: enabled,
-                onPress: () => onChanged(BillingPeriod.monthly),
-              ),
-              _Segment(
-                buttonKey: const ValueKey('billing-annual'),
-                label: annualLabel,
-                selected: value == BillingPeriod.annual,
-                enabled: enabled,
-                onPress: () => onChanged(BillingPeriod.annual),
-              ),
-            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _Segment(
+                  buttonKey: const ValueKey('billing-monthly'),
+                  label: monthlyLabel,
+                  selected: value == BillingPeriod.monthly,
+                  enabled: enabled,
+                  onPress: () => onChanged(BillingPeriod.monthly),
+                ),
+                _Segment(
+                  buttonKey: const ValueKey('billing-annual'),
+                  label: annualLabel,
+                  selected: value == BillingPeriod.annual,
+                  enabled: enabled,
+                  onPress: () => onChanged(BillingPeriod.annual),
+                ),
+              ],
+            ),
           ),
         ),
       ),

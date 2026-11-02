@@ -13,6 +13,7 @@ import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/blocks/page_intro.dart';
 import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
@@ -182,17 +183,13 @@ class _PricingPageState extends ConsumerState<PricingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // App type scale (APP-BLOCKS): page title 24 w500 tight.
-              Text(translations.pricing.title, style: context.theme.typography.display.xl),
-              SizedBox(height: spacing.md),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: tokens.readingContentMaxWidth),
-                child: Text(
-                  translations.pricing.body,
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
+              // The kit's page-intro composition (page-intro.svelte at the app
+              // type scale): title 24 w500 tracking-tight over the one muted
+              // line, stacked with the block's gap-6 — the same recipe home
+              // uses, so every shell page opens identically.
+              AppPageIntro(
+                title: translations.pricing.title,
+                description: translations.pricing.body,
               ),
               SizedBox(height: spacing.xl),
               BillingSelector(

@@ -1,9 +1,6 @@
-import 'dart:async' show unawaited;
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/widgets/glass/glass_style.dart';
@@ -118,98 +115,61 @@ final class _GrainTexture {
 
   /// The tile for [seed], rendered once and cached; deterministic bytes, so
   /// the same seed always draws the same grain.
-  static Future<ui.Image> load(int seed) {
-    final cached = _cache[seed];
-    if (cached != null) {
-      return SynchronousFuture<ui.Image>(cached);
-    }
-    return _render(seed).then((image) {
-      _cache[seed] = image;
-      return image;
-    });
+  ///
+  /// Rendering is synchronous ([ui.Picture.toImageSync]): the CSS ::after is
+  /// a paint-time asset, and an async decode would leave the panel grainless
+  /// for its first frames — permanently under the fake-async pumps of tests
+  /// and goldens, which never settle engine futures.
+  static ui.Image load(int seed) {
+    return _cache.putIfAbsent(seed, () => _render(seed));
   }
 
-  static Future<ui.Image> _render(int seed) async {
+  static ui.Image _render(int seed) {
     const size = 160;
     final random = math.Random(seed);
-    final bytes = Uint8List(size * size * 4);
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
     // glass.css's feColorMatrix pins RGB at constant 0.5 grey and scales the
-    // turbulence's alpha into the channel at 0.55. Constant mid-grey is an
-    // identity source under ideal overlay math; the grain the browser shows
-    // comes from the blend running on premultiplied values, and Flutter's
-    // BlendMode.overlay implements the same formula, so the recipe is ported
-    // byte for byte rather than pre-varied. Calibration stays with the macOS
-    // capture join, like every other glass value.
+    // turbulence's alpha into the channel at 0.55. Constant mid-grey is the
+    // neutral axis of the noise: every pixel shifts the backdrop toward the
+    // same grey, so only the alpha varies.
     const grey = 128;
-    for (var i = 0; i < size * size; i++) {
-      final alpha = (random.nextInt(256) * 0.55).round().clamp(0, 255);
-      bytes[i * 4] = grey;
-      bytes[i * 4 + 1] = grey;
-      bytes[i * 4 + 2] = grey;
-      bytes[i * 4 + 3] = alpha;
+    final paint = Paint();
+    for (var y = 0; y < size; y++) {
+      for (var x = 0; x < size; x++) {
+        final alpha = (random.nextInt(256) * 0.55).round().clamp(0, 255);
+        paint.color = ui.Color.fromARGB(alpha, grey, grey, grey);
+        canvas.drawRect(Rect.fromLTWH(x.toDouble(), y.toDouble(), 1, 1), paint);
+      }
     }
-    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-    final descriptor = ui.ImageDescriptor.raw(
-      buffer,
-      width: size,
-      height: size,
-      pixelFormat: ui.PixelFormat.rgba8888,
-    );
-    final codec = await descriptor.instantiateCodec();
-    final frame = await codec.getNextFrame();
-    codec.dispose();
-    descriptor.dispose();
-    buffer.dispose();
-    return frame.image;
+    final image = recorder.endRecording().toImageSync(size, size);
+    return image;
   }
 }
 
-/// Mounts the grain overlay, painting nothing until the tile decodes.
-class _GrainOverlay extends StatefulWidget {
+/// Mounts the grain overlay, painting the cached tile immediately: the
+/// decoder-free path means a panel is never shown without its grain.
+class _GrainOverlay extends StatelessWidget {
   const _GrainOverlay({required this.seed});
 
   final int seed;
 
   @override
-  State<_GrainOverlay> createState() => _GrainOverlayState();
-}
-
-class _GrainOverlayState extends State<_GrainOverlay> {
-  ui.Image? _tile;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_load());
-  }
-
-  @override
-  void didUpdateWidget(_GrainOverlay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.seed != widget.seed) {
-      _tile = null;
-      unawaited(_load());
-    }
-  }
-
-  Future<void> _load() async {
-    final tile = await _GrainTexture.load(widget.seed);
-    if (mounted) {
-      setState(() => _tile = tile);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final tile = _tile;
-    if (tile == null) {
-      return const SizedBox.expand();
-    }
     // The CSS ::after carries its 18% layer opacity on an alpha-only paint;
     // the foreground token stands in for Colors.black so every color in the
-    // kit comes from the theme (only the alpha channel reaches the image).
+    // kit comes from the theme (an image draw reads only the paint's alpha).
+    // Painted plain (SrcOver) rather than BlendMode.overlay: Skia composes
+    // overlay on unpremultiplied colors, where a mid-grey source is pixel
+    // identity — the grain would vanish. The browser's advanced blend runs
+    // on premultiplied values, which reads as the same soft speckle a plain
+    // grey-alpha draw gives: each noise pixel pulls the backdrop toward mid
+    // grey by up to 18% of its 0.55-scaled alpha. Calibration stays with the
+    // macOS capture join, like every other glass value.
     final tint = context.theme.colors.foreground.withValues(alpha: 0.18);
-    return CustomPaint(painter: _GrainPainter(tile, tint));
+    return CustomPaint(
+      painter: _GrainPainter(_GrainTexture.load(seed), tint),
+    );
   }
 }
 
@@ -225,9 +185,7 @@ class _GrainPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..blendMode = BlendMode.overlay
-      ..color = tint;
+    final paint = Paint()..color = tint;
     final tileWidth = tile.width.toDouble();
     final tileHeight = tile.height.toDouble();
     final source = Rect.fromLTWH(0, 0, tileWidth, tileHeight);

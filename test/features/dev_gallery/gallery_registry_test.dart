@@ -9,7 +9,7 @@ void main() {
     final cases = buildGalleryRegistry(config: _developmentConfig);
     final ids = cases.map((galleryCase) => galleryCase.id).toList();
 
-    expect(cases, hasLength(215));
+    expect(cases, hasLength(223));
     expect(ids.toSet(), hasLength(ids.length));
     expect(
       ids,
@@ -74,6 +74,10 @@ void main() {
         'brandBlocks.releases',
         'brandBlocks.endpoints',
         'brandBlocks.toc',
+        'pages.saasLanding',
+        'pages.product',
+        'pages.pricing',
+        'pages.company',
       ]),
     );
     expect(

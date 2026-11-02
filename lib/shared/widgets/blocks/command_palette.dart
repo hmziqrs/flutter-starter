@@ -72,10 +72,16 @@ class AppCommandPalette extends StatefulWidget {
 }
 
 class _AppCommandPaletteState extends State<AppCommandPalette> {
-  String _query = '';
+  final TextEditingController _queryController = TextEditingController();
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
 
   List<AppCommand> get _matches {
-    final query = _query.trim().toLowerCase();
+    final query = _queryController.text.trim().toLowerCase();
     if (query.isEmpty) {
       return widget.commands;
     }
@@ -107,19 +113,39 @@ class _AppCommandPaletteState extends State<AppCommandPalette> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Padding(
-            // The query row's air (command-palette.svelte: h-14 px-5).
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: FTextField(
-              control: .managed(onChange: (value) => setState(() => _query = value.text)),
-              hint: widget.queryHint,
-              keyboardType: TextInputType.text,
-              autocorrect: false,
-              enableSuggestions: false,
-              // Brand text field: a line, no fill (search_field.dart's rule).
-              style: .delta(color: .delta([.base(null), .variants(null)])),
-              prefixBuilder: (context, style, variants) =>
-                  Icon(FLucideIcons.search, size: 16, color: theme.colors.mutedForeground),
+          // The query row is a bare 56dp line (command-palette.svelte: h-14
+          // px-5 with a borderless Command.Input at text-[1.0625rem]); the
+          // line under it is the list's own border-t.
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            alignment: AlignmentDirectional.center,
+            // TextField needs a Material ancestor; the transparent one adds
+            // no ink, elevation or fill — the query line stays bare.
+            child: Material(
+              type: MaterialType.transparency,
+              child: TextField(
+                controller: _queryController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: widget.queryHint,
+                  hintStyle: TextStyle(
+                    fontSize: 17,
+                    height: 1.2,
+                    color: theme.colors.mutedForeground,
+                  ),
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                ),
+                style: TextStyle(
+                  fontSize: 17,
+                  height: 1.2,
+                  color: theme.colors.foreground,
+                ),
+                keyboardType: TextInputType.text,
+                autocorrect: false,
+                enableSuggestions: false,
+              ),
             ),
           ),
           Container(height: 1, color: theme.colors.border),
@@ -204,12 +230,7 @@ class _AppCommandPaletteState extends State<AppCommandPalette> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colors.foreground.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                          _KbdChip(
                             child: Icon(
                               FLucideIcons.cornerDownLeft,
                               size: 12,
@@ -249,6 +270,37 @@ class _AppCommandPaletteState extends State<AppCommandPalette> {
   }
 }
 
+/// The kit's Kbd chip (kbd.svelte): 20dp tall, at least 20 wide, 4dp of
+/// horizontal air, rounded-sm, the foreground at 8% behind muted 12dp sans
+/// words.
+class _KbdChip extends StatelessWidget {
+  const _KbdChip({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20),
+      height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: AlignmentDirectional.center,
+      decoration: ShapeDecoration(
+        color: theme.colors.foreground.withValues(alpha: 0.08),
+        shape: RoundedSuperellipseBorder(borderRadius: theme.style.borderRadius.xs),
+      ),
+      child: DefaultTextStyle.merge(
+        style: theme.typography.body.xs.copyWith(
+          color: theme.colors.mutedForeground,
+          fontWeight: FontWeight.w500,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 /// One tappable command row: icon, label, shortcut; hover and focus change
 /// color only (BRAND.md s8).
 class _CommandRow extends StatefulWidget {
@@ -277,6 +329,7 @@ class _CommandRowState extends State<_CommandRow> {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final highlighted = _hovering || _focused;
+    final keys = widget.command.shortcutLabel?.split(' ') ?? const <String>[];
     return FocusableActionDetector(
       focusNode: _focusNode,
       mouseCursor: SystemMouseCursors.click,
@@ -300,9 +353,9 @@ class _CommandRowState extends State<_CommandRow> {
         child: Container(
           // The highlighted row carries the foreground at 8% wash
           // (command-palette.svelte: data-selected:bg-foreground/8), 44dp
-          // tall (h-11).
+          // tall (h-11): the 28dp icon tile centered with 8dp of air.
           color: highlighted ? theme.colors.foreground.withValues(alpha: 0.08) : null,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: <Widget>[
               if (widget.command.icon != null) ...<Widget>[
@@ -341,21 +394,17 @@ class _CommandRowState extends State<_CommandRow> {
               ),
               if (widget.command.shortcutLabel != null) ...<Widget>[
                 const SizedBox(width: 12),
-                Container(
-                  // The shortcut renders as a kbd chip: foreground at 8% on a
-                  // small mono rounded rect (Kbd class="bg-foreground/8").
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colors.foreground.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    widget.command.shortcutLabel!,
-                    style: theme.typography.body.xs.copyWith(
-                      color: theme.colors.mutedForeground,
-                      fontFamily: 'JetBrains Mono',
-                    ),
-                  ),
+                // The shortcut renders as the kit's Kbd chips, one per key
+                // with a 4dp gap (command-palette.svelte's keys() snippet:
+                // span flex gap-1 of Kbd bg-foreground/8).
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    for (var index = 0; index < keys.length; index++) ...<Widget>[
+                      if (index > 0) const SizedBox(width: 4),
+                      _KbdChip(child: Text(keys[index])),
+                    ],
+                  ],
                 ),
               ],
             ],

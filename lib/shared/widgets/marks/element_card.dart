@@ -74,7 +74,6 @@ class _ElementCardState extends State<ElementCard> {
           final ringExtent = constraints.maxWidth * 0.7;
           return Container(
             clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.all(24),
             decoration: ShapeDecoration(
               color: Colors.transparent,
               shape: RoundedSuperellipseBorder(
@@ -89,7 +88,9 @@ class _ElementCardState extends State<ElementCard> {
             ),
             child: Stack(
               children: <Widget>[
-                // Corner rings first — the fingerprint sits under everything.
+                // Corner rings first — the fingerprint converges on the card's
+                // own top-right corner (corner-rings.svelte anchors the
+                // picture at the overflow-hidden card's corner, inset 0).
                 Positioned(
                   top: 0,
                   right: 0,
@@ -102,81 +103,84 @@ class _ElementCardState extends State<ElementCard> {
                   ),
                 ),
                 Positioned.fill(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 12,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Text(
-                            widget.number.toString().padLeft(2, '0'),
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.2,
-                              color: theme.colors.mutedForeground,
-                              fontFeatures: const <FontFeature>[
-                                FontFeature.tabularFigures(),
-                              ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 12,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              widget.number.toString().padLeft(2, '0'),
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.2,
+                                color: theme.colors.mutedForeground,
+                                fontFeatures: const <FontFeature>[
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
                             ),
+                            const Spacer(),
+                            if (widget.statusLabel != null)
+                              AppStatusTag(label: widget.statusLabel!, role: widget.statusRole),
+                          ],
+                        ),
+                        Text(
+                          widget.symbol,
+                          style: TextStyle(
+                            fontSize: 44,
+                            height: 1,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -0.04 * 44,
+                            color: widget.kindColor,
                           ),
-                          const Spacer(),
-                          if (widget.statusLabel != null)
-                            AppStatusTag(label: widget.statusLabel!, role: widget.statusRole),
-                        ],
-                      ),
-                      Text(
-                        widget.symbol,
-                        style: TextStyle(
-                          fontSize: 44,
-                          height: 1,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.04 * 44,
-                          color: widget.kindColor,
                         ),
-                      ),
-                      Text(
-                        widget.name,
-                        // The svelte h3 carries tracking-[-0.01em].
-                        style: TextStyle(
-                          fontSize: 18,
-                          height: 1.25,
-                          letterSpacing: -0.01 * 18,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colors.foreground,
+                        Text(
+                          widget.name,
+                          // The svelte h3 carries tracking-[-0.01em].
+                          style: TextStyle(
+                            fontSize: 18,
+                            height: 1.25,
+                            letterSpacing: -0.01 * 18,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colors.foreground,
+                          ),
                         ),
-                      ),
-                      Text(
-                        widget.description,
-                        style: TextStyle(
-                          fontSize: 14.4,
-                          height: 1.625,
-                          color: theme.colors.mutedForeground,
+                        Text(
+                          widget.description,
+                          style: TextStyle(
+                            fontSize: 14.4,
+                            height: 1.625,
+                            color: theme.colors.mutedForeground,
+                          ),
                         ),
-                      ),
-                      // mt-auto: the kind row hugs the bottom of a stretched
-                      // card and keeps a normal gap at intrinsic height — the
-                      // svelte row's mt-auto pt-2, so 8dp more than the
-                      // column's 12dp rhythm.
-                      if (constraints.hasBoundedHeight)
-                        const Spacer()
-                      else
-                        const SizedBox(height: 8),
-                      Row(
-                        children: <Widget>[
-                          AppRingMarker(color: widget.kindColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.kind,
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.2,
-                              color: theme.colors.mutedForeground,
+                        // mt-auto: the kind row hugs the bottom of a stretched
+                        // card and keeps a normal gap at intrinsic height — the
+                        // svelte row's mt-auto pt-2, so 8dp more than the
+                        // column's 12dp rhythm.
+                        if (constraints.hasBoundedHeight)
+                          const Spacer()
+                        else
+                          const SizedBox(height: 8),
+                        Row(
+                          children: <Widget>[
+                            AppRingMarker(color: widget.kindColor),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.kind,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.2,
+                                color: theme.colors.mutedForeground,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

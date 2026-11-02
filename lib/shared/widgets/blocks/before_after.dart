@@ -2,145 +2,175 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 
-/// Before and after (BRAND.md s8, before-after.svelte): the manual way
-/// struck through, then what the tool does instead.
+/// One row of an [AppBeforeAfter]: what the row is about, the old way, and
+/// what the product does instead.
+class AppBeforeAfterRow {
+  const AppBeforeAfterRow({
+    required this.what,
+    required this.before,
+    required this.after,
+  });
+
+  /// What the row compares, e.g. "Colors" — the quiet lead-in on its own
+  /// column from the wide layout (before-after.svelte's 16rem column).
+  final String what;
+
+  /// The manual way, struck through.
+  final String before;
+
+  /// What replaces it, marked with the filled primary ring.
+  final String after;
+}
+
+/// Before and after (BRAND.md s8, before-after.svelte): a hairline list
+/// where the manual way is struck through and the marked side carries the
+/// tool's way.
 ///
-/// The app draws the two sides as thin outline columns: the before side
-/// strikes its items through in muted words (the svelte `<s>` at
-/// decoration-muted-foreground/70), the after side marks each item with the
-/// filled primary ring. Only colors and the strike change — nothing moves.
-/// They sit side by side from 600dp and stack below it.
+/// The block is one list with a hairline on top, one row per comparison,
+/// each closed by a hairline underneath (the svelte `ul.border-t` with
+/// `li.border-b py-4`). Every row reads the struck "before" in muted words
+/// (decoration-muted-foreground/70), then the "after" behind a filled
+/// primary ring marker — only colors and the strike change, nothing moves.
+/// From 1024dp the row opens into the svelte's four-column grid: the
+/// 16rem "what" column, the struck side, the arrow, the marked side.
 class AppBeforeAfter extends StatelessWidget {
   const AppBeforeAfter({
-    required this.beforeLabel,
-    required this.afterLabel,
-    required this.beforeItems,
-    required this.afterItems,
+    required this.rows,
+    this.beforeLabel = 'Before',
+    this.afterLabel = 'After',
     super.key,
   });
 
-  /// The manual way, e.g. "By hand".
+  final List<AppBeforeAfterRow> rows;
+
+  /// For screen readers, e.g. "By hand" — prefixes every struck item.
   final String beforeLabel;
 
-  /// What replaces it, e.g. "With this tool".
+  /// For screen readers, e.g. "With the kit" — prefixes every marked item.
   final String afterLabel;
 
-  final List<String> beforeItems;
-
-  final List<String> afterItems;
+  /// The svelte row opens into its four-column grid at `lg`.
+  static const double wideBreakpoint = 1024;
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    final before = _Column(
-      label: beforeLabel,
-      struckThrough: true,
-      items: beforeItems,
-      borderColor: theme.colors.border,
-      labelColor: theme.colors.mutedForeground,
-    );
-    final after = _Column(
-      label: afterLabel,
-      struckThrough: false,
-      items: afterItems,
-      borderColor: theme.colors.border,
-      labelColor: theme.colors.foreground,
-    );
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 600) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        final wide = constraints.maxWidth >= wideBreakpoint;
+        return Container(
+          // The list's opening hairline (before-after.svelte: ul.border-t);
+          // every row carries its own closing one.
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: theme.colors.border)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Expanded(child: before),
-              const SizedBox(width: 12),
-              Expanded(child: after),
+              for (final row in rows)
+                _Row(row: row, wide: wide, beforeLabel: beforeLabel, afterLabel: afterLabel),
             ],
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[before, const SizedBox(height: 12), after],
+          ),
         );
       },
     );
   }
 }
 
-class _Column extends StatelessWidget {
-  const _Column({
-    required this.label,
-    required this.struckThrough,
-    required this.items,
-    required this.borderColor,
-    required this.labelColor,
+class _Row extends StatelessWidget {
+  const _Row({
+    required this.row,
+    required this.wide,
+    required this.beforeLabel,
+    required this.afterLabel,
   });
 
-  final String label;
+  final AppBeforeAfterRow row;
 
-  final bool struckThrough;
+  final bool wide;
 
-  final List<String> items;
+  final String beforeLabel;
 
-  final Color borderColor;
-
-  final Color labelColor;
+  final String afterLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: ShapeDecoration(
-        color: Colors.transparent,
-        shape: RoundedSuperellipseBorder(
-          side: BorderSide(color: borderColor, width: theme.style.borderWidth),
-          borderRadius: theme.style.borderRadius.lg,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+    // The row's air and closing hairline (li.border-b py-4); the base size
+    // is the svelte's 0.9rem on a relaxed leading, the "what" lead-in the
+    // 0.8125rem muted caption.
+    final body = TextStyle(
+      fontSize: 14.4,
+      height: 1.625,
+      color: theme.colors.foreground,
+    );
+    final beforeStyle = body.copyWith(
+      color: theme.colors.mutedForeground,
+      decoration: TextDecoration.lineThrough,
+      decorationColor: theme.colors.mutedForeground.withValues(alpha: 0.70),
+    );
+    final after = Semantics(
+      label: '$afterLabel: ${row.after}',
+      excludeSemantics: true,
+      child: Row(
         children: <Widget>[
-          Text(
-            label,
-            style: theme.typography.body.sm.copyWith(
-              color: labelColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          for (var index = 0; index < items.length; index++) ...<Widget>[
-            if (index > 0) const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // The after side carries the filled primary ring
-                // (before-after.svelte: Marker filled text-primary); the
-                // struck side runs bare, like the svelte's plain `<s>`.
-                if (!struckThrough) ...<Widget>[
-                  Padding(
-                    padding: const EdgeInsetsDirectional.only(top: 5.5),
-                    child: AppRingMarker(filled: true, color: theme.colors.primary),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Text(
-                    items[index],
-                    style: theme.typography.body.sm.copyWith(
-                      color: struckThrough ? theme.colors.mutedForeground : theme.colors.foreground,
-                      decoration: struckThrough ? TextDecoration.lineThrough : TextDecoration.none,
-                      decorationColor: theme.colors.mutedForeground.withValues(alpha: 0.70),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          // The filled primary ring (Marker filled text-primary), centered
+          // on the line it marks (span.inline-flex items-center gap-2).
+          AppRingMarker(filled: true, color: theme.colors.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(row.after, style: body)),
         ],
       ),
+    );
+    final before = Semantics(
+      label: '$beforeLabel: ${row.before}',
+      excludeSemantics: true,
+      child: Text(row.before, style: beforeStyle),
+    );
+    final what = Text(
+      row.what,
+      style: body.copyWith(fontSize: 13, color: theme.colors.mutedForeground),
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.colors.border)),
+      ),
+      // The stacked row runs what, struck, marked; the wide row opens the
+      // svelte grid (16rem | 1fr | 1.25rem | 1fr, gap-x-4) and shows the
+      // arrow between the sides.
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(width: 256, child: what),
+                const SizedBox(width: 16),
+                Expanded(child: before),
+                const SizedBox(width: 16),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 4),
+                  child: Icon(
+                    FLucideIcons.arrowRight,
+                    size: 15,
+                    color: theme.colors.mutedForeground,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: after),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                what,
+                const SizedBox(height: 4),
+                before,
+                const SizedBox(height: 4),
+                after,
+              ],
+            ),
     );
   }
 }

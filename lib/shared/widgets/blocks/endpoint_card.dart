@@ -357,12 +357,17 @@ class AppEndpointCard extends StatelessWidget {
               children: <Widget>[
                 FButton(
                   size: FButtonSizeVariant.sm,
+                  // Hug the label like the kit's flex row of sm buttons —
+                  // FButton's MainAxisSize.max default would stretch each
+                  // action across the card and stack the row.
+                  mainAxisSize: MainAxisSize.min,
                   onPress: onPrimary,
                   child: Text(primaryLabel),
                 ),
                 if (secondaryLabel != null)
                   FButton(
                     size: FButtonSizeVariant.sm,
+                    mainAxisSize: MainAxisSize.min,
                     variant: FButtonVariant.outline,
                     onPress: onSecondary,
                     child: Text(secondaryLabel!),

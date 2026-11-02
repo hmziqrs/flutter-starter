@@ -43,9 +43,12 @@ class AppEyebrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    const lineHeight = 20.0;
     final textStyle = theme.typography.body.sm.copyWith(
-      // The svelte label is 13dp (text-[0.8125rem]) font-medium.
+      // The svelte label is 13dp (text-[0.8125rem]) font-medium. The line box
+      // is pinned to an even 20dp so every mark centers on whole pixels.
       fontSize: 13,
+      height: lineHeight / 13,
       color: variant == AppEyebrowVariant.rule
           ? theme.colors.mutedForeground
           : theme.colors.primary,
@@ -74,10 +77,21 @@ class AppEyebrow extends StatelessWidget {
               ),
             ),
           ),
-          AppEyebrowVariant.rule => Container(
+          // A 32x1 rule, aligned 9dp under the pinned 20dp line-box top —
+          // centered math ((20-1)/2) would land it on a half pixel and paint
+          // two 50%-alpha rows instead of one crisp one. The Align keeps the
+          // mark's constraints loose (a bare Padding under the tight line box
+          // would force the remainder's height onto the 1px rule).
+          AppEyebrowVariant.rule => SizedBox(
             width: 32,
-            height: 1,
-            color: theme.colors.primary,
+            height: lineHeight,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 9),
+                child: Container(width: 32, height: 1, color: theme.colors.primary),
+              ),
+            ),
           ),
           AppEyebrowVariant.count => Row(
             mainAxisSize: MainAxisSize.min,

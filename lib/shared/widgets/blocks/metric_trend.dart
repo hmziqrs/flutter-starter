@@ -144,22 +144,24 @@ class AppMetricTrend extends StatelessWidget {
     };
     return Semantics(
       label: semanticsText,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      // A Wrap, not a Row: inside a narrow stat card the comparison flows to
+      // its own line instead of overflowing (APP-BLOCKS.md — the trend wraps
+      // as one reading unit). When it fits, the layout is the same inline row.
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
           Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
           Text(
             signedText,
             style: theme.typography.body.xs.copyWith(color: color, fontWeight: FontWeight.w500),
           ),
-          if (comparison != null) ...<Widget>[
-            const SizedBox(width: 6),
+          if (comparison != null)
             Text(
               comparison!,
               style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground),
             ),
-          ],
         ],
       ),
     );

@@ -7,7 +7,7 @@ import 'package:forui/forui.dart';
 /// blocks.
 ///
 /// The avatar is drawn, never photographed: initials in a hollow ring (the
-/// brand's answer to a headshot it does not have), 56dp with the foreground
+/// brand's answer to a headshot it does not have), 40dp with the foreground
 /// at 15% for its ring and the initials in 14dp muted w500.
 class AppPersonCard extends StatelessWidget {
   const AppPersonCard({
@@ -70,12 +70,12 @@ class AppPersonCard extends StatelessWidget {
             spacing: 16,
             children: <Widget>[
               Container(
-                // The avatar runs 56dp (Avatar.Root size="lg" class size-14),
-                // its ring the foreground at 15% (Avatar.Fallback
-                // ring-foreground/15), the initials 14dp muted w500 (the
-                // fallback's text-sm text-muted-foreground + font-medium).
-                width: 56,
-                height: 56,
+                // The avatar runs 40dp (the kit's Avatar lg), its ring the
+                // foreground at 15% (Avatar.Fallback ring-foreground/15), the
+                // initials 14dp muted w500 (the fallback's text-sm
+                // text-muted-foreground + font-medium).
+                width: 40,
+                height: 40,
                 alignment: AlignmentDirectional.center,
                 decoration: ShapeDecoration(
                   color: Colors.transparent,
@@ -84,7 +84,7 @@ class AppPersonCard extends StatelessWidget {
                       color: theme.colors.foreground.withValues(alpha: 0.15),
                       width: theme.style.borderWidth,
                     ),
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
                 child: Text(

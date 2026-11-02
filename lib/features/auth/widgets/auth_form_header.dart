@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:starter/features/auth/auth_page_scaffold.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
+import 'package:starter/shared/widgets/blocks/page_intro.dart';
 
 class AuthFormHeader extends StatelessWidget {
   const AuthFormHeader({
@@ -18,13 +18,14 @@ class AuthFormHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The kit's page-intro composition (page-intro.svelte at the app type
+    // scale) for the title/intro pair — the same 24 w500 tracking-tight title
+    // over the muted 14 line every shell page opens with.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, style: entryPageTitleStyle(context)),
-        SizedBox(height: context.spacing.md),
-        Text(body, style: entryMutedBodyStyle(context)),
+        AppPageIntro(title: title, description: body),
         for (final alert in alerts) ...[
           SizedBox(height: context.spacing.xl),
           alert,

@@ -224,6 +224,47 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('below the sm breakpoint the label hides and the pill goes '
+      "icon-only at the web button's px-3", (tester) async {
+    tester.view
+      ..devicePixelRatio = 1
+      ..physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _harness(
+        child: const GlassDock(
+          actions: <GlassDockEntry>[
+            GlassDockAction(
+              icon: FLucideIcons.listTree,
+              label: 'Contents',
+              semanticLabel: 'Contents',
+              onPressed: _noop,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // The visible label is gone (the web kit's `hidden sm:inline`), the
+    // control is the 16px icon inside the web button's px-3 (40 wide at
+    // h-9), and semantics still announce the action.
+    expect(find.text('Contents'), findsNothing);
+    final button = find.ancestor(
+      of: find.byIcon(FLucideIcons.listTree),
+      matching: find.byWidgetPredicate((widget) => widget is SizedBox && widget.height == 36),
+    );
+    expect(tester.getSize(button.first).width, 40);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Contents')),
+      isNotNull,
+    );
+    handle.dispose();
+  });
+
   testWidgets('separators, lead and a trailing action join the row', (
     tester,
   ) async {

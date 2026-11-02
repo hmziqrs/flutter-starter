@@ -213,12 +213,13 @@ class _StepperRowState extends State<_StepperRow> {
                           widget.step.label,
                           // Step titles read at the story's size
                           // (stepper.stories: text-[1.0625rem]
-                          // font-medium); every title stays in the
-                          // foreground, done or not.
+                          // font-medium leading-normal, 1.5); every
+                          // title stays in the foreground, done or not.
                           style: theme.typography.body.md.copyWith(
                             color: theme.colors.foreground,
                             fontSize: 17,
                             fontWeight: FontWeight.w500,
+                            height: 1.5,
                           ),
                         ),
                         if (widget.step.description != null) ...<Widget>[

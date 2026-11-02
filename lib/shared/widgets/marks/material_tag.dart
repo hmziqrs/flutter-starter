@@ -25,28 +25,41 @@ class MaterialTag extends StatelessWidget {
     return SizedBox(
       height: 23,
       child: Stack(
-        fit: StackFit.expand,
+        alignment: AlignmentDirectional.center,
+        clipBehavior: Clip.none,
         children: <Widget>[
-          // The material pill; the inner page-colored pill covers all but
-          // the 1.5px edge, exactly the kit's p-[1.5px] material cover.
-          ClipRRect(
-            borderRadius: radius,
-            child: BrandMaterialSurface(recipe: recipe),
+          // The label pill sizes the tag (a tag hugs its word, the kit's
+          // inline-flex cover); the material fills it from behind, so the
+          // metal shows only as the 1.5px rim around the page-colored pill.
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: radius,
+              child: BrandMaterialSurface(recipe: recipe),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(1.5),
             child: DecoratedBox(
               decoration: BoxDecoration(color: theme.colors.background, borderRadius: radius),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+              // The kit's inner pill: the 23px pill less the 1.5px cover each
+              // side, so the rim stays an even 1.5px all around.
+              child: SizedBox(
+                height: 20,
                 child: Center(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.typography.body.xs.copyWith(
-                      color: theme.colors.foreground,
-                      fontWeight: FontWeight.w500,
+                  // A plain Center would fill the run's loose width and
+                  // stretch the pill edge to edge; the width factor keeps the
+                  // pill hugging its word (the kit's px-2 air rides inside).
+                  widthFactor: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.typography.body.xs.copyWith(
+                        color: theme.colors.foreground,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),

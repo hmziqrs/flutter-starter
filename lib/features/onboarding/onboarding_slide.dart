@@ -141,10 +141,11 @@ class _SlideCopy extends StatelessWidget {
           style: theme.typography.display.xl.copyWith(
             color: theme.colors.foreground,
             fontWeight: FontWeight.w500,
-            letterSpacing: -titleSize * 0.02,
+            // tracking-tight (-0.025em), the kit page intro's recipe.
+            letterSpacing: -titleSize * 0.025,
           ),
         ),
-        SizedBox(height: spacing.sm),
+        SizedBox(height: spacing.lg),
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: tokens.formContentMaxWidth),
           child: Text(

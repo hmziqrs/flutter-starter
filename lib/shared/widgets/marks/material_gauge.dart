@@ -135,22 +135,27 @@ class _GaugeSectorClipper extends CustomClipper<Path> {
     final isCount = value > 1;
     // The kit's count dash: `(c / value - 6) 6` in the 72 box, so the gap is
     // 6 box units along the circumference.
-    final slice = 2 * math.pi / value;
+    final slice = isCount ? 2 * math.pi / value : 2 * math.pi;
     final gapAngle = isCount ? (6 * size.shortestSide / 72) / radius : 0.0;
     final sweep = isCount ? slice - gapAngle : slice * value;
+    // `radius` is the stroke's centerline (the kit's r=29 under an 8px
+    // stroke), so the sector spans a half thickness either side of it —
+    // treating it as the outer edge would ride the arc 4px inside the track.
+    final outerRadius = radius + thickness / 2;
+    final innerRadius = radius - thickness / 2;
     for (var index = 0; index < (isCount ? value.ceil() : 1); index++) {
       final from = startAngle + slice * index + (isCount ? gapAngle / 2 : 0.0);
-      _annularSector(path, center, radius, thickness, from, sweep);
+      _annularSector(path, center, outerRadius, innerRadius, from, sweep);
       // A share ends in round caps (the kit's `stroke-linecap="round"`); a
-      // count's segments end flat.
+      // count's segments end flat. The cap centers sit on the centerline.
       if (!isCount) {
         final capRadius = thickness / 2;
         for (final angle in <double>[from, from + sweep]) {
           path.addOval(
             Rect.fromCircle(
               center: Offset(
-                center.dx + (radius - capRadius) * math.cos(angle),
-                center.dy + (radius - capRadius) * math.sin(angle),
+                center.dx + radius * math.cos(angle),
+                center.dy + radius * math.sin(angle),
               ),
               radius: capRadius,
             ),
@@ -164,20 +169,20 @@ class _GaugeSectorClipper extends CustomClipper<Path> {
   void _annularSector(
     Path path,
     Offset center,
-    double radius,
-    double thickness,
+    double outerRadius,
+    double innerRadius,
     double from,
     double sweep,
   ) {
     path
-      ..moveTo(center.dx + radius * math.cos(from), center.dy + radius * math.sin(from))
-      ..arcTo(Rect.fromCircle(center: center, radius: radius), from, sweep, false)
+      ..moveTo(center.dx + outerRadius * math.cos(from), center.dy + outerRadius * math.sin(from))
+      ..arcTo(Rect.fromCircle(center: center, radius: outerRadius), from, sweep, false)
       ..lineTo(
-        center.dx + (radius - thickness) * math.cos(from + sweep),
-        center.dy + (radius - thickness) * math.sin(from + sweep),
+        center.dx + innerRadius * math.cos(from + sweep),
+        center.dy + innerRadius * math.sin(from + sweep),
       )
       ..arcTo(
-        Rect.fromCircle(center: center, radius: radius - thickness),
+        Rect.fromCircle(center: center, radius: innerRadius),
         from + sweep,
         -sweep,
         false,

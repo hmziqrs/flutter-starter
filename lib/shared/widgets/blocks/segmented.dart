@@ -35,31 +35,36 @@ class AppSegmented<T> extends StatelessWidget {
     // Root: a thin outline with 4dp padding and 4dp between options. The
     // svelte container is rounded-[calc(var(--radius-md)+4px)] — the theme's
     // radius-md is 8, so 12; no token holds 12, hence the explicit radius.
-    // The options wrap inside the outline — one line wherever the control
-    // fits, never a horizontal overflow on narrow panes or at large text
-    // sizes.
-    return Container(
-      decoration: ShapeDecoration(
-        color: Colors.transparent,
-        shape: RoundedSuperellipseBorder(
-          side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
+    // The control hugs its content (the svelte root is inline-fit): Align
+    // breaks the tight width a stretched column hands down so the outline
+    // ends at the last segment. The options wrap inside the outline — one
+    // line wherever the control fits, never a horizontal overflow on narrow
+    // panes or at large text sizes.
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Container(
+        decoration: ShapeDecoration(
+          color: Colors.transparent,
+          shape: RoundedSuperellipseBorder(
+            side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+          ),
         ),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        children: <Widget>[
-          for (var index = 0; index < options.length; index++)
-            _Segment(
-              key: options[index].key,
-              label: options[index].label,
-              selected: options[index].value == value,
-              isDark: theme.colors.brightness == Brightness.dark,
-              onTap: () => onChanged(options[index].value),
-            ),
-        ],
+        padding: const EdgeInsets.all(4),
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: <Widget>[
+            for (var index = 0; index < options.length; index++)
+              _Segment(
+                key: options[index].key,
+                label: options[index].label,
+                selected: options[index].value == value,
+                isDark: theme.colors.brightness == Brightness.dark,
+                onTap: () => onChanged(options[index].value),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -122,10 +127,11 @@ class _SegmentState extends State<_Segment> {
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          // The svelte segment is h-7.5 (30) with px-3 and text at 13.
+          // The svelte segment is h-7.5 (30) with px-3 and text at 13, and
+          // hugs its label — Center's widthFactor keeps the pill from
+          // expanding to the run's width the way `alignment` would.
           height: 30,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          alignment: Alignment.center,
           decoration: ShapeDecoration(
             // The picked segment carries the soft primary fill; resting and
             // hovered ones stay unfilled — the svelte hover is
@@ -141,20 +147,23 @@ class _SegmentState extends State<_Segment> {
               borderRadius: theme.style.borderRadius.sm,
             ),
           ),
-          child: Text(
-            widget.label,
-            // Every segment label is text-[0.8125rem] font-medium
-            // (segmented.svelte), so the picked one moves by color alone:
-            // picked text goes primary, a hovered resting one to the
-            // foreground, the rest stay muted.
-            style: theme.typography.body.sm.copyWith(
-              color: widget.selected
-                  ? theme.colors.primary
-                  : _hovering
-                  ? theme.colors.foreground
-                  : theme.colors.mutedForeground,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+          child: Center(
+            widthFactor: 1,
+            child: Text(
+              widget.label,
+              // Every segment label is text-[0.8125rem] font-medium
+              // (segmented.svelte), so the picked one moves by color alone:
+              // picked text goes primary, a hovered resting one to the
+              // foreground, the rest stay muted.
+              style: theme.typography.body.sm.copyWith(
+                color: widget.selected
+                    ? theme.colors.primary
+                    : _hovering
+                    ? theme.colors.foreground
+                    : theme.colors.mutedForeground,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),

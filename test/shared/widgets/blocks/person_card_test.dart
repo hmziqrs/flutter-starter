@@ -33,7 +33,7 @@ void main() {
       }
     });
 
-    testWidgets('draws the avatar as a 56dp hollow ring with muted initials', (tester) async {
+    testWidgets('draws the avatar as a 40dp hollow ring with muted initials', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: const SizedBox(width: 320, child: AppPersonCard(name: 'Priya Nair')),
@@ -53,7 +53,7 @@ void main() {
       // Avatar.Fallback ring-foreground/15, bg-transparent.
       expect(ring.side.color, generated.lightTheme.colors.foreground.withValues(alpha: 0.15));
       expect(avatar.color, Colors.transparent);
-      expect(tester.getSize(circleFinder.first).width, 56);
+      expect(tester.getSize(circleFinder.first).width, 40);
 
       final initials = tester.widget<Text>(find.text('PN')).style!;
       expect(initials.color, generated.lightTheme.colors.mutedForeground);

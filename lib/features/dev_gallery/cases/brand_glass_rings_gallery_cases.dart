@@ -74,8 +74,9 @@ String _glassCaseDescription(BrandGlassGalleryKind kind) => switch (kind) {
   BrandGlassGalleryKind.panels =>
     'Frost, smoke, tint and clear floating over a scrolling list. Glass carries one blur and never nests.',
   BrandGlassGalleryKind.dock =>
-    'A floating pill of controls, labels riding beside the icons like the '
-        'brand storybook dock. Every control also announces what it does.',
+    'A floating pill of controls: labels ride beside the icons at reading '
+        "widths and hide below the kit's sm breakpoint, like the brand "
+        'storybook dock. Every control also announces what it does.',
   BrandGlassGalleryKind.grain => 'The seeded grain overlay behind the panel content.',
   BrandGlassGalleryKind.fallback =>
     'The honest degraded path: solid card fill, same border, no blur layer.',
@@ -942,7 +943,7 @@ class _LiquidOverMaterialStory extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 64),
+                    const SizedBox(height: 40), // the story's gap-10
                     LiquidGlass(
                       radius: BorderRadius.circular(24),
                       padding: const EdgeInsets.all(6),
