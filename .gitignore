@@ -63,3 +63,4 @@ android/.kotlin/
 
 # Local capture/video working dir from verification runs
 .video_agent/
+test/failures/

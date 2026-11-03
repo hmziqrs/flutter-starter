@@ -52,7 +52,9 @@ void main() {
       final finder = find.byKey(ValueKey('home-open-$action'));
       await tester.ensureVisible(finder);
       await tester.tap(finder);
-      await tester.pumpAndSettle();
+      // The foundation material animates continuously; settle would never return.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
     }
 
     expect(calls, ['profile', 'pricing', 'settings', 'login']);
@@ -226,12 +228,16 @@ void main() {
     expect(find.byKey(const ValueKey('home-status-grid-1')), findsOneWidget);
 
     tester.view.physicalSize = const Size(800, 900);
-    await tester.pumpAndSettle();
+    // The foundation material animates continuously; settle would never return.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('home-layout-medium')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-grid-2')), findsOneWidget);
 
     tester.view.physicalSize = const Size(1200, 900);
-    await tester.pumpAndSettle();
+    // The foundation material animates continuously; settle would never return.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('home-layout-expanded')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-grid-3')), findsOneWidget);
     expect(
@@ -461,7 +467,9 @@ void main() {
     expect(find.byType(RefreshProgressIndicator), findsOneWidget);
 
     reload.complete(HomeViewData.defaultActivity);
-    await tester.pumpAndSettle();
+    // The foundation material animates continuously; settle would never return.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Honest backend-free completion: indicator dismissed + notConnected toast.
     expect(find.byType(RefreshProgressIndicator), findsNothing);
@@ -507,7 +515,9 @@ void main() {
 
     expect(find.byKey(const ValueKey('home-layout-medium')), findsOneWidget);
     await tester.ensureVisible(find.byKey(const ValueKey('home-open-login')));
-    await tester.pumpAndSettle();
+    // The foundation material animates continuously; settle would never return.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(tester.takeException(), isNull);
   });
 }
@@ -577,7 +587,9 @@ Future<void> _pumpHome(
     ),
   );
   if (settle) {
-    await tester.pumpAndSettle();
+    // The foundation material animates continuously; settle would never return.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   }
 }
 

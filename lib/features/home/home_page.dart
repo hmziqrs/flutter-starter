@@ -8,6 +8,7 @@ import 'package:starter/features/home/home_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/adaptive/app_layout_class.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
+import 'package:starter/shared/fx/shaders/brand_materials.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/blocks/page_intro.dart';
@@ -15,6 +16,7 @@ import 'package:starter/shared/widgets/blocks/section_block.dart';
 import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/brand/app_status_tag.dart';
+import 'package:starter/shared/widgets/marks/material_card.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
@@ -90,8 +92,13 @@ class HomePage extends ConsumerWidget {
                 ),
               ),
               SizedBox(height: spacing.xl),
-              AppSectionBlock(
-                title: context.t.home.statusTitle,
+              // The foundation statuses ride a brand material card (the
+              // kit's material-card cover variant): the copper band makes
+              // the brand's signature surface visible on the first screen,
+              // and material never sits behind the words (BRAND.md s13).
+              MaterialCard(
+                recipe: brandMaterialById('hammered-copper')!,
+                padding: EdgeInsets.all(spacing.xl),
                 child: _StatusSection(viewData: viewData, columns: columns),
               ),
               SizedBox(height: spacing.xl),

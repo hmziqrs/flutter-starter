@@ -53,7 +53,7 @@ void main() {
           dependencies: AppDependencies.inMemory(),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       final title = find.text(localeCase.title);
       expect(title, findsOneWidget);
@@ -77,14 +77,14 @@ void main() {
         initialLocation: '/not-a-route',
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('We could not open that page'), findsOneWidget);
     expect(find.byKey(const ValueKey('route-error-home')), findsOneWidget);
     expect(find.byKey(const ValueKey('route-error-back')), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('route-error-home')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(find.text('Welcome, Alex'), findsOneWidget);
   });
 
@@ -96,15 +96,15 @@ void main() {
         dependencies: AppDependencies.inMemory(),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     final homeContext = tester.element(find.byKey(const ValueKey('home-open-settings')));
     unawaited(GoRouter.of(homeContext).push<void>('/not-a-route'));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('route-error-back')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('route-error-back')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(find.text('Welcome, Alex'), findsOneWidget);
   });
 
@@ -117,7 +117,7 @@ void main() {
         initialLocation: AppRoutes.diagnosticsPath,
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('Development diagnostics'), findsNothing);
     expect(find.text('We could not open that page'), findsOneWidget);
@@ -129,7 +129,7 @@ void main() {
         initialLocation: AppRoutes.diagnosticsPath,
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('Development diagnostics'), findsOneWidget);
   });
@@ -146,7 +146,7 @@ void main() {
         initialLocation: AppRoutes.developmentScreensPath,
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('We could not open that page'), findsOneWidget);
     expect(find.byKey(const ValueKey('gallery-search')), findsNothing);
@@ -158,7 +158,7 @@ void main() {
         initialLocation: AppRoutes.developmentScreensPath,
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('gallery-search')), findsOneWidget);
     expect(find.byKey(const ValueKey('gallery-preview-viewport')), findsOneWidget);
@@ -177,7 +177,7 @@ void main() {
         initialLocation: AppRoutes.appearanceSettingsPath,
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(tester.takeException(), isNull, reason: 'compact layout at 639px');
 
     expect(find.byKey(const ValueKey('compact-navigation')), findsOneWidget);
@@ -188,30 +188,30 @@ void main() {
       tester.element(find.byKey(const ValueKey('compact-navigation'))),
     );
     unawaited(container.read(settingsControllerProvider.notifier).setAccent(AppAccent.blue));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(tester.takeException(), isNull, reason: 'compact theme update at 639px');
     _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(640, 844);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(tester.takeException(), isNull, reason: 'medium layout at 640px');
     expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
     expect(find.text('Appearance'), findsWidgets);
     _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(1023, 844);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(tester.takeException(), isNull, reason: 'medium layout at 1023px');
     expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
     _expectBlueAccent(container);
 
     tester.view.physicalSize = const Size(1024, 844);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
     // The expanded shell starts with its collapsed rail; the toggle expands.
     expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
     expect(find.text('Appearance'), findsWidgets);
     _expectBlueAccent(container);
@@ -237,7 +237,7 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('startup-retry')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(retryCount, 1);
   });

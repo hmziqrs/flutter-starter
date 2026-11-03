@@ -17,6 +17,7 @@ import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_page.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
+import '../support/pump_app_frames.dart';
 
 void main() {
   testWidgets(
@@ -30,7 +31,7 @@ void main() {
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       await tester.ensureVisible(find.byKey(const ValueKey('spacing-relaxed')));
       await tester.tap(find.byKey(const ValueKey('spacing-relaxed')).hitTestable());
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       _expectSpacingVariant(tester, AppSpacingVariant.relaxed);
 
       await tester.tap(
@@ -39,7 +40,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.badgeDollarSign),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
 
       await tester.tap(
@@ -48,7 +49,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.settings),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       _expectSpacingVariant(tester, AppSpacingVariant.relaxed);
@@ -67,7 +68,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.settings),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
       expect(find.byKey(const ValueKey('font-scale-slider')), findsNothing);
@@ -87,7 +88,7 @@ void main() {
       expect(find.byKey(const ValueKey('settings-open-profile')), findsNothing);
 
       await tester.tap(find.byKey(const ValueKey('settings-open-account')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('settings-open-profile')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
@@ -95,7 +96,7 @@ void main() {
       );
 
       GoRouter.of(tester.element(find.byType(SettingsPage))).pop();
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('settings-open-account')), findsOneWidget);
       expect(find.byKey(const ValueKey('settings-open-profile')), findsNothing);
     },
@@ -126,7 +127,7 @@ void main() {
       // through the shell's own toggle before asserting the wide layout.
       expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
 
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
@@ -138,7 +139,7 @@ void main() {
 
       await tester.ensureVisible(find.widgetWithText(FSidebarItem, 'Language'));
       await tester.tap(find.widgetWithText(FSidebarItem, 'Language'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       final uriAfter = GoRouterState.of(
         tester.element(find.byType(SettingsPage)),
@@ -156,7 +157,7 @@ void main() {
 
       await tester.ensureVisible(find.widgetWithText(FSidebarItem, 'Language'));
       await tester.tap(find.widgetWithText(FSidebarItem, 'Language'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(tester.takeException(), isNull);
       final uriDuplicate = GoRouterState.of(
         tester.element(find.byType(SettingsPage)),
@@ -175,11 +176,11 @@ void main() {
       );
 
       await tester.tap(find.byKey(const ValueKey('settings-open-account')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('settings-open-profile')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('settings-open-profile')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('profile-save')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('settings-open-profile'), skipOffstage: false),
@@ -187,7 +188,7 @@ void main() {
       );
 
       GoRouter.of(tester.element(find.byKey(const ValueKey('profile-save')))).pop();
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('profile-save')), findsNothing);
       expect(find.byKey(const ValueKey('settings-open-profile')), findsOneWidget);
     },
@@ -202,11 +203,11 @@ void main() {
       GoRouter.of(tester.element(find.byType(Navigator).first)).go(
         AppRoutes.onboardingPath,
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('onboarding-skip')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('onboarding-skip')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
       await tester.tap(
@@ -215,7 +216,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.settings),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
       expect(find.byKey(const ValueKey('font-scale-slider')), findsNothing);
     },
@@ -229,7 +230,7 @@ void main() {
 
       await tester.ensureVisible(find.byKey(const ValueKey('home-open-settings')));
       await tester.tap(find.byKey(const ValueKey('home-open-settings')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('settings-open-appearance')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
@@ -243,7 +244,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.badgeDollarSign),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byKey(const ValueKey('pricing-page')))).canPop(),
@@ -259,11 +260,11 @@ void main() {
 
       final homeContext = tester.element(find.byKey(const ValueKey('home-greeting')));
       unawaited(GoRouter.of(homeContext).push<void>('/not-a-route'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(const ValueKey('route-error-back')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('route-error-back')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     },
@@ -281,7 +282,7 @@ void main() {
       // through the shell's own toggle before asserting the wide layout.
       expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
@@ -325,15 +326,15 @@ void main() {
       );
 
       await tester.tap(sidebarItem(FLucideIcons.badgeDollarSign));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
 
       await tester.tap(sidebarItem(FLucideIcons.settings));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
 
       await tester.tap(sidebarItem(FLucideIcons.house));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
     },
   );
@@ -387,7 +388,7 @@ void main() {
 
       // The icon rail still navigates branches.
       await tester.tap(find.byKey(const ValueKey('expanded-navigation-pricing')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
     },
   );
@@ -397,11 +398,11 @@ void main() {
     (tester) async {
       await _pumpApp(tester, initialLocation: AppRoutes.settingsPath);
       await tester.tap(find.byKey(const ValueKey('settings-open-privacy-about')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       await tester.ensureVisible(find.byKey(const ValueKey('settings-open-terms')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       await tester.tap(find.byKey(const ValueKey('settings-open-terms')).hitTestable());
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('information-dialog')), findsOneWidget);
 
       await tester.tap(
@@ -410,7 +411,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.badgeDollarSign),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsNothing);
     },
   );
@@ -427,7 +428,7 @@ void main() {
           Scrollable.of(tester.element(find.byKey(const ValueKey('font-scale-slider'))));
       final scrollState = appearanceScroll();
       scrollState.position.jumpTo(240);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       final offset = scrollState.position.pixels;
       expect(offset, greaterThan(0));
 
@@ -437,7 +438,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.badgeDollarSign),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('pricing-page')), findsOneWidget);
 
       await tester.tap(
@@ -446,7 +447,7 @@ void main() {
           matching: find.byIcon(FLucideIcons.settings),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       final scrollStateAfter = appearanceScroll();
       expect(scrollStateAfter.position.pixels, offset);
@@ -465,7 +466,7 @@ void main() {
       // through the shell's own toggle before asserting the wide layout.
       expect(find.byKey(const ValueKey('medium-shell')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('expanded-navigation-toggle')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('expanded-shell')), findsOneWidget);
 
       final initialUri = GoRouterState.of(
@@ -476,7 +477,7 @@ void main() {
 
       await tester.ensureVisible(find.widgetWithText(FSidebarItem, 'Language'));
       await tester.tap(find.widgetWithText(FSidebarItem, 'Language'));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       final uriAfter = GoRouterState.of(
         tester.element(find.byType(SettingsPage)),
@@ -503,7 +504,7 @@ void main() {
       );
 
       tester.view.physicalSize = const Size(1024, 844);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(tester.takeException(), isNull, reason: 'expanded layout at 1024px');
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       final expandedUri = GoRouterState.of(
@@ -513,7 +514,7 @@ void main() {
       expect(expandedUri.queryParameters['section'], 'appearance');
 
       tester.view.physicalSize = const Size(390, 844);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.byKey(const ValueKey('font-scale-slider')), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(SettingsPage))).canPop(),
@@ -541,7 +542,7 @@ void main() {
       await tester.tap(compactNavIcon(FLucideIcons.settings), warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 40));
       await tester.tap(compactNavIcon(FLucideIcons.house), warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
@@ -594,7 +595,7 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }
 
 void _setViewport(WidgetTester tester, Size size) {

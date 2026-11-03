@@ -178,5 +178,5 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }

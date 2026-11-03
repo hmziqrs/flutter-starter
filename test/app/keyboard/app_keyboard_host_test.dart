@@ -14,6 +14,8 @@ import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/shared/motion/app_motion.dart';
 
+import '../support/pump_app_frames.dart';
+
 void main() {
   testWidgets('ordinary keys stay hidden while modifier chords show every held key', (
     tester,
@@ -40,7 +42,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
     await tester.pump(AppMotion.keyboardChordHold + const Duration(milliseconds: 1));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('app-keyboard-chord-overlay')), findsNothing);
   });
@@ -76,14 +78,14 @@ void main() {
   ) async {
     await _pumpApp(tester);
     await tester.tap(find.byKey(const ValueKey('home-open-login')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('Welcome back'), findsWidgets);
     expect(find.byTooltip('Back'), findsNothing);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.backspace);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('Welcome, Alex'), findsOneWidget);
     expect(find.byKey(const ValueKey('app-keyboard-chord-overlay')), findsOneWidget);
@@ -91,7 +93,7 @@ void main() {
 
     await tester.sendKeyUpEvent(LogicalKeyboardKey.backspace);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
   });
 
   for (final backKey in [
@@ -131,7 +133,7 @@ void main() {
           physicalKey: backKey.physical,
         );
       }
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       expect(find.text('Welcome, Alex'), findsOneWidget);
       if (backKey.logical != LogicalKeyboardKey.goBack) {
         await tester.sendKeyUpEvent(
@@ -231,13 +233,13 @@ void main() {
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.backspace);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
 
     await tester.sendKeyUpEvent(LogicalKeyboardKey.backspace);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
   });
 }
 
@@ -263,7 +265,7 @@ Future<void> _pumpApp(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }
 
 Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
@@ -271,9 +273,9 @@ Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
   tester.binding.focusManager.primaryFocus?.unfocus();
   await tester.pump();
   await tester.ensureVisible(target);
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
   await tester.tap(target);
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }
 
 final _developmentConfig = AppConfig(

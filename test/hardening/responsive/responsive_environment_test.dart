@@ -51,8 +51,11 @@ void main() {
         layoutKey: 'home-layout-expanded',
       ),
     ]) {
+      // Animations off: the home case now carries a live material card whose
+      // ticker would never settle.
       final environment = GalleryEnvironment.defaults().copyWith(
         viewport: GalleryViewportPresets.byId(expectation.viewportId),
+        animationsEnabled: false,
       );
       await _pumpCase(
         tester,
@@ -103,6 +106,7 @@ void main() {
 
     environment = environment.copyWith(
       viewport: GalleryViewportPresets.byId('at-medium'),
+      animationsEnabled: false,
     );
     await _pumpCase(tester, galleryCase: pricing, environment: environment);
     expect(find.byKey(const ValueKey('pricing-layout-medium')), findsOneWidget);
@@ -147,6 +151,7 @@ void main() {
 
     environment = environment.copyWith(
       viewport: GalleryViewportPresets.byId('at-medium'),
+      animationsEnabled: false,
     );
     await _pumpCase(tester, galleryCase: login, environment: environment);
     expect(_textIn(tester, email), 'sam@example.com');

@@ -9,6 +9,7 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
+import '../support/pump_app_frames.dart';
 
 void main() {
   final productionRoutes = <(String, String)>[
@@ -40,7 +41,7 @@ void main() {
           initialLocation: location,
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.text(title), findsWidgets);
       expect(find.byKey(const ValueKey('route-error-home')), findsNothing);
@@ -56,7 +57,7 @@ void main() {
         initialLocation: '/auth/otp/not-valid',
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(
       find.text(
@@ -73,7 +74,7 @@ void main() {
         initialLocation: '/auth/otp',
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.text('We could not open that page'), findsOneWidget);
     expect(find.byKey(const ValueKey('route-error-back')), findsNothing);
@@ -92,7 +93,7 @@ void main() {
           initialLocation: location,
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.text('We could not open that page'), findsOneWidget);
     }

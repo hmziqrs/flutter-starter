@@ -11,6 +11,7 @@ import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
+import '../support/pump_app_frames.dart';
 
 void main() {
   setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
@@ -19,7 +20,7 @@ void main() {
     await _pumpApp(tester, AppRoutes.onboardingPath);
 
     await tester.tap(find.byKey(const ValueKey('onboarding-skip')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
   });
@@ -29,12 +30,12 @@ void main() {
 
     for (var index = 0; index < 3; index += 1) {
       await tester.tap(find.byKey(const ValueKey('onboarding-continue')));
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
     }
 
     expect(find.byKey(const ValueKey('paywall-page')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('paywall-skip')));
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
   });
@@ -45,9 +46,9 @@ void main() {
     expect(find.text('No payment or purchase will be made.'), findsOneWidget);
     final continueButton = find.byKey(const ValueKey('paywall-continue'));
     await tester.ensureVisible(continueButton);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
     await tester.tap(continueButton);
-    await tester.pumpAndSettle();
+    await pumpAppFrames(tester);
 
     expect(find.byKey(const ValueKey('home-greeting')), findsOneWidget);
   });
@@ -68,14 +69,14 @@ void main() {
       );
       final source = find.byKey(ValueKey(entry.source));
       await tester.ensureVisible(source);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
       await tester.tap(source);
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
 
       expect(find.byKey(ValueKey(entry.target)), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpAndSettle();
+      await pumpAppFrames(tester);
     }
   });
 
@@ -220,9 +221,9 @@ Future<void> _tapVisible(WidgetTester tester, String valueKey) async {
   tester.binding.focusManager.primaryFocus?.unfocus();
   await tester.pump();
   await tester.ensureVisible(target);
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
   await tester.tap(target);
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }
 
 Future<void> _pumpApp(
@@ -246,7 +247,7 @@ Future<void> _pumpApp(
       initialLocation: initialLocation,
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpAppFrames(tester);
 }
 
 final _productionConfig = AppConfig(

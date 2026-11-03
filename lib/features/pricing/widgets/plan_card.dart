@@ -42,11 +42,11 @@ class PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The brand pricing plan (pricing-plans.svelte): outline cards, the
-    // picked plan standing out through the orange line alone —
-    // ring-primary/55, no card-wide wash — and, for the recommended plan,
-    // its corner-ring fingerprint instead of any fill.
-    final recommended = plan.isRecommended && !selected;
+    // The brand pricing plan (pricing-plans.svelte): outline cards; the
+    // recommended card carries its corner-ring fingerprint and the orange
+    // line in both templates — selection adds the same orange line to
+    // whichever card the visitor picks. No card-wide wash anywhere.
+    final recommended = plan.isRecommended;
     final colors = context.theme.colors;
     final softFillOpacity = colors.brightness == Brightness.dark ? 0.2 : 0.1;
     final spacing = context.spacing;
@@ -67,7 +67,9 @@ class PlanCard extends StatelessWidget {
             decoration: .shapeDelta(
               shape: RoundedSuperellipseBorder(
                 side: BorderSide(
-                  color: selected ? colors.primary.withValues(alpha: 0.55) : colors.border,
+                  color: (selected || recommended)
+                      ? colors.primary.withValues(alpha: 0.55)
+                      : colors.border,
                   width: context.theme.style.borderWidth,
                 ),
                 borderRadius: context.theme.style.borderRadius.lg,
