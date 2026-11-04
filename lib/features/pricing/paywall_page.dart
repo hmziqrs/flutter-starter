@@ -10,7 +10,7 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/adaptive/app_presentation_policy.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/blocks/page_intro.dart';
+import 'package:starter/shared/widgets/blocks/page_header.dart';
 import 'package:starter/shared/widgets/brand/app_notice.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
@@ -146,7 +146,7 @@ class _PaywallPageState extends State<PaywallPage> {
                           // at the app type scale), the same recipe home and
                           // pricing open with: title 24 w500 tracking-tight
                           // over the one muted line at the block's gap-6.
-                          AppPageIntro(
+                          AppPageHeader(
                             title: translations.pricing.paywallTitle,
                             description: translations.pricing.paywallBody,
                           ),

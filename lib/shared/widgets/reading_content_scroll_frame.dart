@@ -21,13 +21,12 @@ class ReadingContentScrollFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.spacing;
     final tokens = context.presentationTokens;
+    // The kit's page frame: `px-4 py-6`, `md:px-8 md:py-8` from the medium width.
+    final wide = MediaQuery.sizeOf(context).width >= 640;
+    final side = wide ? spacing.xl2 : spacing.lg;
+    final top = wide ? spacing.xl2 : spacing.xl;
     return ListView(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        spacing.xl,
-        spacing.xl,
-        spacing.xl,
-        spacing.xl2,
-      ),
+      padding: EdgeInsetsDirectional.fromSTEB(side, top, side, spacing.xl2),
       children: [
         Center(
           child: ConstrainedBox(

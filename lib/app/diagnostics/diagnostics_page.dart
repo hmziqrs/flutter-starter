@@ -249,8 +249,15 @@ class _DiagnosticTile extends StatelessWidget {
   final String value;
   final Widget Function()? valueBuilder;
 
+  static const int _inlineValueMaxLength = 24;
+
   @override
   Widget build(BuildContext context) {
+    // A long value would squeeze the label to nothing on a phone, so it moves
+    // to its own line under the label.
+    if (valueBuilder == null && value.length > _inlineValueMaxLength) {
+      return FTile(title: Text(label), subtitle: SelectableText(value));
+    }
     return FTile(
       title: Text(label),
       details: valueBuilder?.call() ?? SelectableText(value),

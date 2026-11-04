@@ -6,6 +6,7 @@ import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/containers/app_card.dart';
+import 'package:starter/shared/widgets/lists/equal_height_row.dart';
 
 class PlanComparison extends StatelessWidget {
   const PlanComparison({required this.title, required this.plans, super.key});
@@ -26,22 +27,36 @@ class PlanComparison extends StatelessWidget {
           // Section titles run 16 w500 (APP-BLOCKS).
           Text(title, style: context.theme.typography.display.sm),
           SizedBox(height: spacing.lg),
-          Wrap(
-            spacing: spacing.lg,
-            runSpacing: spacing.lg,
-            children: [
-              for (final plan in plans)
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: context.appUnit.un(180) * tokens.spacingScale,
-                    maxWidth: context.appUnit.un(320) * tokens.spacingScale,
-                  ),
-                  child: _PlanColumn(
-                    key: ValueKey('plan-comparison-${plan.id}'),
-                    plan: plan,
-                  ),
-                ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = [
+                for (final plan in plans)
+                  _PlanColumn(key: ValueKey('plan-comparison-${plan.id}'), plan: plan),
+              ];
+              final minColumn = context.appUnit.un(180) * tokens.spacingScale;
+              final fits =
+                  constraints.maxWidth >=
+                  columns.length * minColumn + (columns.length - 1) * spacing.lg;
+              if (!fits) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < columns.length; i++) ...[
+                      if (i > 0) SizedBox(height: spacing.lg),
+                      columns[i],
+                    ],
+                  ],
+                );
+              }
+              return EqualHeightRow(
+                children: [
+                  for (var i = 0; i < columns.length; i++) ...[
+                    if (i > 0) SizedBox(width: spacing.lg),
+                    Expanded(child: columns[i]),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),

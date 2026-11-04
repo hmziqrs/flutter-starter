@@ -41,8 +41,12 @@ class SearchField extends StatelessWidget {
       style: .delta(
         color: .delta([.base(null), .variants(null)]),
       ),
-      prefixBuilder: (context, style, variants) =>
-          Icon(FLucideIcons.search, semanticLabel: hintText),
+      prefixBuilder: (context, style, variants) => FTextField.prefixIconBuilder(
+        context,
+        style,
+        variants,
+        Icon(FLucideIcons.search, semanticLabel: hintText),
+      ),
       clearable: (value) => value.text.isNotEmpty,
       onSubmit: onSubmitted == null ? null : (_) => onSubmitted!(),
     );

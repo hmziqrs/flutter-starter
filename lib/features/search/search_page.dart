@@ -145,8 +145,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
+                    // The field's own width, so the results line up under it.
                     constraints: BoxConstraints(
-                      maxWidth: tokens.wideContentMaxWidth,
+                      maxWidth: tokens.readingContentMaxWidth + 2 * spacing.lg,
                     ),
                     child: const _SearchResultsList(),
                   ),

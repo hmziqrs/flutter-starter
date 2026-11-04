@@ -11,14 +11,14 @@ import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/fx/shaders/brand_materials.dart';
 import 'package:starter/shared/theme/app_presentation_tokens.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
-import 'package:starter/shared/widgets/blocks/page_intro.dart';
+import 'package:starter/shared/widgets/blocks/page_header.dart';
 import 'package:starter/shared/widgets/blocks/section_block.dart';
 import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/brand/app_status_tag.dart';
-import 'package:starter/shared/widgets/marks/material_card.dart';
 import 'package:starter/shared/widgets/feedback/app_toast.dart';
 import 'package:starter/shared/widgets/lists/data_list_view.dart';
+import 'package:starter/shared/widgets/marks/material_card.dart';
 import 'package:starter/shared/widgets/reading_content_scroll_frame.dart';
 import 'package:starter/shared/widgets/refresh/app_refresh_indicator.dart';
 import 'package:starter/shared/widgets/spaced_column.dart';
@@ -75,13 +75,14 @@ class HomePage extends ConsumerWidget {
             children: [
               // Page intro pattern (APP-BLOCKS app type scale): the greeting is
               // the 24 w500 tight page title, the summary its one muted line.
-              AppPageIntro(
+              AppPageHeader(
                 key: const ValueKey('home-greeting'),
                 title: context.t.home.greeting(name: viewData.greetingName),
                 description: context.t.home.summary,
               ),
               SizedBox(height: spacing.xl),
               AppSectionBlock(
+                gap: spacing.lg,
                 title: context.t.home.quickActions,
                 child: _QuickActions(
                   columns: layoutClass == AppLayoutClass.compact ? 1 : 2,
@@ -102,7 +103,11 @@ class HomePage extends ConsumerWidget {
                 child: _StatusSection(viewData: viewData, columns: columns),
               ),
               SizedBox(height: spacing.xl),
-              AppSectionBlock(title: context.t.home.recentTitle, child: const _RecentActivity()),
+              AppSectionBlock(
+                gap: spacing.lg,
+                title: context.t.home.recentTitle,
+                child: const _RecentActivity(),
+              ),
             ],
           ),
         ),

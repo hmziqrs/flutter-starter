@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:starter/shared/fx/shaders/brand_material_recipe.dart';
@@ -46,7 +48,9 @@ class MaterialCard extends StatelessWidget {
         borderRadius: radius,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final band = bandExtent ?? constraints.maxWidth * 10 / 16;
+            // 16:10, held to a band on wide windows so the cover never pushes
+            // the words under it off the screen.
+            final band = bandExtent ?? math.min(constraints.maxWidth * 10 / 16, 240);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,

@@ -749,15 +749,21 @@ class _ProfileForm extends StatelessWidget {
             ),
             SizedBox(height: spacing.lg),
           ],
-          FButton(
-            key: const ValueKey('profile-save'),
-            focusNode: saveFocusNode,
-            onPress: _enabled ? onSave : () {},
-            prefix: phase == ProfilePresentationPhase.saving
-                ? BusyIndicator(severity: BusySeverity.saving, semanticsLabel: profile.saving)
-                : const Icon(FLucideIcons.save),
-            child: Text(
-              phase == ProfilePresentationPhase.saving ? profile.saving : profile.save,
+          // Form actions sit at the end of the form on anything wider than a
+          // phone (the kit's form-actions); a phone keeps the full-width target.
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FButton(
+              key: const ValueKey('profile-save'),
+              focusNode: saveFocusNode,
+              mainAxisSize: MediaQuery.sizeOf(context).width >= 640 ? .min : .max,
+              onPress: _enabled ? onSave : () {},
+              prefix: phase == ProfilePresentationPhase.saving
+                  ? BusyIndicator(severity: BusySeverity.saving, semanticsLabel: profile.saving)
+                  : const Icon(FLucideIcons.save),
+              child: Text(
+                phase == ProfilePresentationPhase.saving ? profile.saving : profile.save,
+              ),
             ),
           ),
         ],

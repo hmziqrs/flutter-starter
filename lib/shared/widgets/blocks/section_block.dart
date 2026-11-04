@@ -13,6 +13,7 @@ class AppSectionBlock extends StatelessWidget {
     required this.title,
     required this.child,
     this.description,
+    this.gap = 40,
     super.key,
   });
 
@@ -21,6 +22,10 @@ class AppSectionBlock extends StatelessWidget {
   final String? description;
 
   final Widget child;
+
+  /// The space before the content: the kit's `gap-10` on content pages. App
+  /// screens pass a tighter one, so a heading stays with what it heads.
+  final double gap;
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +53,7 @@ class AppSectionBlock extends StatelessWidget {
             ),
           ),
         ],
-        // The section's gap-10 before its content.
-        const SizedBox(height: 40),
+        SizedBox(height: gap),
         child,
       ],
     );
