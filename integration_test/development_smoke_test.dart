@@ -262,10 +262,11 @@ void main() {
 
     _log('navigating: -> appearance settings');
     await _go(tester, AppRoutes.appearanceSettingsPath);
-    await tapVisible(tester, const ValueKey('theme-dark'));
-    _log('theme = dark');
-    await tapVisible(tester, const ValueKey('accent-blue'));
-    _log('accent = blue');
+    // Light, not dark: dark is the default, so choosing it would prove nothing.
+    await tapVisible(tester, const ValueKey('theme-light'));
+    _log('theme = light');
+    await tapVisible(tester, const ValueKey('radius-sharp'));
+    _log('radius = sharp');
     final slider = find.byKey(const ValueKey('font-scale-slider'));
     await tester.ensureVisible(slider);
     await pumpAppFrames(tester);
@@ -286,15 +287,15 @@ void main() {
     await tapVisible(tester, const ValueKey('locale-ar'));
     _log('locale = ar (expecting RTL)');
     final liveState = _settingsState(tester);
-    expect(liveState.themeMode, AppThemeMode.dark);
-    expect(liveState.accent, AppAccent.blue);
+    expect(liveState.themeMode, AppThemeMode.light);
+    expect(liveState.radiusVariant, AppRadiusVariant.sharp);
     expect(liveState.fontScale, SettingsState.maximumFontScale);
     expect(liveState.localeOverride, AppLocale.ar);
     expect(
       Directionality.of(tester.element(find.byKey(const ValueKey('locale-ar')))),
       TextDirection.rtl,
     );
-    _log('in-memory settings verified: dark / blue / maxFont / ar / rtl');
+    _log('in-memory settings verified: light / sharp / maxFont / ar / rtl');
 
     _log('tearing app down, then rebuilding to verify persistence across restart');
     await tester.pumpWidget(const SizedBox.shrink());
