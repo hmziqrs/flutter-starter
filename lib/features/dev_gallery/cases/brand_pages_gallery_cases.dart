@@ -786,7 +786,6 @@ class _OrangeTag extends StatelessWidget {
     return Container(
       height: 22,
       padding: const EdgeInsetsDirectional.only(start: 8, end: 10),
-      alignment: AlignmentDirectional.center,
       decoration: ShapeDecoration(
         color: primary.withValues(alpha: fillOpacity),
         shape: const StadiumBorder(),
@@ -1048,7 +1047,7 @@ class _WaveHero extends StatelessWidget {
                   lede,
                   textAlign: TextAlign.center,
                   style: theme.typography.body.lg.copyWith(
-                    color: theme.colors.mutedForeground,
+                    color: theme.colors.foreground.withValues(alpha: 0.85),
                     height: 1.625,
                   ),
                 ),
@@ -1133,7 +1132,7 @@ class _WaveHero extends StatelessWidget {
                           lede,
                           textAlign: TextAlign.center,
                           style: theme.typography.body.lg.copyWith(
-                            color: theme.colors.mutedForeground,
+                            color: theme.colors.foreground.withValues(alpha: 0.85),
                             height: 1.625,
                           ),
                         ),
@@ -1193,9 +1192,9 @@ class _WaveGlow extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: <Color>[
                       primary.withValues(alpha: 0.1),
-                      primary.withValues(alpha: 0.85),
-                      primary.withValues(alpha: 0.25),
-                      primary.withValues(alpha: 0.8),
+                      primary.withValues(alpha: 0.5),
+                      primary.withValues(alpha: 0.15),
+                      primary.withValues(alpha: 0.5),
                       primary.withValues(alpha: 0.1),
                     ],
                     stops: const <double>[0, 0.3, 0.55, 0.8, 1],
@@ -1211,7 +1210,7 @@ class _WaveGlow extends StatelessWidget {
               heightFactor: 0.14,
               child: ImageFiltered(
                 imageFilter: ui.ImageFilter.blur(sigmaX: 36, sigmaY: 28),
-                child: ColoredBox(color: primary.withValues(alpha: 0.35)),
+                child: ColoredBox(color: primary.withValues(alpha: 0.18)),
               ),
             ),
           ),
@@ -1238,7 +1237,6 @@ class _HeroBadge extends StatelessWidget {
       // widths instead of overflowing.
       constraints: const BoxConstraints(minHeight: 26),
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: AlignmentDirectional.center,
       decoration: ShapeDecoration(
         color: theme.colors.background.withValues(alpha: 0.6),
         shape: StadiumBorder(
