@@ -188,11 +188,7 @@ void main() {
     expect(find.text(t.announcements.fixtures.welcome.title), findsOneWidget);
 
     final connectivityBottom = tester.getBottomLeft(find.text(t.connectivity.offline)).dy;
-    final announcementTop = tester
-        .getTopLeft(
-          find.text(t.announcements.fixtures.welcome.title),
-        )
-        .dy;
+    final announcementTop = tester.getTopLeft(find.byKey(const ValueKey('announcement-banner'))).dy;
 
     expect(
       announcementTop - connectivityBottom,

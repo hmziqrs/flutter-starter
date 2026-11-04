@@ -219,6 +219,21 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     ],
   );
 
+  /// Whether the current route is inside the shell, where announcements show.
+  /// Starts closed so a gate or sign-in page never flashes one on first frame.
+  final ValueNotifier<bool> _onShellRoute = ValueNotifier<bool>(false);
+
+  /// The router delegate can notify in the middle of a build, so the flag
+  /// settles after the frame instead of rebuilding the banner host from there.
+  void _syncShellRoute() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _onShellRoute.value = AppRoutes.isShellLocation(
+        _router.routerDelegate.currentConfiguration.uri.path,
+      );
+    });
+  }
+
   static final _ForuiThemeMemo _lightThemeMemo = _ForuiThemeMemo();
   static final _ForuiThemeMemo _darkThemeMemo = _ForuiThemeMemo();
   static final _ForuiThemeMemo _activeThemeMemo = _ForuiThemeMemo();
@@ -232,6 +247,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _router.routerDelegate.addListener(_syncShellRoute);
+    _syncShellRoute();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
       _drainNotificationTapQueue();
@@ -291,6 +308,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _router.routerDelegate.removeListener(_syncShellRoute);
+    _onShellRoute.dispose();
     _router.dispose();
     super.dispose();
   }
@@ -422,7 +441,8 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                         },
                         child: FToaster(
                           child: FTooltipGroup(
-                            child: AppBannerHost(
+                            child: ValueListenableBuilder<bool>(
+                              valueListenable: _onShellRoute,
                               child: Builder(
                                 builder: (sheetContext) => ShakeFeedbackTrigger(
                                   enabled:
@@ -438,6 +458,10 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
                                     child: child ?? const SizedBox.shrink(),
                                   ),
                                 ),
+                              ),
+                              builder: (context, onShellRoute, routed) => AppBannerHost(
+                                showAnnouncements: onShellRoute,
+                                child: routed!,
                               ),
                             ),
                           ),

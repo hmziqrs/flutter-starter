@@ -397,7 +397,7 @@
     "fixtures": {
       "welcome": {
         "title": "Welcome to the starter",
-        "message": "A durable foundation for your next product. Dismiss this to explore the shell."
+        "message": "A durable foundation for your next product. Close this note to start exploring."
       },
       "changelog": {
         "title": "New in this version",

@@ -2277,8 +2277,8 @@ class Translations$announcements$fixtures$welcome$en {
 	/// en: 'Welcome to the starter'
 	String get title => 'Welcome to the starter';
 
-	/// en: 'A durable foundation for your next product. Dismiss this to explore the shell.'
-	String get message => 'A durable foundation for your next product. Dismiss this to explore the shell.';
+	/// en: 'A durable foundation for your next product. Close this note to start exploring.'
+	String get message => 'A durable foundation for your next product. Close this note to start exploring.';
 }
 
 // Path: announcements.fixtures.changelog
@@ -2643,7 +2643,7 @@ extension on Translations {
 			'announcements.severityWarning' => 'Warning',
 			'announcements.severityCritical' => 'Critical',
 			'announcements.fixtures.welcome.title' => 'Welcome to the starter',
-			'announcements.fixtures.welcome.message' => 'A durable foundation for your next product. Dismiss this to explore the shell.',
+			'announcements.fixtures.welcome.message' => 'A durable foundation for your next product. Close this note to start exploring.',
 			'announcements.fixtures.changelog.title' => 'New in this version',
 			'announcements.fixtures.changelog.message' => 'Announcements keep everyone in the loop without an app update.',
 			'announcements.fixtures.deprecation.title' => 'A newer version is available',

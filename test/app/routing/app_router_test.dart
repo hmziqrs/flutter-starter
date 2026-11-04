@@ -48,6 +48,61 @@ void main() {
     });
   }
 
+  group('announcements stay inside the shell', () {
+    final title = find.text('Welcome to the starter');
+
+    for (final location in [AppRoutes.homePath, AppRoutes.settingsPath]) {
+      testWidgets('$location shows the announcement', (tester) async {
+        await LocaleSettings.setLocale(AppLocale.en);
+        await tester.pumpWidget(
+          App(
+            config: _developmentToolsConfig,
+            dependencies: AppDependencies.inMemory(),
+            initialLocation: location,
+          ),
+        );
+        await pumpAppFrames(tester);
+
+        expect(title, findsOneWidget);
+      });
+    }
+
+    for (final location in [
+      AppRoutes.loginPath,
+      AppRoutes.forceUpdatePath,
+      AppRoutes.onboardingPath,
+      AppRoutes.biometricLockPath,
+    ]) {
+      testWidgets('$location does not show the announcement', (tester) async {
+        await LocaleSettings.setLocale(AppLocale.en);
+        await tester.pumpWidget(
+          App(
+            config: _developmentToolsConfig,
+            dependencies: AppDependencies.inMemory(),
+            initialLocation: location,
+          ),
+        );
+        await pumpAppFrames(tester);
+
+        expect(title, findsNothing);
+      });
+    }
+  });
+
+  testWidgets('an OTP address opened directly starts without a failure notice', (tester) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    await tester.pumpWidget(
+      App(
+        config: _productionConfig,
+        dependencies: AppDependencies.inMemory(),
+        initialLocation: AppRoutes.otpLocation(OtpPurpose.registration),
+      ),
+    );
+    await pumpAppFrames(tester);
+
+    expect(find.byKey(const ValueKey('auth-otp-global-failure')), findsNothing);
+  });
+
   testWidgets('missing and malformed OTP purposes use localized recovery', (tester) async {
     await LocaleSettings.setLocale(AppLocale.en);
     await tester.pumpWidget(
@@ -113,4 +168,13 @@ final _authenticatedSession = AuthAuthenticated(
   refreshToken: 'test-refresh-token',
   expiresAt: DateTime.utc(9999, 12, 31),
   userId: 'test-user',
+);
+
+// Announcement fixtures only run in development builds.
+final _developmentToolsConfig = AppConfig(
+  environment: AppEnvironment.development,
+  enableVerboseLogging: false,
+  enableDevTools: true,
+  iosAppleId: '',
+  allowedDeepLinkHosts: AllowedDeepLinkHosts.empty,
 );

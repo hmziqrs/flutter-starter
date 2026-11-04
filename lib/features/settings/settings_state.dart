@@ -47,7 +47,7 @@ class SettingsState with _$SettingsState {
   });
 
   const SettingsState.defaults()
-    : themeMode = AppThemeMode.system,
+    : themeMode = AppThemeMode.dark,
       accent = AppAccent.oxide,
       fontScale = 1,
       textPreset = AppTextPreset.comfortable,

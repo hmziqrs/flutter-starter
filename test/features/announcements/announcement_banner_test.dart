@@ -5,12 +5,13 @@ import 'package:starter/features/announcements/announcement_banner.dart';
 import 'package:starter/features/announcements/announcement_fixtures.dart';
 import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/fx/shaders/brand_material_surface.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/theme/generated_forui_theme.dart' as generated;
 
 void main() {
   group('AnnouncementBannerView', () {
-    testWidgets('renders the dismiss control and the info presentation', (tester) async {
+    testWidgets('good news rides the brand material bar instead of a status fill', (tester) async {
       await tester.pumpWidget(
         _harness(
           child: AnnouncementBannerView(
@@ -22,8 +23,8 @@ void main() {
       );
 
       expect(find.byIcon(FLucideIcons.x), findsOneWidget);
-      expect(find.byIcon(FLucideIcons.info), findsOneWidget);
-      _expectSoftRoleFill(tester, AppBrandColors.light.info);
+      expect(find.byType(BrandMaterialSurface), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.info), findsNothing);
     });
 
     testWidgets('invokes onDismiss when the in-card X is tapped', (tester) async {
@@ -104,10 +105,8 @@ void main() {
       expect(find.text('Welcome to the starter'), findsOneWidget);
     });
 
-    testWidgets('maps every severity to its brand status role', (tester) async {
+    testWidgets('maps warnings and outages to their soft brand status role', (tester) async {
       final expected = <(AnnouncementSeverity, IconData, Color)>[
-        (AnnouncementSeverity.info, FLucideIcons.info, AppBrandColors.light.info),
-        (AnnouncementSeverity.success, FLucideIcons.circleCheck, AppBrandColors.light.green),
         (AnnouncementSeverity.warning, FLucideIcons.triangleAlert, AppBrandColors.light.yellow),
         (AnnouncementSeverity.critical, FLucideIcons.octagonAlert, AppBrandColors.light.red),
       ];

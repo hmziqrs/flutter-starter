@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:starter/features/announcements/announcement_view_data.dart';
 import 'package:starter/features/announcements/announcements_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
+import 'package:starter/shared/fx/shaders/brand_material_surface.dart';
+import 'package:starter/shared/fx/shaders/brand_materials.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
 import 'package:starter/shared/widgets/banners/collapsing_banner_slot.dart';
@@ -112,6 +114,27 @@ class AnnouncementBannerView extends StatelessWidget {
     final spacing = context.spacing;
     final fillOpacity = theme.colors.brightness == Brightness.dark ? 0.20 : 0.10;
 
+    // Good news rides the brand's announce bar (announce-bar.svelte): a strip
+    // of material holding the words on glass. Warnings and outages stay soft
+    // status fills, which are the brand's voice for something going wrong.
+    if (announcement.severity == AnnouncementSeverity.info ||
+        announcement.severity == AnnouncementSeverity.success) {
+      return Semantics(
+        container: true,
+        liveRegion: true,
+        label: '${announcement.title(translations)}. ${announcement.message(translations)}',
+        child: _AnnounceBar(
+          title: announcement.title(translations),
+          message: announcement.message(translations),
+          dismissible: announcement.dismissible,
+          actionLabel: actionRoute == null ? null : translations.announcements.actionLearnMore,
+          dismissLabel: translations.announcements.dismiss,
+          onAction: onAction,
+          onDismiss: onDismiss,
+        ),
+      );
+    }
+
     return Semantics(
       container: true,
       liveRegion: true,
@@ -218,6 +241,137 @@ class AnnouncementBannerView extends StatelessWidget {
   static const FButtonStyleDelta _quietPressStyle = FButtonStyleDelta.delta(
     tappableStyle: FTappableStyleDelta.delta(motion: FTappableMotion.none),
   );
+}
+
+class _AnnounceBar extends StatelessWidget {
+  const _AnnounceBar({
+    required this.title,
+    required this.message,
+    required this.dismissible,
+    required this.dismissLabel,
+    required this.onAction,
+    required this.onDismiss,
+    this.actionLabel,
+  });
+
+  final String title;
+  final String message;
+  final bool dismissible;
+  final String? actionLabel;
+  final String dismissLabel;
+  final VoidCallback onAction;
+  final VoidCallback onDismiss;
+
+  /// The pill's bar width, past which it stops growing and centers.
+  static const double _maxWidth = 760;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final spacing = context.spacing;
+    final titleStyle = theme.typography.body.sm.copyWith(
+      color: theme.colors.foreground,
+      fontWeight: FontWeight.w500,
+    );
+    final messageStyle = theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground);
+    final titleText = Text(title, style: titleStyle, maxLines: 2, overflow: TextOverflow.ellipsis);
+    final messageText = Text(
+      message,
+      style: messageStyle,
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+    );
+
+    return Stack(
+      key: const ValueKey('announcement-banner'),
+      children: [
+        Positioned.fill(
+          // A still frame, as the kit renders this bar: an always-on strip
+          // should not spend frames on ambient motion.
+          child: Builder(
+            builder: (context) {
+              final recipe = brandMaterialById('copper-sweep')!;
+              return BrandMaterialSurface(recipe: recipe, time: recipe.time);
+            },
+          ),
+        ),
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing.lg, vertical: spacing.sm),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _maxWidth),
+                // The words never sit on the material itself (BRAND.md s13):
+                // the page color is nearly opaque under them.
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    color: theme.colors.background.withValues(alpha: 0.92),
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: theme.style.borderRadius.lg,
+                      side: BorderSide(color: theme.colors.border),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      spacing.md,
+                      spacing.xs,
+                      spacing.xs,
+                      spacing.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) => constraints.maxWidth >= 560
+                                ? Row(
+                                    children: [
+                                      Flexible(child: titleText),
+                                      SizedBox(width: spacing.md),
+                                      Expanded(child: messageText),
+                                    ],
+                                  )
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [titleText, messageText],
+                                  ),
+                          ),
+                        ),
+                        if (actionLabel != null) ...[
+                          SizedBox(width: spacing.sm),
+                          FButton(
+                            key: const ValueKey('announcement-action'),
+                            variant: .outline,
+                            size: .sm,
+                            style: AnnouncementBannerView._quietPressStyle,
+                            onPress: onAction,
+                            child: Text(actionLabel!),
+                          ),
+                        ],
+                        if (dismissible) ...[
+                          SizedBox(width: spacing.xs),
+                          FButton.icon(
+                            key: const ValueKey('announcement-dismiss'),
+                            variant: .ghost,
+                            size: .sm,
+                            style: AnnouncementBannerView._quietPressStyle,
+                            semanticsLabel: dismissLabel,
+                            onPress: onDismiss,
+                            child: const Icon(FLucideIcons.x, size: 16),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 ({Color color, IconData icon, String label}) _presentationFor(

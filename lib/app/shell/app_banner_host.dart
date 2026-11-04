@@ -12,15 +12,21 @@ import 'package:starter/features/connectivity/connectivity_controller.dart';
 /// chrome (the paywall's skip action sits exactly there). The topmost visible
 /// banner owns the top safe-area inset, so the routed content below drops its
 /// own top padding to avoid insetting twice.
+///
+/// Announcements only show on [showAnnouncements] routes. Blocking gates and
+/// entry flows (force update, lock, sign-in) keep the connectivity banner,
+/// which still matters there, but never an unrelated announcement.
 class AppBannerHost extends ConsumerWidget {
-  const AppBannerHost({required this.child, super.key});
+  const AppBannerHost({required this.child, this.showAnnouncements = true, super.key});
 
   final Widget child;
+  final bool showAnnouncements;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final connectivityVisible = ref.watch(connectivityBannerVisibleProvider);
-    final hasBanner = connectivityVisible || ref.watch(announcementBannerVisibleProvider);
+    final announcementVisible = showAnnouncements && ref.watch(announcementBannerVisibleProvider);
+    final hasBanner = connectivityVisible || announcementVisible;
     final announcementSlot = connectivityVisible
         ? MediaQuery.removePadding(
             context: context,
@@ -32,7 +38,7 @@ class AppBannerHost extends ConsumerWidget {
     return Column(
       children: [
         const ConnectivityBanner(),
-        announcementSlot,
+        if (showAnnouncements) announcementSlot,
         Expanded(
           child: MediaQuery.removePadding(
             context: context,

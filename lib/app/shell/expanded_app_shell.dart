@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter/app/routing/app_routes.dart';
+import 'package:starter/features/session/session_controller.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/shared/theme/app_sizes.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
@@ -13,7 +15,6 @@ import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 class ExpandedAppShell extends StatelessWidget {
   const ExpandedAppShell({
     required this.selectedIndex,
-    required this.compactSidebar,
     required this.onSelectTab,
     required this.child,
     this.showDeveloperEntry = false,
@@ -23,7 +24,6 @@ class ExpandedAppShell extends StatelessWidget {
   });
 
   final int selectedIndex;
-  final bool compactSidebar;
   final void Function(int) onSelectTab;
 
   /// Shows the developer gallery link below the navigation destinations
@@ -31,7 +31,7 @@ class ExpandedAppShell extends StatelessWidget {
   final bool showDeveloperEntry;
 
   /// Whether the sidebar shows its full width with labels. False renders the
-  /// 88px icon rail (the space-saving default); [onToggleSidebar] flips it.
+  /// 48dp icon rail; [onToggleSidebar] flips it at any window width.
   final bool expanded;
 
   /// Called when the user taps the sidebar collapse/expand control.
@@ -41,7 +41,7 @@ class ExpandedAppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translations = context.t;
-    final railMode = compactSidebar || !expanded;
+    final railMode = !expanded;
     final width = railMode ? AppSizes.compactSidebarWidth : AppSizes.expandedSidebarWidth;
     final navigationInset = context.spacing.sm;
     // The rail's own side air: 4 inside the 48px brand icon rail (the
@@ -50,8 +50,7 @@ class ExpandedAppShell extends StatelessWidget {
     final itemStyle = context.theme.sidebarStyle.groupStyle.itemStyle;
     final itemPadding = itemStyle.padding.resolve(Directionality.of(context));
 
-    // The compact rail (88px) cannot hold readable labels — "Pricing" and
-    // "Settings" clip to "Pric…"/"Set…" — so it renders as an icon rail
+    // The rail cannot hold readable labels, so it renders as an icon rail
     // (BRAND.md s9, labeled and readable controls): the text drops out and the
     // icon centers in the rail through symmetric padding. The item keeps its
     // name on the tooltip, whose semantics label also carries it to assistive
@@ -67,6 +66,15 @@ class ExpandedAppShell extends StatelessWidget {
         width: width,
         child: FSidebar.raw(
           key: const ValueKey('expanded-navigation'),
+          // The kit's `--sidebar` fill, a step off the page color so the shell
+          // reads as its own surface.
+          style: .delta(
+            decoration: .boxDelta(
+              color: context.theme.colors.brightness == Brightness.dark
+                  ? const Color(0xFF171717)
+                  : const Color(0xFFFAFAFA),
+            ),
+          ),
           // The rail cannot hold the wordmark without squeezing or clipping it,
           // so the wordmark header only shows in the expanded sidebar where
           // the name always fits on one line.
@@ -101,6 +109,14 @@ class ExpandedAppShell extends StatelessWidget {
                     ),
                   ),
                 ),
+          // The brand shell keeps the account at the foot of the sidebar.
+          footer: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: railMode ? railInset : navigationInset,
+              vertical: context.spacing.sm,
+            ),
+            child: _AccountItem(iconRailStyle: iconRailStyle),
+          ),
           child: ListView(
             // The 48px rail tightens the side air to 4 so the 36dp toggle
             // fits without clipping; the expanded sidebar keeps its inset.
@@ -241,6 +257,33 @@ class ExpandedAppShell extends StatelessWidget {
     // out of the tree (excludeFromSemantics) so the rail's three annotations
     // cannot merge into one shared ancestor node and lose their per-item
     // names — the Semantics label above carries those instead.
+    return iconRail ? Tooltip(excludeFromSemantics: true, message: label, child: item) : item;
+  }
+}
+
+/// The sidebar's account entry: the profile once signed in, otherwise the way
+/// to sign in. This starter has no hard login, so both are always reachable.
+class _AccountItem extends ConsumerWidget {
+  const _AccountItem({this.iconRailStyle});
+
+  final FSidebarItemStyleDelta? iconRailStyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final translations = context.t;
+    final signedIn = ref.watch(sessionControllerProvider).isAuthenticated;
+    final label = signedIn ? translations.home.editProfile : translations.auth.login.submit;
+    final icon = signedIn ? FLucideIcons.circleUser : FLucideIcons.logIn;
+    final iconRail = iconRailStyle != null;
+    final item = FSidebarItem(
+      key: const ValueKey('expanded-navigation-account'),
+      icon: iconRail ? Semantics(label: label, child: Icon(icon)) : Icon(icon),
+      label: iconRail ? null : Text(label),
+      style: iconRailStyle ?? const FSidebarItemStyleDelta.context(),
+      onPress: () => unawaited(
+        context.push(signedIn ? AppRoutes.updateProfilePath : AppRoutes.loginPath),
+      ),
+    );
     return iconRail ? Tooltip(excludeFromSemantics: true, message: label, child: item) : item;
   }
 }

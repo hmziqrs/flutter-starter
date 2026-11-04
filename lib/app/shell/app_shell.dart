@@ -30,10 +30,14 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  /// The desktop sidebar starts collapsed to the icon rail — the 256px
-  /// expanded sidebar claimed too much of the content width. The toggle in
-  /// the sidebar switches between the two for the current session.
-  bool _sidebarExpanded = false;
+  /// The window width from which the sidebar opens by default, as the brand's
+  /// shell does. Below this the 256dp sidebar would take too much of the page,
+  /// so it starts as the icon rail.
+  static const double _sidebarOpenMinWidth = 1280;
+
+  /// The user's choice from the toggle, for this session. Null follows the
+  /// window width, so the first resize still picks the right default.
+  bool? _sidebarOverride;
 
   int get _selectedIndex => widget.navigationShell?.currentIndex ?? 0;
 
@@ -43,7 +47,7 @@ class _AppShellState extends State<AppShell> {
     shell.goBranch(index, initialLocation: index == shell.currentIndex);
   }
 
-  void _toggleSidebar() => setState(() => _sidebarExpanded = !_sidebarExpanded);
+  void _toggleSidebar(bool current) => setState(() => _sidebarOverride = !current);
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,8 @@ class _AppShellState extends State<AppShell> {
           );
         }
 
+        final sidebarOpen =
+            _sidebarOverride ?? MediaQuery.sizeOf(context).width >= _sidebarOpenMinWidth;
         return switch (layoutClass) {
           AppLayoutClass.compact => CompactAppShell(
             selectedIndex: _selectedIndex,
@@ -71,20 +77,18 @@ class _AppShellState extends State<AppShell> {
           ),
           AppLayoutClass.medium => ExpandedAppShell(
             selectedIndex: _selectedIndex,
-            compactSidebar: true,
             onSelectTab: _onSelectTab,
             showDeveloperEntry: widget.showDeveloperEntry,
-            expanded: _sidebarExpanded,
-            onToggleSidebar: _toggleSidebar,
+            expanded: sidebarOpen,
+            onToggleSidebar: () => _toggleSidebar(sidebarOpen),
             child: widget.child,
           ),
           AppLayoutClass.expanded => ExpandedAppShell(
             selectedIndex: _selectedIndex,
-            compactSidebar: false,
             onSelectTab: _onSelectTab,
             showDeveloperEntry: widget.showDeveloperEntry,
-            expanded: _sidebarExpanded,
-            onToggleSidebar: _toggleSidebar,
+            expanded: sidebarOpen,
+            onToggleSidebar: () => _toggleSidebar(sidebarOpen),
             child: widget.child,
           ),
         };

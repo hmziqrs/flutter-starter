@@ -304,7 +304,8 @@ void main() {
     await pumpAppFrames(tester);
 
     MaterialApp materialApp() => tester.widget(find.byType(MaterialApp));
-    expect(materialApp().themeMode, ThemeMode.system);
+    // The brand's default mode is dark (BRAND.md section 1).
+    expect(materialApp().themeMode, ThemeMode.dark);
     expect(materialApp().darkTheme, isNotNull);
 
     final container = ProviderScope.containerOf(

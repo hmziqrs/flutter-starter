@@ -58,7 +58,7 @@ final class SettingsRepository {
 
       final textPreset = _enumByName(AppTextPreset.values, values[3]) ?? AppTextPreset.comfortable;
       return SettingsState(
-        themeMode: _enumByName(AppThemeMode.values, values[0]) ?? AppThemeMode.system,
+        themeMode: _enumByName(AppThemeMode.values, values[0]) ?? AppThemeMode.dark,
         accent: _enumByName(AppAccent.values, values[1]) ?? AppAccent.oxide,
         fontScale: _parseFontScale(values[2]),
         textPreset: textPreset,

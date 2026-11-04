@@ -59,4 +59,12 @@ abstract final class AppRoutes {
 
   static const search = 'search';
   static const searchPath = '/search';
+
+  /// Whether [path] is inside the app's shell, where announcements belong.
+  static bool isShellLocation(String path) =>
+      path == homePath ||
+      path == pricingPath ||
+      path == settingsPath ||
+      path == accessibilitySettingsPath ||
+      path == aboutLicensePath;
 }
