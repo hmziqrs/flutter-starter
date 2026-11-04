@@ -32,6 +32,11 @@ Current project deployment floors and validation targets are:
 | Windows | Windows 10/11 | `windows-2022` x64, Visual Studio 2022 with Desktop development with C++ |
 | Linux | GTK 3 runtime | `ubuntu-24.04` x64 with Clang, CMake, Ninja, pkg-config, GTK 3 headers, and libstdc++ 12 headers |
 
+Xcode 27 cannot produce a universal macOS build with this Flutter: its `lipo`
+rejects the multi-architecture check Flutter runs. `just build macos` detects it
+and builds the host architecture instead, and CI's Xcode 26 still produces the
+universal app.
+
 Web remains optional and is not part of the release matrix. The runner labels
 are specific supported GitHub-hosted runner families rather than floating
 `*-latest` aliases. Review runner image changes, Xcode/Visual Studio changes,

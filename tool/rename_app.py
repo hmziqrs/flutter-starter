@@ -37,6 +37,7 @@ TEXT_SUFFIXES = {
 NAME_EDITS: dict[str, list[tuple[str, str]]] = {
     "ios/Runner/Info.plist": [("<string>Starter</string>", "<string>{name}</string>")],
     "tvos/Runner/Info.plist": [("<string>Starter</string>", "<string>{name}</string>")],
+    "macos/Runner/Info.plist": [("<string>Starter</string>", "<string>{name}</string>")],
     "macos/Runner/Configs/AppInfo.xcconfig": [("PRODUCT_NAME = starter", "PRODUCT_NAME = {binary}")],
     "linux/CMakeLists.txt": [('set(BINARY_NAME "starter")', 'set(BINARY_NAME "{binary}")')],
     "linux/runner/my_application.cc": [('"Starter"', '"{name}"')],

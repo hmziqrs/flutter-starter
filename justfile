@@ -234,6 +234,18 @@ android-tv-build:
 # Production release build: just build <target>
 # targets: apk | appbundle | ios | macos | linux | windows | web
 build target:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Xcode 27's lipo rejects the multi-arch check Flutter 3.44 runs for a
+    # universal macOS build, so build the host architecture there. CI's Xcode 26
+    # still produces the universal app. Drop this after the next Flutter upgrade.
+    if [[ '{{target}}' == 'macos' ]] && command -v xcodebuild >/dev/null 2>&1; then
+        xcode_major="$(xcodebuild -version | sed -nE '1s/Xcode ([0-9]+).*/\1/p')"
+        if [[ "${xcode_major:-0}" -ge 27 ]]; then
+            echo "Xcode $xcode_major: building macOS for $(uname -m) only." >&2
+            export FLUTTER_XCODE_ARCHS="$(uname -m)"
+        fi
+    fi
     {{flutter}} build {{target}} --release --dart-define-from-file={{prod_config}}
 
 # iOS release without code signing (matches the release workflow).
