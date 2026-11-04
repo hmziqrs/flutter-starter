@@ -17,9 +17,10 @@ The subsystem index — the per-concern "start here" map of the codebase — is
 ## Supported SDK and targets
 
 CI uses Flutter **3.44.7 stable** exactly, which bundles Dart **3.12.2**. The
-package declares Flutter `>=3.44.0 <3.45.0` and Dart `>=3.12.0 <4.0.0`; using a
-different Flutter patch is a reviewed toolchain change, not an incidental local
-upgrade.
+package declares Flutter `>=3.44.0 <4.0.0` and Dart `^3.12.0`, and `mise.toml`
+pins the exact SDK; using a different Flutter patch is a reviewed toolchain
+change, not an incidental local upgrade. Every `just` recipe runs through mise
+when it is installed, so the pin holds even if another SDK is first on `PATH`.
 
 Current project deployment floors and validation targets are:
 
@@ -40,6 +41,42 @@ as maintenance changes.
 GitHub Actions builds release artifacts only; quality gates (`just format-check`,
 `just analyze`, `just test`, `just test-goldens`, and the integration flows) run
 locally.
+
+## Make it yours
+
+Three commands turn the starter into your app. The first is a dry run until you
+add `apply`:
+
+```sh
+just rename "Sightline" com.acme.sightline apply
+just gen
+just brand-assets Si Sightline
+```
+
+`just rename` changes the display name, bundle and application ids, and the
+Android package on every platform (`tool/rename_app.py --dart-package` also
+renames the Dart package). `just brand-assets` redraws every launcher icon, TV
+banner, Top Shelf image and splash logo from the brand's Mark recipe, using your
+two-letter symbol, then rebuilds the native launch screens.
+
+## Brand
+
+Theme and components are a Flutter port of the hmziq brand kit. Tokens live in
+`lib/shared/theme/`, and the kit's pieces in `lib/shared/widgets/` (`blocks`,
+`brand`, `glass`, `marks`, `rings`) and `lib/shared/fx/`. Run a development build
+and open **Brand gallery** in the sidebar to see every piece, and `/dev/screens`
+at any viewport, mode and locale.
+
+Check visual work headlessly; neither command touches your desktop:
+
+```sh
+just visual          # every gallery case, phone and desktop, dark and light
+just visual-screens  # the real app on every route at phone, tablet and desktop
+```
+
+Renders land in `build/visual/` and `build/visual-screens/`, each with a
+`_report.txt` listing any layout exception. `AGENTS.md` has the brand-parity
+rules these support.
 
 ## Set up and run
 
@@ -75,26 +112,16 @@ dart run build_runner build --delete-conflicting-outputs
 Before opening a pull request, run:
 
 ```sh
-dart format --output=none --set-exit-if-changed .
-flutter analyze --fatal-infos
-dart run build_runner build --delete-conflicting-outputs
-git diff --exit-code
-flutter test test
+just format-check
+just analyze
+just gen-check
+just test
+just test-goldens
 ```
 
-`flutter test test` includes canonical pixel comparisons and therefore should
-only be treated as authoritative on the pinned macOS golden environment. On
-other operating systems, run every non-golden test with:
-
-```sh
-find test -type f -name '*_test.dart' ! -path 'test/goldens/*' -print0 \
-  | xargs -0 flutter test
-```
-
-CI performs the same separation: Ubuntu runs all non-golden unit, widget,
-responsive, and accessibility tests; only `macos-26` compares the committed
-pixels. This avoids cross-OS renderer differences without weakening functional
-widget coverage.
+`just gen-check` fails on uncommitted changes, so run it from a clean tree.
+`just test` skips the canonical pixel comparisons and the visual tools, and runs
+on any operating system.
 
 ## Golden review
 
@@ -128,7 +155,7 @@ flutter test integration_test/production_routes_test.dart \
   --dart-define-from-file=config/production.json
 ```
 
-Linux CI wraps both commands in `xvfb-run -a`. The development target covers a
+On a headless Linux host, wrap both commands in `xvfb-run -a`. The development target covers a
 representative local-only flow, settings persistence, locale/theme changes,
 and resizing. The independent production target proves that development routes
 are not registered. Android/iOS device runs or Patrol belong here only after a
@@ -157,20 +184,14 @@ before public distribution.
 
 ## CI architecture
 
-Pull requests and pushes to `main` run:
+GitHub Actions builds release artifacts only (`.github/workflows/release.yml`),
+on pushes to `master` and on demand: macOS universal and iOS on `macos-26`,
+Windows x64, Linux x64 and arm64, and Android APKs and App Bundle. Quality gates
+run locally, as listed above. Signing is deferred, so artifacts are unsigned or
+debug-signed; see `docs/release_readiness.md`.
 
-- Ubuntu 24.04: formatting, fatal analysis, generated drift, every non-golden
-  unit/widget/accessibility test, both Linux integration targets under Xvfb,
-  and Android/Linux production release builds.
-- macOS 26 arm64: the canonical golden comparison plus unsigned iOS and macOS
-  production release builds.
-- Windows Server 2022: the Windows production release build.
-
-The workflow pins Flutter 3.44.7, `actions/checkout@v6`,
-`actions/setup-java@v5`, and `subosito/flutter-action@v2`. GitHub-hosted runners
-satisfy the Node 24 action-runtime requirement; any future self-hosted runner
-must use Actions Runner 2.329.0 or newer before these action lines are reused
-(`checkout@v6` has the highest runner requirement in this workflow).
+`.github/workflows/regenerate-goldens.yml` regenerates the canonical baselines
+on the `macos-26` runner and opens a pull request for review.
 
 ## Dependency maintenance
 
@@ -183,8 +204,8 @@ flutter pub outdated
 flutter pub upgrade
 flutter pub upgrade forui --major-versions
 dart fix --dry-run
-flutter analyze --fatal-infos
-flutter test test
+just analyze
+just test
 ```
 
 Read the relevant changelogs and inspect `dart fix --dry-run` before applying

@@ -157,8 +157,8 @@ public release.
 | Area | Required decision/implementation | Evidence before release |
 | --- | --- | --- |
 | Signing | Replace Android debug-key release signing; configure Apple certificates/profiles and macOS hardened runtime/notarization; define Windows signing if distributed | Signed installable artifacts, protected CI credentials, rotation/ownership record |
-| Identifiers | Replace `com.example.starter` and all placeholder bundle/application IDs consistently | Store-registered unique IDs and clean install/upgrade tests |
-| Icons and brand | Replace template icons, launch visuals, app name, and neutral placeholder brand assets | Reviewed assets at every required platform size and light/dark context |
+| Identifiers | Replace `com.example.starter` and all placeholder bundle/application IDs consistently with `just rename` | Store-registered unique IDs and clean install/upgrade tests |
+| Icons and brand | Redraw icons, launch visuals, and TV banners for your app with `just brand-assets <symbol> <name>`, and set its localized names in `lib/i18n/` | Reviewed assets at every required platform size and light/dark context |
 | Android TV store | Final localized TV banner/icon/screenshots, Tier 3/Tier 2 quality review, Play device catalogue, low-RAM/device and 16 KB validation | TV launcher/store discovery, release AAB inspection, device matrix and reviewer evidence |
 | tvOS store | Final layered icon, Top Shelf artwork, screenshots, privacy manifest/report, App Privacy text, identifiers and signing | Signed Apple TV install, archive/privacy inspection, App Store Connect validation and reviewer evidence |
 | Telemetry | Decide whether analytics, crash reporting, and performance tracing are needed; add only behind application contracts | Data inventory, environment separation, redaction tests, retention/access policy |

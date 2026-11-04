@@ -27,6 +27,9 @@ pushing.
 - `just gen`: regenerate Slang and other builder output.
 - `just format-check && just analyze`: run the formatting and lint gates.
 - `just test`: run all non-golden unit and widget tests.
+- `just visual` / `just visual-screens`: render the gallery and the real app
+  headlessly at phone and desktop sizes.
+- `just rename` / `just brand-assets`: turn the starter into a new app.
 - `just test-goldens`: compare canonical goldens on the pinned macOS environment.
 - `just smoke macos`: run the development integration flow.
 - `just build apk`: create a production-configured release build for a target.
@@ -81,10 +84,12 @@ convenience and local green-checkmarks.
    templates seem to conflict, match the corresponding brand page's actual
    composition — the pages are the authority on how bold the brand is.
 5. **Measure numbers, compare images, show both.** Use the headless pipelines:
-   `flutter test test/visual_dump_test.dart --update-goldens` renders every
-   gallery case to `build/visual/` (real fonts, dark + light); brand truth
-   photographs live in `build/brand-refs/` (storybook captures; regenerate by
-   serving `brand-svelte/storybook-static` and screenshotting if wiped).
+   `just visual` renders every gallery case at phone and desktop sizes to
+   `build/visual/`, and `just visual-screens` renders the real app on every
+   route at phone, tablet and desktop to `build/visual-screens/` (real fonts,
+   dark + light, with a `_report.txt` of layout exceptions). Brand truth
+   photographs live in `build/brand-refs/` (storybook captures; `app/` holds the
+   App blocks; `tool/brand_refs/capture_app_refs.sh` rebuilds that folder).
    Measure both sides with image scripts, then present the renders.
 6. **No desktop input automation, ever.** Verification is headless only
    (widget-test renders, image scripts). Never post synthetic mouse/keyboard

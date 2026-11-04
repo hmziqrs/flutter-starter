@@ -31,11 +31,11 @@ The architecture decisions live in [`plans/completed/initial.md`](../plans/compl
 | keyboard-shortcuts | One root hardware listener, shortcut registry, and chord preview | `lib/app/keyboard/app_keyboard_host.dart` |
 | theme-system | ForuiThemeFactory composes FThemeData from tokens | `lib/shared/theme/forui_theme_factory.dart` |
 | motion-and-page-transitions | Duration/curve tokens + per-platform transitions | `lib/shared/motion/app_motion.dart` |
-| features-product-screens | Callback-driven backend-free product screens | `lib/features/auth/login_page.dart` |
+| features-product-screens | Callback-driven backend-free product screens; entry flows share the brand's auth layout | `lib/features/auth/auth_page_scaffold.dart` |
 | shared-widgets | Cross-feature widget abstractions: states, lists, forms, feedback, refresh, Escape dismissal | `lib/shared/widgets/` |
 | dev-gallery-diagnostics | Dev-only gallery + diagnostics, gated by config | `lib/features/dev_gallery/gallery_case.dart` |
 | infrastructure | Cross-cutting ports + adapters: logging, http, storage, telemetry, platform services | `lib/infrastructure/` |
-| testing-analysis-ci | Linted suite, macOS goldens, integration, 5-job CI | `justfile` |
+| testing-analysis-ci | Linted suite, macOS goldens, integration, headless visual sweeps, release-only CI | `justfile` |
 
 ## Subsystems
 
@@ -157,7 +157,7 @@ Notes:
 - `AppShell` is built two ways: the default `AppShell(navigationShell: shell)` from `StatefulShellRoute.builder`, and `AppShell.preview(child:)` for the dev gallery (which has no shell). It wraps `AppLayoutScope` and passes `selectedIndex`, `child`, and an `onSelectTab(int)` callback down; `onSelectTab` is wired to `goBranch` with reset-on-retap. Ten-foot policy dispatches to `TelevisionAppShell` before the width switch; near-field keeps the compact/medium/expanded behavior. The 0/1/2 index contract (0=home,1=pricing,2=settings) is unchanged.
 - `CompactAppShell`/`ExpandedAppShell` are go_router-agnostic: they switch tabs only through `onSelectTab(int)` and no longer import `go_router`/`app_routes`. `cross_fading_branch_container.dart` owns the tab cross-fade — it keeps every branch proxy mounted in stable order, fades both branches, and leaves only the current branch interactive/focusable/semantic/ticking; it honors `MediaQuery.disableAnimationsOf` (`Duration.zero`).
 - `AppUnit` uses a 390 logical-pixel reference width and bounded interpolation from 320 through 1200; density never changes layout scale and is used only by `pixel`/`snap` for physical-pixel rendering.
-- `medium` reuses `ExpandedAppShell` with `compactSidebar:true`; new tabs need both shells, a new ordered `StatefulShellBranch` in `app_router.dart` (branches are indexed home=0/pricing=1/settings=2), and an `onSelectTab` entry in each shell. `selectedIndex` is derived from `navigationShell.currentIndex`, not a location prefix.
+- `medium` reuses `ExpandedAppShell`, starting as the icon rail (windows from 1280dp open with the labelled sidebar; the toggle works at any width); new tabs need both shells, a new ordered `StatefulShellBranch` in `app_router.dart` (branches are indexed home=0/pricing=1/settings=2), and an `onSelectTab` entry in each shell. `selectedIndex` is derived from `navigationShell.currentIndex`, not a location prefix.
 - Interaction policy is input-only and monotonic, including `remote -> hybridRemote` after precision-pointer observation. Viewing distance remains orthogonal through `AppPresentationPolicy`; `interactionPolicyOverrideProvider` and `presentationPolicyOverrideProvider` are deterministic test/dev hooks. Reading `appLayoutClassProvider` outside AppLayoutScope throws.
 
 #### keyboard-shortcuts
@@ -333,7 +333,10 @@ Files:
 - `integration_test/development_smoke_test.dart` — full-flow smoke across layouts
 - `integration_test/production_routes_test.dart` — dev routes absent in prod
 - `test/goldens/canonical_matrix_golden_test.dart` — 13-case pairwise matrix (macOS)
-- `test/goldens/README.md` — pinned baseline env (macOS 26.5, Flutter 3.44.7)
+- `test/goldens/README.md` — pinned baseline env (macOS 26, Flutter 3.44.7)
+- `test/visual/gallery_dump_test.dart`, `test/visual/app_screens_test.dart` — `just visual` / `just visual-screens`: headless renders of every gallery case and every real route at phone and desktop sizes, with a layout-exception report; skipped by plain `flutter test`
+- `tool/brand_assets/generate_brand_assets_test.dart` — `just brand-assets`: draws all launcher icons, TV banners and splash logos from the Mark recipe
+- `tool/rename_app.py` — `just rename`: renames the app on every platform
 
 Notes:
 - `just test` excludes goldens; goldens compare ONLY on macOS via `just test-goldens`; regenerate the 13 committed baselines with `--update-goldens` on the pinned runner and inspect every changed image.
