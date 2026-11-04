@@ -8,7 +8,7 @@
 
 FLUTTER := mise exec -- flutter
 DART := mise exec -- dart
-TEST_FILES := $(shell find test -type f -name '*_test.dart' ! -path 'test/goldens/*')
+TEST_FILES := $(shell find test -type f -name '*_test.dart' ! -path 'test/goldens/*' ! -path 'test/visual/*')
 
 # Strict analysis gate (--fatal-infos: infos fail).
 analyze:
@@ -34,6 +34,6 @@ e2e:
 
 # TypeScript contract tests for the in-repo test server.
 server-test:
-	cd tools/hono_server && bun test
+	cd tools/hono_server && bun install --frozen-lockfile && bun test
 
 .PHONY: analyze format-check test test-file e2e server-test

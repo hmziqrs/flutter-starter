@@ -11,6 +11,7 @@ prod_config := "config/production.json"
 # in mise.toml (matching the pubspec.yaml constraint) instead of whatever
 # `flutter` is first on PATH; environments without mise keep using PATH.
 flutter     := `command -v mise >/dev/null 2>&1 && echo 'mise exec -- flutter' || echo 'flutter'`
+dart        := `command -v mise >/dev/null 2>&1 && echo 'mise exec -- dart' || echo 'dart'`
 
 # List available recipes.
 default:
@@ -23,9 +24,9 @@ deps:
 
 # Regenerate slang translations and other build_runner outputs.
 gen:
-    dart run build_runner clean
+    {{dart}} run build_runner clean
     rm -f lib/i18n/translations.g.dart lib/i18n/translations_en.g.dart lib/i18n/translations_ar.g.dart lib/i18n/translations_zh_Hans.g.dart
-    dart run build_runner build
+    {{dart}} run build_runner build
 
 # Remove all build artifacts.
 clean:
@@ -38,29 +39,45 @@ analyze:
 
 # Format the codebase in place.
 format:
-    dart format lib test integration_test
+    {{dart}} format lib test integration_test
 
 # Fail if anything is unformatted (pre-commit gate).
 format-check:
-    dart format --output=none --set-exit-if-changed lib test integration_test
+    {{dart}} format --output=none --set-exit-if-changed lib test integration_test
 
 # Verify generated code is committed and in sync (pre-commit gate).
 gen-check:
-    dart run build_runner clean
+    {{dart}} run build_runner clean
     rm -f lib/i18n/translations.g.dart lib/i18n/translations_en.g.dart lib/i18n/translations_ar.g.dart lib/i18n/translations_zh_Hans.g.dart
-    dart run build_runner build
+    {{dart}} run build_runner build
     git diff --exit-code
+
+# Rename the starter into your own app on every platform. Dry run unless apply
+# is passed: just rename "Sightline" com.acme.sightline apply
+rename name id apply='':
+    python3 tool/rename_app.py --name '{{name}}' --id '{{id}}' {{ if apply == 'apply' { '--apply' } else { '' } }}
+
+# --- brand assets --------------------------------------------------------------
+# Redraw every launcher icon, TV banner and splash logo from the brand's Mark
+# recipe, then bake the logos into the native launch screens.
+#   just brand-assets St Starter
+brand-assets symbol='St' name='Starter':
+    {{flutter}} test tool/brand_assets/generate_brand_assets_test.dart \
+        --dart-define=WRITE_BRAND_ASSETS=true \
+        '--dart-define=BRAND_SYMBOL={{symbol}}' \
+        '--dart-define=BRAND_NAME={{name}}'
+    {{dart}} run flutter_native_splash:create
 
 # --- native splash (codegen; config in flutter_native_splash.yaml) ------------
 # Regenerate the committed native launch assets (iOS storyboard, Android
 # drawable + Android-12 styles, web splash). Mirrors `gen`/`gen-check`: review
 # the committed native diff before accepting the CLI output.
 splash:
-    dart run flutter_native_splash:create
+    {{dart}} run flutter_native_splash:create
 
 # Remove the generated native splash launch assets (undo `splash`).
 splash-remove:
-    dart run flutter_native_splash:remove
+    {{dart}} run flutter_native_splash:remove
 
 # --- run the app (development config) -----------------------------------------
 # Run on a device (default macos): just run [chrome|macos|ios|<device-id>]
@@ -119,7 +136,7 @@ test:
     set -euo pipefail
     mkdir -p build
     log=build/test.log
-    if {{flutter}} test $(find test -type f -name '*_test.dart' ! -path 'test/goldens/*') >"$log"; then
+    if {{flutter}} test $(find test -type f -name '*_test.dart' ! -path 'test/goldens/*' ! -path 'test/visual/*') >"$log"; then
         tail -n 1 "$log"
     else
         status=$?
@@ -132,6 +149,17 @@ test:
 # Canonical golden baseline (run on macOS; see test/goldens/README.md).
 test-goldens:
     {{flutter}} test test/goldens/canonical_matrix_golden_test.dart
+
+# Render every gallery case at phone and desktop sizes (dark + light) to
+# build/visual/. Headless; never touches the desktop. See AGENTS.md rule 5.
+visual:
+    {{flutter}} test test/visual/gallery_dump_test.dart --update-goldens
+    {{flutter}} test test/visual/gallery_dump_test.dart --update-goldens --dart-define=VISUAL_VIEWPORT=desktop
+
+# Render the real app on every route at phone, tablet and desktop sizes (dark +
+# light) to build/visual-screens/. Headless. This is what proves a screen.
+visual-screens:
+    {{flutter}} test test/visual/app_screens_test.dart --update-goldens
 
 # Dev smoke integration test — HEADLESS coverage mode.
 # Asserts the full flow + persistence across compact/medium/expanded layouts.
@@ -213,6 +241,10 @@ build-ios:
     {{flutter}} build ios --release --no-codesign --dart-define-from-file={{prod_config}}
 
 # --- in-repo dummy backend (C3) ----------------------------------------------
+# TypeScript contract tests for the dummy backend.
+server-test:
+    cd tools/hono_server && bun install --frozen-lockfile && bun test
+
 # Start the standalone Hono (TypeScript) dummy backend on a configurable port
 # (default 8080). Implements the app's /v1/* API contract; never compiled into
 # the app. Uses Bun when available, otherwise Node via tsx.

@@ -22,18 +22,21 @@ import 'package:starter/features/settings/settings_controller.dart';
 import 'package:starter/features/settings/settings_state.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/cache/cache_store.dart';
-import 'package:starter/shared/adaptive/app_interaction_policy.dart';
 import 'package:starter/shared/theme/forui_theme_factory.dart';
 
-/// Renders every gallery case to a PNG under `build/visual/` so component
-/// work can be measured pixel-by-pixel against the brand storybook
-/// photographs — headlessly, without touching the desktop.
+/// Renders every gallery case to a PNG so component work can be measured
+/// pixel-by-pixel against the brand storybook photographs — headlessly,
+/// without touching the desktop.
 ///
-/// One-off tool, never a CI baseline: run with
-/// `flutter test test/visual_dump_test.dart --update-goldens` and filter to
-/// one family with `--plain-name '<screenId>'`. build/ is gitignored.
+/// One-off tool, never a baseline: `just visual` renders the phone and desktop
+/// sets under `build/visual/`. A plain `flutter test` skips it, because the
+/// output folder is gitignored and absent on a clean clone. Layout exceptions
+/// are collected per case into `_report.txt`, so one bad case cannot hide the
+/// renders of the others; the run fails at the end if any were found.
 void main() {
-  const outputDir = 'build/visual';
+  const viewportId = String.fromEnvironment('VISUAL_VIEWPORT', defaultValue: 'compact-phone');
+  final preset = GalleryViewportPresets.values.firstWhere((preset) => preset.id == viewportId);
+  const outputDir = viewportId == 'compact-phone' ? 'build/visual' : 'build/visual/$viewportId';
   final config = AppConfig(
     environment: AppEnvironment.development,
     enableVerboseLogging: false,
@@ -64,11 +67,13 @@ void main() {
     );
   });
 
-  testWidgets('dump every gallery case (dark + light)', (tester) async {
+  testWidgets('dump every gallery case (dark + light)', skip: !autoUpdateGoldenFiles, (
+    tester,
+  ) async {
     LocaleSettings.setLocaleSync(AppLocale.en);
     tester.view
       ..devicePixelRatio = 2
-      ..physicalSize = const Size(780, 1688);
+      ..physicalSize = preset.size * 2;
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
@@ -76,15 +81,19 @@ void main() {
     final dependencies = AppDependencies.inMemory();
     final boundaryKey = GlobalKey();
     Directory(outputDir).createSync(recursive: true);
+    final problems = <String>[];
+    final previousOnError = FlutterError.onError;
 
     for (final brightness in Brightness.values) {
       final theme = ForuiThemeFactory.build(
         brightness: brightness,
         accent: AppAccent.oxide,
         fontScale: 1,
-        interactionPolicy: AppInteractionPolicy.touch,
+        interactionPolicy: preset.interactionPolicy,
       );
       for (final galleryCase in cases) {
+        final reported = <String>[];
+        FlutterError.onError = (details) => reported.add(details.exceptionAsString());
         await tester.pumpWidget(
           RepaintBoundary(
             key: boundaryKey,
@@ -130,6 +139,8 @@ void main() {
                   home: PreviewFrame(
                     environment: GalleryEnvironment.defaults().copyWith(
                       brightness: brightness,
+                      viewport: preset,
+                      interactionPolicy: preset.interactionPolicy,
                       animationsEnabled: false,
                     ),
                     child: Builder(builder: galleryCase.build),
@@ -143,9 +154,17 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pump();
 
+        final captured = tester.takeException();
+        if (captured != null) reported.add(captured.toString());
+        FlutterError.onError = previousOnError;
+        if (reported.isNotEmpty) {
+          final summary = reported.map((error) => error.split('\n').first).toSet().join(' | ');
+          problems.add('${galleryCase.id}.${brightness.name}: $summary');
+        }
+
         await expectLater(
           find.byKey(boundaryKey),
-          matchesGoldenFile('../$outputDir/${galleryCase.id}.${brightness.name}.png'),
+          matchesGoldenFile('../../$outputDir/${galleryCase.id}.${brightness.name}.png'),
         );
 
         // Cases push dialogs/routes onto the navigator; pumping a teardown
@@ -155,5 +174,10 @@ void main() {
         await tester.pump();
       }
     }
+
+    File('$outputDir/_report.txt').writeAsStringSync(
+      problems.isEmpty ? 'clean\n' : '${problems.join('\n')}\n',
+    );
+    expect(problems, isEmpty, reason: 'Layout exceptions; see $outputDir/_report.txt');
   });
 }
