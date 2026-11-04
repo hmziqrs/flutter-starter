@@ -182,7 +182,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
       child: AuthPageScaffold(
         screenId: 'otp',
         layoutClass: layoutClass,
-        icon: FLucideIcons.badgeCheck,
         title: title,
         body: body,
         form: form,
@@ -192,7 +191,6 @@ class _OtpViewState extends ConsumerState<_OtpView>
 
   Widget _buildForm(BuildContext context) {
     final translations = context.t;
-    final (title, body) = _copy(context);
     final screenDirection = Directionality.of(context);
     final forcedError = switch (widget.presentation.status) {
       OtpPresentationStatus.invalid => translations.auth.otp.invalid,
@@ -214,7 +212,7 @@ class _OtpViewState extends ConsumerState<_OtpView>
           key: const ValueKey('auth-otp-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthFormHeader(title: title, body: body, alerts: alerts),
+            AuthFormAlerts(alerts: alerts),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: Directionality(

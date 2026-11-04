@@ -197,7 +197,6 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
         child: AuthPageScaffold(
           screenId: 'register',
           layoutClass: layoutClass,
-          icon: FLucideIcons.userRoundPlus,
           title: translations.title,
           body: translations.body,
           form: form,
@@ -223,11 +222,7 @@ class _RegisterViewState extends ConsumerState<_RegisterView>
           key: const ValueKey('auth-register-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthFormHeader(
-              title: translations.auth.register.title,
-              body: translations.auth.register.body,
-              alerts: [?feedbackAlert],
-            ),
+            AuthFormAlerts(alerts: [?feedbackAlert]),
             AppTvEditableField(
               activationKey: const ValueKey('auth-register-display-name-activation'),
               label: translations.auth.common.displayName,

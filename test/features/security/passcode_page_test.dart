@@ -114,8 +114,13 @@ void main() {
     await _settle(tester);
 
     expect(find.text(translations.mismatch), findsOneWidget);
-    final confirm = tester.widget<TextField>(find.byKey(const ValueKey('passcode-setup-confirm')));
-    expect(confirm.controller!.text, isEmpty, reason: 'confirm is cleared on mismatch');
+    final confirm = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const ValueKey('passcode-setup-confirm')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(confirm.controller.text, isEmpty, reason: 'confirm is cleared on mismatch');
   });
 
   testWidgets('entry with the correct passcode fires onUnlocked', (tester) async {

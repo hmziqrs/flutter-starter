@@ -166,7 +166,6 @@ class _LoginViewState extends ConsumerState<_LoginView>
       child: AuthPageScaffold(
         screenId: 'login',
         layoutClass: layoutClass,
-        icon: FLucideIcons.shieldCheck,
         title: translations.title,
         body: translations.body,
         form: _buildForm(context),
@@ -254,11 +253,7 @@ class _LoginViewState extends ConsumerState<_LoginView>
           key: const ValueKey('auth-login-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthFormHeader(
-              title: translations.auth.login.title,
-              body: translations.auth.login.body,
-              alerts: alerts,
-            ),
+            AuthFormAlerts(alerts: alerts),
             emailFormField(
               activationKey: const ValueKey('auth-login-email-activation'),
               fieldKey: const ValueKey('auth-login-email'),

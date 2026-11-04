@@ -238,7 +238,7 @@ void main() {
     await _pumpCase(tester, galleryCase: login, environment: environment);
     final page = find.byKey(const ValueKey('auth-login-page'));
     final pageContext = tester.element(page);
-    final formScroll = find.descendant(of: page, matching: find.byType(ListView));
+    final formScroll = find.descendant(of: page, matching: find.byType(SingleChildScrollView));
     final submit = find.byKey(const ValueKey('auth-login-submit'));
 
     expect(MediaQuery.viewInsetsOf(pageContext), PreviewFrame.keyboardInsets);

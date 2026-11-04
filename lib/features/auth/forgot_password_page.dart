@@ -137,7 +137,6 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
       child: AuthPageScaffold(
         screenId: 'forgot-password',
         layoutClass: layoutClass,
-        icon: FLucideIcons.keyRound,
         title: translations.title,
         body: translations.body,
         form: form,
@@ -164,11 +163,7 @@ class _ForgotPasswordViewState extends ConsumerState<_ForgotPasswordView>
           key: const ValueKey('auth-forgot-password-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthFormHeader(
-              title: translations.auth.forgotPassword.title,
-              body: translations.auth.forgotPassword.body,
-              alerts: feedbackAlert == null ? const [] : [feedbackAlert],
-            ),
+            AuthFormAlerts(alerts: feedbackAlert == null ? const [] : [feedbackAlert]),
             emailFormField(
               activationKey: const ValueKey('auth-forgot-password-email-activation'),
               fieldKey: const ValueKey('auth-forgot-password-email'),

@@ -297,7 +297,10 @@ class _OtpRoutePageState extends ConsumerState<OtpRoutePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      // An address opened directly carries no identifier, so there is nobody
+      // to send a code to yet; asking would only surface a failure notice on
+      // a page the user has not acted on.
+      if (!mounted || widget.identifier.isEmpty) return;
       final key = (purpose: widget.purpose, identifier: widget.identifier);
       unawaited(ref.read(otpControllerProvider(key).notifier).requestIssue());
     });

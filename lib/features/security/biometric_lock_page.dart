@@ -11,7 +11,6 @@ import 'package:starter/infrastructure/biometric/biometric_authenticator.dart';
 import 'package:starter/shared/adaptive/app_layout_provider.dart';
 import 'package:starter/shared/theme/app_spacing.dart';
 import 'package:starter/shared/theme/brand_tokens.dart';
-import 'package:starter/shared/widgets/brand/app_icon_tile.dart';
 import 'package:starter/shared/widgets/escape_dismissible_overlay.dart';
 
 class BiometricLockPage extends ConsumerWidget {
@@ -65,9 +64,10 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
       child: AuthPageScaffold(
         screenId: 'biometric-lock',
         layoutClass: layoutClass,
-        icon: isUnavailable ? FLucideIcons.lockKeyhole : FLucideIcons.scanFace,
         title: title,
         body: body,
+        titleKey: const ValueKey('biometric-lock-title'),
+        bodyKey: const ValueKey('biometric-lock-body'),
         form: _buildForm(context, isUnavailable: isUnavailable),
       ),
     );
@@ -80,36 +80,15 @@ class _BiometricLockViewState extends ConsumerState<_BiometricLockView> {
       key: const ValueKey('biometric-lock-form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: AppIconTile(
-            icon: isUnavailable ? FLucideIcons.lockKeyhole : FLucideIcons.scanFace,
-            size: 48,
-          ),
-        ),
-        SizedBox(height: spacing.xl),
-        Text(
-          isUnavailable ? translations.unavailableTitle : translations.lockTitle,
-          key: const ValueKey('biometric-lock-title'),
-          style: entryPageTitleStyle(context),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: spacing.md),
-        Text(
-          isUnavailable ? translations.unavailableBody : translations.lockBody,
-          key: const ValueKey('biometric-lock-body'),
-          style: entryMutedBodyStyle(context),
-          textAlign: TextAlign.center,
-        ),
         if (_lastAttemptFailed) ...[
-          SizedBox(height: spacing.xl),
           FAlert(
             key: const ValueKey('biometric-lock-failure'),
             style: AuthFeedbackAlert.noticeStyle(context, AppStatusRole.destructive),
             icon: const Icon(FLucideIcons.octagonAlert),
             title: Text(translations.authFailedTitle),
           ),
+          SizedBox(height: spacing.lg),
         ],
-        SizedBox(height: spacing.xl),
         if (isUnavailable)
           FButton(
             key: const ValueKey('biometric-lock-fallback'),

@@ -113,9 +113,14 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
       child: AuthPageScaffold(
         screenId: widget.mode == PasscodePageMode.entry ? 'passcode-entry' : 'passcode-setup',
         layoutClass: layoutClass,
-        icon: icon,
         title: title,
         body: body,
+        titleKey: ValueKey(
+          widget.mode == PasscodePageMode.entry ? 'passcode-entry-title' : 'passcode-setup-title',
+        ),
+        bodyKey: ValueKey(
+          widget.mode == PasscodePageMode.entry ? 'passcode-entry-body' : 'passcode-setup-body',
+        ),
         form: _buildForm(context, passcodeState: passcodeState),
       ),
     );
@@ -157,20 +162,6 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          translations.enterTitle,
-          key: const ValueKey('passcode-entry-title'),
-          style: entryPageTitleStyle(context),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: spacing.md),
-        Text(
-          translations.enterBody,
-          key: const ValueKey('passcode-entry-body'),
-          style: entryMutedBodyStyle(context),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: spacing.xl),
         _PasscodeDots(
           filled: _entryController.text.length,
           total: widget.passcodeLength,
@@ -286,20 +277,18 @@ class _PasscodeViewState extends ConsumerState<_PasscodeView> {
     List<String>? autofillHints,
     bool autofocus = false,
   }) {
-    return TextField(
+    return FTextField(
       key: key,
-      controller: controller,
+      control: .managed(controller: controller, onChange: (value) => onChanged(value.text)),
       focusNode: focusNode,
+      label: Text(labelText),
       keyboardType: TextInputType.number,
-      keyboardAppearance: Theme.of(context).brightness,
       maxLength: widget.passcodeLength,
       obscureText: true,
       enableInteractiveSelection: false,
       autofillHints: autofillHints,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(counterText: '', labelText: labelText),
-      onChanged: onChanged,
-      onSubmitted: onSubmitted,
+      onSubmit: onSubmitted,
       autofocus: autofocus,
     );
   }

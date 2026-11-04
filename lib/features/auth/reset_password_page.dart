@@ -119,7 +119,6 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
       child: AuthPageScaffold(
         screenId: 'reset-password',
         layoutClass: layoutClass,
-        icon: FLucideIcons.lockKeyhole,
         title: translations.title,
         body: translations.body,
         form: form,
@@ -141,9 +140,7 @@ class _ResetPasswordViewState extends ConsumerState<_ResetPasswordView>
           key: const ValueKey('auth-reset-password-form'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AuthFormHeader(
-              title: translations.auth.resetPassword.title,
-              body: translations.auth.resetPassword.body,
+            AuthFormAlerts(
               alerts: [
                 ?_feedbackAlert(context),
               ],
