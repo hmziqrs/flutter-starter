@@ -26,9 +26,9 @@ Current project deployment floors and validation targets are:
 
 | Target | Project floor | CI build host/toolchain |
 | --- | --- | --- |
-| Android | API 24 (Flutter 3.44 template floor) | `ubuntu-24.04` x64, Temurin JDK 17, Android toolchain supplied by the runner/Flutter |
-| iOS | iOS 13.0 | `macos-26` arm64, runner-default Xcode with Flutter Swift Package Manager integration, unsigned release build |
-| macOS | macOS 10.15 | `macos-26` arm64, runner-default Xcode with Flutter Swift Package Manager integration |
+| Android | API 26 | `ubuntu-24.04` x64, Temurin JDK 17, Android toolchain supplied by the runner/Flutter |
+| iOS | iOS 15.0 | `macos-26` arm64, runner-default Xcode with Flutter Swift Package Manager integration, unsigned release build |
+| macOS | macOS 12.0 | `macos-26` arm64, runner-default Xcode with Flutter Swift Package Manager integration |
 | Windows | Windows 10/11 | `windows-2022` x64, Visual Studio 2022 with Desktop development with C++ |
 | Linux | GTK 3 runtime | `ubuntu-24.04` x64 with Clang, CMake, Ninja, pkg-config, GTK 3 headers, and libstdc++ 12 headers |
 

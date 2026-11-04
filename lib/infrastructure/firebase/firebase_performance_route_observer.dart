@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starter/infrastructure/firebase/performance_supported.dart';
@@ -33,7 +34,9 @@ class FirebasePerformanceRouteObserver extends NavigatorObserver {
   }
 
   void _startTrace(Route<dynamic>? route) {
-    if (!firebasePerformanceSupported || route == null) {
+    // A starter runs without a Firebase project until one is added. That is a
+    // normal state, not something to warn about on every navigation.
+    if (!firebasePerformanceSupported || route == null || Firebase.apps.isEmpty) {
       return;
     }
     final name = _routeName(route);
