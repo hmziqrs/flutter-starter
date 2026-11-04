@@ -62,6 +62,10 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   @override
   Future<String?> registerToken() async {
     try {
+      // Deliberately not register(): it reports a Firebase Installation ID for
+      // direct-send, where this returns the FCM token the registration API and
+      // its backend contract expect. Move both together, against a real project.
+      // ignore: deprecated_member_use
       final token = await _messaging.getToken();
       if (token == null) {
         return null;
@@ -92,6 +96,7 @@ class FirebaseNotificationsRepository implements NotificationsRepository {
   Future<void> unregisterToken(String token) async {
     try {
       await _registrationClient.unregisterToken(token);
+      // ignore: deprecated_member_use
       await _messaging.deleteToken();
     } on NotificationsException {
       rethrow;
