@@ -139,26 +139,36 @@ class AppPersonCard extends StatelessWidget {
                     height: 1.625,
                   ),
                 ),
-              if (links.isNotEmpty) ...<Widget>[
-                if (constraints.hasBoundedHeight) const Spacer(),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: <Widget>[
-                    for (final link in links)
-                      Text(
-                        link,
-                        style: theme.typography.body.sm.copyWith(
-                          color: theme.colors.mutedForeground,
+              if (links.isNotEmpty)
+                // One child either way, so a stretched cell keeps the same
+                // gaps it was measured with; a spacer here would add a gap.
+                _foot(
+                  pinned: constraints.hasBoundedHeight,
+                  child: Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: <Widget>[
+                      for (final link in links)
+                        Text(
+                          link,
+                          style: theme.typography.body.sm.copyWith(
+                            color: theme.colors.mutedForeground,
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _foot({required bool pinned, required Widget child}) {
+    if (!pinned) return child;
+    return Expanded(
+      child: Align(alignment: AlignmentDirectional.bottomStart, child: child),
     );
   }
 }

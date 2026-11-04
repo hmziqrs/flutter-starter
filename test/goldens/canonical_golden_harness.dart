@@ -49,6 +49,16 @@ final class CanonicalGoldenFixture {
 
 Future<void> loadCanonicalGoldenFonts() async {
   await Future.wait([
+    // The brand's faces come first: without them every Latin label renders in
+    // the test engine's placeholder boxes, which no baseline should record.
+    _loadFontFamily('Onest', const [
+      'assets/fonts/Onest/onest-latin-400-normal.ttf',
+      'assets/fonts/Onest/onest-latin-500-normal.ttf',
+      'assets/fonts/Onest/onest-latin-600-normal.ttf',
+    ]),
+    _loadFontFamily('JetBrains Mono', const [
+      'assets/fonts/JetBrains_Mono/jetbrains-mono-latin-400-normal.ttf',
+    ]),
     _loadFontFamily('Noto Sans', const [
       'assets/fonts/Noto_Sans/NotoSans.ttf',
       'assets/fonts/Noto_Sans/NotoSans-Italic.ttf',

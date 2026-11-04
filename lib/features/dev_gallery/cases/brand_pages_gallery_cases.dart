@@ -29,6 +29,7 @@ import 'package:starter/shared/widgets/brand/app_ring_marker.dart';
 import 'package:starter/shared/widgets/brand/app_wordmark.dart';
 import 'package:starter/shared/widgets/glass/glass_panel.dart';
 import 'package:starter/shared/widgets/glass/glass_style.dart';
+import 'package:starter/shared/widgets/lists/equal_height_row.dart';
 import 'package:starter/shared/widgets/marks/app_mark.dart';
 import 'package:starter/shared/widgets/marks/band_surface.dart';
 import 'package:starter/shared/widgets/marks/brand_icon.dart';
@@ -1605,7 +1606,9 @@ class _AppWindow extends StatelessWidget {
       height: 640,
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
-        color: theme.colors.card.withValues(alpha: 0.4),
+        // Solid, like the kit's material-stage window: this window also rides on
+        // a material, and content never sits bare on the metal (BRAND.md s7).
+        color: Color.alphaBlend(theme.colors.card.withValues(alpha: 0.4), theme.colors.background),
         shape: RoundedSuperellipseBorder(
           side: BorderSide(color: theme.colors.border, width: theme.style.borderWidth),
           borderRadius: theme.style.borderRadius.lg,
@@ -1793,11 +1796,15 @@ class _WindowSidebar extends StatelessWidget {
                     color: index == 0 ? theme.colors.foreground : theme.colors.mutedForeground,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    entry.$2,
-                    style: theme.typography.body.sm.copyWith(
-                      color: index == 0 ? theme.colors.foreground : theme.colors.mutedForeground,
-                      fontWeight: index == 0 ? FontWeight.w500 : FontWeight.w400,
+                  Flexible(
+                    child: Text(
+                      entry.$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.typography.body.sm.copyWith(
+                        color: index == 0 ? theme.colors.foreground : theme.colors.mutedForeground,
+                        fontWeight: index == 0 ? FontWeight.w500 : FontWeight.w400,
+                      ),
                     ),
                   ),
                 ],
@@ -1810,9 +1817,13 @@ class _WindowSidebar extends StatelessWidget {
             children: <Widget>[
               AppRingMarker(filled: true, color: theme.brand.success, size: 7, borderWidth: 1.5),
               const SizedBox(width: 8),
-              Text(
-                'Tracking is on',
-                style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground),
+              Flexible(
+                child: Text(
+                  'Tracking is on',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground),
+                ),
               ),
             ],
           ),
@@ -2178,66 +2189,60 @@ class _LandingBento extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(
-                flex: 4,
-                child: _BentoCard(
-                  title: 'Funnels',
-                  body:
-                      'Pick the steps from visit to payment. See how many people make it through '
-                      'each one, and where the rest leave.',
-                  visual: _MiniFunnel(),
-                ),
+        EqualHeightRow(
+          children: <Widget>[
+            Expanded(
+              flex: 4,
+              child: _BentoCard(
+                title: 'Funnels',
+                body:
+                    'Pick the steps from visit to payment. See how many people make it through '
+                    'each one, and where the rest leave.',
+                visual: _MiniFunnel(),
               ),
-              _BentoGap(),
-              Expanded(
-                flex: 2,
-                child: _BentoCard(
-                  title: 'Retention',
-                  body:
-                      'Of the people who joined each week, how many came back. The darker the '
-                      'square, the more.',
-                  visual: _MiniHeat(),
-                ),
+            ),
+            _BentoGap(),
+            Expanded(
+              flex: 2,
+              child: _BentoCard(
+                title: 'Retention',
+                body:
+                    'Of the people who joined each week, how many came back. The darker the '
+                    'square, the more.',
+                visual: _MiniHeat(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         _BentoGap(),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(
-                child: _BentoCard(
-                  title: 'Live view',
-                  body: "Who's on your site right now and what they just did.",
-                  visual: _MiniLive(),
-                ),
+        EqualHeightRow(
+          children: <Widget>[
+            Expanded(
+              child: _BentoCard(
+                title: 'Live view',
+                body: "Who's on your site right now and what they just did.",
+                visual: _MiniLive(),
               ),
-              _BentoGap(),
-              Expanded(
-                child: _BentoCard(
-                  title: 'Goals',
-                  body: 'Set a number for the month and watch it fill in.',
-                  visual: _GoalsVisual(),
-                ),
+            ),
+            _BentoGap(),
+            Expanded(
+              child: _BentoCard(
+                title: 'Goals',
+                body: 'Set a number for the month and watch it fill in.',
+                visual: _GoalsVisual(),
               ),
-              _BentoGap(),
-              Expanded(
-                child: _BentoCard(
-                  title: 'Alerts',
-                  body:
-                      "An email or a Slack message when something changes that you'd want to know "
-                      'about.',
-                  visual: _AlertsVisual(),
-                ),
+            ),
+            _BentoGap(),
+            Expanded(
+              child: _BentoCard(
+                title: 'Alerts',
+                body:
+                    "An email or a Slack message when something changes that you'd want to know "
+                    'about.',
+                visual: _AlertsVisual(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         _BentoGap(),
         _BentoCard(
@@ -2714,16 +2719,13 @@ class _QuoteRow extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 1024;
     final mid = MediaQuery.sizeOf(context).width >= 640;
     if (wide) {
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            for (var i = 0; i < quotes.length; i++) ...<Widget>[
-              if (i > 0) const SizedBox(width: 16),
-              Expanded(child: card(quotes[i])),
-            ],
+      return EqualHeightRow(
+        children: <Widget>[
+          for (var i = 0; i < quotes.length; i++) ...<Widget>[
+            if (i > 0) const SizedBox(width: 16),
+            Expanded(child: card(quotes[i])),
           ],
-        ),
+        ],
       );
     }
     if (mid) {
@@ -2731,15 +2733,12 @@ class _QuoteRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Expanded(child: card(quotes[0])),
-                const SizedBox(width: 16),
-                Expanded(child: card(quotes[1])),
-              ],
-            ),
+          EqualHeightRow(
+            children: <Widget>[
+              Expanded(child: card(quotes[0])),
+              const SizedBox(width: 16),
+              Expanded(child: card(quotes[1])),
+            ],
           ),
           const SizedBox(height: 16),
           card(quotes[2]),
@@ -2999,16 +2998,13 @@ class _PricingPlansSectionState extends State<_PricingPlansSection> {
             final mid = constraints.maxWidth >= 560;
             Widget plan(_Plan plan) => _PlanCard(plan: plan, yearly: _yearly);
             if (wide) {
-              return IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    for (var i = 0; i < _plans.length; i++) ...<Widget>[
-                      if (i > 0) const SizedBox(width: 16),
-                      Expanded(child: plan(_plans[i])),
-                    ],
+              return EqualHeightRow(
+                children: <Widget>[
+                  for (var i = 0; i < _plans.length; i++) ...<Widget>[
+                    if (i > 0) const SizedBox(width: 16),
+                    Expanded(child: plan(_plans[i])),
                   ],
-                ),
+                ],
               );
             }
             final children = <Widget>[
@@ -3028,15 +3024,12 @@ class _PricingPlansSectionState extends State<_PricingPlansSection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Expanded(child: plan(_plans[0])),
-                      const SizedBox(width: 16),
-                      Expanded(child: plan(_plans[1])),
-                    ],
-                  ),
+                EqualHeightRow(
+                  children: <Widget>[
+                    Expanded(child: plan(_plans[0])),
+                    const SizedBox(width: 16),
+                    Expanded(child: plan(_plans[1])),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 plan(_plans[2]),
@@ -3101,17 +3094,20 @@ class _PlanCard extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    Text(
-                      plan.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        height: 1.5,
-                        fontWeight: FontWeight.w500,
-                        color: theme.colors.foreground,
-                        fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+                    Expanded(
+                      child: Text(
+                        plan.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                          color: theme.colors.foreground,
+                          fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     if (plan.pick) const _OrangeTag(label: 'Recommended'),
                   ],
                 ),
@@ -3306,27 +3302,21 @@ class _FeatureBento extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              for (var i = 0; i < iconTiles.length; i++) ...<Widget>[
-                if (i > 0) const SizedBox(width: 16),
-                Expanded(child: iconTiles[i]),
-              ],
+        EqualHeightRow(
+          children: <Widget>[
+            for (var i = 0; i < iconTiles.length; i++) ...<Widget>[
+              if (i > 0) const SizedBox(width: 16),
+              Expanded(child: iconTiles[i]),
             ],
-          ),
+          ],
         ),
         const SizedBox(height: 16),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(child: visualTiles[0]),
-              const SizedBox(width: 16),
-              Expanded(child: visualTiles[1]),
-            ],
-          ),
+        EqualHeightRow(
+          children: <Widget>[
+            Expanded(child: visualTiles[0]),
+            const SizedBox(width: 16),
+            Expanded(child: visualTiles[1]),
+          ],
         ),
       ],
     );
@@ -3686,22 +3676,19 @@ class _NumbersBand extends StatelessWidget {
                 ],
               );
             }
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  for (var i = 0; i < stats.length; i++) ...<Widget>[
-                    if (i > 0)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Container(width: 1, color: context.theme.colors.border),
-                      ),
-                    Expanded(
-                      child: _BigStat(value: stats[i].$1, label: stats[i].$2),
+            return EqualHeightRow(
+              children: <Widget>[
+                for (var i = 0; i < stats.length; i++) ...<Widget>[
+                  if (i > 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Container(width: 1, color: context.theme.colors.border),
                     ),
-                  ],
+                  Expanded(
+                    child: _BigStat(value: stats[i].$1, label: stats[i].$2),
+                  ),
                 ],
-              ),
+              ],
             );
           },
         ),
@@ -3831,16 +3818,13 @@ class _ValuesRow extends StatelessWidget {
         ],
       );
     }
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          for (var i = 0; i < values.length; i++) ...<Widget>[
-            if (i > 0) const SizedBox(width: 16),
-            Expanded(child: card(values[i])),
-          ],
+    return EqualHeightRow(
+      children: <Widget>[
+        for (var i = 0; i < values.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(width: 16),
+          Expanded(child: card(values[i])),
         ],
-      ),
+      ],
     );
   }
 }
@@ -3978,16 +3962,13 @@ class _TeamGrid extends StatelessWidget {
         children: <Widget>[
           for (var row = 0; row < 2; row++) ...<Widget>[
             if (row > 0) const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  for (var col = 0; col < 3; col++) ...<Widget>[
-                    if (col > 0) const SizedBox(width: 16),
-                    Expanded(child: card(_team[row * 3 + col])),
-                  ],
+            EqualHeightRow(
+              children: <Widget>[
+                for (var col = 0; col < 3; col++) ...<Widget>[
+                  if (col > 0) const SizedBox(width: 16),
+                  Expanded(child: card(_team[row * 3 + col])),
                 ],
-              ),
+              ],
             ),
           ],
         ],
@@ -4000,15 +3981,12 @@ class _TeamGrid extends StatelessWidget {
         children: <Widget>[
           for (var row = 0; row < 3; row++) ...<Widget>[
             if (row > 0) const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(child: card(_team[row * 2])),
-                  const SizedBox(width: 16),
-                  Expanded(child: card(_team[row * 2 + 1])),
-                ],
-              ),
+            EqualHeightRow(
+              children: <Widget>[
+                Expanded(child: card(_team[row * 2])),
+                const SizedBox(width: 16),
+                Expanded(child: card(_team[row * 2 + 1])),
+              ],
             ),
           ],
         ],
@@ -4079,16 +4057,13 @@ class _TestimonialWall extends StatelessWidget {
         children: <Widget>[
           for (var row = 0; row < 2; row++) ...<Widget>[
             if (row > 0) const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  for (var col = 0; col < 3; col++) ...<Widget>[
-                    if (col > 0) const SizedBox(width: 16),
-                    Expanded(child: card(_wallQuotes[row * 3 + col])),
-                  ],
+            EqualHeightRow(
+              children: <Widget>[
+                for (var col = 0; col < 3; col++) ...<Widget>[
+                  if (col > 0) const SizedBox(width: 16),
+                  Expanded(child: card(_wallQuotes[row * 3 + col])),
                 ],
-              ),
+              ],
             ),
           ],
         ],
@@ -4101,15 +4076,12 @@ class _TestimonialWall extends StatelessWidget {
         children: <Widget>[
           for (var row = 0; row < 3; row++) ...<Widget>[
             if (row > 0) const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(child: card(_wallQuotes[row * 2])),
-                  const SizedBox(width: 16),
-                  Expanded(child: card(_wallQuotes[row * 2 + 1])),
-                ],
-              ),
+            EqualHeightRow(
+              children: <Widget>[
+                Expanded(child: card(_wallQuotes[row * 2])),
+                const SizedBox(width: 16),
+                Expanded(child: card(_wallQuotes[row * 2 + 1])),
+              ],
             ),
           ],
         ],
