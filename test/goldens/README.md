@@ -14,8 +14,9 @@ The reviewed baseline environment is:
 - engine `7076f47b1d1a3a0edfd8837b17dc15be6abab661`;
 - the `flutter test` Skia renderer and sRGB output;
 - device-pixel ratio 1;
-- source-controlled Noto Sans, Noto Sans Arabic, and Noto Sans SC fonts, plus
-  the locked ForUI Lucide icon font from the package asset bundle.
+- source-controlled Onest, JetBrains Mono, Noto Sans, Noto Sans Arabic, and Noto
+  Sans SC fonts, plus the locked ForUI Lucide icon font from the package asset
+  bundle.
 
 The harness explicitly pins logical viewport, locale, brightness, application
 font multiplier, nonlinear system text scaler, insets, focus, pointer policy,
@@ -33,6 +34,11 @@ the baselines for review before commit:
 flutter test test/goldens/canonical_matrix_golden_test.dart --update-goldens
 flutter test test/goldens/canonical_matrix_golden_test.dart
 ```
+
+The current baselines were regenerated after the brand port on macOS 27.2 arm64
+with the pinned Flutter and fonts, and every changed image was reviewed. They
+have not been compared on `macos-26` yet: run the workflow above and review its
+pull request to confirm or replace them there.
 
 Other OS and renderer combinations should run widget/accessibility coverage,
 not compare against these platform-specific pixels.
