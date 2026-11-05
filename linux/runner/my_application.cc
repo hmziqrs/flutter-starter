@@ -6,10 +6,14 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "native_surfaces.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  // The route a surface launched the app with, until the channel takes it.
+  char* launch_route;
+  NativeSurfaces* native_surfaces;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
@@ -19,9 +23,28 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+// Closing keeps the app in the tray, but only when there is a tray to come back
+// from. Otherwise the default handler closes the window and the app quits.
+static gboolean window_delete_cb(GtkWidget* window, GdkEvent* event,
+                                 MyApplication* self) {
+  if (self->native_surfaces == nullptr ||
+      !native_surfaces_has_tray(self->native_surfaces)) {
+    return FALSE;
+  }
+  gtk_widget_hide(window);
+  return TRUE;
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
+
+  // A second launch comes back to this window, which may be hidden in the tray.
+  if (self->native_surfaces != nullptr) {
+    native_surfaces_restore_window(self->native_surfaces);
+    return;
+  }
+
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
@@ -75,7 +98,24 @@ static void my_application_activate(GApplication* application) {
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
+  self->native_surfaces = native_surfaces_new(FL_PLUGIN_REGISTRY(view), window,
+                                              self->launch_route);
+  g_clear_pointer(&self->launch_route, g_free);
+  g_signal_connect(window, "delete-event", G_CALLBACK(window_delete_cb), self);
+
   gtk_widget_grab_focus(GTK_WIDGET(view));
+}
+
+// Implements GApplication::open: another launch handed over a surface URL.
+static void my_application_open(GApplication* application, GFile** files,
+                                gint file_count, const gchar* hint) {
+  MyApplication* self = MY_APPLICATION(application);
+  g_application_activate(application);
+  for (gint i = 0; i < file_count; ++i) {
+    g_autofree gchar* url = g_file_get_uri(files[i]);
+    g_autofree gchar* route = native_surfaces_route_from_url(url);
+    native_surfaces_open_route(self->native_surfaces, route);
+  }
 }
 
 // Implements GApplication::local_command_line.
@@ -83,8 +123,21 @@ static gboolean my_application_local_command_line(GApplication* application,
                                                   gchar*** arguments,
                                                   int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
-  // Strip out the first argument as it is the binary name.
-  self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
+
+  // Strip out the first argument as it is the binary name, and a surface's URL,
+  // which is for the native side and not Dart.
+  const gchar* surface_url = nullptr;
+  g_autoptr(GPtrArray) dart_arguments = g_ptr_array_new_with_free_func(g_free);
+  for (gchar** argument = *arguments + 1; *argument != nullptr; ++argument) {
+    if (surface_url == nullptr && native_surfaces_is_url(*argument)) {
+      surface_url = *argument;
+    } else {
+      g_ptr_array_add(dart_arguments, g_strdup(*argument));
+    }
+  }
+  g_ptr_array_add(dart_arguments, nullptr);
+  self->dart_entrypoint_arguments = g_strdupv(
+      reinterpret_cast<gchar**>(dart_arguments->pdata));
 
   g_autoptr(GError) error = nullptr;
   if (!g_application_register(application, nullptr, &error)) {
@@ -93,7 +146,16 @@ static gboolean my_application_local_command_line(GApplication* application,
     return TRUE;
   }
 
-  g_application_activate(application);
+  // The tray keeps the app alive with no window, so a second launch hands over
+  // to the running app rather than adding a second icon.
+  if (g_application_get_is_remote(application) && surface_url != nullptr) {
+    g_autoptr(GFile) file = g_file_new_for_uri(surface_url);
+    GFile* files[] = {file};
+    g_application_open(application, files, 1, "");
+  } else {
+    self->launch_route = native_surfaces_route_from_url(surface_url);
+    g_application_activate(application);
+  }
   *exit_status = 0;
 
   return TRUE;
@@ -120,12 +182,15 @@ static void my_application_shutdown(GApplication* application) {
 // Implements GObject::dispose.
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
+  g_clear_pointer(&self->native_surfaces, native_surfaces_free);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
+  g_clear_pointer(&self->launch_route, g_free);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }
 
 static void my_application_class_init(MyApplicationClass* klass) {
   G_APPLICATION_CLASS(klass)->activate = my_application_activate;
+  G_APPLICATION_CLASS(klass)->open = my_application_open;
   G_APPLICATION_CLASS(klass)->local_command_line =
       my_application_local_command_line;
   G_APPLICATION_CLASS(klass)->startup = my_application_startup;
@@ -142,7 +207,11 @@ MyApplication* my_application_new() {
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
 
+  // Each run by the Flutter tool is its own copy, and never hands off to another.
+  const GApplicationFlags flags = g_getenv("FLUTTER_ENGINE_SWITCHES") != nullptr
+                                      ? G_APPLICATION_NON_UNIQUE
+                                      : G_APPLICATION_HANDLES_OPEN;
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",
-                                     G_APPLICATION_NON_UNIQUE, nullptr));
+                                     flags, nullptr));
 }

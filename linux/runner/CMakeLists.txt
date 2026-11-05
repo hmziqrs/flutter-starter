@@ -9,6 +9,7 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "native_surfaces.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 
@@ -24,3 +25,17 @@ target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
+
+# The tray is optional. It is compiled in only if the AppIndicator headers are
+# here, and the library itself is loaded at startup rather than linked, so the
+# result still runs on a machine without it.
+pkg_check_modules(AYATANA_APPINDICATOR QUIET ayatana-appindicator3-0.1)
+if(AYATANA_APPINDICATOR_FOUND)
+  message(STATUS "Tray: compiled in, using ayatana-appindicator3")
+  target_compile_definitions(${BINARY_NAME} PRIVATE HAVE_AYATANA_APPINDICATOR)
+  target_include_directories(${BINARY_NAME} SYSTEM PRIVATE
+    ${AYATANA_APPINDICATOR_INCLUDE_DIRS})
+  target_link_libraries(${BINARY_NAME} PRIVATE ${CMAKE_DL_LIBS})
+else()
+  message(STATUS "Tray: left out, ayatana-appindicator3 not found")
+endif()
