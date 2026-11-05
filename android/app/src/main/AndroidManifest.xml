@@ -14,6 +14,9 @@
          API 33+. The Noop default never requests it; the optional real
          Firebase adapter requests it via NotificationsRepository. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Android 16 Live Updates: lets SurfaceLive ask for its ongoing notification
+         to be promoted to the status bar chip and the top of the lock screen. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
     <!-- This starter shows no ads, so drop the advertising IDs Firebase Analytics
          merges in. Remove these lines if your app starts using them. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
@@ -91,6 +94,32 @@
                 <!-- <data android:host="example.com"/> -->
             </intent-filter>
         </activity>
+        <!-- Native surfaces, see docs/native_surfaces.md. -->
+        <receiver
+            android:name=".SurfaceSmallWidgetProvider"
+            android:exported="false"
+            android:label="@string/surface_widget_small_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/surface_widget_small_info" />
+        </receiver>
+        <receiver
+            android:name=".SurfaceMediumWidgetProvider"
+            android:exported="false"
+            android:label="@string/surface_widget_medium_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/surface_widget_medium_info" />
+        </receiver>
+        <receiver
+            android:name=".SurfaceLiveDismissedReceiver"
+            android:exported="false" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

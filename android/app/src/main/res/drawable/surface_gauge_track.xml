@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The live gauge's track: dotted outer ring, thick track, inner hairline. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="180dp"
+    android:height="180dp"
+    android:viewportWidth="180"
+    android:viewportHeight="180">
+    <path
+        android:pathData="M167.00,90.00h0.01M166.58,98.05h0.01M165.32,106.01h0.01M163.23,113.79h0.01M160.34,121.32h0.01M156.68,128.50h0.01M152.29,135.26h0.01M147.22,141.52h0.01M141.52,147.22h0.01M135.26,152.29h0.01M128.50,156.68h0.01M121.32,160.34h0.01M113.79,163.23h0.01M106.01,165.32h0.01M98.05,166.58h0.01M90.00,167.00h0.01M81.95,166.58h0.01M73.99,165.32h0.01M66.21,163.23h0.01M58.68,160.34h0.01M51.50,156.68h0.01M44.74,152.29h0.01M38.48,147.22h0.01M32.78,141.52h0.01M27.71,135.26h0.01M23.32,128.50h0.01M19.66,121.32h0.01M16.77,113.79h0.01M14.68,106.01h0.01M13.42,98.05h0.01M13.00,90.00h0.01M13.42,81.95h0.01M14.68,73.99h0.01M16.77,66.21h0.01M19.66,58.68h0.01M23.32,51.50h0.01M27.71,44.74h0.01M32.78,38.48h0.01M38.48,32.78h0.01M44.74,27.71h0.01M51.50,23.32h0.01M58.68,19.66h0.01M66.21,16.77h0.01M73.99,14.68h0.01M81.95,13.42h0.01M90.00,13.00h0.01M98.05,13.42h0.01M106.01,14.68h0.01M113.79,16.77h0.01M121.32,19.66h0.01M128.50,23.32h0.01M135.26,27.71h0.01M141.52,32.78h0.01M147.22,38.48h0.01M152.29,44.74h0.01M156.68,51.50h0.01M160.34,58.68h0.01M163.23,66.21h0.01M165.32,73.99h0.01M166.58,81.95h0.01"
+        android:strokeColor="@color/surface_line"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.4" />
+    <path
+        android:pathData="M28,90a62,62 0 1,0 124,0a62,62 0 1,0 -124,0"
+        android:strokeColor="@color/surface_line"
+        android:strokeWidth="7" />
+    <path
+        android:pathData="M42,90a48,48 0 1,0 96,0a48,48 0 1,0 -96,0"
+        android:strokeColor="@color/surface_line"
+        android:strokeWidth="1" />
+</vector>

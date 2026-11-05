@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Starter</string>
+
+    <!-- docs/native_surfaces.md: shown until the app first publishes. -->
+    <string name="surface_fallback_subtitle">Open the app to get started</string>
+
+    <!-- The system's own screens. Everything on the surfaces themselves comes from Dart. -->
+    <string name="surface_live_channel_name">Live updates</string>
+    <string name="surface_live_channel_description">Shows what the app is working on, including on the lock screen.</string>
+    <string name="surface_widget_small_label">Status</string>
+    <string name="surface_widget_small_description">Progress and status at a glance.</string>
+    <string name="surface_widget_medium_label">Status and shortcuts</string>
+    <string name="surface_widget_medium_description">Progress and status, with shortcuts into the app.</string>
+
+    <!-- Sample state for the widget picker's preview. -->
+    <string name="surface_preview_value" translatable="false">72%</string>
+    <string name="surface_preview_label">Complete</string>
+    <string name="surface_preview_subtitle">Build running</string>
+    <string name="surface_preview_action_1">Home</string>
+    <string name="surface_preview_action_2">Pricing</string>
+    <string name="surface_preview_action_3">Settings</string>
 </resources>

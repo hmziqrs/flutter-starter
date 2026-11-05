@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The native surfaces' palette in dark mode, from docs/native_surfaces.md. -->
+<resources>
+    <color name="surface_page">#0A0A0A</color>
+    <color name="surface_text">#FAFAFA</color>
+    <color name="surface_muted">#A1A1A1</color>
+    <color name="surface_line">#262626</color>
+    <color name="surface_accent">#F38230</color>
+    <color name="surface_success">#4ADE80</color>
+    <color name="surface_warning">#FACC15</color>
+    <color name="surface_failure">#F87171</color>
+</resources>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Doubles as the widget picker's preview, so its defaults are the sample state. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/surface_widget_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/surface_title"
+            style="@style/SurfaceText.Title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/app_name" />
+
+        <ImageView
+            android:id="@+id/surface_dot"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_marginStart="8dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/surface_dot"
+            android:tint="@color/surface_accent" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/surface_gauge"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/surface_gauge_track" />
+
+        <ImageView
+            android:id="@+id/surface_gauge_arc"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/surface_gauge_sample"
+            android:tint="@color/surface_accent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/surface_gauge_value"
+                style="@style/SurfaceText.Figure"
+                android:layout_width="58dp"
+                android:layout_height="26dp"
+                android:autoSizeMaxTextSize="22sp"
+                android:autoSizeMinTextSize="12sp"
+                android:gravity="center"
+                android:text="@string/surface_preview_value" />
+
+            <TextView
+                android:id="@+id/surface_gauge_label"
+                style="@style/SurfaceText"
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/surface_preview_label"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/surface_stat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/surface_stat_value"
+            style="@style/SurfaceText.Figure"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:autoSizeMaxTextSize="40sp"
+            android:autoSizeMinTextSize="16sp"
+            android:gravity="center_vertical|start" />
+
+        <TextView
+            android:id="@+id/surface_stat_label"
+            style="@style/SurfaceText.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/surface_subtitle_strong"
+        style="@style/SurfaceText.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/surface_preview_subtitle"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/surface_subtitle_muted"
+        style="@style/SurfaceText.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="3"
+        android:visibility="gone" />
+</LinearLayout>
