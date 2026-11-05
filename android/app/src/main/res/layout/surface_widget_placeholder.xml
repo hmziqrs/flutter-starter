@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the launcher draws until the provider's first update arrives. Not the sample
+     layouts, because a moment of made-up progress on a real home screen would be a lie. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/surface_widget_background"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        style="@style/SurfaceText.Title"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/app_name" />
+
+    <TextView
+        style="@style/SurfaceText.Lead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/surface_fallback_subtitle" />
+</LinearLayout>

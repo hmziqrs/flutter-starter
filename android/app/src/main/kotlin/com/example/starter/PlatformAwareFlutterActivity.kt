@@ -1,6 +1,8 @@
 package com.example.starter
 
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -9,6 +11,20 @@ abstract class PlatformAwareFlutterActivity : FlutterActivity() {
     protected abstract val isAuthoritativeTvLaunch: Boolean
 
     private var platformCapabilitiesChannel: MethodChannel? = null
+    private var nativeSurfaces: NativeSurfacesChannel? = null
+    private var surfaceLaunchRoute: String? = null
+
+    // Before super, which starts the engine and its plugins: they read this intent.
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val route = SurfaceRoutes.take(intent)
+        surfaceLaunchRoute = route.takeIf { savedInstanceState == null }
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        SurfaceRoutes.take(intent)?.let { nativeSurfaces?.openRoute(it) }
+        super.onNewIntent(intent)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -25,11 +41,20 @@ abstract class PlatformAwareFlutterActivity : FlutterActivity() {
                     }
                 }
             }
+        nativeSurfaces =
+            NativeSurfacesChannel(
+                flutterEngine.dartExecutor.binaryMessenger,
+                this,
+                surfaceLaunchRoute,
+            )
+        surfaceLaunchRoute = null
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         platformCapabilitiesChannel?.setMethodCallHandler(null)
         platformCapabilitiesChannel = null
+        nativeSurfaces?.dispose()
+        nativeSurfaces = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
