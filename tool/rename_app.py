@@ -30,7 +30,7 @@ SKIPPED_DIRS = {
     ".claude", ".git", ".dart_tool", "build", "Pods", ".gradle", ".symlinks", "node_modules",
 }
 TEXT_SUFFIXES = {
-    ".appxmanifest", ".cc", ".cmake", ".cpp", ".dart", ".entitlements", ".example", ".gradle", ".h",
+    ".appxmanifest", ".cc", ".cmake", ".cpp", ".cs", ".dart", ".entitlements", ".example", ".gradle", ".h",
     ".json", ".kt", ".kts", ".md", ".manifest", ".pbxproj", ".plist", ".ps1", ".py", ".rc", ".sh",
     ".swift", ".txt", ".xcconfig", ".xcscheme", ".xml", ".yaml", ".yml",
 }
@@ -49,6 +49,17 @@ NAME_EDITS: dict[str, list[tuple[str, str]]] = {
         ('set(BINARY_NAME "starter")', 'set(BINARY_NAME "{binary}")'),
     ],
     "windows/runner/main.cpp": [('L"Starter"', 'L"{name}"')],
+    "windows/runner/surface_snapshot.cpp": [('L"Starter"', 'L"{name}"')],
+    "windows/runner/native_surfaces.cpp": [('L"URL:Starter surface"', 'L"URL:{name} surface"')],
+    "linux/runner/native_surfaces.cc": [('"Starter"', '"{name}"')],
+    "windows/widget_provider/src/SurfaceCard.cs": [('"Starter"', '"{name}"')],
+    "windows/widget_provider/Package/AppxManifest.xml": [
+        ("<DisplayName>Starter widgets</DisplayName>", "<DisplayName>{name} widgets</DisplayName>"),
+        ("<PublisherDisplayName>Starter</PublisherDisplayName>", "<PublisherDisplayName>{name}</PublisherDisplayName>"),
+        ('DisplayName="Starter widgets"', 'DisplayName="{name} widgets"'),
+        ('Description="Widgets for Starter"', 'Description="Widgets for {name}"'),
+        ('DisplayName="Starter"', 'DisplayName="{name}"'),
+    ],
     "windows/runner/Runner.rc": [
         ('VALUE "ProductName", "Starter"', 'VALUE "ProductName", "{name}"'),
         ('VALUE "CompanyName", "com.example"', 'VALUE "CompanyName", "{company}"'),

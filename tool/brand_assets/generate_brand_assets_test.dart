@@ -136,6 +136,13 @@ Future<void> _generate({required String symbol, required String name}) async {
     });
   }
 
+  // Linux tray, and the Windows 11 Widgets Board package.
+  await _roundedTile('linux/runner/resources/tray_icon.png', 48, symbol, inset: 0);
+  const widgetAssets = 'windows/widget_provider/Package/Assets';
+  await _roundedTile('$widgetAssets/Square150x150Logo.png', 150, symbol, inset: 0);
+  await _roundedTile('$widgetAssets/Square44x44Logo.png', 44, symbol, inset: 0);
+  await _roundedTile('$widgetAssets/StoreLogo.png', 50, symbol, inset: 0);
+
   // Windows: an ICO is a small directory of PNGs.
   await _writeIco('windows/runner/resources/app_icon.ico', symbol, const [16, 32, 48, 256]);
 
