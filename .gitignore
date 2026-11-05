@@ -64,3 +64,8 @@ android/.kotlin/
 # Local capture/video working dir from verification runs
 .video_agent/
 test/failures/
+
+# Android release signing (see android/key.properties.example)
+android/key.properties
+*.jks
+*.keystore

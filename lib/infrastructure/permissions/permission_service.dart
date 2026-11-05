@@ -5,6 +5,10 @@ import 'package:starter/shared/state/operation_exception.dart';
 enum AppPermission {
   camera,
   photos,
+
+  /// Not declared natively, because nothing in the starter uses it. Before
+  /// requesting it, add ACCESS_COARSE_LOCATION to the Android manifest and
+  /// NSLocationWhenInUseUsageDescription to the iOS Info.plist.
   location,
 }
 

@@ -1,17 +1,24 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- The HTTP client needs this in release builds too. Declared here rather
+         than left to whichever plugin happens to add it. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Biometric unlock (local_auth): BiometricPrompt requires USE_BIOMETRIC. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
-    <!-- permissions-media (Wave-5b): protected-resource permissions. CAMERA
-         (camera capture), READ_MEDIA_IMAGES (photo library on API 33+),
-         ACCESS_COARSE_LOCATION (location rationale). The runtime prompts are
-         driven by permission_handler; the rationale sheet always shows first. -->
+    <!-- Camera capture for the profile photo; the rationale sheet shows first.
+         Choosing a photo uses the system picker, which needs no permission, so
+         READ_MEDIA_IMAGES is deliberately absent: it never applied below API 33,
+         and Google Play restricts it to apps whose core purpose needs it. -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!-- push-notifications (Wave-5b): runtime notification permission on
          API 33+. The Noop default never requests it; the optional real
          Firebase adapter requests it via NotificationsRepository. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- This starter shows no ads, so drop the advertising IDs Firebase Analytics
+         merges in. Remove these lines if your app starts using them. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove"/>
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove"/>
     <!-- Keep television hardware optional so the same artifact remains installable
          on phones, tablets, Android TV, and Google TV. -->
     <uses-feature
@@ -21,7 +28,10 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!-- No auto backup: secure storage keys live in the device Keystore, so a
+         restored copy of its data cannot be decrypted on the new device. -->
     <application
+        android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:label="@string/app_name"
         android:name="${applicationName}"

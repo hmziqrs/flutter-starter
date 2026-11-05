@@ -64,6 +64,10 @@ renames the Dart package). `just brand-assets` redraws every launcher icon, TV
 banner, Top Shelf image and splash logo from the brand's Mark recipe, using your
 two-letter symbol, then rebuilds the native launch screens.
 
+To sign Android release builds, copy `android/key.properties.example` to
+`android/key.properties` and fill it in. Git ignores that file, and without it
+release builds use the debug key, which no store accepts.
+
 ## Brand
 
 Theme and components are a Flutter port of the hmziq brand kit. Tokens live in

@@ -1,4 +1,5 @@
 import 'package:app_settings/app_settings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
@@ -11,6 +12,7 @@ class DevicePermissionService implements PermissionService {
 
   @override
   Future<PermissionStatus> requestStatus(AppPermission permission) async {
+    if (_needsNoRuntimePermission(permission)) return const PermissionGranted();
     try {
       final handler = _mapPermission(permission);
       final result = await handler.request();
@@ -28,6 +30,7 @@ class DevicePermissionService implements PermissionService {
 
   @override
   Future<PermissionStatus> checkStatus(AppPermission permission) async {
+    if (_needsNoRuntimePermission(permission)) return const PermissionGranted();
     try {
       final handler = _mapPermission(permission);
       final result = await handler.status;
@@ -51,6 +54,12 @@ class DevicePermissionService implements PermissionService {
       label: 'permissions.open_settings',
     );
   }
+
+  /// Android's system photo picker works with no permission. Asking anyway
+  /// would report "denied" on Android 12 and below, where the media permission
+  /// does not exist, and stop people there from choosing a photo.
+  static bool _needsNoRuntimePermission(AppPermission permission) =>
+      permission == AppPermission.photos && defaultTargetPlatform == TargetPlatform.android;
 
   static ph.Permission _mapPermission(AppPermission permission) {
     return switch (permission) {
