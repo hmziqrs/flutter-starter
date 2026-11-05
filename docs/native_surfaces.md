@@ -90,6 +90,22 @@ photographs in `build/brand-refs/custom-live-*.png`.
 - Nothing moves except the progress itself. Support both modes where the platform
   lets you.
 
+## Turning on macOS widgets
+
+The menu bar item always builds. Desktop widgets need a signing team, because an
+App Group cannot be signed ad hoc, so they are off until you opt in:
+
+1. Add to `macos/Runner/Configs/LocalSigning.xcconfig`:
+
+   ```
+   SURFACE_WIDGETS = YES
+   SURFACE_APP_GROUP = group.your.bundle.id
+   ```
+
+2. Once, while signed in to the team in Xcode, open `macos/Runner.xcworkspace`, so
+   Xcode can create the App Group and the extension's profile.
+3. Build as usual. After turning widgets off again, run `flutter clean`.
+
 ## Trying it
 
 In a development build, open **Brand gallery**, then **Native surfaces**, to
