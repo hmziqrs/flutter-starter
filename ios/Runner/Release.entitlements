@@ -14,5 +14,9 @@
 	     list at the Dart layer (AppConfig.allowedDeepLinkHosts). -->
 	<key>com.apple.developer.associated-domains</key>
 	<array/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(SURFACE_APP_GROUP)</string>
+	</array>
 </dict>
 </plist>

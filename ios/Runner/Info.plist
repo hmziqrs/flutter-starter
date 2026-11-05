@@ -35,8 +35,31 @@
 		<string>????</string>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>CFBundleURLName</key>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER).surface</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>starter-surface</string>
+				</array>
+			</dict>
+		</array>
+		<!-- Links reach Dart through the app_links plugin, which checks them against the host
+		     allowlist, and through the native surfaces channel. Flutter's own deep linking would
+		     also push every URL into the router unchecked: a cold launch from a widget landed on
+		     Home because of it. -->
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSSupportsLiveActivities</key>
+		<true/>
+		<key>SurfaceAppGroup</key>
+		<string>$(SURFACE_APP_GROUP)</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
