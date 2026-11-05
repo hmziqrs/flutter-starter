@@ -1571,6 +1571,8 @@ class Translations$search$en {
 
 	/// en: 'Search is unavailable'
 	String get errorTitle => 'Search is unavailable';
+
+	late final Translations$search$results$en results = Translations$search$results$en.internal(_root);
 }
 
 // Path: feedback
@@ -2239,6 +2241,39 @@ class Translations$permission$location$en {
 	String get rationale => 'We use your location to personalize your experience. You can decline any time.';
 }
 
+// Path: search.results
+class Translations$search$results$en {
+	Translations$search$results$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$search$results$auth$en auth = Translations$search$results$auth$en.internal(_root);
+	late final Translations$search$results$connectivity$en connectivity = Translations$search$results$connectivity$en.internal(_root);
+	late final Translations$search$results$settings$en settings = Translations$search$results$settings$en.internal(_root);
+	late final Translations$search$results$biometric$en biometric = Translations$search$results$biometric$en.internal(_root);
+	late final Translations$search$results$announcements$en announcements = Translations$search$results$announcements$en.internal(_root);
+	late final Translations$search$results$pricing$en pricing = Translations$search$results$pricing$en.internal(_root);
+	late final Translations$search$results$onboarding$en onboarding = Translations$search$results$onboarding$en.internal(_root);
+	late final Translations$search$results$forceUpdate$en forceUpdate = Translations$search$results$forceUpdate$en.internal(_root);
+	late final Translations$search$results$featureFlags$en featureFlags = Translations$search$results$featureFlags$en.internal(_root);
+	late final Translations$search$results$notifications$en notifications = Translations$search$results$notifications$en.internal(_root);
+	late final Translations$search$results$session$en session = Translations$search$results$session$en.internal(_root);
+	late final Translations$search$results$haptics$en haptics = Translations$search$results$haptics$en.internal(_root);
+	late final Translations$search$results$accessibility$en accessibility = Translations$search$results$accessibility$en.internal(_root);
+	late final Translations$search$results$splash$en splash = Translations$search$results$splash$en.internal(_root);
+	late final Translations$search$results$skeleton$en skeleton = Translations$search$results$skeleton$en.internal(_root);
+	late final Translations$search$results$formScaffolding$en formScaffolding = Translations$search$results$formScaffolding$en.internal(_root);
+	late final Translations$search$results$license$en license = Translations$search$results$license$en.internal(_root);
+	late final Translations$search$results$deepLinks$en deepLinks = Translations$search$results$deepLinks$en.internal(_root);
+	late final Translations$search$results$permissions$en permissions = Translations$search$results$permissions$en.internal(_root);
+	late final Translations$search$results$mfa$en mfa = Translations$search$results$mfa$en.internal(_root);
+	late final Translations$search$results$search$en search = Translations$search$results$search$en.internal(_root);
+	late final Translations$search$results$profile$en profile = Translations$search$results$profile$en.internal(_root);
+	late final Translations$search$results$diagnostics$en diagnostics = Translations$search$results$diagnostics$en.internal(_root);
+	late final Translations$search$results$stateViews$en stateViews = Translations$search$results$stateViews$en.internal(_root);
+}
+
 // Path: settings.accessibility.preset
 class Translations$settings$accessibility$preset$en {
 	Translations$settings$accessibility$preset$en.internal(this._root);
@@ -2324,6 +2359,366 @@ class Translations$announcements$fixtures$outage$en {
 
 	/// en: 'Some actions may fail while we resolve a service disruption.'
 	String get message => 'Some actions may fail while we resolve a service disruption.';
+}
+
+// Path: search.results.auth
+class Translations$search$results$auth$en {
+	Translations$search$results$auth$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Authentication'
+	String get title => 'Authentication';
+
+	/// en: 'Login, register, and password reset flows'
+	String get subtitle => 'Login, register, and password reset flows';
+}
+
+// Path: search.results.connectivity
+class Translations$search$results$connectivity$en {
+	Translations$search$results$connectivity$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Connectivity'
+	String get title => 'Connectivity';
+
+	/// en: 'Online/offline banner and network state'
+	String get subtitle => 'Online/offline banner and network state';
+}
+
+// Path: search.results.settings
+class Translations$search$results$settings$en {
+	Translations$search$results$settings$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Settings'
+	String get title => 'Settings';
+
+	/// en: 'Appearance, language, and accessibility preferences'
+	String get subtitle => 'Appearance, language, and accessibility preferences';
+}
+
+// Path: search.results.biometric
+class Translations$search$results$biometric$en {
+	Translations$search$results$biometric$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Biometric unlock'
+	String get title => 'Biometric unlock';
+
+	/// en: 'Face and fingerprint lock with fallback'
+	String get subtitle => 'Face and fingerprint lock with fallback';
+}
+
+// Path: search.results.announcements
+class Translations$search$results$announcements$en {
+	Translations$search$results$announcements$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Announcements'
+	String get title => 'Announcements';
+
+	/// en: 'Critical, warning, info, and success banners'
+	String get subtitle => 'Critical, warning, info, and success banners';
+}
+
+// Path: search.results.pricing
+class Translations$search$results$pricing$en {
+	Translations$search$results$pricing$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pricing'
+	String get title => 'Pricing';
+
+	/// en: 'Plans, paywall, and billing periods'
+	String get subtitle => 'Plans, paywall, and billing periods';
+}
+
+// Path: search.results.onboarding
+class Translations$search$results$onboarding$en {
+	Translations$search$results$onboarding$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Onboarding'
+	String get title => 'Onboarding';
+
+	/// en: 'First-launch introduction and skip flow'
+	String get subtitle => 'First-launch introduction and skip flow';
+}
+
+// Path: search.results.forceUpdate
+class Translations$search$results$forceUpdate$en {
+	Translations$search$results$forceUpdate$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Force update'
+	String get title => 'Force update';
+
+	/// en: 'Hard and soft version gates'
+	String get subtitle => 'Hard and soft version gates';
+}
+
+// Path: search.results.featureFlags
+class Translations$search$results$featureFlags$en {
+	Translations$search$results$featureFlags$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Feature flags'
+	String get title => 'Feature flags';
+
+	/// en: 'Remote configuration toggles'
+	String get subtitle => 'Remote configuration toggles';
+}
+
+// Path: search.results.notifications
+class Translations$search$results$notifications$en {
+	Translations$search$results$notifications$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Notifications'
+	String get title => 'Notifications';
+
+	/// en: 'Push permission and message delivery'
+	String get subtitle => 'Push permission and message delivery';
+}
+
+// Path: search.results.session
+class Translations$search$results$session$en {
+	Translations$search$results$session$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Session'
+	String get title => 'Session';
+
+	/// en: 'Token refresh and sign-out'
+	String get subtitle => 'Token refresh and sign-out';
+}
+
+// Path: search.results.haptics
+class Translations$search$results$haptics$en {
+	Translations$search$results$haptics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Haptics'
+	String get title => 'Haptics';
+
+	/// en: 'Impact, selection, and success feedback'
+	String get subtitle => 'Impact, selection, and success feedback';
+}
+
+// Path: search.results.accessibility
+class Translations$search$results$accessibility$en {
+	Translations$search$results$accessibility$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Accessibility presets'
+	String get title => 'Accessibility presets';
+
+	/// en: 'Comfortable, large, and dyslexia text presets'
+	String get subtitle => 'Comfortable, large, and dyslexia text presets';
+}
+
+// Path: search.results.splash
+class Translations$search$results$splash$en {
+	Translations$search$results$splash$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'In-app splash'
+	String get title => 'In-app splash';
+
+	/// en: 'Startup progress and error state'
+	String get subtitle => 'Startup progress and error state';
+}
+
+// Path: search.results.skeleton
+class Translations$search$results$skeleton$en {
+	Translations$search$results$skeleton$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Skeleton loading'
+	String get title => 'Skeleton loading';
+
+	/// en: 'Shimmer and reduce-motion placeholders'
+	String get subtitle => 'Shimmer and reduce-motion placeholders';
+}
+
+// Path: search.results.formScaffolding
+class Translations$search$results$formScaffolding$en {
+	Translations$search$results$formScaffolding$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Form scaffolding'
+	String get title => 'Form scaffolding';
+
+	/// en: 'Reusable labeled form field layout'
+	String get subtitle => 'Reusable labeled form field layout';
+}
+
+// Path: search.results.license
+class Translations$search$results$license$en {
+	Translations$search$results$license$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Licenses'
+	String get title => 'Licenses';
+
+	/// en: 'OSS license registry and share sheet'
+	String get subtitle => 'OSS license registry and share sheet';
+}
+
+// Path: search.results.deepLinks
+class Translations$search$results$deepLinks$en {
+	Translations$search$results$deepLinks$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Deep links'
+	String get title => 'Deep links';
+
+	/// en: 'Inbound universal and app links'
+	String get subtitle => 'Inbound universal and app links';
+}
+
+// Path: search.results.permissions
+class Translations$search$results$permissions$en {
+	Translations$search$results$permissions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Permissions'
+	String get title => 'Permissions';
+
+	/// en: 'Runtime permission rationale and requests'
+	String get subtitle => 'Runtime permission rationale and requests';
+}
+
+// Path: search.results.mfa
+class Translations$search$results$mfa$en {
+	Translations$search$results$mfa$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'MFA verification'
+	String get title => 'MFA verification';
+
+	/// en: 'Multi-factor one-time passcode'
+	String get subtitle => 'Multi-factor one-time passcode';
+}
+
+// Path: search.results.search
+class Translations$search$results$search$en {
+	Translations$search$results$search$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Search'
+	String get title => 'Search';
+
+	/// en: 'Debounced in-app search and pagination'
+	String get subtitle => 'Debounced in-app search and pagination';
+}
+
+// Path: search.results.profile
+class Translations$search$results$profile$en {
+	Translations$search$results$profile$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Profile'
+	String get title => 'Profile';
+
+	/// en: 'Editable display name and avatar'
+	String get subtitle => 'Editable display name and avatar';
+}
+
+// Path: search.results.diagnostics
+class Translations$search$results$diagnostics$en {
+	Translations$search$results$diagnostics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Diagnostics'
+	String get title => 'Diagnostics';
+
+	/// en: 'Environment and build readout'
+	String get subtitle => 'Environment and build readout';
+}
+
+// Path: search.results.stateViews
+class Translations$search$results$stateViews$en {
+	Translations$search$results$stateViews$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'State views'
+	String get title => 'State views';
+
+	/// en: 'Empty, error, and loading placeholders'
+	String get subtitle => 'Empty, error, and loading placeholders';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -2903,6 +3298,54 @@ extension on Translations {
 			'search.emptyTitle' => 'No results',
 			'search.emptyBody' => 'Try a different search term.',
 			'search.errorTitle' => 'Search is unavailable',
+			'search.results.auth.title' => 'Authentication',
+			'search.results.auth.subtitle' => 'Login, register, and password reset flows',
+			'search.results.connectivity.title' => 'Connectivity',
+			'search.results.connectivity.subtitle' => 'Online/offline banner and network state',
+			'search.results.settings.title' => 'Settings',
+			'search.results.settings.subtitle' => 'Appearance, language, and accessibility preferences',
+			'search.results.biometric.title' => 'Biometric unlock',
+			'search.results.biometric.subtitle' => 'Face and fingerprint lock with fallback',
+			'search.results.announcements.title' => 'Announcements',
+			'search.results.announcements.subtitle' => 'Critical, warning, info, and success banners',
+			'search.results.pricing.title' => 'Pricing',
+			'search.results.pricing.subtitle' => 'Plans, paywall, and billing periods',
+			'search.results.onboarding.title' => 'Onboarding',
+			'search.results.onboarding.subtitle' => 'First-launch introduction and skip flow',
+			'search.results.forceUpdate.title' => 'Force update',
+			'search.results.forceUpdate.subtitle' => 'Hard and soft version gates',
+			'search.results.featureFlags.title' => 'Feature flags',
+			'search.results.featureFlags.subtitle' => 'Remote configuration toggles',
+			'search.results.notifications.title' => 'Notifications',
+			'search.results.notifications.subtitle' => 'Push permission and message delivery',
+			'search.results.session.title' => 'Session',
+			'search.results.session.subtitle' => 'Token refresh and sign-out',
+			'search.results.haptics.title' => 'Haptics',
+			'search.results.haptics.subtitle' => 'Impact, selection, and success feedback',
+			'search.results.accessibility.title' => 'Accessibility presets',
+			'search.results.accessibility.subtitle' => 'Comfortable, large, and dyslexia text presets',
+			'search.results.splash.title' => 'In-app splash',
+			'search.results.splash.subtitle' => 'Startup progress and error state',
+			'search.results.skeleton.title' => 'Skeleton loading',
+			'search.results.skeleton.subtitle' => 'Shimmer and reduce-motion placeholders',
+			'search.results.formScaffolding.title' => 'Form scaffolding',
+			'search.results.formScaffolding.subtitle' => 'Reusable labeled form field layout',
+			'search.results.license.title' => 'Licenses',
+			'search.results.license.subtitle' => 'OSS license registry and share sheet',
+			'search.results.deepLinks.title' => 'Deep links',
+			'search.results.deepLinks.subtitle' => 'Inbound universal and app links',
+			'search.results.permissions.title' => 'Permissions',
+			'search.results.permissions.subtitle' => 'Runtime permission rationale and requests',
+			'search.results.mfa.title' => 'MFA verification',
+			'search.results.mfa.subtitle' => 'Multi-factor one-time passcode',
+			'search.results.search.title' => 'Search',
+			'search.results.search.subtitle' => 'Debounced in-app search and pagination',
+			'search.results.profile.title' => 'Profile',
+			'search.results.profile.subtitle' => 'Editable display name and avatar',
+			'search.results.diagnostics.title' => 'Diagnostics',
+			'search.results.diagnostics.subtitle' => 'Environment and build readout',
+			'search.results.stateViews.title' => 'State views',
+			'search.results.stateViews.subtitle' => 'Empty, error, and loading placeholders',
 			'feedback.title' => 'Send feedback',
 			'feedback.messageLabel' => 'Message',
 			'feedback.messageHint' => 'What happened, or what could be better?',

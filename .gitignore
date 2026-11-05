@@ -69,3 +69,6 @@ test/failures/
 android/key.properties
 *.jks
 *.keystore
+
+# Isolated worktrees created by agent tooling
+.claude/worktrees/

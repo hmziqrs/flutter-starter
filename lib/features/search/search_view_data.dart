@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:starter/i18n/translations.g.dart';
 
 part 'search_view_data.freezed.dart';
 
@@ -38,126 +39,131 @@ class SearchViewData with _$SearchViewData {
   @override
   final List<SearchResultViewData> results;
 
-  static const _fixtureResults = <SearchResultViewData>[
-    SearchResultViewData(
-      id: 'search-result-auth',
-      title: 'Authentication',
-      subtitle: 'Login, register, and password reset flows',
-    ),
-    SearchResultViewData(
-      id: 'search-result-connectivity',
-      title: 'Connectivity',
-      subtitle: 'Online/offline banner and network state',
-    ),
-    SearchResultViewData(
-      id: 'search-result-settings',
-      title: 'Settings',
-      subtitle: 'Appearance, language, and accessibility preferences',
-    ),
-    SearchResultViewData(
-      id: 'search-result-biometric',
-      title: 'Biometric unlock',
-      subtitle: 'Face and fingerprint lock with fallback',
-    ),
-    SearchResultViewData(
-      id: 'search-result-announcements',
-      title: 'Announcements',
-      subtitle: 'Critical, warning, info, and success banners',
-    ),
-    SearchResultViewData(
-      id: 'search-result-pricing',
-      title: 'Pricing',
-      subtitle: 'Plans, paywall, and billing periods',
-    ),
-    SearchResultViewData(
-      id: 'search-result-onboarding',
-      title: 'Onboarding',
-      subtitle: 'First-launch introduction and skip flow',
-    ),
-    SearchResultViewData(
-      id: 'search-result-force-update',
-      title: 'Force update',
-      subtitle: 'Hard and soft version gates',
-    ),
-    SearchResultViewData(
-      id: 'search-result-feature-flags',
-      title: 'Feature flags',
-      subtitle: 'Remote configuration toggles',
-    ),
-    SearchResultViewData(
-      id: 'search-result-notifications',
-      title: 'Notifications',
-      subtitle: 'Push permission and message delivery',
-    ),
-    SearchResultViewData(
-      id: 'search-result-session',
-      title: 'Session',
-      subtitle: 'Token refresh and sign-out',
-    ),
-    SearchResultViewData(
-      id: 'search-result-haptics',
-      title: 'Haptics',
-      subtitle: 'Impact, selection, and success feedback',
-    ),
-    SearchResultViewData(
-      id: 'search-result-accessibility',
-      title: 'Accessibility presets',
-      subtitle: 'Comfortable, large, and dyslexia text presets',
-    ),
-    SearchResultViewData(
-      id: 'search-result-splash',
-      title: 'In-app splash',
-      subtitle: 'Startup progress and error state',
-    ),
-    SearchResultViewData(
-      id: 'search-result-skeleton',
-      title: 'Skeleton loading',
-      subtitle: 'Shimmer and reduce-motion placeholders',
-    ),
-    SearchResultViewData(
-      id: 'search-result-form-scaffolding',
-      title: 'Form scaffolding',
-      subtitle: 'Reusable labeled form field layout',
-    ),
-    SearchResultViewData(
-      id: 'search-result-license',
-      title: 'Licenses',
-      subtitle: 'OSS license registry and share sheet',
-    ),
-    SearchResultViewData(
-      id: 'search-result-deep-links',
-      title: 'Deep links',
-      subtitle: 'Inbound universal and app links',
-    ),
-    SearchResultViewData(
-      id: 'search-result-permissions',
-      title: 'Permissions',
-      subtitle: 'Runtime permission rationale and requests',
-    ),
-    SearchResultViewData(
-      id: 'search-result-mfa',
-      title: 'MFA verification',
-      subtitle: 'Multi-factor one-time passcode',
-    ),
-    SearchResultViewData(
-      id: 'search-result-search',
-      title: 'Search',
-      subtitle: 'Debounced in-app search and pagination',
-    ),
-    SearchResultViewData(
-      id: 'search-result-profile',
-      title: 'Profile',
-      subtitle: 'Editable display name and avatar',
-    ),
-    SearchResultViewData(
-      id: 'search-result-diagnostics',
-      title: 'Diagnostics',
-      subtitle: 'Environment and build readout',
-    ),
-    SearchResultViewData(
-      id: 'search-result-state-views',
-      title: 'State views',
-      subtitle: 'Empty, error, and loading placeholders',
-    ),
-  ];
+  /// The bundled corpus, in the current language. A backend replaces it through
+  /// `searchCorpusSourceProvider`.
+  static List<SearchResultViewData> get _fixtureResults {
+    final results = t.search.results;
+    return <SearchResultViewData>[
+      SearchResultViewData(
+        id: 'search-result-auth',
+        title: results.auth.title,
+        subtitle: results.auth.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-connectivity',
+        title: results.connectivity.title,
+        subtitle: results.connectivity.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-settings',
+        title: results.settings.title,
+        subtitle: results.settings.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-biometric',
+        title: results.biometric.title,
+        subtitle: results.biometric.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-announcements',
+        title: results.announcements.title,
+        subtitle: results.announcements.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-pricing',
+        title: results.pricing.title,
+        subtitle: results.pricing.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-onboarding',
+        title: results.onboarding.title,
+        subtitle: results.onboarding.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-force-update',
+        title: results.forceUpdate.title,
+        subtitle: results.forceUpdate.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-feature-flags',
+        title: results.featureFlags.title,
+        subtitle: results.featureFlags.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-notifications',
+        title: results.notifications.title,
+        subtitle: results.notifications.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-session',
+        title: results.session.title,
+        subtitle: results.session.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-haptics',
+        title: results.haptics.title,
+        subtitle: results.haptics.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-accessibility',
+        title: results.accessibility.title,
+        subtitle: results.accessibility.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-splash',
+        title: results.splash.title,
+        subtitle: results.splash.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-skeleton',
+        title: results.skeleton.title,
+        subtitle: results.skeleton.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-form-scaffolding',
+        title: results.formScaffolding.title,
+        subtitle: results.formScaffolding.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-license',
+        title: results.license.title,
+        subtitle: results.license.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-deep-links',
+        title: results.deepLinks.title,
+        subtitle: results.deepLinks.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-permissions',
+        title: results.permissions.title,
+        subtitle: results.permissions.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-mfa',
+        title: results.mfa.title,
+        subtitle: results.mfa.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-search',
+        title: results.search.title,
+        subtitle: results.search.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-profile',
+        title: results.profile.title,
+        subtitle: results.profile.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-diagnostics',
+        title: results.diagnostics.title,
+        subtitle: results.diagnostics.subtitle,
+      ),
+      SearchResultViewData(
+        id: 'search-result-state-views',
+        title: results.stateViews.title,
+        subtitle: results.stateViews.subtitle,
+      ),
+    ];
+  }
 }

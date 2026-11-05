@@ -685,7 +685,105 @@
     "placeholder": "搜索…",
     "emptyTitle": "暂无结果",
     "emptyBody": "请尝试其他搜索词。",
-    "errorTitle": "搜索暂不可用"
+    "errorTitle": "搜索暂不可用",
+    "results": {
+      "auth": {
+        "title": "身份验证",
+        "subtitle": "登录、注册和重置密码流程"
+      },
+      "connectivity": {
+        "title": "网络连接",
+        "subtitle": "在线/离线横幅和网络状态"
+      },
+      "settings": {
+        "title": "设置",
+        "subtitle": "外观、语言和辅助功能偏好"
+      },
+      "biometric": {
+        "title": "生物识别解锁",
+        "subtitle": "面容和指纹锁定及备用方式"
+      },
+      "announcements": {
+        "title": "公告",
+        "subtitle": "紧急、警告、信息和成功横幅"
+      },
+      "pricing": {
+        "title": "价格",
+        "subtitle": "方案、付费墙和计费周期"
+      },
+      "onboarding": {
+        "title": "新手引导",
+        "subtitle": "首次启动介绍和跳过流程"
+      },
+      "forceUpdate": {
+        "title": "强制更新",
+        "subtitle": "强制和可选的版本门槛"
+      },
+      "featureFlags": {
+        "title": "功能开关",
+        "subtitle": "远程配置开关"
+      },
+      "notifications": {
+        "title": "通知",
+        "subtitle": "推送权限和消息送达"
+      },
+      "session": {
+        "title": "会话",
+        "subtitle": "令牌刷新和退出登录"
+      },
+      "haptics": {
+        "title": "触感反馈",
+        "subtitle": "撞击、选择和成功反馈"
+      },
+      "accessibility": {
+        "title": "辅助功能预设",
+        "subtitle": "舒适、大字和阅读障碍友好文本预设"
+      },
+      "splash": {
+        "title": "应用内启动页",
+        "subtitle": "启动进度和错误状态"
+      },
+      "skeleton": {
+        "title": "骨架屏加载",
+        "subtitle": "闪光和减弱动态占位符"
+      },
+      "formScaffolding": {
+        "title": "表单脚手架",
+        "subtitle": "可复用的带标签表单字段布局"
+      },
+      "license": {
+        "title": "许可证",
+        "subtitle": "开源许可证清单和分享面板"
+      },
+      "deepLinks": {
+        "title": "深层链接",
+        "subtitle": "传入的通用链接和应用链接"
+      },
+      "permissions": {
+        "title": "权限",
+        "subtitle": "运行时权限说明和请求"
+      },
+      "mfa": {
+        "title": "多因素验证",
+        "subtitle": "多因素一次性密码"
+      },
+      "search": {
+        "title": "搜索",
+        "subtitle": "防抖应用内搜索和分页"
+      },
+      "profile": {
+        "title": "个人资料",
+        "subtitle": "可编辑的显示名称和头像"
+      },
+      "diagnostics": {
+        "title": "诊断",
+        "subtitle": "环境和构建信息"
+      },
+      "stateViews": {
+        "title": "状态视图",
+        "subtitle": "空状态、错误和加载占位符"
+      }
+    }
   },
   "feedback": {
     "title": "发送反馈",

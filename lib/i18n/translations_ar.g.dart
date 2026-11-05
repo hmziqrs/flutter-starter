@@ -741,6 +741,7 @@ class _Translations$search$ar extends Translations$search$en {
 	@override String get emptyTitle => 'لا توجد نتائج';
 	@override String get emptyBody => 'جرّب مصطلح بحث آخر.';
 	@override String get errorTitle => 'البحث غير متاح';
+	@override late final _Translations$search$results$ar results = _Translations$search$results$ar._(_root);
 }
 
 // Path: feedback
@@ -1129,6 +1130,39 @@ class _Translations$permission$location$ar extends Translations$permission$locat
 	@override String get rationale => 'نستخدم موقعك لتخصيص تجربتك. يمكنك الرفض في أي وقت.';
 }
 
+// Path: search.results
+class _Translations$search$results$ar extends Translations$search$results$en {
+	_Translations$search$results$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$search$results$auth$ar auth = _Translations$search$results$auth$ar._(_root);
+	@override late final _Translations$search$results$connectivity$ar connectivity = _Translations$search$results$connectivity$ar._(_root);
+	@override late final _Translations$search$results$settings$ar settings = _Translations$search$results$settings$ar._(_root);
+	@override late final _Translations$search$results$biometric$ar biometric = _Translations$search$results$biometric$ar._(_root);
+	@override late final _Translations$search$results$announcements$ar announcements = _Translations$search$results$announcements$ar._(_root);
+	@override late final _Translations$search$results$pricing$ar pricing = _Translations$search$results$pricing$ar._(_root);
+	@override late final _Translations$search$results$onboarding$ar onboarding = _Translations$search$results$onboarding$ar._(_root);
+	@override late final _Translations$search$results$forceUpdate$ar forceUpdate = _Translations$search$results$forceUpdate$ar._(_root);
+	@override late final _Translations$search$results$featureFlags$ar featureFlags = _Translations$search$results$featureFlags$ar._(_root);
+	@override late final _Translations$search$results$notifications$ar notifications = _Translations$search$results$notifications$ar._(_root);
+	@override late final _Translations$search$results$session$ar session = _Translations$search$results$session$ar._(_root);
+	@override late final _Translations$search$results$haptics$ar haptics = _Translations$search$results$haptics$ar._(_root);
+	@override late final _Translations$search$results$accessibility$ar accessibility = _Translations$search$results$accessibility$ar._(_root);
+	@override late final _Translations$search$results$splash$ar splash = _Translations$search$results$splash$ar._(_root);
+	@override late final _Translations$search$results$skeleton$ar skeleton = _Translations$search$results$skeleton$ar._(_root);
+	@override late final _Translations$search$results$formScaffolding$ar formScaffolding = _Translations$search$results$formScaffolding$ar._(_root);
+	@override late final _Translations$search$results$license$ar license = _Translations$search$results$license$ar._(_root);
+	@override late final _Translations$search$results$deepLinks$ar deepLinks = _Translations$search$results$deepLinks$ar._(_root);
+	@override late final _Translations$search$results$permissions$ar permissions = _Translations$search$results$permissions$ar._(_root);
+	@override late final _Translations$search$results$mfa$ar mfa = _Translations$search$results$mfa$ar._(_root);
+	@override late final _Translations$search$results$search$ar search = _Translations$search$results$search$ar._(_root);
+	@override late final _Translations$search$results$profile$ar profile = _Translations$search$results$profile$ar._(_root);
+	@override late final _Translations$search$results$diagnostics$ar diagnostics = _Translations$search$results$diagnostics$ar._(_root);
+	@override late final _Translations$search$results$stateViews$ar stateViews = _Translations$search$results$stateViews$ar._(_root);
+}
+
 // Path: settings.accessibility.preset
 class _Translations$settings$accessibility$preset$ar extends Translations$settings$accessibility$preset$en {
 	_Translations$settings$accessibility$preset$ar._(TranslationsAr root) : this._root = root, super.internal(root);
@@ -1186,6 +1220,270 @@ class _Translations$announcements$fixtures$outage$ar extends Translations$announ
 	// Translations
 	@override String get title => 'انقطاع الخدمة';
 	@override String get message => 'قد تفشل بعض الإجراءات أثناء معالجة اضطراب في الخدمة.';
+}
+
+// Path: search.results.auth
+class _Translations$search$results$auth$ar extends Translations$search$results$auth$en {
+	_Translations$search$results$auth$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'المصادقة';
+	@override String get subtitle => 'تدفقات تسجيل الدخول والتسجيل وإعادة تعيين كلمة المرور';
+}
+
+// Path: search.results.connectivity
+class _Translations$search$results$connectivity$ar extends Translations$search$results$connectivity$en {
+	_Translations$search$results$connectivity$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الاتصال';
+	@override String get subtitle => 'شريط الاتصال وعدم الاتصال وحالة الشبكة';
+}
+
+// Path: search.results.settings
+class _Translations$search$results$settings$ar extends Translations$search$results$settings$en {
+	_Translations$search$results$settings$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الإعدادات';
+	@override String get subtitle => 'تفضيلات المظهر واللغة وإمكانية الوصول';
+}
+
+// Path: search.results.biometric
+class _Translations$search$results$biometric$ar extends Translations$search$results$biometric$en {
+	_Translations$search$results$biometric$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الفتح بالقياسات الحيوية';
+	@override String get subtitle => 'قفل الوجه وبصمة الإصبع مع بديل احتياطي';
+}
+
+// Path: search.results.announcements
+class _Translations$search$results$announcements$ar extends Translations$search$results$announcements$en {
+	_Translations$search$results$announcements$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الإعلانات';
+	@override String get subtitle => 'لافتات حرجة وتحذيرية ومعلوماتية وناجحة';
+}
+
+// Path: search.results.pricing
+class _Translations$search$results$pricing$ar extends Translations$search$results$pricing$en {
+	_Translations$search$results$pricing$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الأسعار';
+	@override String get subtitle => 'الخطط وجدار الدفع وفترات الفوترة';
+}
+
+// Path: search.results.onboarding
+class _Translations$search$results$onboarding$ar extends Translations$search$results$onboarding$en {
+	_Translations$search$results$onboarding$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التعريف بالتطبيق';
+	@override String get subtitle => 'مقدمة التشغيل الأول وخيار التخطي';
+}
+
+// Path: search.results.forceUpdate
+class _Translations$search$results$forceUpdate$ar extends Translations$search$results$forceUpdate$en {
+	_Translations$search$results$forceUpdate$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التحديث الإجباري';
+	@override String get subtitle => 'بوابات الإصدار الإلزامية والاختيارية';
+}
+
+// Path: search.results.featureFlags
+class _Translations$search$results$featureFlags$ar extends Translations$search$results$featureFlags$en {
+	_Translations$search$results$featureFlags$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'مفاتيح الميزات';
+	@override String get subtitle => 'مفاتيح الإعدادات عن بُعد';
+}
+
+// Path: search.results.notifications
+class _Translations$search$results$notifications$ar extends Translations$search$results$notifications$en {
+	_Translations$search$results$notifications$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الإشعارات';
+	@override String get subtitle => 'إذن الإشعارات وتسليم الرسائل';
+}
+
+// Path: search.results.session
+class _Translations$search$results$session$ar extends Translations$search$results$session$en {
+	_Translations$search$results$session$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الجلسة';
+	@override String get subtitle => 'تحديث الرمز وتسجيل الخروج';
+}
+
+// Path: search.results.haptics
+class _Translations$search$results$haptics$ar extends Translations$search$results$haptics$en {
+	_Translations$search$results$haptics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الاهتزاز اللمسي';
+	@override String get subtitle => 'استجابة الضغط والتحديد والنجاح';
+}
+
+// Path: search.results.accessibility
+class _Translations$search$results$accessibility$ar extends Translations$search$results$accessibility$en {
+	_Translations$search$results$accessibility$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'إعدادات إمكانية الوصول';
+	@override String get subtitle => 'إعدادات النص المريح والكبير والمناسب لعسر القراءة';
+}
+
+// Path: search.results.splash
+class _Translations$search$results$splash$ar extends Translations$search$results$splash$en {
+	_Translations$search$results$splash$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'شاشة البداية داخل التطبيق';
+	@override String get subtitle => 'تقدم بدء التشغيل وحالة الخطأ';
+}
+
+// Path: search.results.skeleton
+class _Translations$search$results$skeleton$ar extends Translations$search$results$skeleton$en {
+	_Translations$search$results$skeleton$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التحميل الهيكلي';
+	@override String get subtitle => 'عناصر نائبة متلألئة وأخرى بحركة مخففة';
+}
+
+// Path: search.results.formScaffolding
+class _Translations$search$results$formScaffolding$ar extends Translations$search$results$formScaffolding$en {
+	_Translations$search$results$formScaffolding$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'هيكل النماذج';
+	@override String get subtitle => 'تخطيط قابل لإعادة الاستخدام لحقول النماذج المعنونة';
+}
+
+// Path: search.results.license
+class _Translations$search$results$license$ar extends Translations$search$results$license$en {
+	_Translations$search$results$license$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التراخيص';
+	@override String get subtitle => 'سجل تراخيص البرامج مفتوحة المصدر وورقة المشاركة';
+}
+
+// Path: search.results.deepLinks
+class _Translations$search$results$deepLinks$ar extends Translations$search$results$deepLinks$en {
+	_Translations$search$results$deepLinks$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الروابط العميقة';
+	@override String get subtitle => 'الروابط العامة وروابط التطبيق الواردة';
+}
+
+// Path: search.results.permissions
+class _Translations$search$results$permissions$ar extends Translations$search$results$permissions$en {
+	_Translations$search$results$permissions$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الأذونات';
+	@override String get subtitle => 'توضيح الأذونات وطلبها أثناء التشغيل';
+}
+
+// Path: search.results.mfa
+class _Translations$search$results$mfa$ar extends Translations$search$results$mfa$en {
+	_Translations$search$results$mfa$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التحقق متعدد العوامل';
+	@override String get subtitle => 'رمز مرور لمرة واحدة متعدد العوامل';
+}
+
+// Path: search.results.search
+class _Translations$search$results$search$ar extends Translations$search$results$search$en {
+	_Translations$search$results$search$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'بحث';
+	@override String get subtitle => 'بحث داخل التطبيق مع تأخير وترقيم صفحات';
+}
+
+// Path: search.results.profile
+class _Translations$search$results$profile$ar extends Translations$search$results$profile$en {
+	_Translations$search$results$profile$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'الملف الشخصي';
+	@override String get subtitle => 'اسم العرض والصورة الرمزية القابلان للتعديل';
+}
+
+// Path: search.results.diagnostics
+class _Translations$search$results$diagnostics$ar extends Translations$search$results$diagnostics$en {
+	_Translations$search$results$diagnostics$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'التشخيص';
+	@override String get subtitle => 'معلومات البيئة والإصدار';
+}
+
+// Path: search.results.stateViews
+class _Translations$search$results$stateViews$ar extends Translations$search$results$stateViews$en {
+	_Translations$search$results$stateViews$ar._(TranslationsAr root) : this._root = root, super.internal(root);
+
+	final TranslationsAr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'عروض الحالة';
+	@override String get subtitle => 'عناصر نائبة للحالة الفارغة والخطأ والتحميل';
 }
 
 /// The flat map containing all translations for locale <ar>.
@@ -1765,6 +2063,54 @@ extension on TranslationsAr {
 			'search.emptyTitle' => 'لا توجد نتائج',
 			'search.emptyBody' => 'جرّب مصطلح بحث آخر.',
 			'search.errorTitle' => 'البحث غير متاح',
+			'search.results.auth.title' => 'المصادقة',
+			'search.results.auth.subtitle' => 'تدفقات تسجيل الدخول والتسجيل وإعادة تعيين كلمة المرور',
+			'search.results.connectivity.title' => 'الاتصال',
+			'search.results.connectivity.subtitle' => 'شريط الاتصال وعدم الاتصال وحالة الشبكة',
+			'search.results.settings.title' => 'الإعدادات',
+			'search.results.settings.subtitle' => 'تفضيلات المظهر واللغة وإمكانية الوصول',
+			'search.results.biometric.title' => 'الفتح بالقياسات الحيوية',
+			'search.results.biometric.subtitle' => 'قفل الوجه وبصمة الإصبع مع بديل احتياطي',
+			'search.results.announcements.title' => 'الإعلانات',
+			'search.results.announcements.subtitle' => 'لافتات حرجة وتحذيرية ومعلوماتية وناجحة',
+			'search.results.pricing.title' => 'الأسعار',
+			'search.results.pricing.subtitle' => 'الخطط وجدار الدفع وفترات الفوترة',
+			'search.results.onboarding.title' => 'التعريف بالتطبيق',
+			'search.results.onboarding.subtitle' => 'مقدمة التشغيل الأول وخيار التخطي',
+			'search.results.forceUpdate.title' => 'التحديث الإجباري',
+			'search.results.forceUpdate.subtitle' => 'بوابات الإصدار الإلزامية والاختيارية',
+			'search.results.featureFlags.title' => 'مفاتيح الميزات',
+			'search.results.featureFlags.subtitle' => 'مفاتيح الإعدادات عن بُعد',
+			'search.results.notifications.title' => 'الإشعارات',
+			'search.results.notifications.subtitle' => 'إذن الإشعارات وتسليم الرسائل',
+			'search.results.session.title' => 'الجلسة',
+			'search.results.session.subtitle' => 'تحديث الرمز وتسجيل الخروج',
+			'search.results.haptics.title' => 'الاهتزاز اللمسي',
+			'search.results.haptics.subtitle' => 'استجابة الضغط والتحديد والنجاح',
+			'search.results.accessibility.title' => 'إعدادات إمكانية الوصول',
+			'search.results.accessibility.subtitle' => 'إعدادات النص المريح والكبير والمناسب لعسر القراءة',
+			'search.results.splash.title' => 'شاشة البداية داخل التطبيق',
+			'search.results.splash.subtitle' => 'تقدم بدء التشغيل وحالة الخطأ',
+			'search.results.skeleton.title' => 'التحميل الهيكلي',
+			'search.results.skeleton.subtitle' => 'عناصر نائبة متلألئة وأخرى بحركة مخففة',
+			'search.results.formScaffolding.title' => 'هيكل النماذج',
+			'search.results.formScaffolding.subtitle' => 'تخطيط قابل لإعادة الاستخدام لحقول النماذج المعنونة',
+			'search.results.license.title' => 'التراخيص',
+			'search.results.license.subtitle' => 'سجل تراخيص البرامج مفتوحة المصدر وورقة المشاركة',
+			'search.results.deepLinks.title' => 'الروابط العميقة',
+			'search.results.deepLinks.subtitle' => 'الروابط العامة وروابط التطبيق الواردة',
+			'search.results.permissions.title' => 'الأذونات',
+			'search.results.permissions.subtitle' => 'توضيح الأذونات وطلبها أثناء التشغيل',
+			'search.results.mfa.title' => 'التحقق متعدد العوامل',
+			'search.results.mfa.subtitle' => 'رمز مرور لمرة واحدة متعدد العوامل',
+			'search.results.search.title' => 'بحث',
+			'search.results.search.subtitle' => 'بحث داخل التطبيق مع تأخير وترقيم صفحات',
+			'search.results.profile.title' => 'الملف الشخصي',
+			'search.results.profile.subtitle' => 'اسم العرض والصورة الرمزية القابلان للتعديل',
+			'search.results.diagnostics.title' => 'التشخيص',
+			'search.results.diagnostics.subtitle' => 'معلومات البيئة والإصدار',
+			'search.results.stateViews.title' => 'عروض الحالة',
+			'search.results.stateViews.subtitle' => 'عناصر نائبة للحالة الفارغة والخطأ والتحميل',
 			'feedback.title' => 'إرسال ملاحظات',
 			'feedback.messageLabel' => 'الرسالة',
 			'feedback.messageHint' => 'ماذا حدث، أو ما الذي يمكن تحسينه؟',

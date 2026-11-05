@@ -741,6 +741,7 @@ class _Translations$search$zh_Hans extends Translations$search$en {
 	@override String get emptyTitle => '暂无结果';
 	@override String get emptyBody => '请尝试其他搜索词。';
 	@override String get errorTitle => '搜索暂不可用';
+	@override late final _Translations$search$results$zh_Hans results = _Translations$search$results$zh_Hans._(_root);
 }
 
 // Path: feedback
@@ -1099,6 +1100,39 @@ class _Translations$permission$location$zh_Hans extends Translations$permission$
 	@override String get rationale => '我们使用您的位置来个性化您的体验。您可以随时拒绝。';
 }
 
+// Path: search.results
+class _Translations$search$results$zh_Hans extends Translations$search$results$en {
+	_Translations$search$results$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$search$results$auth$zh_Hans auth = _Translations$search$results$auth$zh_Hans._(_root);
+	@override late final _Translations$search$results$connectivity$zh_Hans connectivity = _Translations$search$results$connectivity$zh_Hans._(_root);
+	@override late final _Translations$search$results$settings$zh_Hans settings = _Translations$search$results$settings$zh_Hans._(_root);
+	@override late final _Translations$search$results$biometric$zh_Hans biometric = _Translations$search$results$biometric$zh_Hans._(_root);
+	@override late final _Translations$search$results$announcements$zh_Hans announcements = _Translations$search$results$announcements$zh_Hans._(_root);
+	@override late final _Translations$search$results$pricing$zh_Hans pricing = _Translations$search$results$pricing$zh_Hans._(_root);
+	@override late final _Translations$search$results$onboarding$zh_Hans onboarding = _Translations$search$results$onboarding$zh_Hans._(_root);
+	@override late final _Translations$search$results$forceUpdate$zh_Hans forceUpdate = _Translations$search$results$forceUpdate$zh_Hans._(_root);
+	@override late final _Translations$search$results$featureFlags$zh_Hans featureFlags = _Translations$search$results$featureFlags$zh_Hans._(_root);
+	@override late final _Translations$search$results$notifications$zh_Hans notifications = _Translations$search$results$notifications$zh_Hans._(_root);
+	@override late final _Translations$search$results$session$zh_Hans session = _Translations$search$results$session$zh_Hans._(_root);
+	@override late final _Translations$search$results$haptics$zh_Hans haptics = _Translations$search$results$haptics$zh_Hans._(_root);
+	@override late final _Translations$search$results$accessibility$zh_Hans accessibility = _Translations$search$results$accessibility$zh_Hans._(_root);
+	@override late final _Translations$search$results$splash$zh_Hans splash = _Translations$search$results$splash$zh_Hans._(_root);
+	@override late final _Translations$search$results$skeleton$zh_Hans skeleton = _Translations$search$results$skeleton$zh_Hans._(_root);
+	@override late final _Translations$search$results$formScaffolding$zh_Hans formScaffolding = _Translations$search$results$formScaffolding$zh_Hans._(_root);
+	@override late final _Translations$search$results$license$zh_Hans license = _Translations$search$results$license$zh_Hans._(_root);
+	@override late final _Translations$search$results$deepLinks$zh_Hans deepLinks = _Translations$search$results$deepLinks$zh_Hans._(_root);
+	@override late final _Translations$search$results$permissions$zh_Hans permissions = _Translations$search$results$permissions$zh_Hans._(_root);
+	@override late final _Translations$search$results$mfa$zh_Hans mfa = _Translations$search$results$mfa$zh_Hans._(_root);
+	@override late final _Translations$search$results$search$zh_Hans search = _Translations$search$results$search$zh_Hans._(_root);
+	@override late final _Translations$search$results$profile$zh_Hans profile = _Translations$search$results$profile$zh_Hans._(_root);
+	@override late final _Translations$search$results$diagnostics$zh_Hans diagnostics = _Translations$search$results$diagnostics$zh_Hans._(_root);
+	@override late final _Translations$search$results$stateViews$zh_Hans stateViews = _Translations$search$results$stateViews$zh_Hans._(_root);
+}
+
 // Path: settings.accessibility.preset
 class _Translations$settings$accessibility$preset$zh_Hans extends Translations$settings$accessibility$preset$en {
 	_Translations$settings$accessibility$preset$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
@@ -1156,6 +1190,270 @@ class _Translations$announcements$fixtures$outage$zh_Hans extends Translations$a
 	// Translations
 	@override String get title => '服务中断';
 	@override String get message => '我们正在处理服务故障，部分操作可能失败。';
+}
+
+// Path: search.results.auth
+class _Translations$search$results$auth$zh_Hans extends Translations$search$results$auth$en {
+	_Translations$search$results$auth$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '身份验证';
+	@override String get subtitle => '登录、注册和重置密码流程';
+}
+
+// Path: search.results.connectivity
+class _Translations$search$results$connectivity$zh_Hans extends Translations$search$results$connectivity$en {
+	_Translations$search$results$connectivity$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '网络连接';
+	@override String get subtitle => '在线/离线横幅和网络状态';
+}
+
+// Path: search.results.settings
+class _Translations$search$results$settings$zh_Hans extends Translations$search$results$settings$en {
+	_Translations$search$results$settings$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '设置';
+	@override String get subtitle => '外观、语言和辅助功能偏好';
+}
+
+// Path: search.results.biometric
+class _Translations$search$results$biometric$zh_Hans extends Translations$search$results$biometric$en {
+	_Translations$search$results$biometric$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '生物识别解锁';
+	@override String get subtitle => '面容和指纹锁定及备用方式';
+}
+
+// Path: search.results.announcements
+class _Translations$search$results$announcements$zh_Hans extends Translations$search$results$announcements$en {
+	_Translations$search$results$announcements$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '公告';
+	@override String get subtitle => '紧急、警告、信息和成功横幅';
+}
+
+// Path: search.results.pricing
+class _Translations$search$results$pricing$zh_Hans extends Translations$search$results$pricing$en {
+	_Translations$search$results$pricing$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '价格';
+	@override String get subtitle => '方案、付费墙和计费周期';
+}
+
+// Path: search.results.onboarding
+class _Translations$search$results$onboarding$zh_Hans extends Translations$search$results$onboarding$en {
+	_Translations$search$results$onboarding$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '新手引导';
+	@override String get subtitle => '首次启动介绍和跳过流程';
+}
+
+// Path: search.results.forceUpdate
+class _Translations$search$results$forceUpdate$zh_Hans extends Translations$search$results$forceUpdate$en {
+	_Translations$search$results$forceUpdate$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '强制更新';
+	@override String get subtitle => '强制和可选的版本门槛';
+}
+
+// Path: search.results.featureFlags
+class _Translations$search$results$featureFlags$zh_Hans extends Translations$search$results$featureFlags$en {
+	_Translations$search$results$featureFlags$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '功能开关';
+	@override String get subtitle => '远程配置开关';
+}
+
+// Path: search.results.notifications
+class _Translations$search$results$notifications$zh_Hans extends Translations$search$results$notifications$en {
+	_Translations$search$results$notifications$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '通知';
+	@override String get subtitle => '推送权限和消息送达';
+}
+
+// Path: search.results.session
+class _Translations$search$results$session$zh_Hans extends Translations$search$results$session$en {
+	_Translations$search$results$session$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '会话';
+	@override String get subtitle => '令牌刷新和退出登录';
+}
+
+// Path: search.results.haptics
+class _Translations$search$results$haptics$zh_Hans extends Translations$search$results$haptics$en {
+	_Translations$search$results$haptics$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '触感反馈';
+	@override String get subtitle => '撞击、选择和成功反馈';
+}
+
+// Path: search.results.accessibility
+class _Translations$search$results$accessibility$zh_Hans extends Translations$search$results$accessibility$en {
+	_Translations$search$results$accessibility$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '辅助功能预设';
+	@override String get subtitle => '舒适、大字和阅读障碍友好文本预设';
+}
+
+// Path: search.results.splash
+class _Translations$search$results$splash$zh_Hans extends Translations$search$results$splash$en {
+	_Translations$search$results$splash$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '应用内启动页';
+	@override String get subtitle => '启动进度和错误状态';
+}
+
+// Path: search.results.skeleton
+class _Translations$search$results$skeleton$zh_Hans extends Translations$search$results$skeleton$en {
+	_Translations$search$results$skeleton$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '骨架屏加载';
+	@override String get subtitle => '闪光和减弱动态占位符';
+}
+
+// Path: search.results.formScaffolding
+class _Translations$search$results$formScaffolding$zh_Hans extends Translations$search$results$formScaffolding$en {
+	_Translations$search$results$formScaffolding$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '表单脚手架';
+	@override String get subtitle => '可复用的带标签表单字段布局';
+}
+
+// Path: search.results.license
+class _Translations$search$results$license$zh_Hans extends Translations$search$results$license$en {
+	_Translations$search$results$license$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '许可证';
+	@override String get subtitle => '开源许可证清单和分享面板';
+}
+
+// Path: search.results.deepLinks
+class _Translations$search$results$deepLinks$zh_Hans extends Translations$search$results$deepLinks$en {
+	_Translations$search$results$deepLinks$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '深层链接';
+	@override String get subtitle => '传入的通用链接和应用链接';
+}
+
+// Path: search.results.permissions
+class _Translations$search$results$permissions$zh_Hans extends Translations$search$results$permissions$en {
+	_Translations$search$results$permissions$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '权限';
+	@override String get subtitle => '运行时权限说明和请求';
+}
+
+// Path: search.results.mfa
+class _Translations$search$results$mfa$zh_Hans extends Translations$search$results$mfa$en {
+	_Translations$search$results$mfa$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '多因素验证';
+	@override String get subtitle => '多因素一次性密码';
+}
+
+// Path: search.results.search
+class _Translations$search$results$search$zh_Hans extends Translations$search$results$search$en {
+	_Translations$search$results$search$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '搜索';
+	@override String get subtitle => '防抖应用内搜索和分页';
+}
+
+// Path: search.results.profile
+class _Translations$search$results$profile$zh_Hans extends Translations$search$results$profile$en {
+	_Translations$search$results$profile$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '个人资料';
+	@override String get subtitle => '可编辑的显示名称和头像';
+}
+
+// Path: search.results.diagnostics
+class _Translations$search$results$diagnostics$zh_Hans extends Translations$search$results$diagnostics$en {
+	_Translations$search$results$diagnostics$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '诊断';
+	@override String get subtitle => '环境和构建信息';
+}
+
+// Path: search.results.stateViews
+class _Translations$search$results$stateViews$zh_Hans extends Translations$search$results$stateViews$en {
+	_Translations$search$results$stateViews$zh_Hans._(TranslationsZhHans root) : this._root = root, super.internal(root);
+
+	final TranslationsZhHans _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '状态视图';
+	@override String get subtitle => '空状态、错误和加载占位符';
 }
 
 /// The flat map containing all translations for locale <zh-Hans>.
@@ -1735,6 +2033,54 @@ extension on TranslationsZhHans {
 			'search.emptyTitle' => '暂无结果',
 			'search.emptyBody' => '请尝试其他搜索词。',
 			'search.errorTitle' => '搜索暂不可用',
+			'search.results.auth.title' => '身份验证',
+			'search.results.auth.subtitle' => '登录、注册和重置密码流程',
+			'search.results.connectivity.title' => '网络连接',
+			'search.results.connectivity.subtitle' => '在线/离线横幅和网络状态',
+			'search.results.settings.title' => '设置',
+			'search.results.settings.subtitle' => '外观、语言和辅助功能偏好',
+			'search.results.biometric.title' => '生物识别解锁',
+			'search.results.biometric.subtitle' => '面容和指纹锁定及备用方式',
+			'search.results.announcements.title' => '公告',
+			'search.results.announcements.subtitle' => '紧急、警告、信息和成功横幅',
+			'search.results.pricing.title' => '价格',
+			'search.results.pricing.subtitle' => '方案、付费墙和计费周期',
+			'search.results.onboarding.title' => '新手引导',
+			'search.results.onboarding.subtitle' => '首次启动介绍和跳过流程',
+			'search.results.forceUpdate.title' => '强制更新',
+			'search.results.forceUpdate.subtitle' => '强制和可选的版本门槛',
+			'search.results.featureFlags.title' => '功能开关',
+			'search.results.featureFlags.subtitle' => '远程配置开关',
+			'search.results.notifications.title' => '通知',
+			'search.results.notifications.subtitle' => '推送权限和消息送达',
+			'search.results.session.title' => '会话',
+			'search.results.session.subtitle' => '令牌刷新和退出登录',
+			'search.results.haptics.title' => '触感反馈',
+			'search.results.haptics.subtitle' => '撞击、选择和成功反馈',
+			'search.results.accessibility.title' => '辅助功能预设',
+			'search.results.accessibility.subtitle' => '舒适、大字和阅读障碍友好文本预设',
+			'search.results.splash.title' => '应用内启动页',
+			'search.results.splash.subtitle' => '启动进度和错误状态',
+			'search.results.skeleton.title' => '骨架屏加载',
+			'search.results.skeleton.subtitle' => '闪光和减弱动态占位符',
+			'search.results.formScaffolding.title' => '表单脚手架',
+			'search.results.formScaffolding.subtitle' => '可复用的带标签表单字段布局',
+			'search.results.license.title' => '许可证',
+			'search.results.license.subtitle' => '开源许可证清单和分享面板',
+			'search.results.deepLinks.title' => '深层链接',
+			'search.results.deepLinks.subtitle' => '传入的通用链接和应用链接',
+			'search.results.permissions.title' => '权限',
+			'search.results.permissions.subtitle' => '运行时权限说明和请求',
+			'search.results.mfa.title' => '多因素验证',
+			'search.results.mfa.subtitle' => '多因素一次性密码',
+			'search.results.search.title' => '搜索',
+			'search.results.search.subtitle' => '防抖应用内搜索和分页',
+			'search.results.profile.title' => '个人资料',
+			'search.results.profile.subtitle' => '可编辑的显示名称和头像',
+			'search.results.diagnostics.title' => '诊断',
+			'search.results.diagnostics.subtitle' => '环境和构建信息',
+			'search.results.stateViews.title' => '状态视图',
+			'search.results.stateViews.subtitle' => '空状态、错误和加载占位符',
 			'feedback.title' => '发送反馈',
 			'feedback.messageLabel' => '内容',
 			'feedback.messageHint' => '发生了什么，或有什么可以改进？',

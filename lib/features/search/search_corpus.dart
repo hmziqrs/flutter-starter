@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:starter/features/search/search_view_data.dart';
+import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/cache/cache_entry.dart';
 import 'package:starter/infrastructure/cache/cached_future_provider.dart';
 import 'package:starter/infrastructure/cache/http_cache_data_source.dart';
@@ -45,6 +46,10 @@ searchCorpusCachedProvider = Provider<FutureProvider<CachedValue<List<SearchResu
   );
 });
 
+final StreamProvider<AppLocale> _localeChangesProvider = StreamProvider<AppLocale>(
+  (ref) => LocaleSettings.getLocaleStream(),
+);
+
 /// The corpus search matches against. With a source wired, the value comes
 /// from the cached fetch (fresh → stale-offline → fetched record); while the
 /// fetch is in flight or failed (unknown key, transport error, offline with
@@ -52,6 +57,8 @@ searchCorpusCachedProvider = Provider<FutureProvider<CachedValue<List<SearchResu
 /// succeeds — never a synthesized list.
 final FutureProvider<List<SearchResultViewData>> searchCorpusProvider =
     FutureProvider<List<SearchResultViewData>>((ref) async {
+      // The bundled corpus is translated, so it follows the language.
+      ref.watch(_localeChangesProvider);
       final cachedProvider = ref.watch(searchCorpusCachedProvider);
       if (cachedProvider == null) {
         return SearchViewData.defaults().results;

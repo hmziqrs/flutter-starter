@@ -690,7 +690,105 @@
     "placeholder": "Search…",
     "emptyTitle": "No results",
     "emptyBody": "Try a different search term.",
-    "errorTitle": "Search is unavailable"
+    "errorTitle": "Search is unavailable",
+    "results": {
+      "auth": {
+        "title": "Authentication",
+        "subtitle": "Login, register, and password reset flows"
+      },
+      "connectivity": {
+        "title": "Connectivity",
+        "subtitle": "Online/offline banner and network state"
+      },
+      "settings": {
+        "title": "Settings",
+        "subtitle": "Appearance, language, and accessibility preferences"
+      },
+      "biometric": {
+        "title": "Biometric unlock",
+        "subtitle": "Face and fingerprint lock with fallback"
+      },
+      "announcements": {
+        "title": "Announcements",
+        "subtitle": "Critical, warning, info, and success banners"
+      },
+      "pricing": {
+        "title": "Pricing",
+        "subtitle": "Plans, paywall, and billing periods"
+      },
+      "onboarding": {
+        "title": "Onboarding",
+        "subtitle": "First-launch introduction and skip flow"
+      },
+      "forceUpdate": {
+        "title": "Force update",
+        "subtitle": "Hard and soft version gates"
+      },
+      "featureFlags": {
+        "title": "Feature flags",
+        "subtitle": "Remote configuration toggles"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "Push permission and message delivery"
+      },
+      "session": {
+        "title": "Session",
+        "subtitle": "Token refresh and sign-out"
+      },
+      "haptics": {
+        "title": "Haptics",
+        "subtitle": "Impact, selection, and success feedback"
+      },
+      "accessibility": {
+        "title": "Accessibility presets",
+        "subtitle": "Comfortable, large, and dyslexia text presets"
+      },
+      "splash": {
+        "title": "In-app splash",
+        "subtitle": "Startup progress and error state"
+      },
+      "skeleton": {
+        "title": "Skeleton loading",
+        "subtitle": "Shimmer and reduce-motion placeholders"
+      },
+      "formScaffolding": {
+        "title": "Form scaffolding",
+        "subtitle": "Reusable labeled form field layout"
+      },
+      "license": {
+        "title": "Licenses",
+        "subtitle": "OSS license registry and share sheet"
+      },
+      "deepLinks": {
+        "title": "Deep links",
+        "subtitle": "Inbound universal and app links"
+      },
+      "permissions": {
+        "title": "Permissions",
+        "subtitle": "Runtime permission rationale and requests"
+      },
+      "mfa": {
+        "title": "MFA verification",
+        "subtitle": "Multi-factor one-time passcode"
+      },
+      "search": {
+        "title": "Search",
+        "subtitle": "Debounced in-app search and pagination"
+      },
+      "profile": {
+        "title": "Profile",
+        "subtitle": "Editable display name and avatar"
+      },
+      "diagnostics": {
+        "title": "Diagnostics",
+        "subtitle": "Environment and build readout"
+      },
+      "stateViews": {
+        "title": "State views",
+        "subtitle": "Empty, error, and loading placeholders"
+      }
+    }
   },
   "feedback": {
     "title": "Send feedback",
