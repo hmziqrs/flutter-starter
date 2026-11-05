@@ -304,6 +304,9 @@ jobs:
   release:
     name: Publish to GitHub Release
     needs: [apple, windows, linux, android]
+    # Dispatching on another branch still checks every build, but the public
+    # "latest" release only ever holds builds from master.
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
