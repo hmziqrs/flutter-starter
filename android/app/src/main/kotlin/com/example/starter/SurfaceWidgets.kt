@@ -11,6 +11,7 @@ import android.graphics.RectF
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
+import android.view.Gravity
 import android.view.View
 import android.widget.RemoteViews
 import androidx.annotation.ColorRes
@@ -45,6 +46,10 @@ internal object SurfaceWidgets {
 
     /** From this width up, a widget uses the medium layout. */
     private const val MEDIUM_MIN_WIDTH_DP = 240
+
+    private const val BODY_SIDE_PADDING_DP = 18
+    private const val BODY_TOP_PADDING_DP = 8
+    private const val BODY_BOTTOM_PADDING_DP = 16
 
     private const val MIN_WIDTH_DP = 100
     private const val MIN_HEIGHT_DP = 100
@@ -96,6 +101,17 @@ internal object SurfaceWidgets {
         RemoteViews(context.packageName, R.layout.surface_widget_medium).also {
             bind(context, it, snapshot, showGauge = snapshot.progress != null)
             bindActions(context, it, snapshot)
+            // A subtitle on its own reads as a footer rather than floating mid card.
+            val textOnly = snapshot.progress == null && snapshot.value == null
+            it.setInt(R.id.surface_body, "setGravity", if (textOnly) Gravity.BOTTOM else Gravity.CENTER_VERTICAL)
+            if (snapshot.actions.isEmpty()) {
+                // Nothing below the body now, so it needs the card's own bottom margin.
+                val density = context.resources.displayMetrics.density
+                val side = (BODY_SIDE_PADDING_DP * density).toInt()
+                val top = (BODY_TOP_PADDING_DP * density).toInt()
+                val bottom = (BODY_BOTTOM_PADDING_DP * density).toInt()
+                it.setViewPadding(R.id.surface_body, side, top, side, bottom)
+            }
         }
 
     private fun bind(context: Context, views: RemoteViews, snapshot: SurfaceSnapshot, showGauge: Boolean) {
@@ -111,17 +127,20 @@ internal object SurfaceWidgets {
             views.setText(R.id.surface_gauge_label, snapshot.valueLabel)
         }
 
-        val showStat = !showGauge && snapshot.value != null
-        views.setVisible(R.id.surface_stat, showStat)
-        if (showStat) {
+        // Stays visible with nothing in it, so it still takes up the middle of the small
+        // layout and the subtitle sits at the bottom.
+        views.setVisible(R.id.surface_stat, !showGauge)
+        if (!showGauge) {
             views.setText(R.id.surface_stat_value, snapshot.value)
             views.setText(R.id.surface_stat_label, snapshot.valueLabel)
         }
 
         // Beside a gauge the subtitle is the headline, as the brand's status line is.
-        // Under a figure, or alone, it is a caption.
+        // Under a figure it is a caption. Alone, it is all the widget has to say.
+        val textOnly = !showGauge && snapshot.value == null
         views.setText(R.id.surface_subtitle_strong, snapshot.subtitle.takeIf { showGauge })
-        views.setText(R.id.surface_subtitle_muted, snapshot.subtitle.takeUnless { showGauge })
+        views.setText(R.id.surface_subtitle_lead, snapshot.subtitle.takeIf { textOnly })
+        views.setText(R.id.surface_subtitle_muted, snapshot.subtitle.takeIf { !showGauge && !textOnly })
     }
 
     private fun bindActions(context: Context, views: RemoteViews, snapshot: SurfaceSnapshot) {

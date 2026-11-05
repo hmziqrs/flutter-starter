@@ -120,6 +120,13 @@
         android:textSize="13sp" />
 
     <TextView
+        android:id="@+id/surface_subtitle_lead"
+        style="@style/SurfaceText.Lead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/surface_subtitle_muted"
         style="@style/SurfaceText.Caption"
         android:layout_width="match_parent"
