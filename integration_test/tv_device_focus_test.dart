@@ -8,6 +8,7 @@ import 'package:starter/app/config/app_environment.dart';
 import 'package:starter/app/dependencies.dart';
 import 'package:starter/app/routing/app_routes.dart';
 import 'package:starter/app/routing/otp_purpose.dart';
+import 'package:starter/features/session/auth_session.dart';
 import 'package:starter/i18n/translations.g.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities_resolver.dart';
@@ -113,7 +114,17 @@ void main() {
   testWidgets('TV Back prioritizes editor, dialog, route, and invoker focus', (
     tester,
   ) async {
-    await _pumpDeviceApp(tester, capabilities: capabilities);
+    // Signed in, because an anonymous Profile shows a sign-in prompt, not the form.
+    await _pumpDeviceApp(
+      tester,
+      capabilities: capabilities,
+      initialSession: AuthSession.authenticated(
+        accessToken: 'tv-access',
+        refreshToken: 'tv-refresh',
+        expiresAt: DateTime.utc(2099),
+        userId: 'tv-user',
+      ),
+    );
 
     await _requestFocusWithin(tester, 'home-open-login');
     await _press(tester, LogicalKeyboardKey.enter);
@@ -200,6 +211,7 @@ Future<void> _pumpDeviceApp(
   WidgetTester tester, {
   required PlatformCapabilities capabilities,
   String? initialLocation,
+  AuthSession? initialSession,
 }) async {
   final config = AppConfig.fromEnvironment();
   expect(config.environment, AppEnvironment.development);
@@ -208,6 +220,7 @@ Future<void> _pumpDeviceApp(
       config: config,
       dependencies: AppDependencies.inMemory(
         platformCapabilities: capabilities,
+        initialSession: initialSession,
       ),
       initialLocation: initialLocation,
     ),
