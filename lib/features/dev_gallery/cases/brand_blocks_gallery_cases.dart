@@ -33,6 +33,7 @@ import 'package:starter/shared/widgets/blocks/release_card.dart';
 import 'package:starter/shared/widgets/blocks/segmented.dart';
 import 'package:starter/shared/widgets/blocks/stat_card.dart';
 import 'package:starter/shared/widgets/blocks/stat_grid.dart';
+import 'package:starter/shared/widgets/blocks/step_number.dart';
 import 'package:starter/shared/widgets/blocks/stepper.dart';
 import 'package:starter/shared/widgets/blocks/summary_box.dart';
 import 'package:starter/shared/widgets/blocks/terminal_window.dart';
@@ -732,6 +733,16 @@ class _StepperStoryState extends State<_StepperStory> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        // The numbered ring on its own, for steps laid out by the page.
+        const Row(
+          spacing: 12,
+          children: <Widget>[
+            AppStepNumber(index: 0),
+            AppStepNumber(index: 1),
+            AppStepNumber(index: 2),
+          ],
+        ),
+        const SizedBox(height: 24),
         AppStepper(
           steps: const <AppStepperStep>[
             (

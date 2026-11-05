@@ -25,6 +25,7 @@ import 'package:starter/shared/widgets/marks/material_sparkline.dart';
 import 'package:starter/shared/widgets/marks/material_stage.dart';
 import 'package:starter/shared/widgets/marks/material_tabs.dart';
 import 'package:starter/shared/widgets/marks/material_tag.dart';
+import 'package:starter/shared/widgets/marks/material_tile.dart';
 
 /// The brand-material stories: all sixteen approved materials, the seeded
 /// picker, material text, the wordmark shimmer, the pause contract and the
@@ -39,6 +40,7 @@ enum BrandMaterialGalleryKind {
   shimmer,
   pause,
   variants,
+  tiles,
   surfaces,
 }
 
@@ -64,6 +66,7 @@ String _caseLabel(BrandMaterialGalleryKind kind) => switch (kind) {
   BrandMaterialGalleryKind.shimmer => 'Wordmark shimmer',
   BrandMaterialGalleryKind.pause => 'Pause control',
   BrandMaterialGalleryKind.variants => 'Material variants',
+  BrandMaterialGalleryKind.tiles => 'Material tiles',
   BrandMaterialGalleryKind.surfaces => 'Material surfaces',
 };
 
@@ -72,6 +75,8 @@ String _caseDescription(BrandMaterialGalleryKind kind) => switch (kind) {
     'Every approved look, drawn by the live shader. Nothing else may ship a material.',
   BrandMaterialGalleryKind.seeded => 'The same name always picks the same material.',
   BrandMaterialGalleryKind.text => 'Letters as a mask over a live material frame.',
+  BrandMaterialGalleryKind.tiles =>
+    'A small framed swatch, in either shape, with or without a child.',
   BrandMaterialGalleryKind.shimmer => 'One shine band sweeps the letters, then rests.',
   BrandMaterialGalleryKind.pause =>
     'Paused holds the current frame; reduced motion stops on its own.',
@@ -114,6 +119,7 @@ class _BrandMaterialPreview extends ConsumerWidget {
               BrandMaterialGalleryKind.swatches => const _SwatchStory(),
               BrandMaterialGalleryKind.seeded => const _SeededStory(),
               BrandMaterialGalleryKind.text => const _TextStory(),
+              BrandMaterialGalleryKind.tiles => const _MaterialTilesStory(),
               BrandMaterialGalleryKind.shimmer => const _ShimmerStory(),
               BrandMaterialGalleryKind.pause => const _PauseStory(),
               BrandMaterialGalleryKind.variants => const _VariantsStory(),
@@ -317,6 +323,25 @@ class _SeededStory extends StatelessWidget {
           'The picker hashes the name, so a given project always lands on the '
           'same look. Callers never choose by eye.',
         ),
+      ],
+    );
+  }
+}
+
+class _MaterialTilesStory extends StatelessWidget {
+  const _MaterialTilesStory();
+
+  @override
+  Widget build(BuildContext context) {
+    final recipe = brandMaterialById('hammered-copper')!;
+    return Wrap(
+      spacing: context.spacing.lg,
+      runSpacing: context.spacing.lg,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        MaterialTile(recipe: recipe),
+        MaterialTile(recipe: recipe, shape: MaterialTileShape.circle),
+        MaterialTile(recipe: brandMaterialById('liquid-chrome')!, size: 48),
       ],
     );
   }

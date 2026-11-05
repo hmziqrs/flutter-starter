@@ -30,7 +30,11 @@ import 'package:starter/shared/fx/shaders/liquid_glass_program.dart';
 /// `_report.txt` and fail the run at the end, so one bad page cannot hide the
 /// renders of the others.
 void main() {
-  const outputDir = 'build/visual-screens';
+  const localeName = String.fromEnvironment('VISUAL_LOCALE', defaultValue: 'en');
+  final locale = AppLocale.values.firstWhere((locale) => locale.name == localeName);
+  const outputDir = localeName == 'en'
+      ? 'build/visual-screens'
+      : 'build/visual-screens/$localeName';
   final config = AppConfig(
     environment: AppEnvironment.development,
     enableVerboseLogging: false,
@@ -100,7 +104,10 @@ void main() {
     await family('Noto Sans', ['assets/fonts/Noto_Sans/NotoSans.ttf']);
     await family('Noto Sans Arabic', [
       'assets/fonts/Noto_Sans_Arabic/NotoSansArabic.ttf',
+      'assets/fonts/Noto_Sans_Arabic/NotoSansArabic-Medium.ttf',
+      'assets/fonts/Noto_Sans_Arabic/NotoSansArabic-SemiBold.ttf',
     ]);
+    await family('Noto Sans SC', ['assets/fonts/Noto_Sans_SC/NotoSansSC.ttf']);
     final lucide = await rootBundle.load('packages/forui_assets/assets/lucide.ttf');
     await ui.loadFontFromList(
       lucide.buffer.asUint8List(),
@@ -131,7 +138,7 @@ void main() {
         final id = '$routeName.$viewportName.${brightness.name}';
         testWidgets(id, skip: !autoUpdateGoldenFiles, (tester) async {
           debugDefaultTargetPlatformOverride = platform;
-          LocaleSettings.setLocaleSync(AppLocale.en);
+          LocaleSettings.setLocaleSync(locale);
           tester.view
             ..devicePixelRatio = 2
             ..physicalSize = size * 2;
@@ -151,6 +158,7 @@ void main() {
                 dependencies: AppDependencies.inMemory(
                   initialSettings: const SettingsState.defaults().copyWith(
                     hasCompletedOnboarding: true,
+                    localeOverride: locale,
                     themeMode: brightness == Brightness.dark
                         ? AppThemeMode.dark
                         : AppThemeMode.light,

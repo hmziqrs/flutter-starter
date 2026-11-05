@@ -27,6 +27,7 @@ import 'package:starter/shared/widgets/rings/horizon_rings.dart';
 import 'package:starter/shared/widgets/rings/ring_divider.dart';
 import 'package:starter/shared/widgets/rings/ring_loader.dart';
 import 'package:starter/shared/widgets/rings/ring_meter.dart';
+import 'package:starter/shared/widgets/rings/scroll_rings.dart';
 import 'package:starter/shared/widgets/rings/status_ring.dart';
 
 /// The glass stories (BRAND.md signature surfaces, glass.css): the four
@@ -96,7 +97,7 @@ String _glassCaseDescription(BrandGlassGalleryKind kind) => switch (kind) {
 /// The rings stories (BRAND.md s7): the hero picture, corner fingerprints,
 /// band arcs, the horizon, the small indicators, the divider and the motion
 /// presets. Dev-only surface, so the labels are literal English.
-enum BrandRingsGalleryKind { hero, corner, band, horizon, indicators, divider, motion }
+enum BrandRingsGalleryKind { hero, corner, band, horizon, indicators, divider, scroll, motion }
 
 /// Builds the "Rings" gallery cases, one per ring piece.
 List<GalleryCase> buildBrandRingsGalleryCases() {
@@ -120,6 +121,7 @@ String _ringsCaseLabel(BrandRingsGalleryKind kind) => switch (kind) {
   BrandRingsGalleryKind.horizon => 'Horizon rings',
   BrandRingsGalleryKind.indicators => 'Loader, meter, status',
   BrandRingsGalleryKind.divider => 'Ring divider',
+  BrandRingsGalleryKind.scroll => 'Scroll rings',
   BrandRingsGalleryKind.motion => 'Motion presets',
 };
 
@@ -133,6 +135,7 @@ String _ringsCaseDescription(BrandRingsGalleryKind kind) => switch (kind) {
     'Half rings around a sun; asleep, the sun goes out and stars come up.',
   BrandRingsGalleryKind.indicators => 'The small ring pieces: loader, meter and status.',
   BrandRingsGalleryKind.divider => 'A hairline with a ring at the end; filled means something.',
+  BrandRingsGalleryKind.scroll => 'Rings that draw themselves in as the page scrolls.',
   BrandRingsGalleryKind.motion =>
     'Turn and ripple presets. Paused holds the frame; reduced motion stills it.',
 };
@@ -223,6 +226,10 @@ class _BrandRingsPreview extends ConsumerWidget {
               BrandRingsGalleryKind.horizon => const _HorizonStory(),
               BrandRingsGalleryKind.indicators => const _IndicatorStory(),
               BrandRingsGalleryKind.divider => const _DividerStory(),
+              BrandRingsGalleryKind.scroll => const SizedBox(
+                height: 320,
+                child: ScrollRings(seed: 'starter'),
+              ),
               BrandRingsGalleryKind.motion => const _MotionStory(),
             },
           ],
