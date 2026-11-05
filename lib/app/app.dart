@@ -31,6 +31,8 @@ import 'package:starter/features/feedback/feedback_sheet.dart';
 import 'package:starter/features/feedback/feedback_transport.dart';
 import 'package:starter/features/feedback/shake_feedback_trigger.dart';
 import 'package:starter/features/force_update/version_gate_providers.dart';
+import 'package:starter/features/native_surfaces/native_surfaces_port.dart';
+import 'package:starter/features/native_surfaces/surface_snapshot.dart';
 import 'package:starter/features/notifications/notification_tap.dart';
 import 'package:starter/features/notifications/notifications_controller.dart';
 import 'package:starter/features/notifications/notifications_repository.dart';
@@ -54,6 +56,7 @@ import 'package:starter/infrastructure/firebase/firebase_performance_route_obser
 import 'package:starter/infrastructure/haptics/haptic_service.dart';
 import 'package:starter/infrastructure/logging/app_logger.dart';
 import 'package:starter/infrastructure/media/media_picker.dart';
+import 'package:starter/infrastructure/native_surfaces/method_channel_native_surfaces.dart';
 import 'package:starter/infrastructure/permissions/permission_service.dart';
 import 'package:starter/infrastructure/platform/platform_capabilities.dart';
 import 'package:starter/infrastructure/platform/system_ui_controller.dart';
@@ -253,6 +256,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
       unawaited(ref.read(sessionControllerProvider.notifier).hydrateFromSecureStore());
       _drainNotificationTapQueue();
       _listenAppLinkStream();
+      _listenNativeSurfaces();
       ref.listenManual(
         versionCheckProvider,
         (_, _) => _router.refresh(),
@@ -286,6 +290,32 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
     unawaited(_router.pushNamed(target, pathParameters: tap.params));
   }
 
+  StreamSubscription<String>? _surfaceRoutes;
+
+  /// Follows tap-throughs from widgets and menus, and tells those surfaces what
+  /// to show. Routes come from storage outside the app, so each one is checked.
+  void _listenNativeSurfaces() {
+    final surfaces = ref.read(nativeSurfacesProvider);
+    void open(String? route) {
+      if (route != null && isOpenableSurfaceRoute(route)) _router.go(route);
+    }
+
+    _surfaceRoutes = surfaces.routeRequests.listen(open);
+    unawaited(surfaces.takeLaunchRoute().then(open));
+    unawaited(surfaces.publish(_surfaceSnapshot(context.t)));
+  }
+
+  static SurfaceSnapshot _surfaceSnapshot(Translations translations) => SurfaceSnapshot(
+    title: translations.app.name,
+    subtitle: translations.home.summary,
+    updatedAt: DateTime.now(),
+    actions: [
+      SurfaceAction(label: translations.navigation.home, route: AppRoutes.homePath),
+      SurfaceAction(label: translations.navigation.pricing, route: AppRoutes.pricingPath),
+      SurfaceAction(label: translations.navigation.settings, route: AppRoutes.settingsPath),
+    ],
+  );
+
   void _listenAppLinkStream() {
     ref.listenManual<AsyncValue<ResolvedLink>>(
       appLinkStreamProvider,
@@ -308,6 +338,7 @@ class _AppViewState extends ConsumerState<_AppView> with WidgetsBindingObserver 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_surfaceRoutes?.cancel());
     _router.routerDelegate.removeListener(_syncShellRoute);
     _onShellRoute.dispose();
     _router.dispose();

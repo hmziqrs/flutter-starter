@@ -17,6 +17,7 @@ import 'package:starter/features/dev_gallery/cases/form_scaffolding_gallery_case
 import 'package:starter/features/dev_gallery/cases/haptics_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/license_share_update_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/mfa_otp_gallery_cases.dart';
+import 'package:starter/features/dev_gallery/cases/native_surfaces_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/notifications_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/permissions_gallery_cases.dart';
 import 'package:starter/features/dev_gallery/cases/pin_autolock_gallery_cases.dart';
@@ -44,6 +45,7 @@ List<GalleryCase> buildGalleryRegistry({required AppConfig config}) {
     ...buildBrandBlocksGalleryCases(),
     ...buildBrandPagesGalleryCases(),
     ...buildBrandDemoPagesGalleryCases(),
+    ...buildNativeSurfacesGalleryCases(),
     ...buildProductionGalleryCases(),
     ...buildConnectivityGalleryCases(),
     ...buildForceUpdateGalleryCases(),
