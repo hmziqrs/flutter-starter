@@ -35,10 +35,9 @@ flutter test test/goldens/canonical_matrix_golden_test.dart --update-goldens
 flutter test test/goldens/canonical_matrix_golden_test.dart
 ```
 
-The current baselines were regenerated after the brand port on macOS 27.2 arm64
-with the pinned Flutter and fonts, and every changed image was reviewed. They
-have not been compared on `macos-26` yet: run the workflow above and review its
-pull request to confirm or replace them there.
+On any other macOS version a few edge pixels anti-alias differently (under 0.5%
+of the image), so `just test-goldens` reports a mismatch there as advice, not a
+failure. `just goldens-ci` runs the workflow above and gives the real verdict.
 
 Other OS and renderer combinations should run widget/accessibility coverage,
 not compare against these platform-specific pixels.

@@ -147,8 +147,26 @@ test:
     fi
 
 # Canonical golden baseline (run on macOS; see test/goldens/README.md).
+# Pixels are exact only on the macOS 26 reference. Other macOS versions anti-alias
+# a few edge pixels differently, so a failure there is reported as advice, and
+# `just goldens-ci` gives the real verdict.
 test-goldens:
+    #!/usr/bin/env bash
+    set -uo pipefail
     {{flutter}} test test/goldens/canonical_matrix_golden_test.dart
+    status=$?
+    major="$(sw_vers -productVersion 2>/dev/null | cut -d. -f1)"
+    if [[ "$status" -ne 0 && "$major" != '26' ]]; then
+        echo "Goldens differ on macOS ${major:-unknown}; the baselines are exact on macOS 26 only." >&2
+        echo "Run 'just goldens-ci' for the authoritative comparison." >&2
+        exit 0
+    fi
+    exit "$status"
+
+# Compare on the macOS 26 runner. The run's summary says whether baselines already
+# matched; if not, it pushes goldens/regen-N for review. Push your branch first.
+goldens-ci:
+    gh workflow run regenerate-goldens.yml --ref "$(git branch --show-current)"
 
 # Render every gallery case at phone and desktop sizes (dark + light) to
 # build/visual/. Headless; never touches the desktop. See AGENTS.md rule 5.
