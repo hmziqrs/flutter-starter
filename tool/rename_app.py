@@ -26,10 +26,13 @@ OLD_ID = "com.example.starter"
 OLD_NAME = "Starter"
 OLD_PACKAGE = "starter"
 
-SKIPPED_DIRS = {".git", ".dart_tool", "build", "Pods", ".gradle", ".symlinks", "node_modules"}
+SKIPPED_DIRS = {
+    ".claude", ".git", ".dart_tool", "build", "Pods", ".gradle", ".symlinks", "node_modules",
+}
 TEXT_SUFFIXES = {
-    ".cc", ".cpp", ".dart", ".example", ".gradle", ".json", ".kt", ".kts", ".md", ".pbxproj",
-    ".plist", ".py", ".rc", ".sh", ".txt", ".xcconfig", ".xcscheme", ".xml", ".yaml", ".yml",
+    ".appxmanifest", ".cc", ".cmake", ".cpp", ".dart", ".entitlements", ".example", ".gradle", ".h",
+    ".json", ".kt", ".kts", ".md", ".manifest", ".pbxproj", ".plist", ".ps1", ".py", ".rc", ".sh",
+    ".swift", ".txt", ".xcconfig", ".xcscheme", ".xml", ".yaml", ".yml",
 }
 
 # Where the display name and the binary name appear, as exact text. A blanket

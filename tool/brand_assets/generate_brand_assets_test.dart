@@ -140,10 +140,9 @@ Future<void> _generate({required String symbol, required String name}) async {
   await _writeIco('windows/runner/resources/app_icon.ico', symbol, const [16, 32, 48, 256]);
 
   // tvOS: layers parallax, so the tile, then the letters on their own.
-  for (final file in Directory('tvos/Runner/Assets.xcassets/AppIcon.brandassets')
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.png'))) {
+  for (final file in Directory(
+    'tvos/Runner/Assets.xcassets/AppIcon.brandassets',
+  ).listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.png'))) {
     final (width, height) = _pngSize(file);
     final base = file.uri.pathSegments.last;
     if (base.contains('top_shelf')) {

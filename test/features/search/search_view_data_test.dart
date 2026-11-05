@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter/features/search/search_view_data.dart';
+import 'package:starter/i18n/translations.g.dart';
 
 void main() {
   group('SearchResultViewData.matches', () {
@@ -43,5 +44,17 @@ void main() {
       final ids = corpus.map((item) => item.id).toSet();
       expect(ids.length, corpus.length);
     });
+  });
+  test('the bundled corpus follows the language', () {
+    addTearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
+
+    LocaleSettings.setLocaleSync(AppLocale.en);
+    expect(SearchViewData.defaults().results.first.title, 'Authentication');
+
+    LocaleSettings.setLocaleSync(AppLocale.ar);
+    expect(SearchViewData.defaults().results.first.title, 'المصادقة');
+
+    LocaleSettings.setLocaleSync(AppLocale.zhHans);
+    expect(SearchViewData.defaults().results.first.title, '身份验证');
   });
 }
