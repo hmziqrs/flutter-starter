@@ -48,6 +48,12 @@
 				</array>
 			</dict>
 		</array>
+		<!-- Links reach Dart through the app_links plugin, which checks them against the host
+		     allowlist, and through the native surfaces channel. Flutter's own deep linking would
+		     also push every URL into the router unchecked: a cold launch from a widget landed on
+		     Home because of it. -->
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSSupportsLiveActivities</key>
