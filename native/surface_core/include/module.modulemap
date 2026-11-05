@@ -1,0 +1,4 @@
+module SurfaceCoreFFI {
+  header "surface_core.h"
+  export *
+}
