@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Throwaway proof. It has no activity and no appwidget-provider metadata, so it adds no
+     launcher icon, never takes focus, and does not appear in the widget picker. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.surfacecore.proof"
+    android:versionCode="1"
+    android:versionName="1.0">
+  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <application android:label="surface_core proof" android:extractNativeLibs="false" android:hasCode="true">
+    <receiver android:name=".ProofWidget" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <!-- API 37 refuses APPWIDGET_UPDATE from adb shell, so the proof fires this instead. -->
+        <action android:name="com.example.surfacecore.proof.RUN" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>
