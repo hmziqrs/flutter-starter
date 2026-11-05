@@ -110,3 +110,31 @@ App Group cannot be signed ad hoc, so they are off until you opt in:
 
 In a development build, open **Brand gallery**, then **Native surfaces**, to
 publish sample snapshots and start and end a live session.
+
+## Sharing logic with Rust
+
+`native/surface_core` is a Rust library with a C ABI that widgets can call for
+networking and data logic. It has been called from the real iOS widget process
+and from an Android widget receiver, with a real fetch and real HTTPS. It is not
+wired into the shipping widgets yet; the proofs are on branch
+`spike/rust-in-widget`.
+
+| Measured on a simulator or emulator | iOS widget | Android receiver |
+|---|---|---|
+| Memory added by a fetch and HTTPS call | 0.23MB footprint | 3.6MB PSS, debug build |
+| Local fetch | 0 to 8ms | 33ms |
+| HTTPS | 41 to 71ms | 185ms |
+| Added to a release binary | 2.3MB | 1.9MB `.so` for arm64 |
+
+Settle these before relying on it:
+
+- **Cellular on iOS.** The library uses POSIX sockets, which Apple says do not
+  automatically activate the cellular modem or an on-demand VPN. A widget waking on
+  cellular could fail. Test on a real device, or use `URLSession` and keep only data
+  mapping in Rust.
+- **Export compliance.** rustls is bundled encryption, which `URLSession` avoids.
+- **Localized text.** The library returns English strings, while this contract has
+  Dart own all text.
+- **Token refresh.** Widgets must not refresh tokens themselves, or they will race the
+  app. The token has to reach the widget through a shared Keychain group on Apple
+  platforms and the app's store on Android.

@@ -87,6 +87,14 @@ Renders land in `build/visual/` and `build/visual-screens/`, each with a
 `_report.txt` listing any layout exception. `AGENTS.md` has the brand-parity
 rules these support.
 
+## Native widgets
+
+iOS home and lock screen widgets with a Live Activity, Android home widgets with a
+lock screen live update, a macOS menu bar item and desktop widgets, and Windows and
+Linux tray items. Dart decides what they say, and each platform only draws it. See
+[`docs/native_surfaces.md`](docs/native_surfaces.md), including the one opt-in step
+macOS widgets need, and the status of sharing logic through Rust.
+
 ## Set up and run
 
 Install Flutter 3.44.7, confirm the bundled Dart version, and resolve the locked
