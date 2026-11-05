@@ -15,6 +15,7 @@ class MainFlutterWindow: NSWindow {
     center()
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    NativeSurfaces.shared.attach(to: flutterViewController.engine.binaryMessenger)
 
     super.awakeFromNib()
   }

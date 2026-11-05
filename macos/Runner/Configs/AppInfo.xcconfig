@@ -10,6 +10,10 @@ PRODUCT_NAME = starter
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.starter
 
+// The App Group the app and its widgets share (docs/native_surfaces.md). Swift reads it through
+// Info.plist and the entitlements expand it, so this line is the only place it is written.
+SURFACE_APP_GROUP = group.com.example.starter
+
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
 

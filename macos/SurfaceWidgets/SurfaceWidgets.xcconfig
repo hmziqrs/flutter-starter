@@ -1,0 +1,7 @@
+// Settings for the widget extension. AppInfo.xcconfig brings in the bundle ID, the App Group and
+// the machine-local signing overrides, so the extension always signs the same way as the app and
+// its bundle ID stays prefixed by the app's, as an embedded extension requires.
+#include "../Runner/Configs/AppInfo.xcconfig"
+
+PRODUCT_NAME = SurfaceWidgets
+PRODUCT_BUNDLE_IDENTIFIER = $(inherited).widgets
