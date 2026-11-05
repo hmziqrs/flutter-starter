@@ -195,6 +195,10 @@ Windows x64, Linux x64 and arm64, and Android APKs and App Bundle. Quality gates
 run locally, as listed above. Signing is deferred, so artifacts are unsigned or
 debug-signed; see `docs/release_readiness.md`.
 
+`.github/workflows/desktop-smoke.yml` launches the real app on Windows and Linux
+and runs the integration flows there, on every feature-branch push. It publishes
+nothing.
+
 `.github/workflows/regenerate-goldens.yml` regenerates the canonical baselines
 on the `macos-26` runner and opens a pull request for review.
 
