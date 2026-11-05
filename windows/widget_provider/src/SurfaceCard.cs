@@ -11,6 +11,12 @@ public static class SurfaceCard
     // Medium widgets have room for this many buttons.
     private const int MediumActions = 2;
 
+    // docs/native_surfaces.md. Cards cannot name a colour, but they can show an image.
+    private const uint DarkAccent = 0xF38230;
+    private const uint DarkLine = 0x262626;
+    private const uint LightAccent = 0xAA530A;
+    private const uint LightLine = 0xE5E5E5;
+
     public static string SnapshotPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "com.example.starter",
@@ -124,9 +130,9 @@ public static class SurfaceCard
             ["hasValueLabel"] = !string.IsNullOrEmpty(valueLabel),
             ["hasProgress"] = progress != null,
 
-            // Column weights: a weight of 0 would hide nothing, so both stay positive.
-            ["progressDone"] = Math.Max(done, 1).ToString(),
-            ["progressLeft"] = Math.Max(100 - done, 1).ToString(),
+            ["progressDone"] = done.ToString(),
+            ["progressDark"] = ProgressBar.DataUri(done, DarkAccent, DarkLine),
+            ["progressLight"] = ProgressBar.DataUri(done, LightAccent, LightLine),
             ["statusColor"] = status switch
             {
                 "active" => "Accent",

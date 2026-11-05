@@ -71,31 +71,12 @@
           "maxLines": 2
         },
         {
-          "type": "ColumnSet",
+          "type": "Image",
           "$when": "${hasProgress}",
-          "spacing": "Medium",
-          "minHeight": "4px",
-          "columns": [
-            {
-              "type": "Column",
-              "width": "${progressDone}",
-              "style": "accent",
-              "minHeight": "4px",
-              "backgroundImage": {
-                "url": "${if($host.hostTheme == 'light', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNYFcwFAAKyAQhclS4OAAAAAElFTkSuQmCC', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP43GQAAAQRAaY2as5OAAAAAElFTkSuQmCC')}",
-                "fillMode": "Repeat"
-              },
-              "items": []
-            },
-            {
-              "type": "Column",
-              "width": "${progressLeft}",
-              "style": "emphasis",
-              "minHeight": "4px",
-              "spacing": "None",
-              "items": []
-            }
-          ]
+          "url": "${if($host.hostTheme == 'light', progressLight, progressDark)}",
+          "size": "Stretch",
+          "altText": "${progressDone}%",
+          "spacing": "Medium"
         }
       ]
     },
