@@ -1,0 +1,131 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "Container",
+      "height": "stretch",
+      "selectAction": {
+        "$when": "${and(hasRoute, $host.isUserContextAuthenticated)}",
+        "type": "Action.Execute",
+        "verb": "open",
+        "data": { "route": "${route}" }
+      },
+      "items": [
+        {
+          "type": "ColumnSet",
+          "spacing": "None",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${title}",
+                  "weight": "Bolder",
+                  "wrap": false
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "auto",
+              "$when": "${statusColor != 'Default'}",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "●",
+                  "color": "${statusColor}",
+                  "size": "Small"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TextBlock",
+          "$when": "${hasValue}",
+          "text": "${value}",
+          "size": "ExtraLarge",
+          "spacing": "Medium",
+          "wrap": false
+        },
+        {
+          "type": "TextBlock",
+          "$when": "${hasValueLabel}",
+          "text": "${valueLabel}",
+          "isSubtle": true,
+          "size": "Small",
+          "spacing": "None",
+          "wrap": false
+        },
+        {
+          "type": "TextBlock",
+          "$when": "${and(hasSubtitle, or(not(hasValue), $host.widgetSize != 'small'))}",
+          "text": "${subtitle}",
+          "isSubtle": true,
+          "spacing": "Small",
+          "wrap": true,
+          "maxLines": 2
+        },
+        {
+          "type": "ColumnSet",
+          "$when": "${hasProgress}",
+          "spacing": "Medium",
+          "minHeight": "4px",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "${progressDone}",
+              "style": "accent",
+              "minHeight": "4px",
+              "backgroundImage": {
+                "url": "${if($host.hostTheme == 'light', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNYFcwFAAKyAQhclS4OAAAAAElFTkSuQmCC', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP43GQAAAQRAaY2as5OAAAAAElFTkSuQmCC')}",
+                "fillMode": "Repeat"
+              },
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "${progressLeft}",
+              "style": "emphasis",
+              "minHeight": "4px",
+              "spacing": "None",
+              "items": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "$when": "${and(hasActions, $host.widgetSize == 'medium', $host.isUserContextAuthenticated)}",
+      "spacing": "Medium",
+      "actions": [
+        {
+          "$data": "${firstActions}",
+          "type": "Action.Execute",
+          "title": "${label}",
+          "verb": "open",
+          "data": { "route": "${route}" }
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "$when": "${and(hasActions, $host.widgetSize == 'large', $host.isUserContextAuthenticated)}",
+      "spacing": "Medium",
+      "actions": [
+        {
+          "$data": "${actions}",
+          "type": "Action.Execute",
+          "title": "${label}",
+          "verb": "open",
+          "data": { "route": "${route}" }
+        }
+      ]
+    }
+  ]
+}
