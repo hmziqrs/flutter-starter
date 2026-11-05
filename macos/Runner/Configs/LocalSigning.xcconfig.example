@@ -1,4 +1,5 @@
-// Machine-local signing overrides for the Runner target.
+// Machine-local signing overrides for the Runner and SurfaceWidgets targets. Both include this
+// file through AppInfo.xcconfig, so the widget extension always signs the same way as the app.
 //
 // Copy to `LocalSigning.xcconfig` (gitignored) and fill in your Apple
 // Development team ID. Required because the macOS entitlements include
@@ -13,5 +14,14 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 CODE_SIGN_IDENTITY = Apple Development
 
 // The committed placeholder `com.example.starter` cannot be registered on the
-// developer portal; override it with an ID your team owns.
+// developer portal; override it with an ID your team owns. The widget extension
+// appends `.widgets` to this.
 PRODUCT_BUNDLE_IDENTIFIER = com.yourorg.starter
+
+// Desktop widgets are off until you turn them on here. The menu bar item works either way.
+// They need an App Group your team owns, and profiles for the app and for
+// `<your bundle ID>.widgets`. Xcode creates those once, while signed in to your team, by
+// opening macos/Runner.xcworkspace or by building once with -allowProvisioningUpdates.
+// After turning them off again, run `flutter clean` to drop the embedded extension.
+// SURFACE_WIDGETS = YES
+// SURFACE_APP_GROUP = group.com.yourorg.starter
