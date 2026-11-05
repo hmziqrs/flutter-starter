@@ -1,0 +1,35 @@
+[package]
+name = "surface_core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Shared networking and data logic for native OS widgets, behind a small C ABI."
+
+[lib]
+# staticlib: linked into Apple binaries (WidgetKit extensions).
+# cdylib: packaged per ABI for Android and loaded with System.loadLibrary.
+# rlib: lets the integration tests call the extern "C" functions.
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+# Blocking HTTP/1.1 with rustls and bundled Mozilla roots. No tokio, no OpenSSL.
+ureq = { version = "3.5", default-features = false, features = ["rustls"] }
+serde = { version = "1", default-features = false, features = ["derive", "std"] }
+serde_json = { version = "1", default-features = false, features = ["std"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+# Only type definitions for jni.h. Adds no runtime code of its own.
+jni-sys = "0.4"
+
+[profile.dev]
+# Skips the dsymutil pass, which floods test output with warnings on macOS.
+split-debuginfo = "unpacked"
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+strip = true
+# Stays "unwind" on purpose: catch_unwind cannot catch anything under "abort", and a
+# panic would then kill the host process instead of returning an error snapshot.
+panic = "unwind"
