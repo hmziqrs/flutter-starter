@@ -17,3 +17,11 @@ CODE_SIGN_IDENTITY = Apple Development
 // developer portal; override it with an ID your team owns. The widget extension
 // appends `.widgets` to this.
 PRODUCT_BUNDLE_IDENTIFIER = com.yourorg.starter
+
+// Desktop widgets are off until you turn them on here. The menu bar item works either way.
+// They need an App Group your team owns, and profiles for the app and for
+// `<your bundle ID>.widgets`. Xcode creates those once, while signed in to your team, by
+// opening macos/Runner.xcworkspace or by building once with -allowProvisioningUpdates.
+// After turning them off again, run `flutter clean` to drop the embedded extension.
+// SURFACE_WIDGETS = YES
+// SURFACE_APP_GROUP = group.com.yourorg.starter

@@ -132,6 +132,8 @@
 		5A0FACE0000000000000000E /* onest-latin-600-normal.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = onest-latin-600-normal.ttf; path = ../assets/fonts/Onest/onest-latin-600-normal.ttf; sourceTree = SOURCE_ROOT; };
 		5A0FACE0000000000000000F /* LICENSE-Onest.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = LICENSE-Onest.txt; path = ../assets/fonts/Onest/LICENSE-Onest.txt; sourceTree = SOURCE_ROOT; };
 		5A0FACE00000000000000010 /* SurfaceWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SurfaceWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A0FACE00000000000000040 /* DebugProfile-Widgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "DebugProfile-Widgets.entitlements"; sourceTree = "<group>"; };
+		5A0FACE00000000000000041 /* Release-Widgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Release-Widgets.entitlements"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,6 +237,8 @@
 				5A0FACE00000000000000008 /* SurfaceStatusBar.swift */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
+				5A0FACE00000000000000040 /* DebugProfile-Widgets.entitlements */,
+				5A0FACE00000000000000041 /* Release-Widgets.entitlements */,
 				33CC11242044D66E0003C045 /* Resources */,
 				33BA886A226E78AF003329D5 /* Configs */,
 			);
@@ -636,7 +640,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Runner/DebugProfile.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Runner/DebugProfile$(SURFACE_ENTITLEMENTS_SUFFIX).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -768,7 +772,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Runner/DebugProfile.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Runner/DebugProfile$(SURFACE_ENTITLEMENTS_SUFFIX).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -788,7 +792,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Runner/Release$(SURFACE_ENTITLEMENTS_SUFFIX).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -821,7 +825,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5A0FACE0000000000000000B /* SurfaceWidgets.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = SurfaceWidgets/SurfaceWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = SurfaceWidgets/Info.plist;
@@ -841,7 +844,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5A0FACE0000000000000000B /* SurfaceWidgets.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = SurfaceWidgets/SurfaceWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = SurfaceWidgets/Info.plist;
@@ -860,7 +862,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5A0FACE0000000000000000B /* SurfaceWidgets.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = SurfaceWidgets/SurfaceWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = SurfaceWidgets/Info.plist;

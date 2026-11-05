@@ -118,7 +118,7 @@ enum SurfaceFont {
 /// The brand's tight figures. Tracking is a fixed length that does not shrink with the text, so a
 /// figure long enough to be scaled down to fit goes without it rather than colliding with itself.
 func surfaceFigureTracking(_ value: String, size: CGFloat) -> CGFloat {
-  value.count > 6 ? 0 : -0.05 * size
+  value.count > 6 ? 0 : -0.035 * size
 }
 
 /// The brand's status bullet: a hollow ring, filled when something is on or done (BRAND.md s7).

@@ -14,9 +14,26 @@ PRODUCT_BUNDLE_IDENTIFIER = com.example.starter
 // Info.plist and the entitlements expand it, so this line is the only place it is written.
 SURFACE_APP_GROUP = group.com.example.starter
 
+// Desktop widgets are opt-in. They need that App Group, and Xcode refuses an App Group without a
+// development certificate, so turning them on by default would break every unsigned build. Off,
+// the app and its menu bar item work as usual, and the extension is still compiled but not embedded.
+// Turn them on in LocalSigning.xcconfig (see LocalSigning.xcconfig.example).
+SURFACE_WIDGETS = NO
+
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
 
 // Machine-local signing overrides (gitignored, optional).
 // See LocalSigning.xcconfig.example.
 #include? "LocalSigning.xcconfig"
+
+// What SURFACE_WIDGETS switches.
+SURFACE_ENTITLEMENTS_SUFFIX = $(SURFACE_ENTITLEMENTS_SUFFIX_$(SURFACE_WIDGETS))
+SURFACE_ENTITLEMENTS_SUFFIX_YES = -Widgets
+SURFACE_ENTITLEMENTS_SUFFIX_NO =
+EXCLUDED_SOURCE_FILE_NAMES = $(SURFACE_EXCLUDED_FILES_$(SURFACE_WIDGETS))
+SURFACE_EXCLUDED_FILES_YES =
+SURFACE_EXCLUDED_FILES_NO = SurfaceWidgets.appex
+SURFACE_ACTIVE_APP_GROUP = $(SURFACE_ACTIVE_APP_GROUP_$(SURFACE_WIDGETS))
+SURFACE_ACTIVE_APP_GROUP_YES = $(SURFACE_APP_GROUP)
+SURFACE_ACTIVE_APP_GROUP_NO =

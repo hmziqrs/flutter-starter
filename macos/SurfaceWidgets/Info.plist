@@ -28,6 +28,6 @@
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
 	<key>SurfaceAppGroup</key>
-	<string>$(SURFACE_APP_GROUP)</string>
+	<string>$(SURFACE_ACTIVE_APP_GROUP)</string>
 </dict>
 </plist>

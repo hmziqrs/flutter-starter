@@ -357,7 +357,7 @@ struct SurfaceGauge: View {
             .tracking(surfaceFigureTracking(value, size: valueSize))
             .foregroundColor(palette.text)
             .lineLimit(1)
-            .minimumScaleFactor(0.5)
+            .minimumScaleFactor(0.3)
         }
         if let label = label {
           Text(label)

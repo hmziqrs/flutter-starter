@@ -76,13 +76,18 @@ enum SurfaceStore {
   static let snapshotKey = "surface.snapshot"
 
   /// The App Group comes from the build settings through Info.plist, so `tool/rename_app.py` and
-  /// the signing setup only have one place to change it (`AppInfo.xcconfig`).
+  /// the signing setup only have one place to change it (`AppInfo.xcconfig`). Empty when widgets
+  /// are turned off.
   static var appGroup: String? {
-    Bundle.main.object(forInfoDictionaryKey: "SurfaceAppGroup") as? String
+    let group = Bundle.main.object(forInfoDictionaryKey: "SurfaceAppGroup") as? String
+    return group?.isEmpty == false ? group : nil
   }
 
+  /// With no App Group there are no widgets to share with, so the menu bar item keeps the snapshot
+  /// in the app's own defaults.
   static func defaults(suite: String? = appGroup) -> UserDefaults? {
-    suite.flatMap(UserDefaults.init(suiteName:))
+    guard let suite = suite else { return .standard }
+    return UserDefaults(suiteName: suite)
   }
 
   static func write(json: String, to defaults: UserDefaults? = defaults()) {
