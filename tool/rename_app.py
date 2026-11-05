@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OLD_ID = "com.example.starter"
 OLD_NAME = "Starter"
 OLD_PACKAGE = "starter"
+OLD_TEAM = "4H4RFUBJJN"
 
 SKIPPED_DIRS = {
     ".claude", ".git", ".dart_tool", "build", "Pods", ".gradle", ".symlinks", "node_modules",
@@ -86,6 +87,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--name", required=True, help='Display name, such as "Sightline".')
     parser.add_argument("--id", required=True, help="Reverse-domain id, such as com.acme.sightline.")
     parser.add_argument("--dart-package", help="New Dart package name. Leave out to keep 'starter'.")
+    parser.add_argument("--team", default="", help="Your Apple Team ID. Leave out to clear the starter's.")
     parser.add_argument("--apply", action="store_true", help="Write the changes. Without it, only list them.")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+", args.id):
@@ -131,6 +133,15 @@ def main() -> int:
                 continue
             text = text.replace(old, new.format(**values))
         changes[path] = text
+
+    # The starter's own Apple team must not follow an app built from it.
+    team = f'"{args.team}"' if args.team else '""'
+    for relative in ("ios", "macos", "tvos"):
+        project = ROOT / relative / "Runner.xcodeproj/project.pbxproj"
+        if project.exists():
+            changes[project] = edited(project).replace(
+                f"DEVELOPMENT_TEAM = {OLD_TEAM};", f"DEVELOPMENT_TEAM = {team};"
+            )
 
     if args.dart_package:
         pubspec = ROOT / "pubspec.yaml"
