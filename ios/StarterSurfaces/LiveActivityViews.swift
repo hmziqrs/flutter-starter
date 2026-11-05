@@ -44,6 +44,8 @@ struct LiveBannerView: View {
       }
     }
     .padding(14)
+    // The system's background tint came out pure black on iOS 27, so the page is painted here too.
+    .background(palette.page)
   }
 }
 
