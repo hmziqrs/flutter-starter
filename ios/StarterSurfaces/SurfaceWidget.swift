@@ -45,11 +45,18 @@ struct SurfaceWidgetView: View {
   let snapshot: SurfaceSnapshot
   @Environment(\.widgetFamily) private var family
   @Environment(\.colorScheme) private var scheme
+  @Environment(\.showsWidgetContainerBackground) private var showsBackground
 
   var body: some View {
+    let page = isAccessory ? nil : SurfacePalette.of(scheme).page
     content
+      // The container background alone comes out lighter than asked: on iOS 27 `#0A0A0A` measured
+      // 24 to 39 on the home screen, which washes out the gauge's rings. So the page is painted
+      // under the content as well, unless the system has removed the background, as on StandBy
+      // and tinted home screens.
+      .background(showsBackground ? page : nil)
       .widgetURL(SurfaceLink.url(route: snapshot.route))
-      .surfaceBackground(isAccessory ? nil : SurfacePalette.of(scheme).page)
+      .surfaceBackground(page)
   }
 
   @ViewBuilder
@@ -132,7 +139,8 @@ struct SurfaceLiveActivity: Widget {
         DynamicIslandExpandedRegion(.center) {
           LiveExpandedCenterView(snapshot: context.state)
         }
-        DynamicIslandExpandedRegion(.trailing) {
+        // The figure and its caption must fit whole. The center text can truncate instead.
+        DynamicIslandExpandedRegion(.trailing, priority: 1) {
           LiveExpandedTrailingView(snapshot: context.state)
         }
         DynamicIslandExpandedRegion(.bottom) {

@@ -153,7 +153,7 @@ struct LiveExpandedLeadingView: View {
       }
     }
     .padding(.leading, 6)
-    .padding(.top, 4)
+    .padding(.top, 12)
   }
 }
 
@@ -175,7 +175,6 @@ struct LiveExpandedCenterView: View {
         .minimumScaleFactor(0.8)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.top, 8)
   }
 }
 
@@ -199,10 +198,12 @@ struct LiveExpandedTrailingView: View {
           .font(SurfaceFont.onest(.regular, 10))
           .foregroundStyle(palette.muted)
           .lineLimit(1)
+          .minimumScaleFactor(0.8)
       }
     }
+    .frame(minWidth: 60, maxWidth: 104, alignment: .trailing)
     .padding(.trailing, 6)
-    .padding(.top, 6)
+    .padding(.top, 12)
   }
 }
 
