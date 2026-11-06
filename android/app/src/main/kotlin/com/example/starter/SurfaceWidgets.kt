@@ -19,6 +19,41 @@ import androidx.annotation.IdRes
 
 /** Home screen widgets. Both draw every size; they differ in their picker entry and default size. */
 abstract class SurfaceWidgetProvider : AppWidgetProvider() {
+    // Spike only: proves the shared Rust library runs from the widget receiver,
+    // with no activity or Flutter engine started.
+    override fun onReceive(context: Context, intent: android.content.Intent) {
+        if (intent.action != "com.example.starter.RUST_PROBE") {
+            super.onReceive(context, intent)
+            return
+        }
+        val pending = goAsync()
+        Thread {
+            try {
+                val before = android.os.Debug.getPss()
+                val version = com.example.surfacecore.SurfaceCore.version()
+                val percent = com.example.surfacecore.SurfaceCore.formatPercent(0.72)
+                val t0 = System.nanoTime()
+                val snapshot = com.example.surfacecore.SurfaceCore.fetchSnapshot("http://10.0.2.2:18474", null)
+                val snapshotMs = (System.nanoTime() - t0) / 1_000_000
+                val afterLocal = android.os.Debug.getPss()
+                val t1 = System.nanoTime()
+                val https = com.example.surfacecore.SurfaceCore.probeUrl("https://example.com")
+                val httpsMs = (System.nanoTime() - t1) / 1_000_000
+                val afterHttps = android.os.Debug.getPss()
+                android.util.Log.i(
+                    "RUST_PROBE",
+                    "provider=${javaClass.simpleName} process=${android.app.Application.getProcessName()} " +
+                        "version=$version percent=$percent pssKbBefore=$before pssKbAfterLocal=$afterLocal " +
+                        "pssKbAfterHttps=$afterHttps snapshotMs=$snapshotMs httpsMs=$httpsMs\nsnapshot=$snapshot\nhttps=$https",
+                )
+            } catch (error: Throwable) {
+                android.util.Log.e("RUST_PROBE", "failed", error)
+            } finally {
+                pending.finish()
+            }
+        }.start()
+    }
+
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
         val snapshot = SurfaceStore.read(context)
         for (id in appWidgetIds) {

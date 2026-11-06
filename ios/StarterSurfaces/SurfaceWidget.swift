@@ -21,6 +21,7 @@ struct SurfaceTimelineProvider: TimelineProvider {
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<SurfaceEntry>) -> Void) {
+    RustProbe.run()
     let entry = SurfaceEntry(date: Date(), snapshot: load())
     completion(Timeline(entries: [entry], policy: .never))
   }
@@ -156,5 +157,64 @@ struct SurfaceLiveActivity: Widget {
       .widgetURL(SurfaceLink.url(route: context.state.route))
       .keylineTint(SurfacePalette.dark.accent)
     }
+  }
+}
+
+
+// Spike only: proves the shared Rust library runs inside the widget process.
+@_silgen_name("surface_core_version") private func rustVersion() -> UnsafePointer<CChar>
+@_silgen_name("surface_core_fetch_snapshot")
+private func rustFetch(_ url: UnsafePointer<CChar>, _ token: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+@_silgen_name("surface_core_probe_url") private func rustProbe(_ url: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?
+@_silgen_name("surface_core_format_percent") private func rustPercent(_ value: Double) -> UnsafeMutablePointer<CChar>?
+@_silgen_name("surface_core_free") private func rustFree(_ raw: UnsafeMutablePointer<CChar>?)
+
+enum RustProbe {
+  private static func take(_ raw: UnsafeMutablePointer<CChar>?) -> String {
+    defer { rustFree(raw) }
+    return raw.map { String(cString: $0) } ?? "nil"
+  }
+
+  private static func footprintMB() -> Double {
+    var info = task_vm_info_data_t()
+    var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+    let result = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+        task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+      }
+    }
+    return result == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : -1
+  }
+
+  private static func timed(_ work: () -> String) -> (String, Int) {
+    let start = DispatchTime.now().uptimeNanoseconds
+    let value = work()
+    return (value, Int((DispatchTime.now().uptimeNanoseconds - start) / 1_000_000))
+  }
+
+  static func run() {
+    let before = footprintMB()
+    let version = String(cString: rustVersion())
+    let percent = take(rustPercent(0.72))
+    let (snapshot, snapshotMs) = timed { take(rustFetch("http://127.0.0.1:18474", nil)) }
+    let afterLocal = footprintMB()
+    let (https, httpsMs) = timed { take(rustProbe("https://example.com")) }
+    let afterHttps = footprintMB()
+    let lines = [
+      "process=\(ProcessInfo.processInfo.processName)",
+      "bundle=\(Bundle.main.bundleIdentifier ?? "?")",
+      "version=\(version)",
+      "percent=\(percent)",
+      "footprintBefore=\(before)",
+      "footprintAfterLocal=\(afterLocal)",
+      "footprintAfterHttps=\(afterHttps)",
+      "snapshotMs=\(snapshotMs)",
+      "httpsMs=\(httpsMs)",
+      "snapshot=\(snapshot)",
+      "https=\(https)",
+    ]
+    let joined = lines.joined(separator: "\n")
+    Logger(subsystem: "starter.native-surfaces", category: "rust").notice("RUST_PROBE \(joined, privacy: .public)")
+    SurfaceStore.defaults?.set(joined, forKey: "rust.probe")
   }
 }

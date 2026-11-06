@@ -92,7 +92,7 @@ struct SurfaceSnapshot: Codable, Hashable {
 enum SurfaceStore {
   static let key = "surface.snapshot"
 
-  private static var defaults: UserDefaults? {
+  static var defaults: UserDefaults? {
     let group = Bundle.main.object(forInfoDictionaryKey: "SurfaceAppGroup") as? String
     return group.flatMap { UserDefaults(suiteName: $0) }
   }
